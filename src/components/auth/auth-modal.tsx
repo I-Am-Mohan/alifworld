@@ -659,18 +659,17 @@ export function AuthModal() {
                     )}
                   </button>
 
-                  <div className="pt-2 text-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLoginStep('password');
-                        setError(null);
-                      }}
-                      className="text-xs font-semibold text-slate-500 hover:text-[#F59E0B] transition"
-                    >
-                      {t.usePassword} →
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginStep('password');
+                      setError(null);
+                    }}
+                    className="w-full bg-transparent border border-slate-300 hover:border-amber-500 text-slate-700 hover:text-slate-950 font-semibold py-3 px-4 rounded-2xl transition flex items-center justify-center gap-2 text-xs sm:text-sm hover:bg-slate-50/50"
+                  >
+                    <span>{t.usePassword}</span>
+                    <span className="font-bold">→</span>
+                  </button>
 
                   <SocialOAuthButtons
                     orText={t.orContinueWith}
@@ -922,18 +921,17 @@ export function AuthModal() {
                     )}
                   </button>
 
-                  <div className="pt-2 text-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLoginStep('number');
-                        setError(null);
-                      }}
-                      className="text-xs font-semibold text-slate-500 hover:text-[#F59E0B] transition"
-                    >
-                      ← {t.useOtp}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginStep('number');
+                      setError(null);
+                    }}
+                    className="w-full bg-transparent border border-slate-300 hover:border-amber-500 text-slate-700 hover:text-slate-950 font-semibold py-3 px-4 rounded-2xl transition flex items-center justify-center gap-2 text-xs sm:text-sm hover:bg-slate-50/50"
+                  >
+                    <span className="font-bold">←</span>
+                    <span>{t.useOtp}</span>
+                  </button>
 
                   <SocialOAuthButtons
                     orText={t.orContinueWith}
