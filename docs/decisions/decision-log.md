@@ -17,6 +17,7 @@
 | [**ADR-0005**](0005-domain-glossary-and-ubiquitous-language.md) | Ubiquitous Language, Canonical Domain Glossary, and Monetary Typing | 2026-09-22 | **Accepted** | Phase 01 / M005 | Product Governance | Standardized canonical domain glossary; enforced integer Poisha (Poisha branded type, _poisha db columns); locked ProductPoint discrete integer units; established bilingual dictionary. |
 | [**ADR-0006**](0006-single-application-modular-monolith-architecture.md) | Single-Application Modular Monolith Architectural Decisions | 2026-09-22 | **Accepted** | Phase 01 / M006 | Architecture Team | Locked single Next.js monolith repository; established 4-layer dependency model; mandated transactional outbox via BullMQ; configured dual web/worker deployment from single Docker image. |
 | [**ADR-0007**](0007-milestone-dependency-graph-and-delivery-workflow.md) | Milestone Dependency Graph and Incremental Delivery Workflow | 2026-09-22 | **Accepted** | Phase 01 / M007 | Delivery Governance | Established 30-phase DAG; mandated predecessor completion verification gate; codified 7-step incremental execution protocol and atomic single-milestone commits. |
+| [**ADR-0008**](0008-risk-register-and-compliance-approval-gates.md) | Risk Register and Compliance Approval Gates Framework | 2026-09-22 | **Accepted** | Phase 01 / M008 | Legal & Architecture | Adopted 12-point enterprise risk register; operationalized 7 compliance approval gates; enforced feature-flag deactivation and error standard for disabled capabilities. |
 
 ---
 
