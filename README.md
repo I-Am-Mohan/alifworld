@@ -50,6 +50,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Milestone Dependency Graph & Delivery Workflow](docs/architecture/milestone-dependency-graph.md)**: 30-phase DAG, critical paths, phase transition gates, and atomic delivery standards.
 - **[Enterprise Risk Register & Compliance Approval Gates](docs/architecture/risk-register-and-compliance-gates.md)**: 12-point enterprise risk register with 5x5 impact/likelihood scoring and operationalized approval gates.
 - **[Environment, Branching, and Release Strategy](docs/architecture/environment-branching-and-release-strategy.md)**: 4-tier environments, Trunk-Based Development, zero-downtime rolling deployments, and Expand-and-Contract migrations.
+- **[Definition of Done & Requirements Traceability Matrix](docs/architecture/definition-of-done-and-traceability-matrix.md)**: 7-pillar canonical Definition of Done and 25-category bidirectional requirements traceability matrix.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -62,6 +63,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0007: Milestone Dependency Graph and Incremental Delivery Workflow](docs/decisions/0007-milestone-dependency-graph-and-delivery-workflow.md)
   - [ADR 0008: Enterprise Risk Register and Compliance Approval Gates](docs/decisions/0008-risk-register-and-compliance-approval-gates.md)
   - [ADR 0009: Environment Topology, Trunk-Based Development, and Zero-Downtime Release Strategy](docs/decisions/0009-environment-branching-and-release-strategy.md)
+  - [ADR 0010: Canonical Definition of Done and Requirements Traceability Matrix Framework](docs/decisions/0010-definition-of-done-and-requirements-traceability.md)
 
 ---
 
@@ -71,8 +73,8 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 
 | Phase | Milestone Range | Phase Theme | Status |
 |:---:|:---:|:---|:---:|
-| **01** | 001–010 | Governance and Architecture | **In Progress (Milestones 001–009 Completed)** |
-| **02** | 011–020 | Repository and Tooling | Planned |
+| **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
+| **02** | 011–020 | Repository and Tooling | **Next Up / Ready to Start** |
 | **03** | 021–030 | Data Architecture | Planned |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |

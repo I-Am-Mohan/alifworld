@@ -25,7 +25,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 
 ## Complete Phase & Milestone Index
 
-### Phase 01: Governance and Architecture (Milestones 001–010)
+### Phase 01: Governance and Architecture (Milestones 001–010) — *(Completed)*
 *Phase Objective: Turn all supplied documents into a controlled, testable source of truth before code implementation.*
 
 - **001**: Project charter, source authority, and AI execution protocol *(Completed)*
@@ -37,7 +37,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **007**: Milestone dependency graph and incremental delivery workflow *(Completed)*
 - **008**: Risk register and compliance approval gates *(Completed)*
 - **009**: Environment, branching, and release strategy *(Completed)*
-- **010**: Definition-of-done and requirements traceability matrix
+- **010**: Definition-of-done and requirements traceability matrix *(Completed)*
 
 ### Phase 02: Repository and Tooling (Milestones 011–020)
 *Phase Objective: Build a deterministic, reproducible local developer experience and baseline CI pipeline.*
