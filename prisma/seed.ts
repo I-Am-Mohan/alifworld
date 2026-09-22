@@ -295,8 +295,8 @@ async function seed() {
   // ----------------------------------------------------------------------------
   // 4. Initial Platform Super Administrator User
   // ----------------------------------------------------------------------------
-  const adminEmail = 'admin@alifworld.com';
-  const adminPhone = '+8801700000000';
+  const adminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'contact@alifworld.com.bd';
+  const adminPhone = process.env.INITIAL_SUPERADMIN_PHONE || '+8801700000000';
 
   let superAdminUser = await (prisma as any).user.findFirst({
     where: { email: adminEmail },
@@ -331,7 +331,7 @@ async function seed() {
       });
     }
 
-    console.info(`✅ Seeded super administrator user (${adminEmail}).`);
+    console.info(`✅ Seeded super administrator user (${adminEmail}, password change required on initial login).`);
   }
 
   // ----------------------------------------------------------------------------

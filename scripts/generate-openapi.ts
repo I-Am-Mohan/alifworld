@@ -46,6 +46,7 @@ export const openApiSpec = {
     { name: 'Wallet & Ledger', description: 'Double-entry wallet accounting and transaction logs' },
     { name: 'Product Points', description: 'Independent loyalty and point snapshotting' },
     { name: 'Payments & Settlements', description: 'Customer payment gateways, webhooks, partial refunds, 5% platform commissions, settlements, and BEFTN payouts' },
+    { name: 'Database & Migrations', description: 'Data dictionary discovery, zero-downtime migration status, and schema health' },
   ],
   paths: {
     '/api/health/live': {
@@ -475,6 +476,40 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/system/database/dictionary': {
+      get: {
+        tags: ['Database & Migrations'],
+        summary: 'Database Data Dictionary Discovery',
+        description: 'Returns the catalog of all 49 canonical relational Prisma models classified by lifecycle deletion policy (IMMUTABLE, SOFT_DELETE, EPHEMERAL).',
+        responses: {
+          '200': {
+            description: 'Data dictionary metadata retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/DataDictionarySummary' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/system/database/migrations': {
+      get: {
+        tags: ['Database & Migrations'],
+        summary: 'Migration Sequence & Zero-Downtime Status',
+        description: 'Returns applied migration sequences, expand-and-contract phase health, and forward-fix audit records.',
+        responses: {
+          '200': {
+            description: 'Migration sequence retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MigrationStatus' },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -591,6 +626,45 @@ export const openApiSpec = {
           postedAt: { type: 'string', format: 'date-time' },
         },
         required: ['id', 'journalNumber', 'description', 'referenceType', 'totalPoisha', 'postedAt'],
+      },
+      DataDictionarySummary: {
+        type: 'object',
+        properties: {
+          totalModels: { type: 'integer', example: 49 },
+          lifecycleBreakdown: {
+            type: 'object',
+            properties: {
+              immutable: { type: 'integer', example: 17 },
+              softDelete: { type: 'integer', example: 30 },
+              ephemeral: { type: 'integer', example: 2 },
+            },
+            required: ['immutable', 'softDelete', 'ephemeral'],
+          },
+          models: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', example: 'Order' },
+                tableName: { type: 'string', example: 'orders' },
+                deletionPolicy: { type: 'string', enum: ['IMMUTABLE', 'SOFT_DELETE', 'EPHEMERAL'] },
+                fieldsCount: { type: 'integer', example: 22 },
+              },
+              required: ['name', 'tableName', 'deletionPolicy'],
+            },
+          },
+        },
+        required: ['totalModels', 'lifecycleBreakdown'],
+      },
+      MigrationStatus: {
+        type: 'object',
+        properties: {
+          currentMigration: { type: 'string', example: '20260922000008_wallets_points_rewards_ranks_immutable_ledgers' },
+          appliedMigrationsCount: { type: 'integer', example: 8 },
+          expandContractPhase: { type: 'string', enum: ['EXPAND', 'DUAL_WRITE', 'BACKFILL', 'CONTRACT', 'STABLE'], example: 'STABLE' },
+          status: { type: 'string', example: 'HEALTHY' },
+        },
+        required: ['currentMigration', 'appliedMigrationsCount', 'expandContractPhase', 'status'],
       },
     },
   },
