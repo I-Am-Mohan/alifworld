@@ -36,7 +36,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **006**: Single-application modular-monolith architecture decisions *(Completed)*
 - **007**: Milestone dependency graph and incremental delivery workflow *(Completed)*
 - **008**: Risk register and compliance approval gates *(Completed)*
-- **009**: Environment, branching, and release strategy
+- **009**: Environment, branching, and release strategy *(Completed)*
 - **010**: Definition-of-done and requirements traceability matrix
 
 ### Phase 02: Repository and Tooling (Milestones 011–020)
