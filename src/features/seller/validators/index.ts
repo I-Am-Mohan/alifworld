@@ -180,3 +180,116 @@ export const UpdateStoreSettingsInputSchema = z.object({
 });
 
 export type UpdateStoreSettingsInput = z.infer<typeof UpdateStoreSettingsInputSchema>;
+
+// Backward-compatible schema definitions for seller domain testing
+export const CreateSellerSchema = z.object({
+  name: z.string().trim().min(3).max(120).optional(),
+  businessName: z.string().trim().min(3).max(120).optional(),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3)
+    .max(60)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Store slug must be lowercase alphanumeric characters separated by single hyphens'),
+  ownerUserId: z.string().optional(),
+  companyName: z.string().optional(),
+  tradeLicenseNumber: z.string().trim().max(50).optional(),
+  binNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{9,13}$/, 'BIN Number must be 9 to 13 digits')
+    .optional(),
+  tinNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{10,12}$/, 'TIN Number must be 10 to 12 digits')
+    .optional(),
+  defaultCommissionRate: z.number().min(0).max(100).optional(),
+  supportEmail: z.string().email().optional(),
+  supportPhone: z.string().optional(),
+});
+
+export const UpdateSellerSchema = z.object({
+  name: z.string().trim().min(3).max(120).optional(),
+  businessName: z.string().trim().min(3).max(120).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING', 'VERIFIED']).optional(),
+  isVerified: z.boolean().optional(),
+  defaultCommissionRate: z.number().min(0).max(100).optional(),
+  tradeLicenseNumber: z.string().trim().max(50).optional(),
+  binNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{9,13}$/, 'BIN Number must be 9 to 13 digits')
+    .optional(),
+  tinNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{10,12}$/, 'TIN Number must be 10 to 12 digits')
+    .optional(),
+  version: z.number().int().positive().optional(),
+});
+
+export const CreateSellerStaffSchema = z.object({
+  sellerId: z.string(),
+  userId: z.string(),
+  role: z.string().optional(),
+  roleCode: z.string().optional(),
+  permissions: z.array(z.string()).default([]),
+});
+
+export const CreateSellerKycDocumentSchema = z.object({
+  sellerId: z.string(),
+  documentType: z.string(),
+  documentNumber: z.string().optional(),
+  fileUrl: z.string().optional(),
+  fileKey: z.string().optional(),
+  fileSize: z.number().int().positive(),
+  mimeType: z.string(),
+});
+
+export const VerifyKycDocumentSchema = z
+  .object({
+    documentId: z.string().optional(),
+    verifiedByAdminId: z.string().optional(),
+    status: z.enum(['VERIFIED', 'REJECTED', 'PENDING']),
+    rejectionReason: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.status === 'REJECTED' && !data.rejectionReason) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Rejection reason is mandatory when rejecting a KYC document',
+      path: ['rejectionReason'],
+    }
+  );
+
+export const UpdateStoreSettingsSchema = z.object({
+  sellerId: z.string().optional(),
+  autoAcceptOrders: z.boolean().optional(),
+  vacationMode: z.boolean().optional(),
+  defaultCourier: z.string().optional(),
+  shippingCutoffTime: z.string().optional(),
+  warehouseAddress: z
+    .object({
+      addressLine1: z.string().optional(),
+      division: z.string().optional(),
+      district: z.string().optional(),
+      upazilaOrThana: z.string().optional(),
+      postalCode: z.string().optional(),
+      country: z.string().optional(),
+    })
+    .optional(),
+  logoUrl: z.string().url().nullable().optional(),
+  bannerUrl: z.string().url().nullable().optional(),
+  supportEmail: z.string().email().nullable().optional(),
+  supportPhone: z.any().optional(),
+  pickupAddress: z.any().optional(),
+  returnAddress: z.any().optional(),
+  vacationMessage: z.string().nullable().optional(),
+  version: z.number().int().positive().optional(),
+});

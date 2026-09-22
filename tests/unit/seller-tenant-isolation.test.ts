@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test';
 import { SellerSettingsService } from '@/features/seller/services/seller-settings-service';
 import { SellerService } from '@/features/seller/services/seller-service';
-import { SellerStatus } from '@/features/seller/types';
+import { SellerStatus, CourierProvider } from '@/features/seller/types';
 import { AuthorizationError, ConflictError } from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
 
@@ -11,7 +11,7 @@ describe('Seller Tenant Isolation: Settings Service', () => {
     name: 'Tenant A Store',
     slug: 'tenant-a-store',
     ownerUserId: 'usr_owner_tenant_a',
-    status: SellerStatus.ACTIVE,
+    status: SellerStatus.VERIFIED,
     version: 1,
   };
 
@@ -20,7 +20,7 @@ describe('Seller Tenant Isolation: Settings Service', () => {
     name: 'Tenant B Store',
     slug: 'tenant-b-store',
     ownerUserId: 'usr_owner_tenant_b',
-    status: SellerStatus.ACTIVE,
+    status: SellerStatus.VERIFIED,
     version: 1,
   };
 
@@ -60,7 +60,8 @@ describe('Seller Tenant Isolation: Settings Service', () => {
     const result = await service.updateSettings('usr_owner_tenant_a', {
       sellerId: 'sel_tenant_a',
       vacationMode: false,
-      defaultCourier: 'PATHAO',
+      defaultCourier: CourierProvider.PATHAO,
+      version: 1,
     });
 
     expect(settingsUpdated).toBe(true);
@@ -89,6 +90,7 @@ describe('Seller Tenant Isolation: Settings Service', () => {
       service.updateSettings('usr_owner_tenant_a', {
         sellerId: 'sel_tenant_b',
         vacationMode: true,
+        version: 1,
       })
     ).rejects.toThrow(AuthorizationError);
   });
@@ -127,6 +129,7 @@ describe('Seller Tenant Isolation: Settings Service', () => {
     const result = await service.updateSettings('usr_super_admin', {
       sellerId: 'sel_tenant_b',
       vacationMode: true,
+      version: 1,
     });
 
     expect(settingsUpdated).toBe(true);

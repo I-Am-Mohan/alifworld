@@ -23,12 +23,15 @@ export interface AddStaffData {
 
 export class SellerStaffRepository extends BaseRepository {
   /**
-   * Finds an active staff assignment by primary ID.
+   * Finds an active staff assignment by primary ID with optional sellerId tenant scoping.
    */
-  public async findById(id: string): Promise<SellerStaffModel | null> {
+  public async findById(id: string, sellerId?: string): Promise<SellerStaffModel | null> {
     return this.executeSafe(async () => {
+      const where = sellerId
+        ? this.whereSellerScope(sellerId, { id })
+        : this.whereNotDeleted({ id });
       const staff = await (this.db as any).sellerStaff.findFirst({
-        where: this.whereNotDeleted({ id }),
+        where,
       });
       return staff as SellerStaffModel | null;
     }, 'SellerStaffRepository.findById');
@@ -40,7 +43,7 @@ export class SellerStaffRepository extends BaseRepository {
   public async findBySellerAndUser(sellerId: string, userId: string): Promise<SellerStaffModel | null> {
     return this.executeSafe(async () => {
       const staff = await (this.db as any).sellerStaff.findFirst({
-        where: this.whereNotDeleted({ sellerId, userId }),
+        where: this.whereSellerScope(sellerId, { userId }),
       });
       return staff as SellerStaffModel | null;
     }, 'SellerStaffRepository.findBySellerAndUser');
@@ -129,7 +132,7 @@ export class SellerStaffRepository extends BaseRepository {
   > {
     return this.executeSafe(async () => {
       const records = await (this.db as any).sellerStaff.findMany({
-        where: this.whereNotDeleted({ sellerId }),
+        where: this.whereSellerScope(sellerId),
         include: {
           user: {
             select: {

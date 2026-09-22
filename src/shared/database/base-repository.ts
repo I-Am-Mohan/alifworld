@@ -94,6 +94,22 @@ export function assertSellerScope(entitySellerId: string | null | undefined, aut
 }
 
 /**
+ * Builds a query where clause strictly scoped to a sellerId and active records (deletedAt: null).
+ * Ensures tenant isolation is enforced inside database queries, not after data retrieval.
+ *
+ * Invariant: Milestone 043 - Apply sellerId scope inside repository/service queries, not after data retrieval.
+ */
+export function buildSellerWhere<T extends object>(
+  sellerId: string,
+  criteria: T = {} as T
+): T & { sellerId: string; deletedAt: null } {
+  return {
+    ...whereActive(criteria),
+    sellerId,
+  };
+}
+
+/**
  * Base Repository providing transactional execution, lifecycle management, and unified error mapping.
  */
 export abstract class BaseRepository {
@@ -106,6 +122,19 @@ export abstract class BaseRepository {
    */
   protected whereNotDeleted<T extends object>(whereClause: T = {} as T): T & { deletedAt: null } {
     return whereActive(whereClause);
+  }
+
+  /**
+   * Applies both soft-delete (deletedAt: null) and seller tenant scope (sellerId) directly to a query where clause.
+   * Ensures sellerId scoping is enforced at the database query level, not after data retrieval.
+   *
+   * Invariant: Milestone 043 - Apply sellerId scope inside repository/service queries, not after data retrieval.
+   */
+  protected whereSellerScope<T extends object>(
+    sellerId: string,
+    whereClause: T = {} as T
+  ): T & { sellerId: string; deletedAt: null } {
+    return buildSellerWhere(sellerId, whereClause);
   }
 
   /**

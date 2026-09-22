@@ -36,15 +36,10 @@ export function createActorFromClaims(claims: AccessTokenClaims, req?: NextReque
 }
 
 /**
- * Authenticates request and asserts authorization against the policy engine.
+ * Authenticates request by extracting and verifying the JWT token.
+ * Throws AuthenticationError (401) if credentials are missing or invalid.
  */
-export async function authorizeRequest(
-  req: NextRequest,
-  action: string,
-  resource: ResourceContext,
-  engine: PolicyEngine = defaultPolicyEngine
-): Promise<{ actor: ActorContext; decision: PolicyDecision }> {
-  // 1. Extract token from Authorization header or HttpOnly cookie
+export function authenticateRequest(req: NextRequest): ActorContext {
   const authHeader = req.headers.get('authorization');
   let token = extractBearerToken(authHeader);
   if (!token) {
@@ -60,13 +55,21 @@ export async function authorizeRequest(
     throw new Error('JWT_SECRET is not configured');
   }
 
-  // 2. Verify claims
   const claims = verifyJwt<AccessTokenClaims>(token, jwtSecret);
-  const actor = createActorFromClaims(claims, req);
+  return createActorFromClaims(claims, req);
+}
 
-  // 3. Assert policy decision
+/**
+ * Authenticates request and asserts authorization against the policy engine.
+ */
+export async function authorizeRequest(
+  req: NextRequest,
+  action: string,
+  resource: ResourceContext,
+  engine: PolicyEngine = defaultPolicyEngine
+): Promise<{ actor: ActorContext; decision: PolicyDecision }> {
+  const actor = authenticateRequest(req);
   const decision = await engine.assert(actor, action, resource);
-
   return { actor, decision };
 }
 

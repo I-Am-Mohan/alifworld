@@ -33,7 +33,7 @@ export class SellerStoreSettingsRepository extends BaseRepository {
   public async findBySellerId(sellerId: string): Promise<SellerStoreSettingsModel | null> {
     return this.executeSafe(async () => {
       const settings = await (this.db as any).sellerStoreSettings.findFirst({
-        where: this.whereNotDeleted({ sellerId }),
+        where: this.whereSellerScope(sellerId),
       });
       return settings as SellerStoreSettingsModel | null;
     }, 'SellerStoreSettingsRepository.findBySellerId');

@@ -31,12 +31,16 @@ export interface ReviewKycData {
 
 export class SellerKycDocumentRepository extends BaseRepository {
   /**
-   * Finds an active KYC document by primary ID.
+   * Finds an active KYC document by primary ID with optional sellerId tenant scoping.
+   * Scopes query at the database level when sellerId is provided.
    */
-  public async findById(id: string): Promise<SellerKycDocumentModel | null> {
+  public async findById(id: string, sellerId?: string): Promise<SellerKycDocumentModel | null> {
     return this.executeSafe(async () => {
+      const where = sellerId
+        ? this.whereSellerScope(sellerId, { id })
+        : this.whereNotDeleted({ id });
       const doc = await (this.db as any).sellerKycDocument.findFirst({
-        where: this.whereNotDeleted({ id }),
+        where,
       });
       return doc as SellerKycDocumentModel | null;
     }, 'SellerKycDocumentRepository.findById');
