@@ -1432,6 +1432,258 @@ async function seed() {
         console.info('✅ Seeded demo payment, gateway webhook log, commission ledger, settlement, and BEFTN payout.');
       }
     }
+
+    // ----------------------------------------------------------------------------
+    // 10. Wallets, Decoupled Product Points, Rewards, Ranks & Double-Entry Ledgers
+    // ----------------------------------------------------------------------------
+    // 10.1 Chart of Accounts
+    const accountsData = [
+      { code: '1010-CASH-GATEWAY', name: 'Cash at Digital Gateway (Asset)', type: 'ASSET', desc: 'Inward payments collected at bKash/Nagad' },
+      { code: '2010-CUSTOMER-MAIN-LIABILITY', name: 'Customer Main Wallet (Liability)', type: 'LIABILITY', desc: 'Customer withdrawable fiat balances' },
+      { code: '2020-CUSTOMER-SHOPPING-LIABILITY', name: 'Customer Shopping Wallet (Liability)', type: 'LIABILITY', desc: 'Customer store credit balances' },
+      { code: '2030-CUSTOMER-GOODLUCK-LIABILITY', name: 'Customer Good-Luck Wallet (Liability)', type: 'LIABILITY', desc: 'Customer promotional lottery balances' },
+      { code: '2040-CUSTOMER-CHARITY-LIABILITY', name: 'Customer Charity Wallet (Liability)', type: 'LIABILITY', desc: 'Customer allocated donation funds' },
+      { code: '4010-PLATFORM-COMMISSION-REVENUE', name: 'Marketplace Commission Revenue', type: 'REVENUE', desc: 'Standard 5% platform cut' },
+      { code: '4020-SERVICE-CHARGE-REVENUE', name: 'Platform Service Charge Revenue', type: 'REVENUE', desc: '10% reward service fee deduction' },
+      { code: '5010-PROMOTIONAL-REWARDS-EXPENSE', name: 'Promotional Rewards Expense Pool', type: 'EXPENSE', desc: 'Funded pool for buyer reward distribution' },
+    ];
+
+    const accountMap = new Map<string, any>();
+    for (const acc of accountsData) {
+      let existingAcc = await (prisma as any).ledgerAccount.findUnique({ where: { code: acc.code } });
+      if (!existingAcc) {
+        existingAcc = await (prisma as any).ledgerAccount.create({
+          data: {
+            id: generateId(ID_PREFIXES.LEDGER_ACCOUNT),
+            code: acc.code,
+            name: acc.name,
+            type: acc.type,
+            currency: 'BDT',
+            description: acc.desc,
+            isActive: true,
+          },
+        });
+      }
+      accountMap.set(acc.code, existingAcc);
+    }
+
+    // 10.2 Customer Wallets
+    if (demoCustomer) {
+      const walletTypes = [
+        { type: 'MAIN', available: BigInt(50000) },      // ৳500.00
+        { type: 'SHOPPING', available: BigInt(20000) },  // ৳200.00
+        { type: 'GOOD_LUCK', available: BigInt(15000) }, // ৳150.00
+        { type: 'CHARITY', available: BigInt(5000) },    // ৳50.00
+      ];
+
+      const customerWallets: Record<string, any> = {};
+      for (const wt of walletTypes) {
+        let w = await (prisma as any).wallet.findFirst({
+          where: { userId: demoCustomer.id, type: wt.type, deletedAt: null },
+        });
+        if (!w) {
+          w = await (prisma as any).wallet.create({
+            data: {
+              id: generateId(ID_PREFIXES.WALLET),
+              userId: demoCustomer.id,
+              type: wt.type,
+              currency: 'BDT',
+              availablePoisha: wt.available,
+              pendingPoisha: BigInt(0),
+              status: 'ACTIVE',
+            },
+          });
+        }
+        customerWallets[wt.type] = w;
+      }
+
+      // 10.3 Decoupled Product Points Account
+      let pointAcc = await (prisma as any).pointAccount.findUnique({
+        where: { userId: demoCustomer.id },
+      });
+      if (!pointAcc) {
+        pointAcc = await (prisma as any).pointAccount.create({
+          data: {
+            id: generateId(ID_PREFIXES.POINT_ACCOUNT),
+            userId: demoCustomer.id,
+            availablePoints: 450,
+            pendingPoints: 0,
+            lifetimePoints: 450,
+          },
+        });
+
+        await (prisma as any).pointEvent.create({
+          data: {
+            id: generateId(ID_PREFIXES.POINT_EVENT),
+            pointAccountId: pointAcc.id,
+            eventType: 'ORDER_RELEASED',
+            points: 450,
+            orderId: demoOrder ? demoOrder.id : null,
+            ruleVersion: 'v1.0.0',
+            notes: '450 discrete Product Points earned from Nexus Pro 5G purchase released after return window',
+          },
+        });
+      }
+
+      // 10.4 Versioned Reward Rules
+      const customerRewardRuleCode = 'CUSTOMER_REWARD_SPLIT';
+      let rewardRule = await (prisma as any).rewardRule.findFirst({
+        where: { ruleCode: customerRewardRuleCode, version: 'v1.0.0' },
+      });
+      if (!rewardRule) {
+        rewardRule = await (prisma as any).rewardRule.create({
+          data: {
+            id: generateId(ID_PREFIXES.REWARD_RULE),
+            ruleCode: customerRewardRuleCode,
+            version: 'v1.0.0',
+            name: 'Customer Loyalty Reward Split Policy',
+            description: 'Main 50%, Shopping 20%, Good-Luck 15%, Charity 5%, Service Charge 10% (100% sum)',
+            splits: {
+              MAIN: 5000,
+              SHOPPING: 2000,
+              GOOD_LUCK: 1500,
+              CHARITY: 500,
+              SERVICE_CHARGE: 1000,
+            },
+            isActive: true,
+          },
+        });
+      }
+
+      // 10.5 Customer & Seller Rank Definitions
+      const rankDefs = [
+        { category: 'CUSTOMER_CLUB', code: 'BRONZE', title: 'Bronze Customer Club', period: 'DAILY', threshold: 3000, share: 100 },
+        { category: 'CUSTOMER_CLUB', code: 'SILVER', title: 'Silver Customer Club', period: 'DAILY', threshold: 4000, share: 200 },
+        { category: 'CUSTOMER_CLUB', code: 'GOLD', title: 'Gold Customer Club', period: 'DAILY', threshold: 5000, share: 300 },
+        { category: 'CUSTOMER_STAR', code: 'MEGA_STAR', title: 'Customer Mega Star (Top 10)', period: 'DAILY', starMin: 1, starMax: 10, share: 100 },
+        { category: 'SELLER_CLUB', code: 'BRONZE', title: 'Bronze Seller Club', period: 'DAILY', threshold: 10000, share: 100 },
+        { category: 'SELLER_CLUB', code: 'SILVER', title: 'Silver Seller Club', period: 'DAILY', threshold: 3000, share: 200 },
+        { category: 'SELLER_CLUB', code: 'GOLD', title: 'Gold Seller Club', period: 'DAILY', threshold: 100000, share: 300 },
+      ];
+
+      for (const rd of rankDefs) {
+        const existing = await (prisma as any).rankDefinition.findFirst({
+          where: { category: rd.category, code: rd.code, period: rd.period },
+        });
+        if (!existing) {
+          await (prisma as any).rankDefinition.create({
+            data: {
+              id: generateId(ID_PREFIXES.RANK_DEFINITION),
+              category: rd.category,
+              code: rd.code,
+              title: rd.title,
+              period: rd.period,
+              pointThreshold: rd.threshold || null,
+              starPositionMin: rd.starMin || null,
+              starPositionMax: rd.starMax || null,
+              poolShareBps: rd.share,
+              isActive: true,
+            },
+          });
+        }
+      }
+
+      // 10.6 Balanced Double-Entry Journal Transaction (Reward Distribution)
+      const demoJournalNumber = 'JRN-20260922-0001';
+      const existingJournal = await (prisma as any).ledgerJournal.findUnique({
+        where: { journalNumber: demoJournalNumber },
+      });
+
+      if (!existingJournal && customerWallets['MAIN']) {
+        const journal = await (prisma as any).ledgerJournal.create({
+          data: {
+            id: generateId(ID_PREFIXES.LEDGER_JOURNAL),
+            journalNumber: demoJournalNumber,
+            description: 'Customer order reward distribution across multi-account wallets',
+            referenceType: 'REWARD_DISTRIBUTION',
+            referenceId: demoOrder ? demoOrder.id : null,
+            totalPoisha: BigInt(100000), // ৳1,000.00
+            ruleVersion: 'v1.0.0',
+            postings: {
+              create: [
+                // Debit: ৳1,000 from Promotional Expense Pool
+                {
+                  id: generateId(ID_PREFIXES.LEDGER_POSTING),
+                  accountId: accountMap.get('5010-PROMOTIONAL-REWARDS-EXPENSE').id,
+                  direction: 'DEBIT',
+                  amountPoisha: BigInt(100000),
+                  description: 'Promotional expense pool distribution debit',
+                },
+                // Credit: ৳500 to Customer Main Wallet (50%)
+                {
+                  id: generateId(ID_PREFIXES.LEDGER_POSTING),
+                  accountId: accountMap.get('2010-CUSTOMER-MAIN-LIABILITY').id,
+                  walletId: customerWallets['MAIN'].id,
+                  direction: 'CREDIT',
+                  amountPoisha: BigInt(50000),
+                  description: 'Customer Main Wallet 50% reward credit',
+                },
+                // Credit: ৳200 to Customer Shopping Wallet (20%)
+                {
+                  id: generateId(ID_PREFIXES.LEDGER_POSTING),
+                  accountId: accountMap.get('2020-CUSTOMER-SHOPPING-LIABILITY').id,
+                  walletId: customerWallets['SHOPPING'].id,
+                  direction: 'CREDIT',
+                  amountPoisha: BigInt(20000),
+                  description: 'Customer Shopping Wallet 20% reward credit',
+                },
+                // Credit: ৳150 to Customer Good Luck Wallet (15%)
+                {
+                  id: generateId(ID_PREFIXES.LEDGER_POSTING),
+                  accountId: accountMap.get('2030-CUSTOMER-GOODLUCK-LIABILITY').id,
+                  walletId: customerWallets['GOOD_LUCK'].id,
+                  direction: 'CREDIT',
+                  amountPoisha: BigInt(15000),
+                  description: 'Customer Good-Luck Wallet 15% reward credit',
+                },
+                // Credit: ৳50 to Customer Charity Wallet (5%)
+                {
+                  id: generateId(ID_PREFIXES.LEDGER_POSTING),
+                  accountId: accountMap.get('2040-CUSTOMER-CHARITY-LIABILITY').id,
+                  walletId: customerWallets['CHARITY'].id,
+                  direction: 'CREDIT',
+                  amountPoisha: BigInt(5000),
+                  description: 'Customer Charity Wallet 5% reward credit',
+                },
+                // Credit: ৳100 to Platform Service Charge Revenue (10%)
+                {
+                  id: generateId(ID_PREFIXES.LEDGER_POSTING),
+                  accountId: accountMap.get('4020-SERVICE-CHARGE-REVENUE').id,
+                  direction: 'CREDIT',
+                  amountPoisha: BigInt(10000),
+                  description: 'Platform 10% reward service fee revenue',
+                },
+              ],
+            },
+          },
+        });
+
+        // 10.7 Reward Allocation Snapshot
+        await (prisma as any).rewardAllocation.create({
+          data: {
+            id: generateId(ID_PREFIXES.REWARD_ALLOCATION),
+            ruleId: rewardRule.id,
+            ruleVersion: 'v1.0.0',
+            sourceType: 'ORDER',
+            sourceId: demoOrder ? demoOrder.id : 'ORD-20260922-0001',
+            beneficiaryType: 'CUSTOMER',
+            beneficiaryId: demoCustomer.id,
+            basisPoisha: BigInt(100000),
+            allocatedPoisha: BigInt(100000),
+            splitBreakdown: {
+              MAIN: '50000',
+              SHOPPING: '20000',
+              GOOD_LUCK: '15000',
+              CHARITY: '5000',
+              SERVICE_CHARGE: '10000',
+            },
+            journalId: journal.id,
+          },
+        });
+
+        console.info('✅ Seeded Chart of Accounts, multi-account wallets, Product Points, reward rules, ranks, and double-entry journal.');
+      }
+    }
   }
 
   // Record seed execution in AuditLog

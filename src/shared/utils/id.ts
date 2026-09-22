@@ -58,6 +58,16 @@ export const ID_PREFIXES = {
   STOCK_BALANCE: 'stb',
   STOCK_RESERVATION: 'res',
   STOCK_MOVEMENT: 'mov',
+  LEDGER_ACCOUNT: 'lac',
+  LEDGER_JOURNAL: 'jrn',
+  LEDGER_POSTING: 'pos',
+  POINT_ACCOUNT: 'pac',
+  POINT_EVENT: 'pev',
+  REWARD_RULE: 'rwr',
+  REWARD_ALLOCATION: 'rwa',
+  RANK_DEFINITION: 'rnk',
+  USER_RANK: 'urk',
+  LEADERBOARD_SNAPSHOT: 'lbs',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];

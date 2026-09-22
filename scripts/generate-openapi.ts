@@ -407,6 +407,74 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/wallets': {
+      get: {
+        tags: ['Wallet & Ledger'],
+        summary: 'List Multi-Account User Wallets',
+        description: 'Returns segregated balances for Main, Shopping, Good-Luck, and Charity wallets in integer minor unit poisha.',
+        responses: {
+          '200': {
+            description: 'Wallets retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/points': {
+      get: {
+        tags: ['Product Points'],
+        summary: 'Get Decoupled Product Points Balance',
+        description: 'Retrieves available, pending escrow, and lifetime Product Points with chronological event stream.',
+        responses: {
+          '200': {
+            description: 'Point account retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/ranks': {
+      get: {
+        tags: ['Product Points'],
+        summary: 'Get Customer Club Rank & Star Bands',
+        description: 'Returns customer qualification progress across Bronze, Silver, Gold tiers and competitive Star bands.',
+        responses: {
+          '200': {
+            description: 'Rank status retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/admin/ledger/journals': {
+      get: {
+        tags: ['Wallet & Ledger'],
+        summary: 'Audit Double-Entry Journal Transactions',
+        description: 'Queries balanced double-entry journals with debit and credit breakdown conserving zero-sum accounting.',
+        responses: {
+          '200': {
+            description: 'Journals retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -487,6 +555,42 @@ export const openApiSpec = {
           status: { type: 'string', enum: ['PENDING', 'AUDITED', 'APPROVED', 'DISBURSED'] },
         },
         required: ['id', 'sellerId', 'settlementNumber', 'periodStart', 'periodEnd', 'grossOrderPoisha', 'commissionPoisha', 'netPayoutPoisha', 'status'],
+      },
+      Wallet: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'wal_01j7x4b9e8m02k3f8d7c6b5a1' },
+          type: { type: 'string', enum: ['MAIN', 'SHOPPING', 'GOOD_LUCK', 'CHARITY', 'SYSTEM_RESERVE'] },
+          currency: { type: 'string', example: 'BDT' },
+          availablePoisha: { type: 'string', example: '50000' },
+          pendingPoisha: { type: 'string', example: '0' },
+          status: { type: 'string', enum: ['ACTIVE', 'FROZEN', 'CLOSED'] },
+        },
+        required: ['id', 'type', 'currency', 'availablePoisha', 'pendingPoisha', 'status'],
+      },
+      PointAccount: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'pac_01j7x4b9e8m02k3f8d7c6b5a1' },
+          userId: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
+          availablePoints: { type: 'integer', example: 450 },
+          pendingPoints: { type: 'integer', example: 0 },
+          lifetimePoints: { type: 'integer', example: 450 },
+        },
+        required: ['id', 'userId', 'availablePoints', 'pendingPoints', 'lifetimePoints'],
+      },
+      LedgerJournal: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'jrn_01j7x4b9e8m02k3f8d7c6b5a1' },
+          journalNumber: { type: 'string', example: 'JRN-20260922-0001' },
+          description: { type: 'string', example: 'Customer order reward distribution' },
+          referenceType: { type: 'string', example: 'REWARD_DISTRIBUTION' },
+          totalPoisha: { type: 'string', example: '100000' },
+          ruleVersion: { type: 'string', example: 'v1.0.0' },
+          postedAt: { type: 'string', format: 'date-time' },
+        },
+        required: ['id', 'journalNumber', 'description', 'referenceType', 'totalPoisha', 'postedAt'],
       },
     },
   },

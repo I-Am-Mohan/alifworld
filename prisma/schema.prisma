@@ -123,6 +123,9 @@ model User {
   orders          Order[]
   carts           Cart[]
   payments        Payment[]
+  wallets         Wallet[]
+  pointAccount    PointAccount?
+  userRanks       UserRank[]
 
   @@index([status])
   @@index([deletedAt])
@@ -260,6 +263,8 @@ model Seller {
   commissions       CommissionLedger[]
   settlements       SellerSettlement[]
   payouts           SellerPayout[]
+  wallets           Wallet[]
+  sellerRanks       UserRank[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -1168,6 +1173,302 @@ model PaymentWebhookLog {
   @@index([status, createdAt])
   @@map("payment_webhook_logs")
 }
+
+// ------------------------------------------------------------------------------
+// 39. Multi-Account User & Merchant Wallet
+// ------------------------------------------------------------------------------
+/// Segregated balance wallets for customers and sellers with explicit holds
+model Wallet {
+  id              String    @id @default(uuid())
+  userId          String?   @map("user_id")
+  sellerId        String?   @map("seller_id")
+  type            String    // MAIN, SHOPPING, GOOD_LUCK, CHARITY, SYSTEM_RESERVE
+  currency        String    @default("BDT")
+  availablePoisha BigInt    @default(0) @map("available_poisha")
+  pendingPoisha   BigInt    @default(0) @map("pending_poisha")
+  status          String    @default("ACTIVE") // ACTIVE, FROZEN, CLOSED
+  version         Int       @default(1)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user     User?           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  seller   Seller?         @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  postings LedgerPosting[]
+
+  @@unique([userId, type])
+  @@unique([sellerId, type])
+  @@index([userId, status])
+  @@index([sellerId, status])
+  @@index([type, status])
+  @@index([deletedAt])
+  @@map("wallets")
+}
+
+// ------------------------------------------------------------------------------
+// 40. Double-Entry Chart of Accounts
+// ------------------------------------------------------------------------------
+/// Formal chart of accounts defining double-entry asset, liability, equity, revenue, and expense categories
+model LedgerAccount {
+  id          String    @id @default(uuid())
+  code        String    @unique // e.g. 1010-CASH-GATEWAY, 2010-CUSTOMER-MAIN-LIABILITY
+  name        String
+  type        String    // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  currency    String    @default("BDT")
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  version     Int       @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  postings LedgerPosting[]
+
+  @@index([type, isActive])
+  @@index([deletedAt])
+  @@map("ledger_accounts")
+}
+
+// ------------------------------------------------------------------------------
+// 41. Immutable Double-Entry Journal Transaction
+// ------------------------------------------------------------------------------
+/// Atomic, balanced financial transaction header strictly conserving Sum(Debits) == Sum(Credits)
+model LedgerJournal {
+  id             String    @id @default(uuid())
+  journalNumber  String    @unique @map("journal_number") // e.g. JRN-20260922-XXXX
+  description    String
+  referenceType  String    @map("reference_type") // ORDER_PAYMENT, REWARD_DISTRIBUTION, REFUND_ADJUSTMENT, SETTLEMENT_CLEARING, WITHDRAWAL
+  referenceId    String?   @map("reference_id")
+  totalPoisha    BigInt    @map("total_poisha")
+  idempotencyKey String?   @unique @map("idempotency_key")
+  ruleVersion    String?   @map("rule_version")
+  reversalOfId   String?   @unique @map("reversal_of_id")
+  postedAt       DateTime  @default(now()) @map("posted_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  originalJournal LedgerJournal?  @relation("JournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversalJournal LedgerJournal?  @relation("JournalReversal")
+  postings        LedgerPosting[]
+
+  @@index([referenceType, referenceId])
+  @@index([postedAt])
+  @@map("ledger_journals")
+}
+
+// ------------------------------------------------------------------------------
+// 42. Immutable Double-Entry Ledger Posting
+// ------------------------------------------------------------------------------
+/// Atomic debit or credit posting against a chart of account and optional wallet
+model LedgerPosting {
+  id           String   @id @default(uuid())
+  journalId    String   @map("journal_id")
+  accountId    String   @map("account_id")
+  walletId     String?  @map("wallet_id")
+  direction    String   // DEBIT, CREDIT
+  amountPoisha BigInt   @map("amount_poisha")
+  currency     String   @default("BDT")
+  description  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  journal LedgerJournal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  account LedgerAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  wallet  Wallet?       @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  @@index([journalId])
+  @@index([accountId])
+  @@index([walletId])
+  @@index([direction, createdAt])
+  @@map("ledger_postings")
+}
+
+// ------------------------------------------------------------------------------
+// 43. Decoupled Customer Point Account
+// ------------------------------------------------------------------------------
+/// Dedicated loyalty Product Point balance strictly isolated from BDT fiat balances
+model PointAccount {
+  id              String    @id @default(uuid())
+  userId          String    @unique @map("user_id")
+  availablePoints Int       @default(0) @map("available_points")
+  pendingPoints   Int       @default(0) @map("pending_points") // Escrow points pending return inspection window
+  lifetimePoints  Int       @default(0) @map("lifetime_points")
+  version         Int       @default(1)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  events PointEvent[]
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("point_accounts")
+}
+
+// ------------------------------------------------------------------------------
+// 44. Immutable Point Event Stream
+// ------------------------------------------------------------------------------
+/// Append-only chronological stream of loyalty token adjustments (earn, release, refund clawback)
+model PointEvent {
+  id             String   @id @default(uuid())
+  pointAccountId String   @map("point_account_id")
+  eventType      String   @map("event_type") // ORDER_EARNED, ORDER_RELEASED, REFUND_REVERSED, REWARD_AWARDED, EXPIRATION
+  points         Int      // Positive for credits, negative for debits/clawbacks
+  orderId        String?  @map("order_id")
+  orderItemId    String?  @map("order_item_id")
+  ruleVersion    String   @default("v1.0.0") @map("rule_version")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  pointAccount PointAccount @relation(fields: [pointAccountId], references: [id], onDelete: Restrict)
+
+  @@index([pointAccountId, createdAt])
+  @@index([orderId, orderItemId])
+  @@index([eventType])
+  @@map("point_events")
+}
+
+// ------------------------------------------------------------------------------
+// 45. Versioned Reward & Commission Split Rules
+// ------------------------------------------------------------------------------
+/// Versioned administrative split configuration with mandatory 100% basis point sum invariant
+model RewardRule {
+  id            String    @id @default(uuid())
+  ruleCode      String    @map("rule_code") // CUSTOMER_REWARD_SPLIT, SELLER_CLUB_SPLIT, CUSTOMER_CASHBACK
+  version       String    @default("v1.0.0")
+  name          String
+  description   String?
+  splits        Json      // Object mapping wallet targets to bps (e.g. { MAIN: 5000, SHOPPING: 2000, GOOD_LUCK: 1500, CHARITY: 500, SERVICE_CHARGE: 1000 })
+  isActive      Boolean   @default(true) @map("is_active")
+  effectiveFrom DateTime  @default(now()) @map("effective_from")
+  effectiveTo   DateTime? @map("effective_to")
+  deletedAt     DateTime? @map("deleted_at")
+  deletedBy     String?   @map("deleted_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  allocations RewardAllocation[]
+
+  @@unique([ruleCode, version])
+  @@index([ruleCode, isActive])
+  @@index([deletedAt])
+  @@map("reward_rules")
+}
+
+// ------------------------------------------------------------------------------
+// 46. Immutable Reward Allocation Snapshot
+// ------------------------------------------------------------------------------
+/// Verifiable calculation snapshot recording reward distributions linked to double-entry journals
+model RewardAllocation {
+  id              String   @id @default(uuid())
+  ruleId          String   @map("rule_id")
+  ruleVersion     String   @map("rule_version")
+  sourceType      String   @map("source_type") // ORDER, CLUB_PERIOD, RANK_BONUS
+  sourceId        String   @map("source_id")
+  beneficiaryType String   @map("beneficiary_type") // CUSTOMER, SELLER
+  beneficiaryId   String   @map("beneficiary_id")
+  basisPoisha     BigInt   @map("basis_poisha")
+  allocatedPoisha BigInt   @map("allocated_poisha")
+  splitBreakdown  Json     @map("split_breakdown")
+  journalId       String?  @map("journal_id")
+  reversalOfId    String?  @unique @map("reversal_of_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  rule RewardRule @relation(fields: [ruleId], references: [id], onDelete: Restrict)
+
+  @@index([beneficiaryType, beneficiaryId])
+  @@index([sourceType, sourceId])
+  @@index([createdAt])
+  @@map("reward_allocations")
+}
+
+// ------------------------------------------------------------------------------
+// 47. Customer & Seller Rank Definitions
+// ------------------------------------------------------------------------------
+/// Recognition tier and star band definitions with qualification thresholds and pool shares
+model RankDefinition {
+  id              String    @id @default(uuid())
+  category        String    // CUSTOMER_CLUB, CUSTOMER_STAR, SELLER_CLUB, SELLER_STAR
+  code            String    // BRONZE, SILVER, GOLD, MEGA_STAR, SUPER_STAR, STAR
+  title           String
+  period          String    // DAILY, WEEKLY, MONTHLY, YEARLY
+  pointThreshold  Int?      @map("point_threshold")
+  starPositionMin Int?      @map("star_position_min")
+  starPositionMax Int?      @map("star_position_max")
+  poolShareBps    Int?      @map("pool_share_bps") // Basis points of pool (e.g. 100 = 1%)
+  effectiveFrom   DateTime  @default(now()) @map("effective_from")
+  effectiveTo     DateTime? @map("effective_to")
+  isActive        Boolean   @default(true) @map("is_active")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  userRanks UserRank[]
+
+  @@unique([category, code, period])
+  @@index([category, isActive])
+  @@index([deletedAt])
+  @@map("rank_definitions")
+}
+
+// ------------------------------------------------------------------------------
+// 48. User & Seller Rank Qualification Achievements
+// ------------------------------------------------------------------------------
+/// Chronological log of achieved ranks per evaluation period
+model UserRank {
+  id                    String    @id @default(uuid())
+  userId                String?   @map("user_id")
+  sellerId              String?   @map("seller_id")
+  rankDefinitionId      String    @map("rank_definition_id")
+  period                String    // DAILY, WEEKLY, MONTHLY, YEARLY
+  periodDate            DateTime  @map("period_date")
+  qualifyingPoints      Int       @map("qualifying_points")
+  position              Int?
+  rewardAllocatedPoisha BigInt    @default(0) @map("reward_allocated_poisha")
+  status                String    @default("ACTIVE") // ACTIVE, EXPIRED, REVOKED
+  deletedAt             DateTime? @map("deleted_at")
+  deletedBy             String?   @map("deleted_by")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user           User?          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  seller         Seller?        @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  rankDefinition RankDefinition @relation(fields: [rankDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([userId, rankDefinitionId])
+  @@index([sellerId, rankDefinitionId])
+  @@index([period, periodDate])
+  @@index([deletedAt])
+  @@map("user_ranks")
+}
+
+// ------------------------------------------------------------------------------
+// 49. Immutable Periodic Leaderboard Ranking Snapshots
+// ------------------------------------------------------------------------------
+/// Historical competitive ranking leaderboard snapshots for daily, weekly, monthly, and yearly awards
+model LeaderboardSnapshot {
+  id                String   @id @default(uuid())
+  category          String   // CUSTOMER, SELLER
+  period            String   // DAILY, WEEKLY, MONTHLY, YEARLY
+  periodStart       DateTime @map("period_start")
+  periodEnd         DateTime @map("period_end")
+  actorId           String   @map("actor_id")
+  actorName         String   @map("actor_name")
+  rankPosition      Int      @map("rank_position")
+  accumulatedPoints Int      @map("accumulated_points")
+  starBand          String?  @map("star_band") // MEGA_STAR, SUPER_STAR, STAR
+  poolShareBps      Int?     @map("pool_share_bps")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([category, period, periodStart, rankPosition])
+  @@index([actorId, period])
+  @@index([category, period, periodStart])
+  @@map("leaderboard_snapshots")
+}
+
 
 
 

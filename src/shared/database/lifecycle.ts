@@ -43,6 +43,11 @@ export const MODEL_DELETION_POLICIES: Record<string, DeletionPolicy> = {
   RefundItem: 'IMMUTABLE',
   SellerPayout: 'IMMUTABLE',
   PaymentWebhookLog: 'IMMUTABLE',
+  LedgerJournal: 'IMMUTABLE',
+  LedgerPosting: 'IMMUTABLE',
+  PointEvent: 'IMMUTABLE',
+  RewardAllocation: 'IMMUTABLE',
+  LeaderboardSnapshot: 'IMMUTABLE',
 
   // Category 2: Soft-Deletable Domain Entities
   SystemConfig: 'SOFT_DELETE',
@@ -70,6 +75,12 @@ export const MODEL_DELETION_POLICIES: Record<string, DeletionPolicy> = {
   SellerFulfillmentGroup: 'SOFT_DELETE',
   Shipment: 'SOFT_DELETE',
   SellerSettlement: 'SOFT_DELETE',
+  Wallet: 'SOFT_DELETE',
+  LedgerAccount: 'SOFT_DELETE',
+  PointAccount: 'SOFT_DELETE',
+  RewardRule: 'SOFT_DELETE',
+  RankDefinition: 'SOFT_DELETE',
+  UserRank: 'SOFT_DELETE',
 
   // Category 3: Ephemeral Records with TTL Purge Policy
   HealthProbe: 'EPHEMERAL',
