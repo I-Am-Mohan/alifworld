@@ -66,7 +66,7 @@ export const customerRegistrationSchema = z.object({
 export type CustomerRegistrationInput = z.infer<typeof customerRegistrationSchema>;
 
 export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required'),
+  refreshToken: z.string().min(1, 'Refresh token is required').optional(),
   clientType: z
     .enum(['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'])
     .default('WEB'),

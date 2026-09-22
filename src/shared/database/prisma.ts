@@ -39,6 +39,10 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
+export function getPrismaClient(): PrismaClient {
+  return prisma;
+}
+
 export interface DatabaseHealthResult {
   status: 'healthy' | 'unhealthy';
   latencyMs: number;

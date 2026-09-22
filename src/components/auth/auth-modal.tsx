@@ -18,21 +18,19 @@ import {
   Sparkles,
   ShieldCheck,
   RefreshCw,
-  Globe,
   Edit2,
   ChevronRight,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { useAuthModal, AuthMode } from './auth-context';
+import { useI18n } from '@/i18n/context';
 
 type LoginStep = 'number' | 'unregistered' | 'otp' | 'password';
 type RegisterStep = 'number' | 'otp' | 'name' | 'password' | 'details' | 'success';
 
 export function AuthModal() {
   const { isOpen, mode, setMode, closeAuthModal, loginSuccess } = useAuthModal();
-
-  // Language state
-  const [locale, setLocale] = useState<'bn' | 'en'>('bn');
+  const { t: translate, locale } = useI18n();
 
   // Step state
   const [loginStep, setLoginStep] = useState<LoginStep>('number');
@@ -50,7 +48,7 @@ export function AuthModal() {
   const [registerPassword, setRegisterPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [address, setAddress] = useState('');
-  const [division, setDivision] = useState('Dhaka');
+  const [selectedDivisionKey, setSelectedDivisionKey] = useState('dhaka');
   const [city, setCity] = useState('');
   const [birthday, setBirthday] = useState('');
   const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
@@ -89,73 +87,78 @@ export function AuthModal() {
 
   if (!isOpen) return null;
 
-  // Translations
+  // Translations mapped from global i18n
   const t = {
-    signIn: locale === 'bn' ? 'লগইন' : 'Sign In',
-    register: locale === 'bn' ? 'নিবন্ধন' : 'Register',
-    mobileNumber: locale === 'bn' ? 'মোবাইল নম্বর' : 'Mobile Number',
-    mobilePlaceholder: '01XXXXXXXXX',
-    continue: locale === 'bn' ? 'এগিয়ে যান' : 'Continue',
-    usePassword: locale === 'bn' ? 'পাসওয়ার্ড দিয়ে লগইন করুন' : 'Sign in with password',
-    useOtp: locale === 'bn' ? 'মোবাইল ওটিপি দিয়ে লগইন করুন' : 'Sign in with Mobile OTP',
-    verifyCode: locale === 'bn' ? 'যাচাইকরণ কোড' : 'Verification Code',
-    otpSentTo:
-      locale === 'bn'
-        ? '৬-সংখ্যার ওটিপি কোড পাঠানো হয়েছে এই নম্বরে:'
-        : 'A 6-digit OTP code has been sent to:',
-    resendIn: locale === 'bn' ? 'পুনরায় কোড পাঠান:' : 'Resend code in:',
-    resendNow: locale === 'bn' ? 'কোড পুনরায় পাঠান' : 'Resend Code',
-    changeNumber: locale === 'bn' ? 'নম্বর পরিবর্তন' : 'Change number',
-    verifyAndLogin: locale === 'bn' ? 'যাচাই ও লগইন করুন' : 'Verify & Sign In',
-    unregisteredTitle: locale === 'bn' ? 'কোনো অ্যাকাউন্ট পাওয়া যায়নি' : 'Account Not Found',
-    unregisteredDesc: (p: string) =>
-      locale === 'bn'
-        ? `${p} নম্বর দিয়ে কোনো অ্যাকাউন্ট নেই। আপনি কি নতুন অ্যাকাউন্ট তৈরি করতে চান?`
-        : `No account exists with ${p}. Would you like to create a new account or try another number?`,
-    continueToRegister: locale === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Continue to Register',
-    tryAnotherNumber: locale === 'bn' ? 'অন্য নম্বর দিয়ে চেষ্টা করুন' : 'Login with another number',
-    stepName: locale === 'bn' ? 'আপনার নাম' : 'Your Name',
-    firstName: locale === 'bn' ? 'নামের প্রথম অংশ' : 'First Name',
-    lastName: locale === 'bn' ? 'নামের শেষ অংশ' : 'Last Name',
-    next: locale === 'bn' ? 'পরবর্তী ধাপ' : 'Next Step',
-    stepPassword: locale === 'bn' ? 'পাসওয়ার্ড সেট করুন' : 'Set Password',
-    passwordNotice:
-      locale === 'bn'
-        ? 'পরবর্তী লগইনের জন্য এই পাসওয়ার্ডটি ব্যবহার করবেন'
-        : 'Use this password for your next logins',
-    password: locale === 'bn' ? 'পাসওয়ার্ড' : 'Password',
-    confirmPassword: locale === 'bn' ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm Password',
-    stepDetails: locale === 'bn' ? 'ঐচ্ছিক প্রোফাইল তথ্য' : 'Optional Profile Details',
-    detailsSub:
-      locale === 'bn'
-        ? 'এই তথ্যগুলো ঐচ্ছিক। আপনি চাইলে এখনই পূরণ করতে পারেন অথবা পরে যোগ করতে পারেন।'
-        : 'These details are optional. You can add them now or complete them later in your profile.',
-    address: locale === 'bn' ? 'ডেলিভারি ঠিকানা' : 'Delivery Address',
-    division: locale === 'bn' ? 'বিভাগ' : 'Division',
-    city: locale === 'bn' ? 'শহর / উপজেলা' : 'City / Upazila',
-    birthday: locale === 'bn' ? 'জন্মদিন' : 'Birthday',
-    gender: locale === 'bn' ? 'লিঙ্গ' : 'Gender',
-    male: locale === 'bn' ? 'পুরুষ' : 'Male',
-    female: locale === 'bn' ? 'মহিলা' : 'Female',
-    other: locale === 'bn' ? 'অন্যান্য' : 'Other',
-    completeReg: locale === 'bn' ? 'নিবন্ধন সম্পন্ন করুন' : 'Complete Registration',
-    skipNow: locale === 'bn' ? 'এখনই নয়, পরে করব' : 'Skip for Now',
-    welcome: locale === 'bn' ? 'আলিফওয়ার্ল্ড-এ আপনাকে স্বাগতম!' : 'Welcome to AlifWorld!',
-    welcomeSub:
-      locale === 'bn'
-        ? 'আপনার অ্যাকাউন্ট এবং ৪টি ওয়ালেট সফলভাবে প্রস্তুত হয়েছে।'
-        : 'Your account and 4 segregated wallets are ready for shopping.',
+    signIn: translate('auth.signIn'),
+    register: translate('auth.register'),
+    mobileNumber: translate('auth.mobileNumber'),
+    mobilePlaceholder: translate('auth.mobilePlaceholder'),
+    continue: translate('auth.continue'),
+    usePassword: translate('auth.usePassword'),
+    useOtp: translate('auth.useOtp'),
+    verifyCode: translate('auth.verifyCode'),
+    otpSentTo: translate('auth.otpSentTo'),
+    resendIn: translate('auth.resendIn'),
+    resendNow: translate('auth.resendNow'),
+    changeNumber: translate('auth.changeNumber'),
+    verifyAndLogin: translate('auth.verifyAndLogin'),
+    unregisteredTitle: translate('auth.unregisteredTitle'),
+    unregisteredDesc: (p: string) => translate('auth.unregisteredDesc', { phone: p }),
+    continueToRegister: translate('auth.continueToRegister'),
+    tryAnotherNumber: translate('auth.tryAnotherNumber'),
+    stepName: translate('auth.stepName'),
+    firstName: translate('auth.firstName'),
+    lastName: translate('auth.lastName'),
+    next: translate('auth.nextStep'),
+    stepPassword: translate('auth.stepPassword'),
+    passwordNotice: translate('auth.passwordNotice'),
+    password: translate('auth.password'),
+    confirmPassword: translate('auth.confirmPassword'),
+    stepDetails: translate('auth.stepDetails'),
+    detailsSub: translate('auth.detailsSub'),
+    address: translate('auth.address'),
+    addressPlaceholder: translate('auth.addressPlaceholder'),
+    division: translate('auth.division'),
+    city: translate('auth.city'),
+    cityPlaceholder: translate('auth.cityPlaceholder'),
+    birthday: translate('auth.birthday'),
+    gender: translate('auth.gender'),
+    male: translate('auth.male'),
+    female: translate('auth.female'),
+    other: translate('auth.other'),
+    completeReg: translate('auth.completeReg'),
+    skipNow: translate('auth.skipNow'),
+    welcome: translate('auth.welcome'),
+    welcomeSub: translate('auth.welcomeSub'),
+    signInWithMobile: translate('auth.signInWithMobile'),
+    signInWithMobileDesc: translate('auth.signInWithMobileDesc'),
+    signInWithPassword: translate('auth.signInWithPassword'),
+    signInWithPasswordDesc: translate('auth.signInWithPasswordDesc'),
+    emailOrMobile: translate('auth.emailOrMobile'),
+    createAccount: translate('auth.createAccount'),
+    createAccountDesc: translate('auth.createAccountDesc'),
+    step1of3: translate('auth.step1of3'),
+    step2of3: translate('auth.step2of3'),
+    step3of3: translate('auth.step3of3'),
+    enterNameDesc: translate('auth.enterNameDesc'),
+    firstNamePlaceholder: translate('auth.firstNamePlaceholder'),
+    lastNamePlaceholder: translate('auth.lastNamePlaceholder'),
+    safeAndEncrypted: translate('auth.safeAndEncrypted'),
+    identitySystem: translate('auth.identitySystem'),
+    devOtpLabel: translate('auth.devOtpLabel'),
+    clickToFill: translate('auth.clickToFill'),
+    close: translate('auth.close'),
   };
 
-  const divisions = [
-    'Dhaka',
-    'Chattogram',
-    'Sylhet',
-    'Rajshahi',
-    'Khulna',
-    'Barishal',
-    'Rangpur',
-    'Mymensingh',
+  const divisionList = [
+    { key: 'dhaka', name: translate('store.divisions.dhaka').split(',')[0] },
+    { key: 'chittagong', name: translate('store.divisions.chittagong').split(',')[0] },
+    { key: 'sylhet', name: translate('store.divisions.sylhet').split(',')[0] },
+    { key: 'rajshahi', name: translate('store.divisions.rajshahi').split(',')[0] },
+    { key: 'khulna', name: translate('store.divisions.khulna').split(',')[0] },
+    { key: 'barisal', name: translate('store.divisions.barisal').split(',')[0] },
+    { key: 'rangpur', name: translate('store.divisions.rangpur').split(',')[0] },
+    { key: 'mymensingh', name: translate('store.divisions.mymensingh').split(',')[0] },
   ];
 
   // OTP handlers
@@ -198,7 +201,7 @@ export function AuthModal() {
 
     const cleanPhone = phone.trim();
     if (!cleanPhone) {
-      setError(locale === 'bn' ? 'অনুগ্রহ করে মোবাইল নম্বর দিন' : 'Please enter your mobile number');
+      setError(translate('auth.errEnterPhone'));
       return;
     }
 
@@ -213,7 +216,7 @@ export function AuthModal() {
       const checkData = await checkRes.json();
 
       if (!checkRes.ok || !checkData.success) {
-        throw new Error(checkData.error?.message || 'Failed to check number');
+        throw new Error(checkData.error?.message || translate('auth.errCheckNumber'));
       }
 
       if (!checkData.data.exists) {
@@ -229,7 +232,7 @@ export function AuthModal() {
         const otpData = await otpRes.json();
 
         if (!otpRes.ok || !otpData.success) {
-          throw new Error(otpData.error?.message || 'Failed to send OTP');
+          throw new Error(otpData.error?.message || translate('auth.errSendOtp'));
         }
 
         setCooldown(60);
@@ -250,11 +253,7 @@ export function AuthModal() {
 
     const code = otp.join('');
     if (code.length < 6) {
-      setError(
-        locale === 'bn'
-          ? 'অনুগ্রহ করে সম্পূর্ণ ৬-সংখ্যার কোড দিন'
-          : 'Please enter all 6 digits of the code'
-      );
+      setError(translate('auth.errEnter6Digits'));
       return;
     }
 
@@ -268,7 +267,7 @@ export function AuthModal() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Invalid verification code');
+        throw new Error(data.error?.message || translate('auth.errInvalidCode'));
       }
 
       loginSuccess(data.data.user);
@@ -285,11 +284,7 @@ export function AuthModal() {
     setError(null);
 
     if (!passwordIdentifier.trim() || !loginPassword) {
-      setError(
-        locale === 'bn'
-          ? 'অনুগ্রহ করে ইমেইল/নম্বর ও পাসওয়ার্ড দিন'
-          : 'Please enter your identifier and password'
-      );
+      setError(translate('auth.errEnterIdentifierPass'));
       return;
     }
 
@@ -307,7 +302,7 @@ export function AuthModal() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Invalid credentials');
+        throw new Error(data.error?.message || translate('auth.errInvalidCreds'));
       }
 
       loginSuccess(data.data.user);
@@ -327,7 +322,7 @@ export function AuthModal() {
 
     const cleanPhone = phone.trim();
     if (!cleanPhone) {
-      setError(locale === 'bn' ? 'অনুগ্রহ করে মোবাইল নম্বর দিন' : 'Please enter your mobile number');
+      setError(translate('auth.errEnterPhone'));
       return;
     }
 
@@ -341,7 +336,7 @@ export function AuthModal() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Failed to send registration OTP');
+        throw new Error(data.error?.message || translate('auth.errSendOtp'));
       }
 
       setCooldown(60);
@@ -361,7 +356,7 @@ export function AuthModal() {
 
     const code = otp.join('');
     if (code.length < 6) {
-      setError(locale === 'bn' ? '৬-সংখ্যার কোড দিন' : 'Please enter 6-digit code');
+      setError(translate('auth.errEnter6Digits'));
       return;
     }
 
@@ -375,7 +370,7 @@ export function AuthModal() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Invalid verification code');
+        throw new Error(data.error?.message || translate('auth.errInvalidCode'));
       }
 
       setVerificationTicket(data.data.verificationTicket);
@@ -394,11 +389,11 @@ export function AuthModal() {
     setError(null);
 
     if (!firstName.trim()) {
-      setError(locale === 'bn' ? 'প্রথম নাম দিন' : 'First name is required');
+      setError(translate('auth.errEnterFirstName'));
       return;
     }
     if (!lastName.trim()) {
-      setError(locale === 'bn' ? 'শেষ নাম দিন' : 'Last name is required');
+      setError(translate('auth.errEnterLastName'));
       return;
     }
 
@@ -411,11 +406,11 @@ export function AuthModal() {
     setError(null);
 
     if (registerPassword.length < 8) {
-      setError(locale === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে' : 'Password must be at least 8 characters');
+      setError(translate('auth.errPassMin8'));
       return;
     }
     if (registerPassword !== confirmPassword) {
-      setError(locale === 'bn' ? 'পাসওয়ার্ড দুটি মেলেনি' : 'Passwords do not match');
+      setError(translate('auth.errPassMismatch'));
       return;
     }
 
@@ -438,7 +433,7 @@ export function AuthModal() {
           lastName: lastName.trim(),
           password: registerPassword,
           address: skipOptional ? undefined : address.trim() || undefined,
-          division: skipOptional ? undefined : division,
+          division: skipOptional ? undefined : divisionList.find((d) => d.key === selectedDivisionKey)?.name || undefined,
           city: skipOptional ? undefined : city.trim() || undefined,
           birthday: skipOptional ? undefined : birthday || undefined,
           gender: skipOptional ? undefined : gender || undefined,
@@ -448,7 +443,7 @@ export function AuthModal() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Registration completion failed');
+        throw new Error(data.error?.message || translate('auth.errRegFailed'));
       }
 
       setRegisterStep('success');
@@ -477,23 +472,12 @@ export function AuthModal() {
           <AlifLogo size="sm" />
 
           <div className="flex items-center gap-3">
-            {/* Locale Toggle */}
-            <button
-              type="button"
-              onClick={() => setLocale(locale === 'bn' ? 'en' : 'bn')}
-              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-700 transition"
-              title="Toggle Language"
-            >
-              <Globe className="w-3 h-3 text-slate-500" />
-              <span>{locale === 'bn' ? 'English' : 'বাংলা'}</span>
-            </button>
-
             {/* Close Button */}
             <button
               type="button"
               onClick={closeAuthModal}
               className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition"
-              aria-label="Close"
+              aria-label={t.close}
             >
               <X className="w-4 h-4" />
             </button>
@@ -558,8 +542,8 @@ export function AuthModal() {
               }}
               className="mb-4 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-[11px] text-amber-800 font-semibold cursor-pointer hover:bg-amber-100 transition"
             >
-              <span>Development OTP: <strong>{devOtpCode}</strong></span>
-              <span className="text-[10px] uppercase underline text-amber-600">Click to fill</span>
+              <span>{t.devOtpLabel} <strong>{devOtpCode}</strong></span>
+              <span className="text-[10px] uppercase underline text-amber-600">{t.clickToFill}</span>
             </div>
           )}
 
@@ -576,12 +560,10 @@ export function AuthModal() {
                 >
                   <div>
                     <h3 className="text-lg font-black text-slate-900 mb-1">
-                      {locale === 'bn' ? 'মোবাইল দিয়ে লগইন করুন' : 'Sign in with Mobile'}
+                      {t.signInWithMobile}
                     </h3>
                     <p className="text-xs text-slate-500 mb-4">
-                      {locale === 'bn'
-                        ? 'আপনার মোবাইল নম্বর লিখুন। আমরা একটি ওটিপি কোড পাঠাব।'
-                        : 'Enter your phone number to receive a 6-digit verification code.'}
+                      {t.signInWithMobileDesc}
                     </p>
 
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
@@ -805,16 +787,14 @@ export function AuthModal() {
                 >
                   <div>
                     <h3 className="text-lg font-black text-slate-900 mb-1">
-                      {locale === 'bn' ? 'পাসওয়ার্ড দিয়ে প্রবেশ করুন' : 'Sign in with Password'}
+                      {t.signInWithPassword}
                     </h3>
                     <p className="text-xs text-slate-500 mb-4">
-                      {locale === 'bn'
-                        ? 'আপনার ইমেইল অথবা মোবাইল নম্বর এবং পাসওয়ার্ড দিন'
-                        : 'Enter your email or phone and your password'}
+                      {t.signInWithPasswordDesc}
                     </p>
 
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
-                      {locale === 'bn' ? 'ইমেইল অথবা মোবাইল' : 'Email or Mobile'}
+                      {t.emailOrMobile}
                     </label>
                     <input
                       type="text"
@@ -892,12 +872,10 @@ export function AuthModal() {
                 >
                   <div>
                     <h3 className="text-lg font-black text-slate-900 mb-1">
-                      {locale === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create an Account'}
+                      {t.createAccount}
                     </h3>
                     <p className="text-xs text-slate-500 mb-4">
-                      {locale === 'bn'
-                        ? 'আপনার মোবাইল নম্বর লিখুন। আমরা একটি ওটিপি কোড পাঠাব।'
-                        : 'Enter your phone number to get started with an OTP.'}
+                      {t.createAccountDesc}
                     </p>
 
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
@@ -1040,11 +1018,11 @@ export function AuthModal() {
                 >
                   <div>
                     <div className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-700 font-bold text-[11px] rounded-full mb-1">
-                      {locale === 'bn' ? 'ধাপ ১/৩' : 'Step 1 of 3'}
+                      {t.step1of3}
                     </div>
                     <h3 className="text-lg font-black text-slate-900">{t.stepName}</h3>
                     <p className="text-xs text-slate-500 mb-4">
-                      {locale === 'bn' ? 'আপনার পুরো নাম লিখুন' : 'Please enter your first and last name'}
+                      {t.enterNameDesc}
                     </p>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -1056,7 +1034,7 @@ export function AuthModal() {
                           type="text"
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          placeholder={locale === 'bn' ? 'তানভীর' : 'Tanvir'}
+                          placeholder={t.firstNamePlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition"
                           autoFocus
                           required
@@ -1070,7 +1048,7 @@ export function AuthModal() {
                           type="text"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          placeholder={locale === 'bn' ? 'আহমেদ' : 'Ahmed'}
+                          placeholder={t.lastNamePlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition"
                           required
                         />
@@ -1096,7 +1074,7 @@ export function AuthModal() {
                 >
                   <div>
                     <div className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-700 font-bold text-[11px] rounded-full mb-1">
-                      {locale === 'bn' ? 'ধাপ ২/৩' : 'Step 2 of 3'}
+                      {t.step2of3}
                     </div>
                     <h3 className="text-lg font-black text-slate-900">{t.stepPassword}</h3>
 
@@ -1162,7 +1140,7 @@ export function AuthModal() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300">
                   <div>
                     <div className="inline-block px-2.5 py-0.5 bg-emerald-50 text-emerald-700 font-bold text-[11px] rounded-full mb-1">
-                      {locale === 'bn' ? 'ধাপ ৩/৩ (ঐচ্ছিক)' : 'Step 3 of 3 (Optional)'}
+                      {t.step3of3}
                     </div>
                     <h3 className="text-lg font-black text-slate-900">{t.stepDetails}</h3>
                     <p className="text-xs text-slate-500 mb-3">{t.detailsSub}</p>
@@ -1178,7 +1156,7 @@ export function AuthModal() {
                           type="text"
                           value={address}
                           onChange={(e) => setAddress(e.target.value)}
-                          placeholder={locale === 'bn' ? 'রোড, বাড়ি নং, এলাকা...' : 'Road, House, Area...'}
+                          placeholder={t.addressPlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] rounded-2xl px-4 py-2.5 text-xs text-slate-900 outline-none transition"
                         />
                       </div>
@@ -1190,13 +1168,13 @@ export function AuthModal() {
                             {t.division}
                           </label>
                           <select
-                            value={division}
-                            onChange={(e) => setDivision(e.target.value)}
+                            value={selectedDivisionKey}
+                            onChange={(e) => setSelectedDivisionKey(e.target.value)}
                             className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] rounded-2xl px-3 py-2 text-xs font-medium text-slate-900 outline-none"
                           >
-                            {divisions.map((d) => (
-                              <option key={d} value={d}>
-                                {d}
+                            {divisionList.map((d) => (
+                              <option key={d.key} value={d.key}>
+                                {d.name}
                               </option>
                             ))}
                           </select>
@@ -1207,7 +1185,7 @@ export function AuthModal() {
                             type="text"
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
-                            placeholder={locale === 'bn' ? 'যেমন: গুলশান' : 'e.g. Gulshan'}
+                            placeholder={t.cityPlaceholder}
                             className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] rounded-2xl px-3 py-2 text-xs text-slate-900 outline-none"
                           />
                         </div>
@@ -1217,7 +1195,7 @@ export function AuthModal() {
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
                             <span>{t.birthday}</span>
                           </label>
                           <input
@@ -1230,7 +1208,7 @@ export function AuthModal() {
 
                         <div>
                           <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
-                            <User className="w-3 h-3 text-slate-400" />
+                            <User className="w-3.5 h-3.5 text-slate-400" />
                             <span>{t.gender}</span>
                           </label>
                           <div className="flex gap-1">
@@ -1304,9 +1282,9 @@ export function AuthModal() {
         <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
           <div className="flex items-center gap-1.5 font-medium">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>100% Safe &amp; Encrypted</span>
+            <span>{t.safeAndEncrypted}</span>
           </div>
-          <span className="font-semibold text-slate-600">AlifWorld Identity</span>
+          <span className="font-semibold text-slate-600">{t.identitySystem}</span>
         </div>
       </div>
     </div>

@@ -63,6 +63,10 @@
     {
       "name": "Database & Migrations",
       "description": "Data dictionary discovery, zero-downtime migration status, and schema health"
+    },
+    {
+      "name": "Internationalization & Localization",
+      "description": "Dynamic language management, default locale settings, and multilingual platform support"
     }
   ],
   "paths": {
@@ -1040,6 +1044,145 @@
           }
         }
       }
+    },
+    "/api/v1/system/languages": {
+      "get": {
+        "tags": ["Internationalization & Localization"],
+        "summary": "List Supported Platform Languages",
+        "description": "Returns all registered languages with active/default status, native names, and word for language translations.",
+        "responses": {
+          "200": {
+            "description": "Languages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LanguageListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Internationalization & Localization"],
+        "summary": "Register New Platform Language Dynamically",
+        "description": "Dynamically registers a new language code with native display names and RTL/LTR text direction.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddLanguageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Language registered successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LanguageListResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Language code already registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/languages/default": {
+      "patch": {
+        "tags": ["Internationalization & Localization"],
+        "summary": "Set Platform Default Language",
+        "description": "Designates an active registered language code as the authoritative system-wide default locale.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetDefaultLanguageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default language updated successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LanguageListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/languages/{code}": {
+      "patch": {
+        "tags": ["Internationalization & Localization"],
+        "summary": "Update Language Metadata or Status",
+        "description": "Updates display name, native name, or toggles active status for a registered language.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "bn" },
+            "description": "Language ISO code"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateLanguageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Language updated successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LanguageListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Internationalization & Localization"],
+        "summary": "Delete or Deregister Language",
+        "description": "Removes a non-default language from platform availability.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "example": "ar" },
+            "description": "Language ISO code to remove"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Language removed successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LanguageListResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot remove default or sole registered language",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiErrorEnvelope" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1597,6 +1740,66 @@
           }
         },
         "required": ["success", "data"]
+      },
+      "LanguageDefinition": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "bn" },
+          "name": { "type": "string", "example": "বাংলা" },
+          "nativeName": { "type": "string", "example": "বাংলা" },
+          "wordForLanguage": { "type": "string", "example": "ভাষা" },
+          "direction": { "type": "string", "enum": ["ltr", "rtl"], "example": "ltr" },
+          "isDefault": { "type": "boolean", "example": true },
+          "isActive": { "type": "boolean", "example": true }
+        },
+        "required": ["code", "name", "nativeName", "wordForLanguage", "direction", "isDefault", "isActive"]
+      },
+      "LanguageListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "defaultLocale": { "type": "string", "example": "bn" },
+              "languages": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/LanguageDefinition" }
+              }
+            },
+            "required": ["defaultLocale", "languages"]
+          }
+        },
+        "required": ["success", "data"]
+      },
+      "AddLanguageRequest": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "ar" },
+          "name": { "type": "string", "example": "Arabic" },
+          "nativeName": { "type": "string", "example": "العربية" },
+          "wordForLanguage": { "type": "string", "example": "لغة" },
+          "direction": { "type": "string", "enum": ["ltr", "rtl"], "default": "ltr" },
+          "isActive": { "type": "boolean", "default": true }
+        },
+        "required": ["code", "name", "nativeName", "wordForLanguage"]
+      },
+      "SetDefaultLanguageRequest": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string", "example": "en" }
+        },
+        "required": ["code"]
+      },
+      "UpdateLanguageRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Bengali" },
+          "nativeName": { "type": "string", "example": "বাংলা" },
+          "wordForLanguage": { "type": "string", "example": "ভাষা" },
+          "direction": { "type": "string", "enum": ["ltr", "rtl"] },
+          "isActive": { "type": "boolean" }
+        }
       }
     }
   }

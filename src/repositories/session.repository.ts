@@ -11,6 +11,13 @@ import { getPrismaClient } from '@/shared/database/prisma';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { NotFoundError } from '@/shared/errors/app-error';
 
+export interface SessionFamilyMetadata {
+  familyId: string;
+  generation: number;
+  consumedTokenHashes: string[];
+  rawDeviceInfo?: string | null;
+}
+
 export interface CreateSessionParams {
   userId: string;
   sessionToken: string;
@@ -20,6 +27,7 @@ export interface CreateSessionParams {
   ipAddress?: string | null;
   userAgent?: string | null;
   expiresAt: Date;
+  familyId?: string;
 }
 
 export class SessionRepository {
@@ -28,10 +36,46 @@ export class SessionRepository {
   }
 
   /**
-   * Creates a new authenticated session for a user.
+   * Safely parses family lineage metadata from session deviceInfo.
+   */
+  parseFamilyMetadata(session: { id: string; deviceInfo?: string | null }): SessionFamilyMetadata {
+    if (session.deviceInfo) {
+      try {
+        const parsed = JSON.parse(session.deviceInfo);
+        if (parsed && typeof parsed === 'object' && parsed.familyId) {
+          return {
+            familyId: parsed.familyId,
+            generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
+            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes) ? parsed.consumedTokenHashes : [],
+            rawDeviceInfo: parsed.rawDeviceInfo ?? null,
+          };
+        }
+      } catch {
+        // Fallback for legacy plain text deviceInfo
+      }
+    }
+
+    return {
+      familyId: `fam_${session.id}`,
+      generation: 0,
+      consumedTokenHashes: [],
+      rawDeviceInfo: session.deviceInfo ?? null,
+    };
+  }
+
+  /**
+   * Creates a new authenticated session for a user with initialized token family.
    */
   async createSession(params: CreateSessionParams) {
     const id = generateId(ID_PREFIXES.SESSION);
+    const familyId = params.familyId || `fam_${id}`;
+
+    const familyMeta: SessionFamilyMetadata = {
+      familyId,
+      generation: 0,
+      consumedTokenHashes: [],
+      rawDeviceInfo: params.deviceInfo ?? null,
+    };
 
     return this.prisma.userSession.create({
       data: {
@@ -40,7 +84,7 @@ export class SessionRepository {
         sessionToken: params.sessionToken,
         refreshTokenHash: params.refreshTokenHash ?? null,
         clientType: params.clientType ?? 'WEB',
-        deviceInfo: params.deviceInfo ?? null,
+        deviceInfo: JSON.stringify(familyMeta),
         ipAddress: params.ipAddress ?? null,
         userAgent: params.userAgent ?? null,
         expiresAt: params.expiresAt,
@@ -89,16 +133,71 @@ export class SessionRepository {
 
   /**
    * Updates the refresh token hash and extends the expiration upon token rotation.
+   * Tracks consumed token hashes and increments family generation counter.
    */
   async rotateSessionRefreshToken(
-    sessionId: string,
-    newRefreshTokenHash: string,
-    newExpiresAt: Date
+    sessionIdOrParams:
+      | string
+      | {
+          sessionId: string;
+          newRefreshTokenHash: string;
+          newExpiresAt: Date;
+          consumedHash?: string;
+          newGeneration?: number;
+        },
+    legacyNewHash?: string,
+    legacyExpiresAt?: Date
   ) {
+    let sessionId: string;
+    let newRefreshTokenHash: string;
+    let newExpiresAt: Date;
+    let consumedHash: string | undefined;
+    let newGeneration: number | undefined;
+
+    if (typeof sessionIdOrParams === 'object') {
+      sessionId = sessionIdOrParams.sessionId;
+      newRefreshTokenHash = sessionIdOrParams.newRefreshTokenHash;
+      newExpiresAt = sessionIdOrParams.newExpiresAt;
+      consumedHash = sessionIdOrParams.consumedHash;
+      newGeneration = sessionIdOrParams.newGeneration;
+    } else {
+      sessionId = sessionIdOrParams;
+      newRefreshTokenHash = legacyNewHash!;
+      newExpiresAt = legacyExpiresAt!;
+    }
+
+    const session = await this.prisma.userSession.findUnique({
+      where: { id: sessionId },
+      select: { id: true, deviceInfo: true, refreshTokenHash: true },
+    });
+
+    if (!session) {
+      throw new NotFoundError(`Session ${sessionId} not found`);
+    }
+
+    const metadata = this.parseFamilyMetadata(session);
+    const updatedConsumed = [...metadata.consumedTokenHashes];
+
+    // Record the consumed token hash
+    const hashToConsume = consumedHash || session.refreshTokenHash;
+    if (hashToConsume && !updatedConsumed.includes(hashToConsume)) {
+      updatedConsumed.push(hashToConsume);
+    }
+
+    // Keep bounded history to last 50 rotated tokens in this family
+    const trimmedConsumed = updatedConsumed.slice(-50);
+
+    const updatedMetadata: SessionFamilyMetadata = {
+      ...metadata,
+      generation: newGeneration ?? (metadata.generation + 1),
+      consumedTokenHashes: trimmedConsumed,
+    };
+
     return this.prisma.userSession.update({
       where: { id: sessionId },
       data: {
         refreshTokenHash: newRefreshTokenHash,
+        deviceInfo: JSON.stringify(updatedMetadata),
         expiresAt: newExpiresAt,
         lastActiveAt: new Date(),
       },

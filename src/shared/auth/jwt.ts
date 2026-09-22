@@ -161,6 +161,8 @@ export function generateRefreshToken(
   params: {
     userId: string;
     sessionId: string;
+    familyId?: string;
+    generation?: number;
     tokenVersion: number;
     clientType: ClientType;
   },
@@ -171,9 +173,14 @@ export function generateRefreshToken(
       ? TOKEN_POLICIES.MOBILE_REFRESH_TOKEN_TTL_SECONDS
       : TOKEN_POLICIES.WEB_REFRESH_TOKEN_TTL_SECONDS;
 
+  const familyId = params.familyId || `fam_${params.sessionId}`;
+  const generation = params.generation ?? 0;
+
   const claims: Omit<RefreshTokenClaims, 'iss' | 'aud' | 'exp' | 'iat'> = {
     sub: params.userId,
     sessionId: params.sessionId,
+    familyId,
+    generation,
     tokenVersion: params.tokenVersion,
     clientType: params.clientType,
     jti: generateId('ses'),

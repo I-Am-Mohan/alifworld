@@ -57,6 +57,8 @@ export interface AccessTokenClaims {
 export interface RefreshTokenClaims {
   sub: string;               // User ID
   sessionId: string;         // Underlying UserSession ID
+  familyId: string;          // Refresh token family ID (Milestone 035)
+  generation: number;        // Monotonically increasing generation number in family (0, 1, 2, ...)
   tokenVersion: number;      // User tokenVersion
   clientType: ClientType;    // Client category
   iss: string;               // Issuer

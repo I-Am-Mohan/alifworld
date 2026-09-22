@@ -15,6 +15,10 @@ export abstract class AppError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 
+  get code(): string {
+    return this.errorCode;
+  }
+
   toJSON() {
     return {
       success: false as const,
@@ -37,9 +41,19 @@ export class AuthenticationError extends AppError {
   readonly errorCode = 'UNAUTHENTICATED';
 }
 
+export class UnauthorizedError extends AppError {
+  readonly statusCode = 401;
+  readonly errorCode = 'UNAUTHORIZED';
+}
+
+export class TokenReuseDetectedError extends AppError {
+  readonly statusCode = 401;
+  readonly errorCode = 'REFRESH_TOKEN_REUSE_DETECTED';
+}
+
 export class AuthorizationError extends AppError {
   readonly statusCode = 403;
-  readonly errorCode = 'UNAUTHORIZED';
+  readonly errorCode = 'FORBIDDEN';
 }
 
 export class ComplianceGateError extends AppError {

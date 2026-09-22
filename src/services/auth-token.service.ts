@@ -23,8 +23,9 @@ import {
   hashToken,
 } from '@/shared/auth/jwt';
 import { SessionRepository } from '@/repositories/session.repository';
-import { UnauthorizedError } from '@/shared/errors/app-error';
+import { UnauthorizedError, TokenReuseDetectedError } from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
+import { getPrismaClient } from '@/shared/database/prisma';
 
 export interface UserAuthDetails {
   id: string;
@@ -67,10 +68,16 @@ export interface TokenPairResult {
 export class AuthTokenService {
   private sessionRepo: SessionRepository;
   private secret: string;
+  private prismaClient?: any;
 
-  constructor(sessionRepo?: SessionRepository, secret?: string) {
+  constructor(sessionRepo?: SessionRepository, secret?: string, prisma?: any) {
     this.sessionRepo = sessionRepo || new SessionRepository();
     this.secret = secret || getServerEnv().JWT_SECRET;
+    this.prismaClient = prisma;
+  }
+
+  private get prisma() {
+    return this.prismaClient || (getPrismaClient() as any);
   }
 
   /**
@@ -129,8 +136,9 @@ export class AuthTokenService {
 
     const expiresAt = new Date(Date.now() + ttl * 1000);
     const sessionToken = generateId(ID_PREFIXES.SESSION);
+    const familyId = generateId('fam');
 
-    // Create session in database
+    // Create session in database with token family tracking
     const session = await this.sessionRepo.createSession({
       userId: params.user.id,
       sessionToken,
@@ -139,22 +147,30 @@ export class AuthTokenService {
       ipAddress: params.ipAddress,
       userAgent: params.userAgent,
       expiresAt,
+      familyId,
     });
 
-    // Generate Refresh Token
+    // Generate Initial Refresh Token (Family generation 0)
     const refreshToken = generateRefreshToken(
       {
         userId: params.user.id,
         sessionId: session.id,
+        familyId,
+        generation: 0,
         tokenVersion: params.user.tokenVersion,
         clientType,
       },
       this.secret
     );
 
-    // Store hash of issued refresh token
+    // Store hash of issued refresh token and record initial generation
     const refreshTokenHash = hashToken(refreshToken);
-    await this.sessionRepo.rotateSessionRefreshToken(session.id, refreshTokenHash, expiresAt);
+    await this.sessionRepo.rotateSessionRefreshToken({
+      sessionId: session.id,
+      newRefreshTokenHash: refreshTokenHash,
+      newExpiresAt: expiresAt,
+      newGeneration: 0,
+    });
 
     // Enforce concurrent session limit
     await this.sessionRepo.enforceSessionLimit(
@@ -221,27 +237,16 @@ export class AuthTokenService {
     }
 
     if (session.isRevoked) {
+      if (session.revokedReason === 'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED') {
+        throw new TokenReuseDetectedError(
+          'Security breach detected: This refresh token family was previously revoked due to token reuse.'
+        );
+      }
       throw new UnauthorizedError('Session has been revoked');
     }
 
     if (session.expiresAt.getTime() < Date.now()) {
       throw new UnauthorizedError('Session has expired');
-    }
-
-    // Token Reuse Detection: Compare hash of incoming token with stored hash
-    const incomingHash = hashToken(incomingRefreshToken);
-    if (session.refreshTokenHash && session.refreshTokenHash !== incomingHash) {
-      // SECURITY BREACH: Old or stolen token was presented!
-      // Invalidate all sessions for this user and increment tokenVersion immediately
-      await this.sessionRepo.revokeAllUserSessions(
-        session.userId,
-        'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED'
-      );
-      await this.sessionRepo.incrementUserTokenVersion(session.userId);
-
-      throw new UnauthorizedError(
-        'Security breach detected: Refresh token reuse detected. All active sessions have been terminated.'
-      );
     }
 
     const user = session.user;
@@ -253,6 +258,63 @@ export class AuthTokenService {
       throw new UnauthorizedError('Token has been revoked due to credential rotation');
     }
 
+    // Parse Token Family Lineage & Consumed Hashes
+    const familyMeta = this.sessionRepo.parseFamilyMetadata(session);
+    const familyId = claims.familyId || familyMeta.familyId;
+    const incomingHash = hashToken(incomingRefreshToken);
+
+    const isCurrentActive = session.refreshTokenHash === incomingHash;
+    const isConsumed = familyMeta.consumedTokenHashes.includes(incomingHash);
+    const isOldGeneration = typeof claims.generation === 'number' && claims.generation < familyMeta.generation;
+
+    // Token Reuse Detection: If token is not current active, is consumed, or is an older generation
+    if (!isCurrentActive || isConsumed || isOldGeneration) {
+      // SECURITY BREACH: Old or stolen token was presented!
+      // Invalidate the session family and all active sessions for this user immediately
+      await this.sessionRepo.revokeSession(session.id, 'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED');
+      await this.sessionRepo.revokeAllUserSessions(
+        session.userId,
+        'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED'
+      );
+      await this.sessionRepo.incrementUserTokenVersion(session.userId);
+
+      // Record high-severity security audit log
+      try {
+        await this.prisma.auditLog.create({
+          data: {
+            id: generateId(ID_PREFIXES.AUDIT),
+            actorId: session.userId,
+            actorRole: 'SECURITY_SYSTEM',
+            action: 'SECURITY_ALERT_REFRESH_TOKEN_REUSE_DETECTED',
+            resource: 'RefreshTokenFamily',
+            resourceId: familyId,
+            ipAddress: null,
+            userAgent: null,
+            metadata: {
+              sessionId: session.id,
+              familyId,
+              attemptedGeneration: claims.generation ?? null,
+              activeGeneration: familyMeta.generation,
+              isConsumed,
+              isOldGeneration,
+              clientType: claims.clientType,
+            },
+          },
+        });
+      } catch {
+        // Non-blocking audit
+      }
+
+      throw new TokenReuseDetectedError(
+        'Security breach detected: Refresh token reuse detected. All active sessions have been terminated.',
+        {
+          familyId,
+          attemptedGeneration: claims.generation ?? null,
+          activeGeneration: familyMeta.generation,
+        }
+      );
+    }
+
     const clientType = requestedClientType || (session.clientType as ClientType) || 'WEB';
     const ttl =
       clientType === 'MOBILE_FLUTTER'
@@ -260,20 +322,30 @@ export class AuthTokenService {
         : TOKEN_POLICIES.WEB_REFRESH_TOKEN_TTL_SECONDS;
     const newExpiresAt = new Date(Date.now() + ttl * 1000);
 
-    // Generate brand new Refresh Token
+    const nextGeneration = (claims.generation ?? familyMeta.generation) + 1;
+
+    // Generate brand new Refresh Token in the family lineage
     const newRefreshToken = generateRefreshToken(
       {
         userId: user.id,
         sessionId: session.id,
+        familyId,
+        generation: nextGeneration,
         tokenVersion: user.tokenVersion,
         clientType,
       },
       this.secret
     );
 
-    // Update session record with the new token hash
+    // Update session record with the new token hash and record previous token as consumed
     const newHash = hashToken(newRefreshToken);
-    await this.sessionRepo.rotateSessionRefreshToken(session.id, newHash, newExpiresAt);
+    await this.sessionRepo.rotateSessionRefreshToken({
+      sessionId: session.id,
+      newRefreshTokenHash: newHash,
+      newExpiresAt,
+      consumedHash: incomingHash,
+      newGeneration: nextGeneration,
+    });
 
     // Re-fetch full user with roles for fresh access token claims
     const fullSession = await this.sessionRepo.findSessionByToken(session.sessionToken);
@@ -295,6 +367,28 @@ export class AuthTokenService {
       },
       this.secret
     );
+
+    // Record routine rotation audit log
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          id: generateId(ID_PREFIXES.AUDIT),
+          actorId: user.id,
+          actorRole: roles[0] || 'CUSTOMER',
+          action: 'TOKEN_REFRESH_ROTATED',
+          resource: 'RefreshTokenFamily',
+          resourceId: familyId,
+          metadata: {
+            sessionId: session.id,
+            familyId,
+            generation: nextGeneration,
+            clientType,
+          },
+        },
+      });
+    } catch {
+      // Audit non-blocking
+    }
 
     return {
       accessToken,

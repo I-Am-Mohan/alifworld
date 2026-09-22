@@ -31,9 +31,12 @@ import {
   Shirt,
   Luggage,
   HeartPulse,
+  X,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { useAuthModal } from '@/components/auth/auth-context';
+import { useI18n } from '@/i18n/context';
+import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 
 // Custom Vector SVG Icons
 function BasketIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -124,8 +127,9 @@ interface Product {
 
 export default function CustomerStorePage() {
   const { openAuthModal, user } = useAuthModal();
+  const { t, locale } = useI18n();
   const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [selectedDivision, setSelectedDivision] = useState<string>('Dhaka, Bangladesh');
+  const [selectedDivisionKey, setSelectedDivisionKey] = useState<string>('dhaka');
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [cartCount, setCartCount] = useState<number>(2);
@@ -151,14 +155,14 @@ export default function CustomerStorePage() {
   const toggleFavorite = (productId: string) => {
     setFavorites((prev) => {
       const nextState = !prev[productId];
-      showToast(nextState ? 'Added to wishlist' : 'Removed from wishlist');
+      showToast(nextState ? t('store.product.addedWishlist') : t('store.product.removedWishlist'));
       return { ...prev, [productId]: nextState };
     });
   };
 
   const handleAddToCart = (productTitle: string) => {
     setCartCount((prev) => prev + 1);
-    showToast(`Added "${productTitle}" to cart`);
+    showToast(`${t('store.product.addedToCart')}: "${productTitle}"`);
   };
 
   const scrollToTop = () => {
@@ -166,23 +170,24 @@ export default function CustomerStorePage() {
   };
 
   const divisions = [
-    'Dhaka, Bangladesh',
-    'Chittagong, Bangladesh',
-    'Sylhet, Bangladesh',
-    'Rajshahi, Bangladesh',
-    'Khulna, Bangladesh',
-    'Barisal, Bangladesh',
-    'Rangpur, Bangladesh',
-    'Mymensingh, Bangladesh',
+    { key: 'dhaka', name: t('store.divisions.dhaka') },
+    { key: 'chittagong', name: t('store.divisions.chittagong') },
+    { key: 'sylhet', name: t('store.divisions.sylhet') },
+    { key: 'rajshahi', name: t('store.divisions.rajshahi') },
+    { key: 'khulna', name: t('store.divisions.khulna') },
+    { key: 'barisal', name: t('store.divisions.barisal') },
+    { key: 'rangpur', name: t('store.divisions.rangpur') },
+    { key: 'mymensingh', name: t('store.divisions.mymensingh') },
   ];
+  const currentDivisionName = t(`store.divisions.${selectedDivisionKey}`);
 
   const categoryNav = [
-    { id: 'All', label: 'All', icon: <BasketIcon className="w-5 h-5 text-amber-600" /> },
-    { id: 'Furniture', label: 'Furniture', icon: <ArmchairIcon className="w-5 h-5 text-slate-700" /> },
-    { id: 'Electronics', label: 'Electronics', icon: <Headphones className="w-5 h-5 text-indigo-600" /> },
-    { id: 'Clothing', label: 'Clothing', icon: <Shirt className="w-5 h-5 text-orange-600" /> },
-    { id: 'Cosmetics', label: 'Cosmetics', icon: <CosmeticsIcon className="w-5 h-5 text-rose-500" /> },
-    { id: 'Shoes', label: 'Shoes', icon: <SneakerIcon className="w-5 h-5 text-sky-600" /> },
+    { id: 'All', label: t('store.categories.all'), icon: <BasketIcon className="w-5 h-5 text-amber-600" /> },
+    { id: 'Furniture', label: t('store.categories.furniture'), icon: <ArmchairIcon className="w-5 h-5 text-slate-700" /> },
+    { id: 'Electronics', label: t('store.categories.electronics'), icon: <Headphones className="w-5 h-5 text-indigo-600" /> },
+    { id: 'Clothing', label: t('store.categories.clothing'), icon: <Shirt className="w-5 h-5 text-orange-600" /> },
+    { id: 'Cosmetics', label: t('store.categories.cosmetics'), icon: <CosmeticsIcon className="w-5 h-5 text-rose-500" /> },
+    { id: 'Shoes', label: t('store.categories.shoes'), icon: <SneakerIcon className="w-5 h-5 text-sky-600" /> },
   ];
 
   const topBrands = [
@@ -264,9 +269,9 @@ export default function CustomerStorePage() {
 
   const promoFeatures = [
     {
-      title: 'Luggage & Travel Gear',
-      subtitle: 'Travel smart, pack better',
-      discount: 'Min. 40% Off',
+      title: t('store.promo.luggageTitle'),
+      subtitle: t('store.promo.luggageSubtitle'),
+      discount: t('store.deals.minOff', { percent: '40' }),
       category: 'luggage',
       buttonBg: 'bg-[#EA580C] hover:bg-[#C2410C]',
       iconComponent: <Luggage className="w-4 h-4 text-orange-600" />,
@@ -274,9 +279,9 @@ export default function CustomerStorePage() {
       imageUrl: 'https://images.unsplash.com/photo-1581553680321-4fffae59fccd?w=600&auto=format&fit=crop&q=80',
     },
     {
-      title: 'Drugstore & Health Products',
-      subtitle: 'Health essentials for everyday care',
-      discount: 'Min. 35% Off',
+      title: t('store.promo.healthTitle'),
+      subtitle: t('store.promo.healthSubtitle'),
+      discount: t('store.deals.minOff', { percent: '35' }),
       category: 'health',
       buttonBg: 'bg-[#0D9488] hover:bg-[#0F766E]',
       iconComponent: <HeartPulse className="w-4 h-4 text-teal-600" />,
@@ -284,9 +289,9 @@ export default function CustomerStorePage() {
       imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80',
     },
     {
-      title: 'Electronics',
-      subtitle: 'Latest tech, best prices',
-      discount: 'Min. 30% Off',
+      title: t('store.promo.electronicsTitle'),
+      subtitle: t('store.promo.electronicsSubtitle'),
+      discount: t('store.deals.minOff', { percent: '30' }),
       category: 'electronics',
       buttonBg: 'bg-[#7C3AED] hover:bg-[#6D28D9]',
       iconComponent: <Laptop className="w-4 h-4 text-purple-600" />,
@@ -294,9 +299,9 @@ export default function CustomerStorePage() {
       imageUrl: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600&auto=format&fit=crop&q=80',
     },
     {
-      title: 'Clothing',
-      subtitle: 'Trendy styles for every day',
-      discount: 'Min. 25% Off',
+      title: t('store.promo.clothingTitle'),
+      subtitle: t('store.promo.clothingSubtitle'),
+      discount: t('store.deals.minOff', { percent: '25' }),
       category: 'clothing',
       buttonBg: 'bg-[#EA580C] hover:bg-[#C2410C]',
       iconComponent: <Shirt className="w-4 h-4 text-orange-600" />,
@@ -304,9 +309,9 @@ export default function CustomerStorePage() {
       imageUrl: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80',
     },
     {
-      title: 'Shoes',
-      subtitle: 'Step in style & comfort',
-      discount: 'Min. 30% Off',
+      title: t('store.categories.shoes'),
+      subtitle: t('store.promo.shoesSubtitle'),
+      discount: t('store.deals.minOff', { percent: '30' }),
       category: 'shoes',
       buttonBg: 'bg-[#0284C7] hover:bg-[#0369A1]',
       iconComponent: <SneakerIcon className="w-4 h-4 text-sky-600" />,
@@ -314,9 +319,9 @@ export default function CustomerStorePage() {
       imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80',
     },
     {
-      title: 'Skin & Hair Care',
-      subtitle: 'Pure glow & natural beauty',
-      discount: 'Min. 20% Off',
+      title: t('store.categories.skinCare'),
+      subtitle: t('store.promo.skinCareSubtitle'),
+      discount: t('store.deals.minOff', { percent: '20' }),
       category: 'skincare',
       buttonBg: 'bg-[#E11D48] hover:bg-[#BE123C]',
       iconComponent: <Sparkles className="w-4 h-4 text-rose-500" />,
@@ -327,38 +332,38 @@ export default function CustomerStorePage() {
 
   const trendingCategories = [
     {
-      name: 'Luggage & Travel Gear',
-      count: '7 items',
+      name: t('store.promo.luggageTitle'),
+      count: `7 ${t('store.categories.itemsCount')}`,
       bgClass: 'bg-[#FFEDD5] border-[#FED7AA]',
       icon: <Luggage className="w-5 h-5 text-orange-600" />,
     },
     {
-      name: 'Drugstore & Health Products',
-      count: '46 items',
+      name: t('store.promo.healthTitle'),
+      count: `46 ${t('store.categories.itemsCount')}`,
       bgClass: 'bg-[#EEF2FF] border-[#E0E7FF]',
       icon: <HeartPulse className="w-5 h-5 text-indigo-600" />,
     },
     {
-      name: 'Electronics',
-      count: '41 items',
+      name: t('store.categories.electronics'),
+      count: `41 ${t('store.categories.itemsCount')}`,
       bgClass: 'bg-[#FEF3C7] border-[#FDE68A]',
       icon: <Smartphone className="w-5 h-5 text-amber-600" />,
     },
     {
-      name: 'Clothing',
-      count: '54 items',
+      name: t('store.categories.clothing'),
+      count: `54 ${t('store.categories.itemsCount')}`,
       bgClass: 'bg-[#FCE7F3] border-[#FBCFE8]',
       icon: <Shirt className="w-5 h-5 text-pink-600" />,
     },
     {
-      name: 'Shoes',
-      count: '42 items',
+      name: t('store.categories.shoes'),
+      count: `42 ${t('store.categories.itemsCount')}`,
       bgClass: 'bg-[#CCFBF1] border-[#99F6E4]',
       icon: <SneakerIcon className="w-5 h-5 text-teal-600" />,
     },
     {
-      name: 'Skin & Hair Care',
-      count: '7 items',
+      name: t('store.categories.skinCare'),
+      count: `7 ${t('store.categories.itemsCount')}`,
       bgClass: 'bg-[#DCFCE7] border-[#BBF7D0]',
       icon: <Sparkles className="w-5 h-5 text-emerald-600" />,
     },
@@ -367,13 +372,13 @@ export default function CustomerStorePage() {
   const fashionProducts: Product[] = [
     {
       id: 'prd_hm_yoga_01',
-      title: 'High-Waist Yoga Leggings',
+      title: t('store.items.hmYogaTitle'),
       brand: 'H&M',
       category: 'Clothing',
       price: 2499,
       comparePrice: 2999,
-      discountPercent: '14.29% off',
-      description: 'High-Waist Yoga Leggings — a premium quality comfort wear.',
+      discountPercent: t('store.product.discountOff', { percent: '14.29' }),
+      description: t('store.items.hmYogaDesc'),
       tags: ['S', 'leggings', 'yoga'],
       rating: 5.0,
       reviews: 1,
@@ -382,13 +387,13 @@ export default function CustomerStorePage() {
     },
     {
       id: 'prd_tnf_hoodie_02',
-      title: 'Premium Cotton Hoodie',
+      title: t('store.items.tnfHoodieTitle'),
       brand: 'THE NORTH FACE',
       category: 'Clothing',
       price: 3399,
       comparePrice: 3799,
-      discountPercent: '11.11% off',
-      description: 'Premium Cotton Hoodie — cozy brushed fleece, unisex regular fit.',
+      discountPercent: t('store.product.discountOff', { percent: '11.11' }),
+      description: t('store.items.tnfHoodieDesc'),
       tags: ['M', 'hoodie', 'cotton'],
       rating: 4.8,
       reviews: 24,
@@ -397,13 +402,13 @@ export default function CustomerStorePage() {
     },
     {
       id: 'prd_zara_dress_03',
-      title: "Women's Floral Summer Dress",
+      title: t('store.items.zaraDressTitle'),
       brand: 'ZARA',
       category: 'Clothing',
       price: 3399,
       comparePrice: 3899,
-      discountPercent: '13.05% off',
-      description: "Women's Floral Summer Dress — breathable linen blend with side slit.",
+      discountPercent: t('store.product.discountOff', { percent: '13.05' }),
+      description: t('store.items.zaraDressDesc'),
       tags: ['S', 'dress', 'floral'],
       rating: 4.9,
       reviews: 18,
@@ -412,13 +417,13 @@ export default function CustomerStorePage() {
     },
     {
       id: 'prd_levis_jeans_04',
-      title: 'Slim Fit Stretch Jeans',
+      title: t('store.items.levisJeansTitle'),
       brand: "LEVI'S",
       category: 'Clothing',
       price: 4199,
       comparePrice: 4999,
-      discountPercent: '16.67% off',
-      description: 'Slim Fit Stretch Jeans — vintage wash durable denim with 2% elastane.',
+      discountPercent: t('store.product.discountOff', { percent: '16.67' }),
+      description: t('store.items.levisJeansDesc'),
       tags: ['Blue', '32', 'jeans'],
       rating: 4.7,
       reviews: 42,
@@ -430,13 +435,13 @@ export default function CustomerStorePage() {
   const footwearProducts: Product[] = [
     {
       id: 'prd_bata_sandals_05',
-      title: "Kids' Sport Sandals",
+      title: t('store.items.bataSandalsTitle'),
       brand: 'BATA',
       category: 'Shoes',
       price: 1450,
       comparePrice: 1700,
-      discountPercent: '15.01% off',
-      description: "Kids' Sport Sandals — lightweight shock-absorbing grip sole.",
+      discountPercent: t('store.product.discountOff', { percent: '15.01' }),
+      description: t('store.items.bataSandalsDesc'),
       tags: ['11', 'sandals', 'kids'],
       rating: 3.0,
       reviews: 1,
@@ -445,13 +450,13 @@ export default function CustomerStorePage() {
     },
     {
       id: 'prd_woodland_shoes_06',
-      title: "Men's Formal Leather Shoes",
+      title: t('store.items.woodlandShoesTitle'),
       brand: 'WOODLAND',
       category: 'Shoes',
       price: 6800,
       comparePrice: 7600,
-      discountPercent: '11.11% off',
-      description: "Men's Formal Leather Shoes — genuine full-grain leather oxford lace-ups.",
+      discountPercent: t('store.product.discountOff', { percent: '11.11' }),
+      description: t('store.items.woodlandShoesDesc'),
       tags: ['8', 'formal shoes', 'leather'],
       rating: 4.9,
       reviews: 35,
@@ -460,13 +465,13 @@ export default function CustomerStorePage() {
     },
     {
       id: 'prd_nike_air_07',
-      title: 'Air Motion Running Shoes',
+      title: t('store.items.nikeAirTitle'),
       brand: 'NIKE',
       category: 'Shoes',
       price: 7200,
       comparePrice: 8200,
-      discountPercent: '12.20% off',
-      description: 'Air Motion Running Shoes — responsive cushioned sprint midsole.',
+      discountPercent: t('store.product.discountOff', { percent: '12.20' }),
+      description: t('store.items.nikeAirDesc'),
       tags: ['10', 'running', 'sneakers'],
       rating: 4.8,
       reviews: 64,
@@ -475,13 +480,13 @@ export default function CustomerStorePage() {
     },
     {
       id: 'prd_puma_casual_08',
-      title: 'Casual Canvas Slip-Ons',
+      title: t('store.items.pumaCasualTitle'),
       brand: 'PUMA',
       category: 'Shoes',
       price: 2850,
       comparePrice: 3500,
-      discountPercent: '18.57% off',
-      description: 'Casual Canvas Slip-Ons — all-day relaxed walk comfort memory insole.',
+      discountPercent: t('store.product.discountOff', { percent: '18.57' }),
+      description: t('store.items.pumaCasualDesc'),
       tags: ['9', 'casual', 'canvas'],
       rating: 4.6,
       reviews: 19,
@@ -504,19 +509,14 @@ export default function CustomerStorePage() {
       <div className="bg-[#DBEAFE]/80 backdrop-blur-sm border-b border-sky-200/60 text-slate-700 text-xs py-2 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4 sm:space-x-6">
-            <div className="flex items-center space-x-1 cursor-pointer hover:text-slate-950 font-medium">
-              <span>En</span>
-              <ChevronDown className="w-3.5 h-3.5" />
-            </div>
-
             <div className="flex items-center space-x-1.5 text-slate-700 hover:text-slate-950">
               <Phone className="w-3.5 h-3.5 text-slate-600" />
-              <span className="font-semibold">+880 1997-469249</span>
+              <span className="font-semibold">{t('nav.hotline')}</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            <span className="text-slate-500 font-medium hidden sm:inline">Follow us</span>
+            <span className="text-slate-500 font-medium hidden sm:inline">{t('nav.followUs')}</span>
             <div className="flex items-center space-x-2">
               <a
                 href="https://facebook.com"
@@ -565,7 +565,7 @@ export default function CustomerStorePage() {
 
       {/* MAIN HEADER */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4">
           {/* Logo & Location */}
           <div className="flex items-center space-x-4 sm:space-x-6 shrink-0">
             <AlifLogo size="md" href="/" />
@@ -582,10 +582,10 @@ export default function CustomerStorePage() {
                 </div>
                 <div className="leading-tight">
                   <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    DELIVER TO
+                    {t('nav.deliverTo')}
                   </span>
                   <span className="text-xs font-black text-slate-800 flex items-center gap-1">
-                    {selectedDivision}
+                    {currentDivisionName}
                     <ChevronDown className="w-3 h-3 text-slate-500" />
                   </span>
                 </div>
@@ -594,22 +594,22 @@ export default function CustomerStorePage() {
               {isLocationMenuOpen && (
                 <div className="absolute left-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50">
                   <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                    Select Your Division
+                    {t('nav.selectDivision')}
                   </div>
                   {divisions.map((div) => (
                     <button
-                      key={div}
+                      key={div.key}
                       type="button"
                       onClick={() => {
-                        setSelectedDivision(div);
+                        setSelectedDivisionKey(div.key);
                         setIsLocationMenuOpen(false);
-                        showToast(`Delivery location set to ${div}`);
+                        showToast(t('store.divisions.locationSet', { location: div.name }));
                       }}
                       className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-amber-50 hover:text-[#D97706] transition-colors ${
-                        selectedDivision === div ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700'
+                        selectedDivisionKey === div.key ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700'
                       }`}
                     >
-                      {div}
+                      {div.name}
                     </button>
                   ))}
                 </div>
@@ -627,39 +627,40 @@ export default function CustomerStorePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder='Search "Smart Watch", "Shoes", "Clothing"...'
+                placeholder={t('nav.searchPlaceholder')}
                 className="w-full bg-[#F8FAFC] border border-slate-200/90 rounded-full py-2.5 pl-11 pr-12 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 shadow-sm transition-all"
               />
               <button
                 type="button"
-                aria-label="Paste from clipboard"
+                aria-label={t('common.pasteClipboard')}
                 onClick={() => {
                   navigator.clipboard
                     ?.readText?.()
                     .then((text) => setSearchQuery(text))
-                    .catch(() => showToast('Clipboard ready'));
+                    .catch(() => showToast(t('common.clipboardReady')));
                 }}
                 className="absolute right-3 text-slate-400 hover:text-slate-700 p-1 transition-colors"
-                title="Paste from clipboard"
+                title={t('common.pasteClipboard')}
               >
                 <Clipboard className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="flex items-center space-x-4 sm:space-x-6 shrink-0">
+          {/* Quick Actions & Language Switcher */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Account Button (Desktop only: hidden on mobile because available in bottom navigation bar) */}
             <button
               type="button"
               onClick={() => {
                 if (user) {
-                  showToast(`Signed in as ${user.name || 'Customer'}`);
+                  showToast(t('auth.signedInAs', { name: user.name || t('nav.account') }));
                 } else {
                   openAuthModal('login');
                 }
               }}
-              className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors cursor-pointer"
-              title={user ? `Account: ${user.name || 'Signed In'}` : 'Sign In / Register'}
+              className="hidden md:flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors cursor-pointer"
+              title={user ? `${t('nav.account')}: ${user.name || t('nav.account')}` : `${t('nav.signIn')} / ${t('nav.register')}`}
             >
               <div className="relative">
                 <User className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
@@ -668,14 +669,15 @@ export default function CustomerStorePage() {
                 )}
               </div>
               <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1 truncate max-w-[65px]">
-                {user ? user.name?.split(' ')[0] || 'Account' : 'Account'}
+                {user ? user.name?.split(' ')[0] || t('nav.account') : t('nav.account')}
               </span>
             </button>
 
+            {/* Cart Button (Desktop only: hidden on mobile because available in bottom navigation bar) */}
             <button
               type="button"
-              onClick={() => showToast(`Cart contains ${cartCount} items`)}
-              className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors relative"
+              onClick={() => showToast(t('auth.cartCountToast', { count: cartCount }))}
+              className="hidden md:flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors relative cursor-pointer"
             >
               <div className="relative">
                 <ShoppingCart className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
@@ -685,29 +687,66 @@ export default function CustomerStorePage() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">Cart</span>
+              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">{t('nav.cart')}</span>
             </button>
+
+            {/* Language Switcher: Positioned after cart button on desktop, and at the end on mobile! */}
+            <div className="hidden md:block w-px h-6 bg-slate-200 ml-1 mr-0.5" />
+            <LanguageSwitcher />
           </div>
         </div>
 
         {/* Mobile Deliver To Bar */}
-        <div className="lg:hidden px-4 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+        <div className="lg:hidden relative px-4 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
           <div className="flex items-center space-x-1.5 text-slate-600">
             <MapPin className="w-3.5 h-3.5 text-amber-500" />
-            <span className="font-bold text-[11px] text-slate-800">{selectedDivision}</span>
+            <span className="font-bold text-[11px] text-slate-800">{currentDivisionName}</span>
           </div>
           <button
             type="button"
             onClick={() => setIsLocationMenuOpen(!isLocationMenuOpen)}
             className="text-[10px] font-bold text-[#F59E0B] hover:underline"
           >
-            Change
+            {t('common.change')}
           </button>
+
+          {isLocationMenuOpen && (
+            <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-xl py-2 z-50">
+              <div className="px-4 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex justify-between items-center">
+                <span>{t('nav.selectDivision')}</span>
+                <button
+                  type="button"
+                  onClick={() => setIsLocationMenuOpen(false)}
+                  className="text-slate-400 hover:text-slate-700"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-1 p-2">
+                {divisions.map((div) => (
+                  <button
+                    key={div.key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDivisionKey(div.key);
+                      setIsLocationMenuOpen(false);
+                      showToast(t('store.divisions.locationSet', { location: div.name }));
+                    }}
+                    className={`text-left px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
+                      selectedDivisionKey === div.key ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {div.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       {/* CATEGORY ICON NAVIGATION STRIP */}
-      <nav aria-label="Category Navigation" className="bg-white border-b border-slate-200/80 shadow-xs">
+      <nav aria-label={t('nav.categories')} className="bg-white border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-start sm:justify-center space-x-6 sm:space-x-10 py-3 overflow-x-auto no-scrollbar">
             {categoryNav.map((cat) => {
@@ -718,7 +757,7 @@ export default function CustomerStorePage() {
                   type="button"
                   onClick={() => {
                     setActiveCategory(cat.id);
-                    showToast(`Filtered by ${cat.label}`);
+                    showToast(t('store.promo.filteredBy', { name: cat.label }));
                   }}
                   className="flex flex-col items-center group shrink-0 relative pb-1 transition-all cursor-pointer"
                 >
@@ -747,7 +786,7 @@ export default function CustomerStorePage() {
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1600&auto=format&fit=crop&q=80"
-            alt="Timeless Elegance Collection"
+            alt={t('store.hero.title')}
             className="w-full h-full object-cover object-center opacity-75 sm:opacity-90"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-sky-100/90 via-sky-50/70 to-transparent sm:from-sky-100/95 sm:via-sky-50/60" />
@@ -758,23 +797,18 @@ export default function CustomerStorePage() {
             {/* Pill Tag with Sparkles Icon */}
             <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-sky-900/10 border border-sky-800/20 text-[#0A4B8C] text-xs font-black tracking-wide uppercase mb-6 backdrop-blur-sm">
               <Sparkles className="w-3.5 h-3.5 text-[#0A4B8C]" />
-              <span>SMART PICKS</span>
+              <span>{t('store.hero.collectionBadge')}</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-black text-[#0A2540] tracking-tight leading-[1.05]">
-              TIMELESS <br />
-              ELEGANCE
+              {t('store.hero.title')}
             </h1>
 
-            <div className="mt-2 text-2xl sm:text-3xl font-serif italic text-sky-900 font-medium">
-              Crafted For You
-            </div>
-
             <p className="mt-4 text-sm sm:text-base text-slate-700 max-w-md leading-relaxed font-medium">
-              Curated styles and everyday essentials for a life well lived.
+              {t('store.hero.subtitle')}
             </p>
 
-            <div className="mt-8">
+            <div className="mt-8 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -783,7 +817,7 @@ export default function CustomerStorePage() {
                 }}
                 className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-full bg-[#0A4B8C] hover:bg-[#083A6D] text-white font-bold text-sm shadow-lg shadow-sky-950/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               >
-                <span>Explore Now</span>
+                <span>{t('store.hero.shopNow')}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -794,13 +828,16 @@ export default function CustomerStorePage() {
       {/* TOP BRANDS SECTION */}
       <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight">Top Brands</h2>
+          <div>
+            <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.brands.title')}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{t('store.brands.subtitle')}</p>
+          </div>
           <button
             type="button"
-            onClick={() => showToast('Viewing all authorized brands')}
+            onClick={() => showToast(t('store.promo.viewingBrands'))}
             className="text-xs font-bold text-[#F59E0B] hover:text-[#D97706] flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>See All</span>
+            <span>{t('common.viewAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -810,7 +847,7 @@ export default function CustomerStorePage() {
             <div
               key={brand.name}
               className="flex flex-col items-center group cursor-pointer"
-              onClick={() => showToast(`Filtered by ${brand.name}`)}
+              onClick={() => showToast(t('store.promo.filteredBy', { name: brand.name }))}
             >
               <div className="w-full aspect-square rounded-2xl bg-white border border-slate-200/90 shadow-xs hover:shadow-md hover:border-amber-300 transition-all flex items-center justify-center p-3 text-center group-hover:scale-105">
                 {brand.renderMark}
@@ -854,10 +891,10 @@ export default function CustomerStorePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => showToast(`Shopping ${promo.title}`)}
+                  onClick={() => showToast(t('store.promo.shoppingToast', { title: promo.title }))}
                   className={`mt-3 inline-flex items-center space-x-1 px-4 py-1.5 rounded-full text-white text-xs font-bold shadow-sm transition-all cursor-pointer ${promo.buttonBg}`}
                 >
-                  <span>Shop Now</span>
+                  <span>{t('store.hero.shopNow')}</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               </div>
@@ -869,13 +906,13 @@ export default function CustomerStorePage() {
       {/* TRENDING CATEGORIES PASTEL PILLS */}
       <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight">Trending Categories</h2>
+          <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.categories.all')}</h2>
           <button
             type="button"
-            onClick={() => showToast('Browsing all categories')}
+            onClick={() => showToast(t('store.promo.browsingCategories'))}
             className="text-xs font-bold text-[#F59E0B] hover:text-[#D97706] flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>See All</span>
+            <span>{t('common.viewAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -884,7 +921,7 @@ export default function CustomerStorePage() {
           {trendingCategories.map((cat) => (
             <div
               key={cat.name}
-              onClick={() => showToast(`Opened category: ${cat.name}`)}
+              onClick={() => showToast(t('store.promo.openedCategory', { name: cat.name }))}
               className={`rounded-2xl border p-4 shadow-xs hover:shadow-md cursor-pointer transition-all flex items-center justify-between group ${cat.bgClass}`}
             >
               <div className="flex-1 pr-2">
@@ -908,18 +945,18 @@ export default function CustomerStorePage() {
         <div className="relative rounded-3xl overflow-hidden bg-[#F6F1EA] border border-amber-200/50 shadow-sm p-6 sm:p-10 lg:p-14 flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="max-w-md z-10">
             <h2 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-none">
-              SHOE COLLECTION
+              {t('store.shoeCollection.title')}
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-700 font-medium">
-              Premium styles for every season
+              {t('store.shoeCollection.subtitle')}
             </p>
             <div className="w-14 h-1 bg-[#D97706] rounded-full mt-4 mb-6" />
             <button
               type="button"
-              onClick={() => showToast('Stepping into premium shoe collection!')}
+              onClick={() => showToast(t('store.shoeCollection.steppingToast'))}
               className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-[#B45309] hover:bg-[#92400E] text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all cursor-pointer"
             >
-              <span>STEP INTO STYLE</span>
+              <span>{t('store.shoeCollection.cta')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -927,7 +964,7 @@ export default function CustomerStorePage() {
           <div className="relative w-full max-w-xl flex items-center justify-center">
             <img
               src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=900&auto=format&fit=crop&q=80"
-              alt="Premium Shoe Collection"
+              alt={t('store.shoeCollection.title')}
               className="w-full max-h-72 object-contain drop-shadow-xl"
             />
 
@@ -935,7 +972,7 @@ export default function CustomerStorePage() {
             <div className="absolute top-4 left-4 sm:left-12 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-lg px-3 py-1.5 flex items-center space-x-2">
               <SneakerIcon className="w-4 h-4 text-amber-600" />
               <div className="text-left">
-                <div className="text-[10px] font-bold text-slate-500">Track Spikes</div>
+                <div className="text-[10px] font-bold text-slate-500">{t('store.shoeCollection.trackSpikes')}</div>
                 <div className="text-xs font-black text-slate-900">৳4,599</div>
               </div>
             </div>
@@ -944,7 +981,7 @@ export default function CustomerStorePage() {
             <div className="absolute bottom-4 right-4 sm:right-10 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-lg px-3 py-1.5 flex items-center space-x-2">
               <SneakerIcon className="w-4 h-4 text-slate-700" />
               <div className="text-left">
-                <div className="text-[10px] font-bold text-slate-500">Platform Sneakers</div>
+                <div className="text-[10px] font-bold text-slate-500">{t('store.shoeCollection.platformSneakers')}</div>
                 <div className="text-xs font-black text-slate-900">৳4,199</div>
               </div>
             </div>
@@ -955,13 +992,16 @@ export default function CustomerStorePage() {
       {/* TOP DEALS IN FASHION PRODUCT GRID */}
       <section id="deals-section" className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight">Top Deals In Fashion</h2>
+          <div>
+            <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.trending.fashionTitle')}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{t('store.trending.fashionSubtitle')}</p>
+          </div>
           <button
             type="button"
-            onClick={() => showToast('Browsing all fashion deals')}
+            onClick={() => showToast(t('store.promo.browsingFashionDeals'))}
             className="text-xs font-bold text-[#F59E0B] hover:text-[#D97706] flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>See All</span>
+            <span>{t('common.viewAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -991,7 +1031,7 @@ export default function CustomerStorePage() {
                     <div className="absolute top-2.5 right-2.5 flex flex-col space-y-2">
                       <button
                         type="button"
-                        aria-label="Add to wishlist"
+                        aria-label={t('common.addToWishlist')}
                         onClick={() => toggleFavorite(product.id)}
                         className={`w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm border border-slate-200 shadow-xs flex items-center justify-center transition-all cursor-pointer ${
                           isFav ? 'text-red-500 scale-110' : 'text-slate-500 hover:text-red-500'
@@ -1001,8 +1041,8 @@ export default function CustomerStorePage() {
                       </button>
                       <button
                         type="button"
-                        aria-label="Share product"
-                        onClick={() => showToast('Product link copied')}
+                        aria-label={t('common.shareProduct')}
+                        onClick={() => showToast(t('store.promo.linkCopied'))}
                         className="w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm border border-slate-200 shadow-xs flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                       >
                         <Share2 className="w-3.5 h-3.5" />
@@ -1017,7 +1057,7 @@ export default function CustomerStorePage() {
                       </span>
                       <span className="font-bold text-[#16A34A] flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
-                        In Stock
+                        {t('store.product.inStock')}
                       </span>
                     </div>
 
@@ -1067,7 +1107,7 @@ export default function CustomerStorePage() {
                     className="w-full py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    <span>Add to cart</span>
+                    <span>{t('store.product.addToCart')}</span>
                   </button>
                 </div>
               </div>
@@ -1079,13 +1119,13 @@ export default function CustomerStorePage() {
       {/* FOOTWEAR PREMIUM COLLECTION */}
       <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight">Footwear Premium Collection</h2>
+          <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.trending.footwearTitle')}</h2>
           <button
             type="button"
-            onClick={() => showToast('Browsing all footwear')}
+            onClick={() => showToast(t('store.promo.browsingFootwear'))}
             className="text-xs font-bold text-[#F59E0B] hover:text-[#D97706] flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>See All</span>
+            <span>{t('store.product.seeAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -1109,7 +1149,7 @@ export default function CustomerStorePage() {
                     <div className="absolute top-2.5 right-2.5 flex flex-col space-y-2">
                       <button
                         type="button"
-                        aria-label="Add to wishlist"
+                        aria-label={t('common.addToWishlist')}
                         onClick={() => toggleFavorite(product.id)}
                         className={`w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm border border-slate-200 shadow-xs flex items-center justify-center transition-all cursor-pointer ${
                           isFav ? 'text-red-500 scale-110' : 'text-slate-500 hover:text-red-500'
@@ -1119,8 +1159,8 @@ export default function CustomerStorePage() {
                       </button>
                       <button
                         type="button"
-                        aria-label="Share product"
-                        onClick={() => showToast('Product link copied')}
+                        aria-label={t('common.shareProduct')}
+                        onClick={() => showToast(t('store.promo.linkCopied'))}
                         className="w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm border border-slate-200 shadow-xs flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                       >
                         <Share2 className="w-3.5 h-3.5" />
@@ -1135,7 +1175,7 @@ export default function CustomerStorePage() {
                       </span>
                       <span className="font-bold text-[#16A34A] flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]" />
-                        In Stock
+                        {t('store.product.inStock')}
                       </span>
                     </div>
 
@@ -1185,7 +1225,7 @@ export default function CustomerStorePage() {
                     className="w-full py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    <span>Add to cart</span>
+                    <span>{t('store.product.addToCart')}</span>
                   </button>
                 </div>
               </div>
@@ -1199,8 +1239,8 @@ export default function CustomerStorePage() {
         {/* Floating Cart Button */}
         <button
           type="button"
-          aria-label="View Shopping Cart"
-          onClick={() => showToast(`Opening cart (${cartCount} items)`)}
+          aria-label={t('common.viewCart')}
+          onClick={() => showToast(t('store.promo.openingCart', { count: cartCount }))}
           className="w-12 h-12 rounded-full bg-[#18181B] text-white shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center relative border border-slate-700 cursor-pointer"
         >
           <ShoppingCart className="w-5 h-5" />
@@ -1216,7 +1256,7 @@ export default function CustomerStorePage() {
           href="https://wa.me/8801997469249"
           target="_blank"
           rel="noreferrer"
-          aria-label="Chat on WhatsApp"
+          aria-label={t('common.chatWhatsApp')}
           className="w-12 h-12 rounded-full bg-[#25D366] text-white shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
         >
           <WhatsAppIcon className="w-6 h-6" />
@@ -1227,7 +1267,7 @@ export default function CustomerStorePage() {
       {showScrollTop && (
         <button
           type="button"
-          aria-label="Scroll to top"
+          aria-label={t('common.scrollToTop')}
           onClick={scrollToTop}
           className="fixed bottom-20 sm:bottom-8 right-4 z-40 w-12 h-12 rounded-full bg-[#F59E0B] hover:bg-[#D97706] text-black shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
         >
@@ -1241,12 +1281,12 @@ export default function CustomerStorePage() {
           type="button"
           onClick={() => {
             scrollToTop();
-            showToast('Home');
+            showToast(t('nav.home'));
           }}
           className="flex flex-col items-center text-slate-950 font-bold cursor-pointer"
         >
           <Home className="w-5 h-5 text-slate-950" />
-          <span className="text-[10px] mt-1 font-black">Home</span>
+          <span className="text-[10px] mt-1 font-black">{t('nav.home')}</span>
         </button>
 
         <button
@@ -1254,17 +1294,17 @@ export default function CustomerStorePage() {
           onClick={() => {
             const el = document.getElementById('deals-section');
             el?.scrollIntoView({ behavior: 'smooth' });
-            showToast('Categories');
+            showToast(t('nav.categories'));
           }}
           className="flex flex-col items-center text-slate-500 hover:text-slate-900 cursor-pointer"
         >
           <LayoutGrid className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-semibold">Categories</span>
+          <span className="text-[10px] mt-1 font-semibold">{t('nav.categories')}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => showToast(`Shopping Bag (${cartCount} items)`)}
+          onClick={() => showToast(t('auth.cartCountToast', { count: cartCount }))}
           className="flex flex-col items-center text-slate-500 hover:text-slate-900 relative cursor-pointer"
         >
           <div className="relative">
@@ -1275,16 +1315,22 @@ export default function CustomerStorePage() {
               </span>
             )}
           </div>
-          <span className="text-[10px] mt-1 font-semibold">Bag</span>
+          <span className="text-[10px] mt-1 font-semibold">{t('nav.bag')}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => showToast('Account Profile')}
+          onClick={() => {
+            if (user) {
+              showToast(t('auth.signedInAs', { name: user.name || t('nav.account') }));
+            } else {
+              openAuthModal('login');
+            }
+          }}
           className="flex flex-col items-center text-slate-500 hover:text-slate-900 cursor-pointer"
         >
           <User className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-semibold">Account</span>
+          <span className="text-[10px] mt-1 font-semibold">{t('nav.account')}</span>
         </button>
       </div>
 
@@ -1296,13 +1342,13 @@ export default function CustomerStorePage() {
             <div className="space-y-4">
               <AlifLogo size="md" href="/" inverted />
               <p className="text-xs text-[#9CA3AF] leading-relaxed max-w-sm">
-                Your neighborhood&apos;s fastest delivery service. We bring everything you need, right to your doorstep in minutes.
+                {t('store.footer.slogan')}
               </p>
 
               <div className="pt-2 space-y-2 text-xs text-[#D1D5DB]">
                 <div className="flex items-center space-x-2">
                   <Phone className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="font-semibold">+880 1997-469249</span>
+                  <span className="font-semibold">{t('nav.hotline')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="w-3.5 h-3.5 text-amber-500" />
@@ -1314,32 +1360,32 @@ export default function CustomerStorePage() {
             {/* Quick Links */}
             <div>
               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">
-                QUICK LINKS
+                {t('store.footer.quickLinks')}
               </h4>
               <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
                 <li>
-                  <button type="button" onClick={() => showToast('About AlifWorld')} className="hover:text-white transition-colors cursor-pointer">
-                    About Us
+                  <button type="button" onClick={() => showToast(t('store.promo.aboutToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.aboutUs')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast('Frequently Asked Questions')} className="hover:text-white transition-colors cursor-pointer">
-                    FAQs
+                  <button type="button" onClick={() => showToast(t('store.promo.faqsToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.faqs')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast('Verified Stores')} className="hover:text-white transition-colors cursor-pointer">
-                    Stores
+                  <button type="button" onClick={() => showToast(t('store.promo.storesToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.stores')}
                   </button>
                 </li>
                 <li className="pt-2">
-                  <span className="text-amber-500 font-bold block mb-1.5">Become a Seller</span>
+                  <span className="text-amber-500 font-bold block mb-1.5">{t('store.footer.becomeSeller')}</span>
                   <button
                     type="button"
-                    onClick={() => showToast('Merchant registration portal')}
+                    onClick={() => showToast(t('store.promo.sellerPortalToast'))}
                     className="inline-block px-3.5 py-1.5 rounded-lg bg-[#262624] text-white text-xs font-semibold border border-neutral-700 hover:border-amber-500 transition-colors cursor-pointer"
                   >
-                    Become a Seller
+                    {t('store.footer.becomeSeller')}
                   </button>
                 </li>
               </ul>
@@ -1348,27 +1394,27 @@ export default function CustomerStorePage() {
             {/* Policies */}
             <div>
               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">
-                POLICIES
+                {t('store.footer.policies')}
               </h4>
               <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
                 <li>
-                  <button type="button" onClick={() => showToast('Privacy Policy')} className="hover:text-white transition-colors cursor-pointer">
-                    Privacy Policy
+                  <button type="button" onClick={() => showToast(t('store.promo.privacyToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.privacyPolicy')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast('Terms & Conditions')} className="hover:text-white transition-colors cursor-pointer">
-                    Terms &amp; Conditions
+                  <button type="button" onClick={() => showToast(t('store.promo.termsToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.termsConditions')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast('Shipping Policy')} className="hover:text-white transition-colors cursor-pointer">
-                    Shipping Policy
+                  <button type="button" onClick={() => showToast(t('store.promo.shippingToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.shippingPolicy')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast('Return & Refund Policy')} className="hover:text-white transition-colors cursor-pointer">
-                    Return &amp; Refund Policy
+                  <button type="button" onClick={() => showToast(t('store.promo.returnToast'))} className="hover:text-white transition-colors cursor-pointer">
+                    {t('store.footer.returnPolicy')}
                   </button>
                 </li>
               </ul>
@@ -1377,7 +1423,7 @@ export default function CustomerStorePage() {
             {/* Follow Us & Trust Badges */}
             <div>
               <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">
-                FOLLOW US
+                {t('store.footer.followUs')}
               </h4>
               <div className="flex items-center space-x-3 mb-6">
                 <a
@@ -1426,15 +1472,15 @@ export default function CustomerStorePage() {
               <div className="space-y-2 text-xs text-[#D1D5DB] font-medium">
                 <div className="flex items-center space-x-2">
                   <ShieldCheck className="w-4 h-4 text-amber-400" />
-                  <span>Quality Assured</span>
+                  <span>{t('store.footer.qualityAssured')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                  <span>100% Secure Checkout</span>
+                  <span>{t('store.footer.secureCheckout')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Truck className="w-4 h-4 text-amber-400" />
-                  <span>Trusted Nationwide Delivery</span>
+                  <span>{t('store.footer.trustedDelivery')}</span>
                 </div>
               </div>
             </div>
@@ -1442,10 +1488,10 @@ export default function CustomerStorePage() {
 
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#9CA3AF] gap-4">
             <div>
-              © 2026 AlifWorld. All rights reserved.
+              {t('store.footer.copyright')}
             </div>
             <div className="px-3 py-1 rounded-full bg-[#262624] text-slate-400 border border-neutral-800 font-mono text-[11px]">
-              V 3.2.0
+              {t('store.footer.version')}
             </div>
           </div>
         </div>

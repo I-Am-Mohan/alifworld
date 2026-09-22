@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
+import { I18nProvider } from '@/i18n/context';
 
 export const metadata: Metadata = {
   title: 'AlifWorld | Bangladesh Premium Multi-Vendor Marketplace',
@@ -24,9 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-BD" className="light">
+    <html lang="bn-BD" className="light">
       <body className="antialiased bg-[#FAF9F6] text-slate-900 selection:bg-brand-orange selection:text-white min-h-screen">
-        <AuthWrapper>{children}</AuthWrapper>
+        <I18nProvider>
+          <AuthWrapper>{children}</AuthWrapper>
+        </I18nProvider>
       </body>
     </html>
   );

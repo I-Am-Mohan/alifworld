@@ -47,6 +47,7 @@ export const openApiSpec = {
     { name: 'Product Points', description: 'Independent loyalty and point snapshotting' },
     { name: 'Payments & Settlements', description: 'Customer payment gateways, webhooks, partial refunds, 5% platform commissions, settlements, and BEFTN payouts' },
     { name: 'Database & Migrations', description: 'Data dictionary discovery, zero-downtime migration status, and schema health' },
+    { name: 'Internationalization & Localization', description: 'Dynamic language management, default locale settings, and multilingual platform support' },
   ],
   paths: {
     '/api/health/live': {
@@ -472,6 +473,47 @@ export const openApiSpec = {
           },
           '422': {
             description: 'Validation failed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/refresh': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Rotate Refresh Token & Detect Family Reuse',
+        description: 'Rotates a single-use refresh token within an authenticated token family. Issues fresh access token and next-generation refresh token. If a previously consumed token is presented, detects security breach, revokes the entire token family, and terminates active sessions.',
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RefreshTokenRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Token rotated successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RefreshTokenResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized, session expired, or token reuse detected',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Validation failed or refresh token missing',
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
@@ -922,6 +964,144 @@ export const openApiSpec = {
           },
         },
       },
+    '/api/v1/system/languages': {
+      get: {
+        tags: ['Internationalization & Localization'],
+        summary: 'List Supported Platform Languages',
+        description: 'Returns all registered languages with active/default status, native names, and word for language translations.',
+        responses: {
+          '200': {
+            description: 'Languages retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LanguageListResponse' },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Internationalization & Localization'],
+        summary: 'Register New Platform Language Dynamically',
+        description: 'Dynamically registers a new language code with native display names and RTL/LTR text direction.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/AddLanguageRequest' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Language registered successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LanguageListResponse' },
+              },
+            },
+          },
+          '409': {
+            description: 'Language code already registered',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/system/languages/default': {
+      patch: {
+        tags: ['Internationalization & Localization'],
+        summary: 'Set Platform Default Language',
+        description: 'Designates an active registered language code as the authoritative system-wide default locale.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/SetDefaultLanguageRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Default language updated successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LanguageListResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/system/languages/{code}': {
+      patch: {
+        tags: ['Internationalization & Localization'],
+        summary: 'Update Language Metadata or Status',
+        description: 'Updates display name, native name, or toggles active status for a registered language.',
+        parameters: [
+          {
+            name: 'code',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'bn' },
+            description: 'Language ISO code',
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/UpdateLanguageRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Language updated successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LanguageListResponse' },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ['Internationalization & Localization'],
+        summary: 'Delete or Deregister Language',
+        description: 'Removes a non-default language from platform availability.',
+        parameters: [
+          {
+            name: 'code',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'ar' },
+            description: 'Language ISO code to remove',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Language removed successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LanguageListResponse' },
+              },
+            },
+          },
+          '400': {
+            description: 'Cannot remove default or sole registered language',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
     },
   },
   components: {
@@ -1132,6 +1312,35 @@ export const openApiSpec = {
               },
             },
             required: ['tokenPolicies', 'cookieSettings', 'passwordRequirements'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      RefreshTokenRequest: {
+        type: 'object',
+        properties: {
+          refreshToken: {
+            type: 'string',
+            description: 'The refresh token to rotate (optional if supplied via aw_refresh_token HttpOnly cookie)',
+            example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          },
+        },
+      },
+      RefreshTokenResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+              refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+              tokenType: { type: 'string', example: 'Bearer' },
+              expiresIn: { type: 'integer', example: 900 },
+              familyId: { type: 'string', example: 'fam_01j7x4b9e8m02k3f8d7c6b5a1' },
+              generation: { type: 'integer', example: 1 },
+            },
+            required: ['accessToken', 'refreshToken', 'tokenType', 'expiresIn', 'familyId', 'generation'],
           },
         },
         required: ['success', 'data'],
@@ -1453,6 +1662,66 @@ export const openApiSpec = {
           },
         },
         required: ['success', 'data'],
+      },
+      LanguageDefinition: {
+        type: 'object',
+        properties: {
+          code: { type: 'string', example: 'bn' },
+          name: { type: 'string', example: 'বাংলা' },
+          nativeName: { type: 'string', example: 'বাংলা' },
+          wordForLanguage: { type: 'string', example: 'ভাষা' },
+          direction: { type: 'string', enum: ['ltr', 'rtl'], example: 'ltr' },
+          isDefault: { type: 'boolean', example: true },
+          isActive: { type: 'boolean', example: true },
+        },
+        required: ['code', 'name', 'nativeName', 'wordForLanguage', 'direction', 'isDefault', 'isActive'],
+      },
+      LanguageListResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              defaultLocale: { type: 'string', example: 'bn' },
+              languages: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/LanguageDefinition' },
+              },
+            },
+            required: ['defaultLocale', 'languages'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      AddLanguageRequest: {
+        type: 'object',
+        properties: {
+          code: { type: 'string', example: 'ar' },
+          name: { type: 'string', example: 'Arabic' },
+          nativeName: { type: 'string', example: 'العربية' },
+          wordForLanguage: { type: 'string', example: 'لغة' },
+          direction: { type: 'string', enum: ['ltr', 'rtl'], default: 'ltr' },
+          isActive: { type: 'boolean', default: true },
+        },
+        required: ['code', 'name', 'nativeName', 'wordForLanguage'],
+      },
+      SetDefaultLanguageRequest: {
+        type: 'object',
+        properties: {
+          code: { type: 'string', example: 'en' },
+        },
+        required: ['code'],
+      },
+      UpdateLanguageRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', example: 'Bengali' },
+          nativeName: { type: 'string', example: 'বাংলা' },
+          wordForLanguage: { type: 'string', example: 'ভাষা' },
+          direction: { type: 'string', enum: ['ltr', 'rtl'] },
+          isActive: { type: 'boolean' },
+        },
       },
     },
   },
