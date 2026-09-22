@@ -1,8 +1,79 @@
-import { LanguageDefinition, I18nConfig } from './types';
+import { LanguageDefinition, I18nConfig, CanonicalLocale, SupportedLocale } from './types';
 
-export const DEFAULT_LOCALE = 'bn';
+export const CANONICAL_LOCALES = ['bn-BD', 'en-BD'] as const;
+export const SUPPORTED_LOCALES = ['bn-BD', 'en-BD', 'bn', 'en'] as const;
+
+export const DEFAULT_LOCALE: CanonicalLocale = 'bn-BD';
+export const DEFAULT_SHORT_LOCALE = 'bn';
 export const LOCALE_COOKIE_NAME = 'aw_locale';
 export const LOCALE_STORAGE_KEY = 'alifworld_locale';
+
+/**
+ * Normalizes any candidate string to canonical BCP 47 Bangladesh format ('bn-BD' | 'en-BD').
+ */
+export function normalizeToCanonicalLocale(candidate?: string | null): CanonicalLocale {
+  if (!candidate || typeof candidate !== 'string') {
+    return DEFAULT_LOCALE;
+  }
+  const clean = candidate.trim().toLowerCase().replace(/_/g, '-');
+  if (clean.startsWith('bn') || clean.includes('bengali') || clean.includes('bangla')) {
+    return 'bn-BD';
+  }
+  if (clean.startsWith('en') || clean.includes('english')) {
+    return 'en-BD';
+  }
+  return DEFAULT_LOCALE;
+}
+
+/**
+ * Normalizes any candidate string to short ISO 639-1 language code ('bn' | 'en').
+ */
+export function normalizeToShortLocale(candidate?: string | null): 'bn' | 'en' {
+  if (!candidate || typeof candidate !== 'string') {
+    return DEFAULT_SHORT_LOCALE;
+  }
+  const clean = candidate.trim().toLowerCase().replace(/_/g, '-');
+  if (clean.startsWith('bn') || clean.includes('bengali') || clean.includes('bangla')) {
+    return 'bn';
+  }
+  if (clean.startsWith('en') || clean.includes('english')) {
+    return 'en';
+  }
+  return DEFAULT_SHORT_LOCALE;
+}
+
+/**
+ * Validates whether a candidate locale is supported by AlifWorld.
+ */
+export function isSupportedLocale(candidate?: string | null): boolean {
+  if (!candidate || typeof candidate !== 'string') return false;
+  const clean = candidate.trim().toLowerCase().replace(/_/g, '-');
+  return clean === 'bn' || clean === 'en' || clean === 'bn-bd' || clean === 'en-bd';
+}
+
+/**
+ * Canonical Bangladesh launch languages.
+ */
+export const CANONICAL_LANGUAGES: LanguageDefinition[] = [
+  {
+    code: 'bn-BD',
+    name: 'বাংলা (বাংলাদেশ)',
+    nativeName: 'বাংলা',
+    wordForLanguage: 'ভাষা',
+    direction: 'ltr',
+    isDefault: true,
+    isActive: true,
+  },
+  {
+    code: 'en-BD',
+    name: 'English (Bangladesh)',
+    nativeName: 'English',
+    wordForLanguage: 'Language',
+    direction: 'ltr',
+    isDefault: false,
+    isActive: true,
+  },
+];
 
 /**
  * Default supported languages in AlifWorld.
@@ -67,7 +138,14 @@ export function getLanguageSwitchMode(
 
   // Rule 2: Exactly 2 active languages -> dropdown with opposite language word on button
   if (activeLanguages.length === 2) {
-    const current = activeLanguages.find((l) => l.code === currentLocale) || activeLanguages[0];
+    const current =
+      activeLanguages.find((l) => l.code.toLowerCase() === currentLocale.trim().toLowerCase()) ||
+      activeLanguages.find(
+        (l) =>
+          l.code === normalizeToShortLocale(currentLocale) ||
+          l.code === normalizeToCanonicalLocale(currentLocale)
+      ) ||
+      activeLanguages[0];
     const opposite = activeLanguages.find((l) => l.code !== current.code) || activeLanguages[1];
 
     // If site is in English ('en'), button label is Bengali word "ভাষা"
@@ -83,7 +161,13 @@ export function getLanguageSwitchMode(
 
   // Rule 3: 3 or more active languages -> dropdown with current chosen language on button
   const currentLanguage =
-    activeLanguages.find((l) => l.code === currentLocale) || activeLanguages[0];
+    activeLanguages.find((l) => l.code.toLowerCase() === currentLocale.trim().toLowerCase()) ||
+    activeLanguages.find(
+      (l) =>
+        l.code === normalizeToShortLocale(currentLocale) ||
+        l.code === normalizeToCanonicalLocale(currentLocale)
+    ) ||
+    activeLanguages[0];
 
   return {
     mode: 'dropdown',

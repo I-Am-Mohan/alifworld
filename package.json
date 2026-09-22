@@ -7,6 +7,7 @@
     "dev": "bun run scripts/run-with-env.ts .env.local next dev",
     "dev:production": "bun run scripts/run-with-env.ts .env.production next dev",
     "build": "bun run scripts/run-with-env.ts .env.production next build",
+    "build:local": "bun run scripts/run-with-env.ts .env.local next build",
     "build:dev": "bun run scripts/run-with-env.ts .env.local next build",
     "start": "bun run scripts/run-with-env.ts .env.production next start",
     "production:production": "bun run start",

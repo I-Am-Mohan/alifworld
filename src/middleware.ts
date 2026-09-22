@@ -28,6 +28,11 @@ import {
   applySecurityHeaders,
 } from '@/shared/security/headers';
 import { auditService } from '@/shared/audit';
+import {
+  resolveLocaleFromRequest,
+  extractLocaleFromPath,
+} from '@/i18n/locale-resolver';
+import { LOCALE_COOKIE_NAME } from '@/i18n/config';
 
 export async function middleware(req: NextRequest): Promise<NextResponse> {
   const pathname = req.nextUrl.pathname;
@@ -110,18 +115,45 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     return errorResponse;
   }
 
-  // 3. Continue Request Execution Downstream
-  // Create request headers with propagated request-id
+  // 3. Negotiate Authoritative Locale (BCP 47 & Regional Tagging)
+  const resolvedLocale = resolveLocaleFromRequest(req);
+  const pathLocaleInfo = extractLocaleFromPath(pathname);
+
+  // 4. Continue Request Execution Downstream (Rewrite localized paths or pass through)
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-request-id', requestId);
+  requestHeaders.set('x-locale', resolvedLocale.locale);
+  requestHeaders.set('x-locale-short', resolvedLocale.shortCode);
+  requestHeaders.set('x-locale-source', resolvedLocale.source);
 
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  let response: NextResponse;
 
-  // 4. Provision anti-CSRF token cookie if absent (for browser clients)
+  // Handle URL localized prefix routing (e.g. /bn-BD/products -> rewrite to /products)
+  // API routes (/api/*) and admin/seller operational consoles are not rewritten
+  const shouldRewrite =
+    Boolean(pathLocaleInfo.locale) &&
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/admin') &&
+    !pathname.startsWith('/seller');
+
+  if (shouldRewrite) {
+    const rewriteUrl = new URL(pathLocaleInfo.pathnameWithoutLocale, req.url);
+    // Preserve existing search params
+    rewriteUrl.search = req.nextUrl.search;
+    response = NextResponse.rewrite(rewriteUrl, {
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  } else {
+    response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+
+  // 5. Provision anti-CSRF token cookie if absent (for browser clients)
   const existingCsrfCookie = req.cookies.get(CSRF_COOKIE_NAME)?.value;
   if (!existingCsrfCookie) {
     const newToken = generateCsrfToken();
@@ -137,10 +169,26 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // 5. Apply Security Headers, CORS Headers, and Correlation ID
+  // 6. Synchronize Locale Cookie (aw_locale)
+  const existingLocaleCookie = req.cookies.get(LOCALE_COOKIE_NAME)?.value;
+  if (existingLocaleCookie !== resolvedLocale.locale) {
+    response.cookies.set({
+      name: LOCALE_COOKIE_NAME,
+      value: resolvedLocale.locale,
+      path: '/',
+      maxAge: 365 * 24 * 60 * 60, // 1 year
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false, // Accessible to client scripts
+    });
+  }
+
+  // 7. Apply Security Headers, CORS Headers, Correlation ID & Locale Headers
   applySecurityHeaders(response.headers, pathname);
   applyCorsHeaders(response, corsResult);
   response.headers.set('x-request-id', requestId);
+  response.headers.set('x-locale', resolvedLocale.locale);
+  response.headers.set('Content-Language', resolvedLocale.locale);
 
   return response;
 }

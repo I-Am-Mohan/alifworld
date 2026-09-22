@@ -16,7 +16,9 @@ import { z } from 'zod';
 export const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   NEXT_PUBLIC_CDN_URL: z.string().url().default('http://localhost:9000/alifworld-media'),
-  NEXT_PUBLIC_DEFAULT_LOCALE: z.string().default('bn-BD'),
+  NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(['bn-BD', 'en-BD', 'bn', 'en'], {
+    errorMap: () => ({ message: 'Unsupported locale in NEXT_PUBLIC_DEFAULT_LOCALE' }),
+  }).default('bn-BD'),
   NEXT_PUBLIC_BASE_CURRENCY: z.string().default('BDT'),
 });
 
@@ -32,7 +34,9 @@ export const serverEnvSchema = clientEnvSchema.extend({
   PORT: z.coerce.number().int().positive().default(3000),
   APP_URL: z.string().url().default('http://localhost:3000'),
   API_URL: z.string().url().default('http://localhost:3000/api/v1'),
-  TZ: z.string().default('Asia/Dhaka'),
+  TZ: z.string().refine((val) => val === 'Asia/Dhaka', {
+    message: 'Invalid timezone: platform business timezone must be Asia/Dhaka',
+  }).default('Asia/Dhaka'),
   DEFAULT_LOCALE: z.string().default('bn-BD'),
   SUPPORTED_LOCALES: z.string().default('en-BD,bn-BD'),
   BASE_CURRENCY: z.string().default('BDT'),
@@ -162,6 +166,9 @@ export const serverEnvSchema = clientEnvSchema.extend({
   MAKER_CHECKER_THRESHOLD_POISHA: z.coerce.number().int().positive().default(5000000), // 50,000 BDT
   FEATURE_POINTS_CASH_CONVERTIBLE: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .refine((val) => val === false, {
+      message: 'Locked Invariant: Product Points are non-convertible loyalty metric',
+    })
     .default(false),
   FEATURE_ADVANCED_SHOPPING_ENABLED: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())

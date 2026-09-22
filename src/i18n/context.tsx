@@ -7,6 +7,8 @@ import {
   INITIAL_LANGUAGES,
   LOCALE_COOKIE_NAME,
   LOCALE_STORAGE_KEY,
+  isSupportedLocale,
+  normalizeToCanonicalLocale,
 } from './config';
 import { getDictionary, TranslationSchema } from './translations';
 
@@ -23,6 +25,18 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
+function normalizeClientLocale(code?: string | null): string {
+  const candidate = code?.trim();
+  if (!candidate) return DEFAULT_LOCALE;
+  return isSupportedLocale(candidate) ? normalizeToCanonicalLocale(candidate) : candidate;
+}
+
+function applyDocumentLocale(code: string): void {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = normalizeClientLocale(code);
+  }
+}
+
 export function I18nProvider({
   children,
   initialLocale,
@@ -32,7 +46,7 @@ export function I18nProvider({
   initialLocale?: string;
   initialLanguages?: LanguageDefinition[];
 }) {
-  const [locale, setLocaleState] = useState<string>(initialLocale || DEFAULT_LOCALE);
+  const [locale, setLocaleState] = useState<string>(normalizeClientLocale(initialLocale));
   const [languages, setLanguages] = useState<LanguageDefinition[]>(
     initialLanguages || INITIAL_LANGUAGES
   );
@@ -41,12 +55,13 @@ export function I18nProvider({
 
   // Sync with cookie and localStorage
   const applyLocale = useCallback((newCode: string) => {
-    setLocaleState(newCode);
+    const normalizedCode = normalizeClientLocale(newCode);
+    setLocaleState(normalizedCode);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(LOCALE_STORAGE_KEY, newCode);
-        document.cookie = `${LOCALE_COOKIE_NAME}=${newCode};path=/;max-age=31536000;SameSite=Lax`;
-        document.documentElement.lang = newCode === 'bn' ? 'bn-BD' : 'en-BD';
+        localStorage.setItem(LOCALE_STORAGE_KEY, normalizedCode);
+        document.cookie = `${LOCALE_COOKIE_NAME}=${normalizedCode};path=/;max-age=31536000;SameSite=Lax`;
+        applyDocumentLocale(normalizedCode);
       } catch {}
     }
   }, []);
@@ -88,8 +103,9 @@ export function I18nProvider({
         if (match) saved = match[2];
       }
       if (saved) {
-        setLocaleState(saved);
-        document.documentElement.lang = saved === 'bn' ? 'bn-BD' : 'en-BD';
+        const normalizedSavedLocale = normalizeClientLocale(saved);
+        setLocaleState(normalizedSavedLocale);
+        applyDocumentLocale(normalizedSavedLocale);
       }
     }
     refreshLanguages();
