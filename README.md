@@ -47,6 +47,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Non-Functional Requirements & SLOs](docs/architecture/non-functional-requirements-and-slos.md)**: Performance benchmarks, capacity sizing, availability SLOs, and graceful degradation rules.
 - **[Domain Glossary & Ubiquitous Language](docs/architecture/domain-glossary-and-ubiquitous-language.md)**: Canonical terminology, integer Poisha definitions, Product Point rules, and bilingual dictionary.
 - **[Single-Application Modular Monolith](docs/architecture/single-application-modular-monolith.md)**: System topology, 4-tier layer constraints, outbox decoupling, and process deployment models.
+- **[Milestone Dependency Graph & Delivery Workflow](docs/architecture/milestone-dependency-graph.md)**: 30-phase DAG, critical paths, phase transition gates, and atomic delivery standards.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -56,6 +57,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0004: Non-Functional Requirements, Capacity Assumptions, and SLOs](docs/decisions/0004-non-functional-requirements-and-slos.md)
   - [ADR 0005: Ubiquitous Language, Canonical Domain Glossary, and Monetary Typing](docs/decisions/0005-domain-glossary-and-ubiquitous-language.md)
   - [ADR 0006: Single-Application Modular Monolith Architectural Decisions](docs/decisions/0006-single-application-modular-monolith-architecture.md)
+  - [ADR 0007: Milestone Dependency Graph and Incremental Delivery Workflow](docs/decisions/0007-milestone-dependency-graph-and-delivery-workflow.md)
 
 ---
 
@@ -65,7 +67,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 
 | Phase | Milestone Range | Phase Theme | Status |
 |:---:|:---:|:---|:---:|
-| **01** | 001–010 | Governance and Architecture | **In Progress (Milestones 001–006 Completed)** |
+| **01** | 001–010 | Governance and Architecture | **In Progress (Milestones 001–007 Completed)** |
 | **02** | 011–020 | Repository and Tooling | Planned |
 | **03** | 021–030 | Data Architecture | Planned |
 | **04** | 031–040 | Identity and Authentication | Planned |
