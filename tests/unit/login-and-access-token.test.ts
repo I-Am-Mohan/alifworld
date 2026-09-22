@@ -333,6 +333,7 @@ describe('Customer Login and Access Token Issuance (Milestone 034)', () => {
         const loginResult = await loginService.login({
           identifier: 'tanvir@example.com',
           password: rawPassword,
+          clientType: 'WEB',
         });
 
         const profile = await loginService.getCurrentUser(loginResult.tokens.accessToken);
@@ -349,6 +350,7 @@ describe('Customer Login and Access Token Issuance (Milestone 034)', () => {
         const loginResult = await loginService.login({
           identifier: 'tanvir@example.com',
           password: rawPassword,
+          clientType: 'WEB',
         });
 
         // Simulate global tokenVersion bump (e.g. password reset)
