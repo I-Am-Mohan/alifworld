@@ -113,3 +113,46 @@ export const resendVerificationSchema = z.object({
 
 export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 
+const passwordResetEmailSchema = z
+  .string()
+  .min(5, 'Email is required')
+  .max(255, 'Email exceeds maximum allowed length')
+  .email('Please enter a valid email address')
+  .transform((value) => value.trim().toLowerCase());
+
+const newPasswordSchema = z
+  .string()
+  .min(PASSWORD_POLICY.MIN_LENGTH, `Password must be at least ${PASSWORD_POLICY.MIN_LENGTH} characters`)
+  .max(PASSWORD_POLICY.MAX_LENGTH, `Password must not exceed ${PASSWORD_POLICY.MAX_LENGTH} characters`);
+
+export const requestPasswordResetSchema = z.object({
+  email: passwordResetEmailSchema,
+  locale: z.enum(['bn-BD', 'en-BD']).default('bn-BD'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    email: passwordResetEmailSchema,
+    token: z.string().min(32, 'Reset token is invalid').max(256, 'Reset token is invalid'),
+    newPassword: newPasswordSchema,
+    confirmPassword: z.string().max(PASSWORD_POLICY.MAX_LENGTH),
+  })
+  .refine((input) => input.newPassword === input.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required').max(PASSWORD_POLICY.MAX_LENGTH),
+    newPassword: newPasswordSchema,
+    confirmPassword: z.string().max(PASSWORD_POLICY.MAX_LENGTH),
+  })
+  .refine((input) => input.newPassword === input.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

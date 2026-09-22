@@ -134,6 +134,49 @@ export class UserRepository {
   }
 
   /**
+   * Updates user password hash.
+   */
+  async updatePassword(userId: string, newPasswordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: newPasswordHash,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Selects only the credential fields needed by password security flows.
+   */
+  async findPasswordUserByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        status: true,
+        passwordHash: true,
+        deletedAt: true,
+      },
+    });
+  }
+
+  async findPasswordUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+        passwordHash: true,
+        deletedAt: true,
+      },
+    });
+  }
+
+  /**
    * Finds user by primary ID with roles and permissions.
    */
   async findUserById(id: string) {

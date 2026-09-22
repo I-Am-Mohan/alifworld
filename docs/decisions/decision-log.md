@@ -36,6 +36,7 @@
 | [**ADR-0024**](0024-model-sellers-seller-staff-kyc-documents-and-store-settings.md) | Model Sellers, Seller Staff, KYC Documents, and Store Settings | 2026-09-22 | **Accepted** | Phase 03 / M024 | Architecture, Operations & Legal | Modeled Seller, SellerStaff, SellerKycDocument, and SellerStoreSettings in Prisma with tenant boundary enforcement, NBR BIN/TIN compliance, and audited private KYC access. |
 | [**ADR-0025**](0025-model-catalog-taxonomy-products-variants-and-media.md) | Model Catalog Taxonomy, Products, Variants, and Media | 2026-09-22 | **Accepted** | Phase 03 / M025 | Architecture, Product & Tax | Modeled Category, Brand, Product, ProductVariant, ProductMedia, and ProductSlugHistory with integer poisha pricing, independent Product Points, and NBR VAT rules. |
 | [**ADR-0026**](0026-model-warehouses-inventory-balances-and-stock-movements.md) | Model Warehouses, Inventory Balances, and Stock Movements | 2026-09-22 | **Accepted** | Phase 03 / M026 | Architecture, Operations & Logistics | Modeled Warehouse, StockBalance, StockReservation, and StockMovementLedger with strict Available invariant calculation, atomic reservations with 15m TTL, and OCC oversell protection. |
+| [**ADR-0037**](0037-password-reset-change-and-breach-safe-controls.md) | Password Reset, Change, and Breach-Safe Controls | 2026-09-22 | **Accepted** | Phase 04 / M037 | Architecture & Security | Reused hashed one-time tokens for neutral password recovery, revoked all sessions after credential changes, and blocked common breached passwords. |
 
 ---
 

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthModal } from './auth-context';
 import { useI18n } from '@/i18n/context';
+import { ChangePasswordForm } from './change-password-form';
 
 interface SessionItem {
   id: string;
@@ -189,6 +190,13 @@ export function AccountSessionModal() {
 
         {/* Modal Body: Scrollable Device & Session List */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
+          <section aria-labelledby="password-security-heading">
+            <h4 id="password-security-heading" className="mb-3 text-sm font-bold text-slate-900">
+              {t('auth.passwordSecurity')}
+            </h4>
+            <ChangePasswordForm onPasswordChanged={logout} />
+          </section>
+
           {/* Active Devices Section */}
           <div>
             <div className="flex items-center justify-between mb-3">

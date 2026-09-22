@@ -313,7 +313,7 @@ export class InventoryService {
       throw new NotFoundError(`Stock balance '${validated.stockBalanceId}' not found.`);
     }
 
-    let deltas: {
+    const deltas: {
       onHandDelta?: number;
       reservedDelta?: number;
       damagedDelta?: number;
@@ -438,7 +438,7 @@ export class InventoryService {
     try {
       await (prisma as any).outboxEvent.create({
         data: {
-          id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX_EVENT ?? 'evt'),
+          id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX),
           eventType,
           aggregateType: 'INVENTORY',
           aggregateId,

@@ -297,6 +297,17 @@ export const env: ServerEnv = new Proxy({} as ServerEnv, {
 });
 
 /**
+ * Returns the lazily validated server environment.
+ * Kept as a function so services can defer secret access until runtime.
+ */
+export function getServerEnv(): ServerEnv {
+  if (!cachedServerEnv) {
+    cachedServerEnv = validateServerEnv();
+  }
+  return cachedServerEnv;
+}
+
+/**
  * Convenient structured application configuration getter.
  */
 export function getAppConfig() {
@@ -305,6 +316,7 @@ export function getAppConfig() {
     timezone: env.TZ,
     baseCurrency: env.BASE_CURRENCY,
     supportedLocales: env.SUPPORTED_LOCALES,
+    databaseUrl: env.DATABASE_URL,
     gates: {
       featureAffiliateMultiTierEnabled: env.FEATURE_AFFILIATE_MULTI_TIER_ENABLED,
       maxAffiliateDepth: env.MAX_AFFILIATE_DEPTH,
@@ -317,4 +329,3 @@ export function getAppConfig() {
     },
   };
 }
-

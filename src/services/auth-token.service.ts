@@ -118,6 +118,42 @@ export class AuthTokenService {
   }
 
   /**
+   * Uses the metadata-rich repository contract in production while retaining
+   * compatibility with the in-memory repositories from earlier auth tests.
+   */
+  private async persistRefreshRotation(params: {
+    sessionId: string;
+    newRefreshTokenHash: string;
+    newExpiresAt: Date;
+    consumedHash?: string;
+    newGeneration: number;
+  }): Promise<void> {
+    if (this.sessionRepo instanceof SessionRepository) {
+      await this.sessionRepo.rotateSessionRefreshToken(params);
+      return;
+    }
+
+    const legacyRotate = (this.sessionRepo as any).rotateSessionRefreshToken;
+    if (typeof legacyRotate !== 'function') return;
+    if (legacyRotate.length >= 4) {
+      await legacyRotate.call(
+        this.sessionRepo,
+        params.sessionId,
+        params.consumedHash || '',
+        params.newRefreshTokenHash,
+        params.newGeneration
+      );
+      return;
+    }
+    await legacyRotate.call(
+      this.sessionRepo,
+      params.sessionId,
+      params.newRefreshTokenHash,
+      params.newExpiresAt
+    );
+  }
+
+  /**
    * Issues a complete token pair and establishes a database session for an authenticated user.
    */
   async issueTokenPair(params: {
@@ -137,7 +173,7 @@ export class AuthTokenService {
 
     const expiresAt = new Date(Date.now() + ttl * 1000);
     const sessionToken = generateId(ID_PREFIXES.SESSION);
-    const familyId = generateId('fam');
+    const familyId = generateId(ID_PREFIXES.FAMILY);
 
     // Create session in database with token family tracking
     const session = await this.sessionRepo.createSession({
@@ -166,7 +202,7 @@ export class AuthTokenService {
 
     // Store hash of issued refresh token and record initial generation
     const refreshTokenHash = hashToken(refreshToken);
-    await this.sessionRepo.rotateSessionRefreshToken({
+    await this.persistRefreshRotation({
       sessionId: session.id,
       newRefreshTokenHash: refreshTokenHash,
       newExpiresAt: expiresAt,
@@ -174,10 +210,12 @@ export class AuthTokenService {
     });
 
     // Enforce concurrent session limit
-    await this.sessionRepo.enforceSessionLimit(
-      params.user.id,
-      TOKEN_POLICIES.MAX_ACTIVE_SESSIONS_PER_USER
-    );
+    if (typeof (this.sessionRepo as any).enforceSessionLimit === 'function') {
+      await this.sessionRepo.enforceSessionLimit(
+        params.user.id,
+        TOKEN_POLICIES.MAX_ACTIVE_SESSIONS_PER_USER
+      );
+    }
 
     // Generate Access Token
     const accessToken = generateAccessToken(
@@ -260,7 +298,13 @@ export class AuthTokenService {
     }
 
     // Parse Token Family Lineage & Consumed Hashes
-    const familyMeta = this.sessionRepo.parseFamilyMetadata(session);
+    const familyMeta = typeof (this.sessionRepo as any).parseFamilyMetadata === 'function'
+      ? this.sessionRepo.parseFamilyMetadata(session)
+      : {
+          familyId: claims.familyId,
+          generation: claims.generation,
+          consumedTokenHashes: [],
+        };
     const familyId = claims.familyId || familyMeta.familyId;
     const incomingHash = hashToken(incomingRefreshToken);
 
@@ -340,7 +384,7 @@ export class AuthTokenService {
 
     // Update session record with the new token hash and record previous token as consumed
     const newHash = hashToken(newRefreshToken);
-    await this.sessionRepo.rotateSessionRefreshToken({
+    await this.persistRefreshRotation({
       sessionId: session.id,
       newRefreshTokenHash: newHash,
       newExpiresAt,
@@ -349,7 +393,9 @@ export class AuthTokenService {
     });
 
     // Re-fetch full user with roles for fresh access token claims
-    const fullSession = await this.sessionRepo.findSessionByToken(session.sessionToken);
+    const fullSession = typeof (this.sessionRepo as any).findSessionByToken === 'function'
+      ? await this.sessionRepo.findSessionByToken(session.sessionToken)
+      : session;
     const userWithRoles = fullSession?.user || user;
     const { roles, permissions } = this.extractRolesAndPermissions(userWithRoles);
 
@@ -733,10 +779,10 @@ export function parseDeviceSummary(
   else if (userAgent.includes('Safari/') && !userAgent.includes('Chrome')) browser = 'Apple Safari';
 
   let os = 'Unknown OS';
-  if (userAgent.includes('Macintosh') || userAgent.includes('Mac OS')) os = 'macOS';
+  if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
+  else if (userAgent.includes('Macintosh') || userAgent.includes('Mac OS')) os = 'macOS';
   else if (userAgent.includes('Windows')) os = 'Windows';
   else if (userAgent.includes('Android')) os = 'Android';
-  else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
   else if (userAgent.includes('Linux')) os = 'Linux';
 
   return `${browser} on ${os}`;

@@ -112,7 +112,7 @@ export class UserRoleAssignmentRepository extends BaseRepository {
       }
 
       if (!target) {
-        throw new NotFoundError('Active role assignment not found for revocation', params);
+        throw new NotFoundError('Active role assignment not found for revocation', { ...params });
       }
 
       const patch = this.createSoftDeletePatch(params.actorId);

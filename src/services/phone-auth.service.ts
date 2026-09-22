@@ -103,7 +103,7 @@ export class PhoneAuthService {
    * Normalizes a Bangladesh mobile number to standard E.164 (+8801XXXXXXXXX).
    */
   normalizePhoneNumber(raw: string): string {
-    let clean = raw.replace(/[\s\-()]/g, '');
+    const clean = raw.replace(/[\s\-()]/g, '');
     if (clean.startsWith('01') && clean.length === 11) {
       return `+88${clean}`;
     }

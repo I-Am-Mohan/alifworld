@@ -69,6 +69,7 @@ export const ID_PREFIXES = {
   USER_RANK: 'urk',
   LEADERBOARD_SNAPSHOT: 'lbs',
   SESSION: 'ses',
+  FAMILY: 'fam',
   OTP: 'otp',
 } as const;
 

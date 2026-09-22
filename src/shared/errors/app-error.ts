@@ -43,11 +43,10 @@ export class AuthenticationError extends AppError {
 
 export class UnauthorizedError extends AppError {
   readonly statusCode = 401;
-  readonly errorCode = 'UNAUTHORIZED';
+  readonly errorCode: string = 'UNAUTHORIZED';
 }
 
-export class TokenReuseDetectedError extends AppError {
-  readonly statusCode = 401;
+export class TokenReuseDetectedError extends UnauthorizedError {
   readonly errorCode = 'REFRESH_TOKEN_REUSE_DETECTED';
 }
 

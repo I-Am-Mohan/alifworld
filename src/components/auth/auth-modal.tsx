@@ -20,12 +20,13 @@ import {
   RefreshCw,
   Edit2,
   ChevronRight,
+  KeyRound,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { useAuthModal, AuthMode } from './auth-context';
 import { useI18n } from '@/i18n/context';
 
-type LoginStep = 'number' | 'unregistered' | 'otp' | 'password';
+type LoginStep = 'number' | 'unregistered' | 'otp' | 'password' | 'forgot';
 type RegisterStep = 'number' | 'otp' | 'name' | 'password' | 'details' | 'success';
 
 export function AuthModal() {
@@ -41,6 +42,9 @@ export function AuthModal() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [passwordIdentifier, setPasswordIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetRequested, setResetRequested] = useState(false);
+  const [devResetToken, setDevResetToken] = useState<string | null>(null);
 
   // Register Fields
   const [firstName, setFirstName] = useState('');
@@ -148,6 +152,14 @@ export function AuthModal() {
     devOtpLabel: translate('auth.devOtpLabel'),
     clickToFill: translate('auth.clickToFill'),
     close: translate('auth.close'),
+    forgotPassword: translate('auth.forgotPassword'),
+    forgotPasswordTitle: translate('auth.forgotPasswordTitle'),
+    forgotPasswordDesc: translate('auth.forgotPasswordDesc'),
+    emailAddress: translate('auth.emailAddress'),
+    sendResetLink: translate('auth.sendResetLink'),
+    resetRequestAccepted: translate('auth.resetRequestAccepted'),
+    backToSignIn: translate('auth.backToSignIn'),
+    openDevResetLink: translate('auth.openDevResetLink'),
   };
 
   const divisionList = [
@@ -308,6 +320,36 @@ export function AuthModal() {
       loginSuccess(data.data.user);
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/v1/auth/password/request-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetEmail.trim(),
+          locale: locale === 'bn' ? 'bn-BD' : 'en-BD',
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        throw new Error(translate('auth.resetRequestFailed'));
+      }
+      setDevResetToken(data.data.devResetToken || null);
+      setResetRequested(true);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : translate('auth.resetRequestFailed')
+      );
     } finally {
       setLoading(false);
     }
@@ -807,6 +849,22 @@ export function AuthModal() {
                     />
                   </div>
 
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetEmail(passwordIdentifier.includes('@') ? passwordIdentifier : '');
+                        setResetRequested(false);
+                        setDevResetToken(null);
+                        setLoginStep('forgot');
+                        setError(null);
+                      }}
+                      className="text-xs font-bold text-amber-700 hover:text-amber-800 hover:underline"
+                    >
+                      {t.forgotPassword}
+                    </button>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                       {t.password}
@@ -854,6 +912,80 @@ export function AuthModal() {
                       ← {t.useOtp}
                     </button>
                   </div>
+                </form>
+              )}
+
+              {loginStep === 'forgot' && (
+                <form
+                  onSubmit={handlePasswordResetRequest}
+                  className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                    <KeyRound className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">{t.forgotPasswordTitle}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {t.forgotPasswordDesc}
+                    </p>
+                  </div>
+
+                  {resetRequested ? (
+                    <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-relaxed text-emerald-800">
+                      <div className="flex gap-2">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{t.resetRequestAccepted}</span>
+                      </div>
+                      {devResetToken && (
+                        <a
+                          href={`/reset-password?email=${encodeURIComponent(resetEmail.trim())}#token=${encodeURIComponent(devResetToken)}`}
+                          className="mt-3 inline-flex font-bold text-emerald-900 underline"
+                        >
+                          {t.openDevResetLink}
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <label className="block">
+                      <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                        {t.emailAddress}
+                      </span>
+                      <input
+                        type="email"
+                        value={resetEmail}
+                        onChange={(event) => setResetEmail(event.target.value)}
+                        autoComplete="email"
+                        maxLength={255}
+                        required
+                        autoFocus
+                        className="w-full rounded-2xl border border-slate-200 bg-[#F8FAFC] px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100"
+                        placeholder="name@example.com"
+                      />
+                    </label>
+                  )}
+
+                  {!resetRequested && (
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#F59E0B] to-[#D97706] px-4 py-3.5 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 transition disabled:opacity-50"
+                    >
+                      {loading && <RefreshCw className="h-4 w-4 animate-spin" />}
+                      {t.sendResetLink}
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginStep('password');
+                      setError(null);
+                    }}
+                    className="flex w-full items-center justify-center gap-1.5 py-2 text-xs font-semibold text-slate-500 transition hover:text-amber-700"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t.backToSignIn}
+                  </button>
                 </form>
               )}
             </div>

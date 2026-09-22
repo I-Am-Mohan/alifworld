@@ -688,6 +688,130 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/password/request-reset': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Request Password Reset',
+        description: 'Queues a one-time 15-minute password reset link. The response is deliberately neutral for known and unknown email addresses. Requests are limited to one per minute and three per hour per account.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PasswordResetRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Neutral reset-request acknowledgement',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PasswordResetRequestResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Invalid email or locale',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '503': {
+            description: 'Reset notification could not be queued',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/password/reset': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Reset Password with One-Time Token',
+        description: 'Consumes a hashed one-time reset token, rejects compromised or reused passwords, updates the password, increments tokenVersion, and revokes every active session atomically.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PasswordResetCompletionRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password reset and all sessions revoked',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PasswordMutationResponse' },
+              },
+            },
+          },
+          '409': {
+            description: 'The one-time token was consumed concurrently',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Invalid token or password policy failure',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/password/change': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Change Authenticated User Password',
+        description: 'Verifies the current password, rejects compromised or reused passwords, changes the credential, increments tokenVersion, and revokes every active session atomically.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PasswordChangeRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password changed and all sessions revoked',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PasswordMutationResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Authentication failed or current password is incorrect',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Password policy failure',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/token/policy': {
       get: {
         tags: ['Authentication'],
@@ -1103,6 +1227,7 @@ export const openApiSpec = {
           },
         },
       },
+    },
     '/api/v1/system/languages': {
       get: {
         tags: ['Internationalization & Localization'],
@@ -1575,6 +1700,66 @@ export const openApiSpec = {
               tokenVersion: { type: 'integer', example: 2 },
             },
             required: ['message', 'tokenVersion'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      PasswordResetRequest: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email', example: 'customer@example.com' },
+          locale: { type: 'string', enum: ['en-BD', 'bn-BD'], default: 'bn-BD' },
+        },
+        required: ['email'],
+      },
+      PasswordResetRequestResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              accepted: { type: 'boolean', const: true },
+              message: { type: 'string' },
+              cooldownSeconds: { type: 'integer', example: 60 },
+            },
+            required: ['accepted', 'message', 'cooldownSeconds'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      PasswordResetCompletionRequest: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email' },
+          token: { type: 'string', minLength: 32, writeOnly: true },
+          newPassword: { type: 'string', format: 'password', minLength: 8, maxLength: 128, writeOnly: true },
+          confirmPassword: { type: 'string', format: 'password', maxLength: 128, writeOnly: true },
+        },
+        required: ['email', 'token', 'newPassword', 'confirmPassword'],
+      },
+      PasswordChangeRequest: {
+        type: 'object',
+        properties: {
+          currentPassword: { type: 'string', format: 'password', maxLength: 128, writeOnly: true },
+          newPassword: { type: 'string', format: 'password', minLength: 8, maxLength: 128, writeOnly: true },
+          confirmPassword: { type: 'string', format: 'password', maxLength: 128, writeOnly: true },
+        },
+        required: ['currentPassword', 'newPassword', 'confirmPassword'],
+      },
+      PasswordMutationResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              passwordReset: { type: 'boolean' },
+              passwordChanged: { type: 'boolean' },
+              sessionsRevoked: { type: 'boolean', const: true },
+              message: { type: 'string' },
+            },
+            required: ['sessionsRevoked', 'message'],
           },
         },
         required: ['success', 'data'],

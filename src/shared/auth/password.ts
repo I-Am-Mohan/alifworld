@@ -16,7 +16,46 @@ const PBKDF2_DIGEST = 'sha512';
 const HASH_IDENTIFIER = '$pbkdf2-sha512$';
 
 /**
- * Validates raw password complexity against platform security rules.
+ * High-frequency breached password blacklist (NIST SP 800-63B breach-safe control)
+ */
+const COMMONLY_BREACHED_PASSWORDS = new Set([
+  'password1!',
+  'password123!',
+  'password@123',
+  'password@1234',
+  'password#1',
+  'qwerty@123',
+  'qwerty123!',
+  'qwertyuiop1!',
+  'admin@123',
+  'admin123!',
+  'welcome@123',
+  'welcome123!',
+  'alifworld@2026',
+  'dhaka@1234',
+  'bangladesh@1',
+  'qwerty1234!',
+  'abc12345!',
+  'abcd1234!',
+  'monkey123!',
+  'dragon123!',
+  'football1!',
+  'princess1!',
+  'sunshine1!',
+  'trustno1!',
+  'master123!',
+  '12345678@aa',
+  'letmein@123',
+  'iloveyou@123',
+  'pass@word1',
+]);
+
+export function isCommonPassword(password: string): boolean {
+  return COMMONLY_BREACHED_PASSWORDS.has(password.toLowerCase().trim());
+}
+
+/**
+ * Validates raw password complexity against platform security rules and breach lists.
  */
 export function validatePasswordStrength(password: string): {
   isValid: boolean;
@@ -50,6 +89,10 @@ export function validatePasswordStrength(password: string): {
 
   if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     errors.push('Password must contain at least one special character (!@#$%^&*...)');
+  }
+
+  if (isCommonPassword(password)) {
+    errors.push('This password appears in known data breaches or is too common. Please choose a more unique password.');
   }
 
   return {

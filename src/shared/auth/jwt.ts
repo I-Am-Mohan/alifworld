@@ -35,15 +35,16 @@ export interface JwtSignOptions {
 /**
  * Signs an arbitrary JSON payload into an RFC 7519 HS256 JWT token.
  */
-export function signJwt<T extends Record<string, unknown>>(
+export function signJwt<T extends object>(
   payload: T,
   secret: string,
   options: JwtSignOptions = {}
 ): string {
   const nowSeconds = Math.floor(Date.now() / 1000);
+  const payloadRecord = payload as Record<string, unknown>;
   const exp = options.expiresInSeconds
     ? nowSeconds + options.expiresInSeconds
-    : (payload.exp as number) || nowSeconds + TOKEN_POLICIES.ACCESS_TOKEN_TTL_SECONDS;
+    : (payloadRecord.exp as number) || nowSeconds + TOKEN_POLICIES.ACCESS_TOKEN_TTL_SECONDS;
 
   const header = {
     alg: 'HS256',
@@ -52,8 +53,8 @@ export function signJwt<T extends Record<string, unknown>>(
 
   const finalPayload = {
     ...payload,
-    iss: options.issuer || payload.iss || TOKEN_POLICIES.ISSUER,
-    aud: options.audience || payload.aud || TOKEN_POLICIES.AUDIENCE,
+    iss: options.issuer || payloadRecord.iss || TOKEN_POLICIES.ISSUER,
+    aud: options.audience || payloadRecord.aud || TOKEN_POLICIES.AUDIENCE,
     iat: nowSeconds,
     exp,
   };
@@ -72,10 +73,10 @@ export function signJwt<T extends Record<string, unknown>>(
 /**
  * Verifies an HS256 JWT token with constant-time signature validation and expiration checks.
  */
-export function verifyJwt<T extends Record<string, unknown>>(
+export function verifyJwt<T extends object>(
   token: string,
   secret: string
-): T {
+): T & { iss: string; aud: string; iat: number; exp: number } {
   if (!token || typeof token !== 'string') {
     throw new UnauthorizedError('Authentication token missing or invalid');
   }
@@ -110,13 +111,14 @@ export function verifyJwt<T extends Record<string, unknown>>(
   }
 
   const nowSeconds = Math.floor(Date.now() / 1000);
-  if (typeof claims.exp === 'number' && claims.exp < nowSeconds) {
+  const claimRecord = claims as Record<string, unknown>;
+  if (typeof claimRecord.exp === 'number' && claimRecord.exp < nowSeconds) {
     throw new UnauthorizedError('Token has expired', {
-      expiredAt: new Date(claims.exp * 1000).toISOString(),
+      expiredAt: new Date(claimRecord.exp * 1000).toISOString(),
     });
   }
 
-  return claims;
+  return claims as T & { iss: string; aud: string; iat: number; exp: number };
 }
 
 /**

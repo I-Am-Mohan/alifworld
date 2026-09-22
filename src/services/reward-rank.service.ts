@@ -78,7 +78,7 @@ export class RewardRankService {
     const ruleVersion = params.ruleVersion || 'v1.0.0';
 
     // Fetch active reward rule
-    let rule = await this.prisma.rewardRule.findFirst({
+    const rule = await this.prisma.rewardRule.findFirst({
       where: { ruleCode, version: ruleVersion, isActive: true, deletedAt: null },
     });
 
