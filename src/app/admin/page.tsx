@@ -148,18 +148,36 @@ export default function AdminPortalPage() {
 
           <Link
             href="/admin/sellers"
-            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group md:col-span-2"
+            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
           >
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-mono font-bold text-brand-orange">SEL-01</span>
                 <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
-                  Review Merchants & KYC Dossiers →
+                  Review Merchants &amp; KYC Dossiers →
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white mb-1">Merchant Verification & KYC Dossiers</h3>
+              <h3 className="text-lg font-bold text-white mb-1">Merchant Verification &amp; KYC Dossiers</h3>
               <p className="text-xs text-neutral-400">
-                Audit seller registrations, verify government regulatory credentials (NBR BIN/TIN, City Corporation Trade Licenses), manage commission tiers, and enforce multi-tenant separation.
+                Audit seller registrations, verify government regulatory credentials (NBR BIN/TIN, Trade Licenses), and enforce multi-tenant separation.
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/categories"
+            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
+          >
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-mono font-bold text-emerald-400">CAT-01</span>
+                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
+                  Open Taxonomy &amp; Brands →
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-1">Catalog Taxonomy &amp; Brand Authority</h3>
+              <p className="text-xs text-neutral-400">
+                Configure hierarchical category trees, NBR Mushak-6.3 VAT rate profiles (15%, 5%, 0%), and approved brand trademarks.
               </p>
             </div>
           </Link>

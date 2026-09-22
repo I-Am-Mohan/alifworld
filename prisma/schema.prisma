@@ -249,6 +249,7 @@ model Seller {
   staff        SellerStaff[]
   kycDocuments SellerKycDocument[]
   settings     SellerStoreSettings?
+  products     Product[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -339,5 +340,194 @@ model SellerStoreSettings {
   @@index([deletedAt])
   @@map("seller_store_settings")
 }
+
+// ------------------------------------------------------------------------------
+// 14. Catalog Taxonomy Categories
+// ------------------------------------------------------------------------------
+/// Hierarchical category tree with self-referencing parent/child relations and NBR VAT rules
+model Category {
+  id             String    @id @default(uuid())
+  name           String
+  nameBn         String?   @map("name_bn")
+  slug           String    @unique
+  description    String?
+  parentId       String?   @map("parent_id")
+  imageUrl       String?   @map("image_url")
+  icon           String?
+  displayOrder   Int       @default(0) @map("display_order")
+  isActive       Boolean   @default(true) @map("is_active")
+  taxRatePercent Decimal   @default(0.00) @map("tax_rate_percent") @db.Decimal(5, 2) // Default NBR VAT rate (e.g. 5.00, 7.50, 15.00)
+  version        Int       @default(1)
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([parentId])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("categories")
+}
+
+// ------------------------------------------------------------------------------
+// 15. Brand Authority & Registry
+// ------------------------------------------------------------------------------
+/// Approved brand registry for catalog categorization and trademark compliance
+model Brand {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  logoUrl     String?   @map("logo_url")
+  website     String?
+  isVerified  Boolean   @default(true) @map("is_verified")
+  isActive    Boolean   @default(true) @map("is_active")
+  version     Int       @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("brands")
+}
+
+// ------------------------------------------------------------------------------
+// 16. Products & Catalog Core
+// ------------------------------------------------------------------------------
+/// Merchant products with strict BDT integer poisha pricing and independent Product Points
+model Product {
+  id                   String    @id @default(uuid())
+  sellerId             String    @map("seller_id")
+  categoryId           String    @map("category_id")
+  brandId              String?   @map("brand_id")
+  title                String
+  titleBn              String?   @map("title_bn")
+  slug                 String    @unique
+  description          String    @db.Text
+  descriptionBn        String?   @map("description_bn") @db.Text
+  status               String    @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, PUBLISHED, ARCHIVED
+  basePricePoisha      BigInt    @map("base_price_poisha") // Integer minor units (1 BDT = 100 poisha)
+  compareAtPricePoisha BigInt?   @map("compare_at_price_poisha") // MSRP / strikethrough price in poisha
+  currency             String    @default("BDT")
+  productPoint         Int       @default(0) @map("product_point") // Discrete integer Product Points (independent from price!)
+  sku                  String?   @unique
+  barcode              String?
+  isPhysical           Boolean   @default(true) @map("is_physical")
+  weightGrams          Int?      @map("weight_grams")
+  warranty             String?
+  tags                 String[]  @default([])
+  taxRatePercent       Decimal?  @map("tax_rate_percent") @db.Decimal(5, 2) // Overrides category tax rate if specified
+  version              Int       @default(1)
+  deletedAt            DateTime? @map("deleted_at")
+  deletedBy            String?   @map("deleted_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  seller      Seller               @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  category    Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brand       Brand?               @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  variants    ProductVariant[]
+  media       ProductMedia[]
+  slugHistory ProductSlugHistory[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("products")
+}
+
+// ------------------------------------------------------------------------------
+// 17. Product Variants & SKU Matrix
+// ------------------------------------------------------------------------------
+/// Sellable inventory variants (e.g. Color, Size, Storage) with SKU and pricing
+model ProductVariant {
+  id                   String    @id @default(uuid())
+  productId            String    @map("product_id")
+  sku                  String    @unique
+  title                String
+  pricePoisha          BigInt    @map("price_poisha") // Variant price in integer poisha
+  compareAtPricePoisha BigInt?   @map("compare_at_price_poisha")
+  productPoint         Int?      @map("product_point") // Optional variant points override
+  barcode              String?
+  weightGrams          Int?      @map("weight_grams")
+  option1Name          String?   @map("option1_name") // e.g. "Color"
+  option1Value         String?   @map("option1_value") // e.g. "Midnight Black"
+  option2Name          String?   @map("option2_name") // e.g. "Storage"
+  option2Value         String?   @map("option2_value") // e.g. "256GB"
+  option3Name          String?   @map("option3_name") // e.g. "Size"
+  option3Value         String?   @map("option3_value")
+  imageUrl             String?   @map("image_url")
+  isActive             Boolean   @default(true) @map("is_active")
+  displayOrder         Int       @default(0) @map("display_order")
+  version              Int       @default(1)
+  deletedAt            DateTime? @map("deleted_at")
+  deletedBy            String?   @map("deleted_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("product_variants")
+}
+
+// ------------------------------------------------------------------------------
+// 18. Product Media & Gallery Assets
+// ------------------------------------------------------------------------------
+/// Visual assets (images, videos) associated with products and variants
+model ProductMedia {
+  id           String    @id @default(uuid())
+  productId    String    @map("product_id")
+  mediaType    String    @default("IMAGE") @map("media_type") // IMAGE, VIDEO
+  url          String    // S3 permanent storage URL
+  altText      String?   @map("alt_text")
+  altTextBn    String?   @map("alt_text_bn")
+  isPrimary    Boolean   @default(false) @map("is_primary")
+  displayOrder Int       @default(0) @map("display_order")
+  fileSize     Int?      @map("file_size")
+  mimeType     String?   @map("mime_type")
+  width        Int?
+  height       Int?
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, isPrimary])
+  @@index([displayOrder])
+  @@index([deletedAt])
+  @@map("product_media")
+}
+
+// ------------------------------------------------------------------------------
+// 19. Product Slug History (Preserved Public URLs)
+// ------------------------------------------------------------------------------
+/// Preserves SEO redirects and permalinks when product slugs are updated
+model ProductSlugHistory {
+  id        String   @id @default(uuid())
+  productId String   @map("product_id")
+  oldSlug   String   @unique @map("old_slug")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_slug_history")
+}
+
 
 

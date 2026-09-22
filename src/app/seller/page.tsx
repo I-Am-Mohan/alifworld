@@ -14,7 +14,7 @@ export default function SellerCenterPage() {
     ownerName: 'Rahim Chowdhury',
     kycCompleted: true,
     staffCount: 2,
-    activeProducts: 0,
+    activeProducts: 2,
     withdrawableBalance: '৳0.00',
   };
 
@@ -34,6 +34,12 @@ export default function SellerCenterPage() {
           </div>
         </div>
         <div className="flex space-x-3">
+          <Link
+            href="/seller/products"
+            className="px-4 py-2 rounded-lg bg-brand-orange text-white font-semibold text-sm hover:bg-brand-orange/90 shadow-lg"
+          >
+            Product Catalog ({store.activeProducts})
+          </Link>
           <Link
             href="/seller/settings"
             className="px-4 py-2 rounded-lg border border-neutral-700 bg-neutral-900 text-sm hover:bg-neutral-800 font-semibold"
@@ -113,14 +119,27 @@ export default function SellerCenterPage() {
           <span className="w-2.5 h-2.5 rounded-full bg-brand-orange mr-2 inline-block" />
           Store Management & Configuration
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
-            href="/seller/settings"
+            href="/seller/products"
             className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all group"
           >
             <div className="text-xs font-mono font-bold text-brand-orange mb-1">MODULE-01</div>
             <h3 className="text-base font-bold text-white group-hover:text-brand-orange transition-colors">
-              Logistics & Store Profile
+              Products &amp; Catalog
+            </h3>
+            <p className="text-xs text-neutral-400 mt-1.5">
+              Manage listings, multi-SKU variants, BDT poisha prices, and discrete Product Points.
+            </p>
+          </Link>
+
+          <Link
+            href="/seller/settings"
+            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all group"
+          >
+            <div className="text-xs font-mono font-bold text-brand-globeLightBlue mb-1">MODULE-02</div>
+            <h3 className="text-base font-bold text-white group-hover:text-brand-globeLightBlue transition-colors">
+              Logistics &amp; Store Profile
             </h3>
             <p className="text-xs text-neutral-400 mt-1.5">
               Configure pickup warehouse, return address, Pathao/Steadfast courier defaults, and vacation mode.
@@ -131,9 +150,9 @@ export default function SellerCenterPage() {
             href="/seller/kyc"
             className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all group"
           >
-            <div className="text-xs font-mono font-bold text-emerald-400 mb-1">MODULE-02</div>
+            <div className="text-xs font-mono font-bold text-emerald-400 mb-1">MODULE-03</div>
             <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
-              KYC & Compliance Documents
+              KYC &amp; Compliance Documents
             </h3>
             <p className="text-xs text-neutral-400 mt-1.5">
               Upload and manage Trade License, NID, NBR BIN, and bank cheque leaf verification records.
@@ -144,9 +163,9 @@ export default function SellerCenterPage() {
             href="/seller/staff"
             className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all group"
           >
-            <div className="text-xs font-mono font-bold text-brand-globeLightBlue mb-1">MODULE-03</div>
-            <h3 className="text-base font-bold text-white group-hover:text-brand-globeLightBlue transition-colors">
-              Staff Delegation & Roles
+            <div className="text-xs font-mono font-bold text-amber-400 mb-1">MODULE-04</div>
+            <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition-colors">
+              Staff Delegation &amp; Roles
             </h3>
             <p className="text-xs text-neutral-400 mt-1.5">
               Delegate order packing, product drafting, and store management to authorized employees.

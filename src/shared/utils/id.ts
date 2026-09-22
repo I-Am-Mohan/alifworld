@@ -39,11 +39,16 @@ export const ID_PREFIXES = {
   STAFF: 'stf',
   KYC_DOCUMENT: 'kyc',
   STORE_SETTINGS: 'set',
+  BRAND: 'brd',
+  MEDIA: 'med',
+  PRODUCT_MEDIA: 'med',
   SHIPMENT: 'shp',
   INVENTORY: 'inv',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];
+
+export const ENTITY_PREFIXES = ID_PREFIXES;
 
 const ALL_PREFIXES = new Set<string>(Object.values(ID_PREFIXES));
 const ID_REGEX = /^[a-z]{3}_[0-9a-z]{16,40}$/;
@@ -57,6 +62,8 @@ export function generateId(prefix: IdPrefix): string {
   const entropy = randomBytes(8).toString('hex');
   return `${prefix}_${timestamp}${entropy}`;
 }
+
+export const generatePrefixedId = generateId;
 
 /**
  * Validates that an identifier matches the standardized AlifWorld format

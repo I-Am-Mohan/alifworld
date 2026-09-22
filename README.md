@@ -65,6 +65,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Identifiers, Lifecycle & Deletion Policy](docs/architecture/identifiers-lifecycle-and-deletion-policy.md)**: Prefixed k-sortable IDs, UTC/Dhaka timestamps, OCC versioning, and 3-tier deletion policy.
 - **[User, Role, Permission & Assignment Architecture](docs/architecture/user-roles-permissions-and-role-assignments.md)**: Normalized IAM schema, tenant-scoped role assignments, and Bangladesh E.164 phone normalization.
 - **[Seller, Staff, KYC & Store Settings Architecture](docs/architecture/seller-staff-kyc-and-store-settings.md)**: Multi-tenant merchant isolation, KYC document regulatory verification, delegated store staff, and logistics configurations.
+- **[Catalog Taxonomy, Products, Variants & Media Architecture](docs/architecture/catalog-taxonomy-products-and-media.md)**: Hierarchical product taxonomy, trademark brand registry, multi-SKU variants, BDT integer poisha pricing, and independent Product Points.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -92,6 +93,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0022: Identifiers, Timestamps, Lifecycle Fields, and Deletion Policy Standardization](docs/decisions/0022-standardize-identifiers-timestamps-lifecycle-fields-and-deletion-policy.md)
   - [ADR 0023: Model Users, Roles, Permissions, and Role Assignments Architecture](docs/decisions/0023-model-users-roles-permissions-and-role-assignments.md)
   - [ADR 0024: Model Sellers, Seller Staff, KYC Documents, and Store Settings](docs/decisions/0024-model-sellers-seller-staff-kyc-documents-and-store-settings.md)
+  - [ADR 0025: Model Catalog Taxonomy, Products, Variants, and Media](docs/decisions/0025-model-catalog-taxonomy-products-variants-and-media.md)
 
 ---
 
@@ -103,7 +105,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
 | **02** | 011–020 | Repository and Tooling | **Completed (Milestones 011–020)** |
-| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–024 Completed)** |
+| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–025 Completed)** |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
 | **06** | 051–060 | Bangladesh Localization | Planned |

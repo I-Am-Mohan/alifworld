@@ -452,6 +452,247 @@ async function seed() {
     }
 
     console.info(`✅ Seeded verified merchant store 'Dhaka Tech Electronics' (${merchantStore.id}).`);
+
+    // ----------------------------------------------------------------------------
+    // 6. Catalog Taxonomy, Brands & Products
+    // ----------------------------------------------------------------------------
+    // Seed Categories
+    const rootCatId = generateId(ID_PREFIXES.CATEGORY);
+    const rootCategory = await (prisma as any).category.upsert({
+      where: { slug: 'electronics-gadgets' },
+      create: {
+        id: rootCatId,
+        name: 'Electronics & Gadgets',
+        nameBn: 'ইলেকট্রনিক্স ও গ্যাজেটস',
+        slug: 'electronics-gadgets',
+        description: 'Computers, smartphones, accessories and home entertainment',
+        taxRatePercent: 5.00,
+        displayOrder: 1,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    const subCatPhoneId = generateId(ID_PREFIXES.CATEGORY);
+    const phoneCategory = await (prisma as any).category.upsert({
+      where: { slug: 'smartphones-tablets' },
+      create: {
+        id: subCatPhoneId,
+        name: 'Smartphones & Tablets',
+        nameBn: 'স্মার্টফোন ও ট্যাবলেট',
+        slug: 'smartphones-tablets',
+        parentId: rootCategory.id,
+        taxRatePercent: 5.00,
+        displayOrder: 1,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    const subCatAudioId = generateId(ID_PREFIXES.CATEGORY);
+    const audioCategory = await (prisma as any).category.upsert({
+      where: { slug: 'audio-headphones' },
+      create: {
+        id: subCatAudioId,
+        name: 'Audio & Headphones',
+        nameBn: 'অডিও ও হেডফোন',
+        slug: 'audio-headphones',
+        parentId: rootCategory.id,
+        taxRatePercent: 15.00,
+        displayOrder: 2,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    // Seed Brands
+    const waltonBrandId = generateId(ID_PREFIXES.BRAND);
+    const waltonBrand = await (prisma as any).brand.upsert({
+      where: { slug: 'walton' },
+      create: {
+        id: waltonBrandId,
+        name: 'Walton',
+        slug: 'walton',
+        website: 'https://waltonbd.com',
+        isVerified: true,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    const xiaomiBrandId = generateId(ID_PREFIXES.BRAND);
+    const xiaomiBrand = await (prisma as any).brand.upsert({
+      where: { slug: 'xiaomi' },
+      create: {
+        id: xiaomiBrandId,
+        name: 'Xiaomi',
+        slug: 'xiaomi',
+        website: 'https://mi.com',
+        isVerified: true,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    // Seed Product 1: Walton Smartphone
+    const prod1Id = generateId(ID_PREFIXES.PRODUCT);
+    const phoneProduct = await (prisma as any).product.upsert({
+      where: { slug: 'walton-primo-s8-pro' },
+      create: {
+        id: prod1Id,
+        sellerId: merchantStore.id,
+        categoryId: phoneCategory.id,
+        brandId: waltonBrand.id,
+        title: 'Walton Primo S8 Pro (8GB RAM / 128GB ROM)',
+        titleBn: 'ওয়ালটন প্রিমো এস৮ প্রো (৮জিবি র‍্যাম / ১২৮জিবি রম)',
+        slug: 'walton-primo-s8-pro',
+        description: 'Flagship octa-core performance, 64MP AI Quad Camera, 5000mAh battery with 33W Fast Charging.',
+        descriptionBn: 'অক্টাকোর পারফরম্যান্স, ৬৪ মেগাপিক্সেল এআই ক্যামেরা এবং দ্রুত চার্জিং সুবিধা।',
+        status: 'PUBLISHED',
+        basePricePoisha: BigInt(2199000), // ৳21,990.00
+        compareAtPricePoisha: BigInt(2499000), // ৳24,990.00
+        currency: 'BDT',
+        productPoint: 450, // 450 Product Points
+        sku: 'WALT-S8PRO',
+        isPhysical: true,
+        weightGrams: 195,
+        warranty: '1 Year Official Warranty',
+        tags: ['smartphone', 'walton', 'android', 'electronics'],
+        taxRatePercent: 5.00,
+        version: 1,
+      },
+      update: {},
+    });
+
+    // Seed Variants for Phone Product
+    await (prisma as any).productVariant.upsert({
+      where: { sku: 'WALT-S8PRO-BLK-128' },
+      create: {
+        id: generateId(ID_PREFIXES.VARIANT),
+        productId: phoneProduct.id,
+        sku: 'WALT-S8PRO-BLK-128',
+        title: 'Midnight Black / 128GB',
+        pricePoisha: BigInt(2199000),
+        compareAtPricePoisha: BigInt(2499000),
+        productPoint: 450,
+        option1Name: 'Color',
+        option1Value: 'Midnight Black',
+        option2Name: 'Storage',
+        option2Value: '128GB',
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    await (prisma as any).productVariant.upsert({
+      where: { sku: 'WALT-S8PRO-BLU-128' },
+      create: {
+        id: generateId(ID_PREFIXES.VARIANT),
+        productId: phoneProduct.id,
+        sku: 'WALT-S8PRO-BLU-128',
+        title: 'Ocean Blue / 128GB',
+        pricePoisha: BigInt(2199000),
+        compareAtPricePoisha: BigInt(2499000),
+        productPoint: 450,
+        option1Name: 'Color',
+        option1Value: 'Ocean Blue',
+        option2Name: 'Storage',
+        option2Value: '128GB',
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    // Seed Media for Phone Product
+    const phoneMediaExists = await (prisma as any).productMedia.findFirst({
+      where: { productId: phoneProduct.id },
+    });
+    if (!phoneMediaExists) {
+      await (prisma as any).productMedia.create({
+        data: {
+          id: generateId(ID_PREFIXES.MEDIA),
+          productId: phoneProduct.id,
+          mediaType: 'IMAGE',
+          url: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97',
+          altText: 'Walton Primo S8 Pro Front and Back',
+          isPrimary: true,
+          displayOrder: 1,
+        },
+      });
+    }
+
+    // Seed Product 2: Xiaomi Earbuds
+    const prod2Id = generateId(ID_PREFIXES.PRODUCT);
+    const audioProduct = await (prisma as any).product.upsert({
+      where: { slug: 'xiaomi-redmi-buds-5-pro' },
+      create: {
+        id: prod2Id,
+        sellerId: merchantStore.id,
+        categoryId: audioCategory.id,
+        brandId: xiaomiBrand.id,
+        title: 'Xiaomi Redmi Buds 5 Pro Wireless Earbuds',
+        titleBn: 'শাওমি রেডমি বাডস ৫ প্রো ওয়্যারলেস ইয়ারবাডস',
+        slug: 'xiaomi-redmi-buds-5-pro',
+        description: 'Active Noise Cancellation up to 52dB, Hi-Res Audio Wireless with LDAC, 38 hours total battery.',
+        descriptionBn: 'হাই-রেস অডিও সাপোর্ট এবং দীর্ঘ ব্যাটারি ব্যাকআপ সমৃদ্ধ অ্যাক্টিভ নয়েজ ক্যান্সেলেশন।',
+        status: 'PUBLISHED',
+        basePricePoisha: BigInt(649000), // ৳6,490.00
+        compareAtPricePoisha: BigInt(749000), // ৳7,490.00
+        currency: 'BDT',
+        productPoint: 120, // 120 Product Points
+        sku: 'MI-BUDS5P',
+        isPhysical: true,
+        warranty: '6 Months Brand Warranty',
+        tags: ['earbuds', 'audio', 'xiaomi', 'anc'],
+        taxRatePercent: 15.00,
+        version: 1,
+      },
+      update: {},
+    });
+
+    await (prisma as any).productVariant.upsert({
+      where: { sku: 'MI-BUDS5P-WHT' },
+      create: {
+        id: generateId(ID_PREFIXES.VARIANT),
+        productId: audioProduct.id,
+        sku: 'MI-BUDS5P-WHT',
+        title: 'Moonlight White',
+        pricePoisha: BigInt(649000),
+        compareAtPricePoisha: BigInt(749000),
+        productPoint: 120,
+        option1Name: 'Color',
+        option1Value: 'Moonlight White',
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    const audioMediaExists = await (prisma as any).productMedia.findFirst({
+      where: { productId: audioProduct.id },
+    });
+    if (!audioMediaExists) {
+      await (prisma as any).productMedia.create({
+        data: {
+          id: generateId(ID_PREFIXES.MEDIA),
+          productId: audioProduct.id,
+          mediaType: 'IMAGE',
+          url: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df',
+          altText: 'Xiaomi Redmi Buds 5 Pro White',
+          isPrimary: true,
+          displayOrder: 1,
+        },
+      });
+    }
+
+    console.info('✅ Seeded catalog categories, brands, products, variants, and media.');
   }
 
   // Record seed execution in AuditLog
