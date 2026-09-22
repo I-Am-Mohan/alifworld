@@ -19,12 +19,13 @@ import {
   ShieldCheck,
   RefreshCw,
   Edit2,
-  ChevronRight,
   KeyRound,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { useAuthModal, AuthMode } from './auth-context';
 import { useI18n } from '@/i18n/context';
+import { getBangladeshMobileOperator } from '@/shared/utils/phone';
+import { getBangladeshDistricts } from '@/shared/geo/bangladesh-geo';
 
 type LoginStep = 'number' | 'unregistered' | 'otp' | 'password' | 'forgot';
 type RegisterStep = 'number' | 'otp' | 'name' | 'password' | 'details' | 'success';
@@ -53,6 +54,7 @@ export function AuthModal() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [address, setAddress] = useState('');
   const [selectedDivisionKey, setSelectedDivisionKey] = useState('dhaka');
+  const [selectedDistrict, setSelectedDistrict] = useState('Dhaka');
   const [city, setCity] = useState('');
   const [birthday, setBirthday] = useState('');
   const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('');
@@ -172,6 +174,9 @@ export function AuthModal() {
     { key: 'rangpur', name: translate('store.divisions.rangpur').split(',')[0] },
     { key: 'mymensingh', name: translate('store.divisions.mymensingh').split(',')[0] },
   ];
+
+  const detectedOperator = phone.trim() ? getBangladeshMobileOperator(phone.trim()) : null;
+  const availableDistricts = getBangladeshDistricts(selectedDivisionKey);
 
   // OTP handlers
   const handleOtpChange = (index: number, val: string) => {
@@ -476,7 +481,8 @@ export function AuthModal() {
           password: registerPassword,
           address: skipOptional ? undefined : address.trim() || undefined,
           division: skipOptional ? undefined : divisionList.find((d) => d.key === selectedDivisionKey)?.name || undefined,
-          city: skipOptional ? undefined : city.trim() || undefined,
+          district: skipOptional ? undefined : selectedDistrict || undefined,
+          city: skipOptional ? undefined : (city.trim() || selectedDistrict || undefined),
           birthday: skipOptional ? undefined : birthday || undefined,
           gender: skipOptional ? undefined : gender || undefined,
           clientType: 'WEB',
@@ -621,10 +627,17 @@ export function AuthModal() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="1700112233"
-                        className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-20 pr-4 py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition"
+                        className={`w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-20 ${detectedOperator ? 'pr-28' : 'pr-4'} py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition`}
                         autoFocus
                         required
                       />
+                      {detectedOperator && (
+                        <div className="absolute right-3 flex items-center pointer-events-none">
+                          <span className="text-[10px] font-bold text-amber-900 bg-amber-100/90 border border-amber-300/80 px-2 py-0.5 rounded-full shadow-xs">
+                            {detectedOperator.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1023,10 +1036,17 @@ export function AuthModal() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="1700112233"
-                        className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-20 pr-4 py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition"
+                        className={`w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-20 ${detectedOperator ? 'pr-28' : 'pr-4'} py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition`}
                         autoFocus
                         required
                       />
+                      {detectedOperator && (
+                        <div className="absolute right-3 flex items-center pointer-events-none">
+                          <span className="text-[10px] font-bold text-amber-900 bg-amber-100/90 border border-amber-300/80 px-2 py-0.5 rounded-full shadow-xs">
+                            {detectedOperator.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1293,7 +1313,7 @@ export function AuthModal() {
                         />
                       </div>
 
-                      {/* Division & City */}
+                      {/* Division & District */}
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-xs font-bold text-slate-600 mb-1">
@@ -1301,7 +1321,12 @@ export function AuthModal() {
                           </label>
                           <select
                             value={selectedDivisionKey}
-                            onChange={(e) => setSelectedDivisionKey(e.target.value)}
+                            onChange={(e) => {
+                              const newDiv = e.target.value;
+                              setSelectedDivisionKey(newDiv);
+                              const dists = getBangladeshDistricts(newDiv);
+                              if (dists.length > 0) setSelectedDistrict(dists[0].nameEn);
+                            }}
                             className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] rounded-2xl px-3 py-2 text-xs font-medium text-slate-900 outline-none"
                           >
                             {divisionList.map((d) => (
@@ -1312,14 +1337,20 @@ export function AuthModal() {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-600 mb-1">{t.city}</label>
-                          <input
-                            type="text"
-                            value={city}
-                            onChange={(e) => setCity(e.target.value)}
-                            placeholder={t.cityPlaceholder}
-                            className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] rounded-2xl px-3 py-2 text-xs text-slate-900 outline-none"
-                          />
+                          <label className="block text-xs font-bold text-slate-600 mb-1">
+                            {locale === 'bn' ? 'জেলা (District)' : 'District'}
+                          </label>
+                          <select
+                            value={selectedDistrict}
+                            onChange={(e) => setSelectedDistrict(e.target.value)}
+                            className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] rounded-2xl px-3 py-2 text-xs font-medium text-slate-900 outline-none"
+                          >
+                            {availableDistricts.map((dist) => (
+                              <option key={dist.id} value={dist.nameEn}>
+                                {locale === 'bn' ? dist.nameBn : dist.nameEn}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
 

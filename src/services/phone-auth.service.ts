@@ -23,6 +23,15 @@ import {
   UnauthorizedError,
 } from '@/shared/errors/app-error';
 import { ClientType } from '@/shared/auth/token-policy';
+import {
+  normalizeBangladeshPhone,
+  getBangladeshMobileOperator,
+  maskBangladeshPhone,
+  BangladeshMobileOperator,
+} from '@/shared/utils/phone';
+import {
+  validateBangladeshAddress,
+} from '@/shared/geo/bangladesh-geo';
 
 export const PHONE_AUTH_CONSTANTS = {
   LOGIN_PURPOSE: 'PHONE_LOGIN',
@@ -37,6 +46,8 @@ export interface CheckUserResult {
   exists: boolean;
   registered: boolean;
   phone: string;
+  maskedPhone: string;
+  operator?: BangladeshMobileOperator | null;
   name?: string | null;
   status?: string;
   isEmailVerified?: boolean;
@@ -45,6 +56,8 @@ export interface CheckUserResult {
 export interface SendOtpResult {
   success: boolean;
   phone: string;
+  maskedPhone: string;
+  operator?: BangladeshMobileOperator | null;
   message: string;
   cooldownSeconds: number;
   devOtpCode?: string;
@@ -70,6 +83,9 @@ export interface CompleteRegistrationParams {
   email?: string | null;
   address?: string | null;
   division?: string | null;
+  district?: string | null;
+  upazila?: string | null;
+  postalCode?: string | null;
   city?: string | null;
   birthday?: string | null;
   gender?: string | null;
@@ -101,21 +117,10 @@ export class PhoneAuthService {
 
   /**
    * Normalizes a Bangladesh mobile number to standard E.164 (+8801XXXXXXXXX).
+   * Supports Bengali numerals, strips formatting characters, and validates operator prefixes.
    */
   normalizePhoneNumber(raw: string): string {
-    const clean = raw.replace(/[\s\-()]/g, '');
-    if (clean.startsWith('01') && clean.length === 11) {
-      return `+88${clean}`;
-    }
-    if (clean.startsWith('8801') && clean.length === 13) {
-      return `+${clean}`;
-    }
-    if (clean.startsWith('+8801') && clean.length === 14) {
-      return clean;
-    }
-    throw new ValidationError(
-      'Please enter a valid 11-digit Bangladesh mobile number (e.g. 01700112233)'
-    );
+    return normalizeBangladeshPhone(raw);
   }
 
   /**
@@ -123,16 +128,20 @@ export class PhoneAuthService {
    */
   async checkUser(rawPhone: string): Promise<CheckUserResult> {
     const phone = this.normalizePhoneNumber(rawPhone);
+    const maskedPhone = maskBangladeshPhone(phone);
+    const operator = getBangladeshMobileOperator(phone);
     const user = await this.userRepo.findUserByPhone(phone);
 
     if (!user) {
-      return { exists: false, registered: false, phone };
+      return { exists: false, registered: false, phone, maskedPhone, operator };
     }
 
     return {
       exists: true,
       registered: true,
       phone,
+      maskedPhone,
+      operator,
       name: user.name,
       status: user.status,
       isEmailVerified: user.isEmailVerified,
@@ -226,10 +235,14 @@ export class PhoneAuthService {
     });
 
     const isDev = process.env.NODE_ENV !== 'production';
+    const maskedPhone = maskBangladeshPhone(phone);
+    const operator = getBangladeshMobileOperator(phone);
 
     return {
       success: true,
       phone,
+      maskedPhone,
+      operator,
       message: `A 6-digit verification code has been sent to ${phone}.`,
       cooldownSeconds: PHONE_AUTH_CONSTANTS.COOLDOWN_SECONDS,
       ...(isDev && { devOtpCode: rawOtp }),
@@ -451,10 +464,14 @@ export class PhoneAuthService {
     });
 
     const isDev = process.env.NODE_ENV !== 'production';
+    const maskedPhone = maskBangladeshPhone(phone);
+    const operator = getBangladeshMobileOperator(phone);
 
     return {
       success: true,
       phone,
+      maskedPhone,
+      operator,
       message: `A 6-digit registration code has been sent to ${phone}.`,
       cooldownSeconds: PHONE_AUTH_CONSTANTS.COOLDOWN_SECONDS,
       ...(isDev && { devOtpCode: rawOtp }),
@@ -538,6 +555,23 @@ export class PhoneAuthService {
         `Password does not meet required security standards: ${passwordCheck.errors.join('; ')}`,
         { errors: passwordCheck.errors }
       );
+    }
+
+    // 2.1 Validate optional address details if provided
+    if (params.division || params.district || params.postalCode) {
+      const geoCheck = validateBangladeshAddress({
+        division: params.division || undefined,
+        district: params.district || undefined,
+        upazila: params.upazila || undefined,
+        postalCode: params.postalCode || undefined,
+        streetAddress: params.address || undefined,
+      });
+      if (!geoCheck.isValid) {
+        throw new ValidationError(
+          `Invalid address details: ${geoCheck.errors.join('; ')}`,
+          { errors: geoCheck.errors }
+        );
+      }
     }
 
     const passwordHash = hashPassword(params.password);
@@ -640,6 +674,9 @@ export class PhoneAuthService {
             hasBirthday: !!params.birthday,
             hasGender: !!params.gender,
             division: params.division ?? null,
+            district: params.district ?? null,
+            upazila: params.upazila ?? null,
+            postalCode: params.postalCode ?? null,
           },
         },
       });
@@ -657,6 +694,9 @@ export class PhoneAuthService {
             optionalProfile: {
               address: params.address ?? null,
               division: params.division ?? null,
+              district: params.district ?? null,
+              upazila: params.upazila ?? null,
+              postalCode: params.postalCode ?? null,
               city: params.city ?? null,
               birthday: params.birthday ?? null,
               gender: params.gender ?? null,
