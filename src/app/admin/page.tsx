@@ -1,188 +1,65 @@
+import React from 'react';
 import Link from 'next/link';
-import { getAppConfig } from '@/shared/config/environment';
+import { Lock, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { AlifLogo } from '@/components/brand/logo';
 
 export const dynamic = 'force-dynamic';
 
 export default function AdminPortalPage() {
-  const config = getAppConfig();
-
-  const gates = [
-    {
-      id: 'GATE-01',
-      title: 'Single-Tier Referral Enforcement',
-      status: config.gates.featureAffiliateMultiTierEnabled ? 'Multi-Tier (Review)' : 'Locked Single-Tier',
-      compliant: !config.gates.featureAffiliateMultiTierEnabled,
-      depth: config.gates.maxAffiliateDepth,
-    },
-    {
-      id: 'GATE-02',
-      title: 'Promotional Lottery / Raffles',
-      status: config.gates.featureLotteryEnabled ? 'Active (Unsafe)' : 'Disabled (Pending License)',
-      compliant: !config.gates.featureLotteryEnabled,
-    },
-    {
-      id: 'GATE-03',
-      title: 'MFS Direct Debit & Tokenization',
-      status: config.gates.featureMfsDirectDebitEnabled ? 'Active' : 'Mock / Sandbox Only',
-      compliant: true,
-    },
-    {
-      id: 'GATE-04',
-      title: 'NBR VAT Mushak-6.3 Integration',
-      status: config.gates.featureNbrTaxIntegrationEnabled ? 'Connected' : 'Pending NBR API Clearance',
-      compliant: true,
-    },
-    {
-      id: 'GATE-05',
-      title: 'Maker-Checker High-Value Payouts',
-      status: config.gates.featureMakerCheckerPayoutEnabled ? 'Enforced (>= ৳50,000)' : 'Disabled',
-      compliant: config.gates.featureMakerCheckerPayoutEnabled,
-    },
-    {
-      id: 'GATE-06',
-      title: 'Product Points Cash Conversion',
-      status: config.gates.featurePointsCashConvertible ? 'Convertible (Violation)' : 'Non-Convertible Invariant',
-      compliant: !config.gates.featurePointsCashConvertible,
-    },
-    {
-      id: 'GATE-07',
-      title: 'Advanced Shopping Term Deposits',
-      status: config.gates.featureAdvancedShoppingEnabled ? 'Active (Violation)' : 'Disabled (Pending License)',
-      compliant: !config.gates.featureAdvancedShoppingEnabled,
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <header className="border-b border-neutral-800 pb-6 mb-8 flex justify-between items-center">
-        <div>
-          <span className="text-xs uppercase tracking-widest text-brand-orange font-bold">
-            AlifWorld Platform Operations
-          </span>
-          <h1 className="text-3xl font-black mt-1">Admin Operations Console</h1>
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between">
+      {/* Top Header */}
+      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <AlifLogo size="sm" href="/" />
+          <Link
+            href="/"
+            className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors inline-flex items-center space-x-1"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Return to Storefront</span>
+          </Link>
         </div>
-        <Link
-          href="/"
-          className="px-4 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm hover:bg-neutral-800"
-        >
-          ← Back to Storefront
-        </Link>
       </header>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-bold mb-4 flex items-center">
-          <span className="w-3 h-3 rounded-full bg-emerald-400 mr-2.5 inline-block" />
-          Active Regulatory Compliance Gates (GATE-01 to GATE-07)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {gates.map((gate) => (
-            <div
-              key={gate.id}
-              className="p-5 rounded-xl border border-neutral-800 bg-neutral-900/40 flex flex-col justify-between"
+      {/* Main Container */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-[#F59E0B] flex items-center justify-center mx-auto mb-5 shadow-xs">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div className="inline-flex items-center space-x-1.5 text-[11px] uppercase tracking-widest font-mono font-bold text-[#F59E0B] bg-amber-50 px-3 py-1 rounded-full border border-amber-200 mb-3">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>Authentication Required</span>
+          </div>
+
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Admin Console Access Restricted
+          </h1>
+
+          <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+            The unauthenticated demo admin console has been removed. Access to platform operations, financial ledgers, and governance requires multi-factor IAM enterprise authentication.
+          </p>
+
+          <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+            <Link
+              href="/"
+              className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-sm shadow-sm transition-all"
             >
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-mono font-bold text-brand-orange">
-                    {gate.id}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      gate.compliant
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                        : 'bg-red-950 text-red-400 border border-red-800'
-                    }`}
-                  >
-                    {gate.compliant ? 'COMPLIANT' : 'ATTENTION'}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-white mb-1">{gate.title}</h3>
-                <p className="text-xs text-neutral-400">{gate.status}</p>
-              </div>
-            </div>
-          ))}
+              Return to Storefront
+            </Link>
+            <p className="text-[11px] text-slate-400">
+              Only authorized AlifWorld personnel may request console credentials.
+            </p>
+          </div>
         </div>
-      </section>
+      </main>
 
-      {/* Operational Modules & Subsystems */}
-      <section>
-        <h2 className="text-xl font-bold mb-4 flex items-center">
-          <span className="w-3 h-3 rounded-full bg-brand-orange mr-2.5 inline-block" />
-          Platform Domains & Administration
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link
-            href="/admin/users"
-            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-mono font-bold text-brand-orange">IAM-01</span>
-                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
-                  Open Directory →
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">User Management & Identities</h3>
-              <p className="text-xs text-neutral-400">
-                Browse platform users, manage Bangladesh E.164 phones, inspect verification states, and delegate roles.
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/roles"
-            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-mono font-bold text-brand-globeLightBlue">IAM-02</span>
-                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
-                  Open Matrix →
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">RBAC Roles & Permissions</h3>
-              <p className="text-xs text-neutral-400">
-                Inspect 9 standard system roles, configure granular permission matrices, and audit multi-tenant scopes.
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/sellers"
-            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-mono font-bold text-brand-orange">SEL-01</span>
-                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
-                  Review Merchants &amp; KYC Dossiers →
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">Merchant Verification &amp; KYC Dossiers</h3>
-              <p className="text-xs text-neutral-400">
-                Audit seller registrations, verify government regulatory credentials (NBR BIN/TIN, Trade Licenses), and enforce multi-tenant separation.
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/admin/categories"
-            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
-          >
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-mono font-bold text-emerald-400">CAT-01</span>
-                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
-                  Open Taxonomy &amp; Brands →
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-white mb-1">Catalog Taxonomy &amp; Brand Authority</h3>
-              <p className="text-xs text-neutral-400">
-                Configure hierarchical category trees, NBR Mushak-6.3 VAT rate profiles (15%, 5%, 0%), and approved brand trademarks.
-              </p>
-            </div>
-          </Link>
-        </div>
-      </section>
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-400">
+        © 2026 AlifWorld Security &amp; IAM Gateway. All administrative access is logged and monitored.
+      </footer>
     </div>
   );
 }

@@ -1,27 +1,31 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
-export const dynamic = 'force-dynamic';
-
 export default function AdminRolesPage() {
+  const [selectedRoleCode, setSelectedRoleCode] = useState<string>('SUPER_ADMIN');
+
   const roles = [
     {
       code: 'SUPER_ADMIN',
       name: 'Super Administrator',
       description: 'Platform owner with unrestricted access across all contexts',
       isSystem: true,
-      permissionCount: 26,
+      permissionCount: 29,
       assignedUserCount: 1,
     },
     {
       code: 'ADMIN',
       name: 'Platform Administrator',
-      description: 'Administrative operator managing sellers, catalog, and compliance',
+      description: 'Administrative operator managing sellers, catalog, compliance, and warehouses',
       isSystem: true,
-      permissionCount: 17,
+      permissionCount: 20,
       assignedUserCount: 4,
     },
     {
@@ -29,7 +33,7 @@ export default function AdminRolesPage() {
       name: 'Operations & Logistics Manager',
       description: 'Fulfillment, warehouse, and courier tracking coordinator',
       isSystem: true,
-      permissionCount: 5,
+      permissionCount: 8,
       assignedUserCount: 8,
     },
     {
@@ -37,7 +41,7 @@ export default function AdminRolesPage() {
       name: 'Customer Support Agent',
       description: 'First-tier customer and merchant support representative',
       isSystem: true,
-      permissionCount: 4,
+      permissionCount: 5,
       assignedUserCount: 15,
     },
     {
@@ -53,7 +57,7 @@ export default function AdminRolesPage() {
       name: 'Store Merchant Owner',
       description: 'Primary owner of a verified multi-vendor storefront',
       isSystem: true,
-      permissionCount: 9,
+      permissionCount: 12,
       assignedUserCount: 42,
     },
     {
@@ -61,8 +65,8 @@ export default function AdminRolesPage() {
       name: 'Store Staff Member',
       description: 'Delegated staff handling order packing and product drafts',
       isSystem: true,
-      permissionCount: 4,
-      assignedUserCount: 89,
+      permissionCount: 6,
+      assignedUserCount: 68,
     },
     {
       code: 'CUSTOMER',
@@ -72,153 +76,101 @@ export default function AdminRolesPage() {
       permissionCount: 2,
       assignedUserCount: 1420,
     },
-    {
-      code: 'RIDER',
-      name: 'Delivery Rider',
-      description: 'Last-mile logistics and dispatch rider',
-      isSystem: true,
-      permissionCount: 2,
-      assignedUserCount: 35,
-    },
-  ];
-
-  const modules = [
-    {
-      name: 'IAM & Security',
-      permissions: ['users:read', 'users:write', 'users:delete', 'users:suspend', 'roles:read', 'roles:manage', 'roles:assign', 'permissions:read'],
-    },
-    {
-      name: 'Seller Management',
-      permissions: ['sellers:read', 'sellers:verify', 'sellers:suspend', 'seller:profile:manage', 'seller:staff:manage'],
-    },
-    {
-      name: 'Catalog & Taxonomy',
-      permissions: ['catalog:read', 'catalog:write', 'catalog:publish', 'catalog:archive'],
-    },
-    {
-      name: 'Orders & RMA',
-      permissions: ['orders:read', 'orders:manage', 'orders:cancel', 'orders:refund'],
-    },
-    {
-      name: 'Finance & Ledger',
-      permissions: ['finance:read', 'finance:ledger', 'finance:adjust', 'finance:payout'],
-    },
-    {
-      name: 'System & Governance',
-      permissions: ['system:config', 'system:audit_read'],
-    },
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
       {/* Header */}
-      <header className="border-b border-neutral-800 pb-6 mb-8 flex justify-between items-center">
-        <div>
-          <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-brand-orange font-bold mb-1">
-            <Link href="/admin" className="hover:underline">
-              Platform Operations
-            </Link>
-            <span>/</span>
-            <Link href="/admin/users" className="hover:underline">
-              Identity
-            </Link>
-            <span>/</span>
-            <span>RBAC Matrix</span>
+      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-6">
+            <AlifLogo size="sm" href="/" />
+            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <div className="hidden sm:block">
+              <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-bold">
+                Platform Operations
+              </span>
+              <h1 className="text-sm font-black text-slate-900 leading-tight">
+                Role-Based Access Control (RBAC) Matrix
+              </h1>
+            </div>
           </div>
-          <h1 className="text-3xl font-black">Roles & Permission Matrix</h1>
-          <p className="text-xs text-neutral-400 mt-1">
-            Standard system roles, granular domain permissions, and tenant isolation policies.
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Link
-            href="/admin/users"
-            className="px-4 py-2 rounded-lg border border-neutral-700 bg-neutral-900 text-sm hover:bg-neutral-800 font-semibold"
-          >
-            ← User Directory
-          </Link>
-          <Link
-            href="/admin"
-            className="px-4 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm hover:bg-neutral-800"
-          >
-            Console Home
-          </Link>
+
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/admin/users"
+              className="px-4 py-2 rounded-lg bg-black text-white hover:bg-neutral-800 text-xs font-bold transition-all shadow-sm"
+            >
+              User Directory
+            </Link>
+            <Link
+              href="/admin"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-all"
+            >
+              ← Admin Portal
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Role Summary Grid */}
-      <section className="mb-10">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold flex items-center">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-orange mr-2 inline-block" />
-            Standard System Roles
-          </h2>
-          <span className="text-xs text-neutral-500 font-mono">
-            {roles.length} Active System Roles
-          </span>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+          <h2 className="text-xl font-black text-slate-950">System Roles &amp; Authority Architecture</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Hierarchical system roles enforced by Server-Side Access Control (ADR-0023). Tenant separation prevents horizontal privilege escalation.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {roles.map((role) => (
-            <Card key={role.code} className="p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-mono text-xs font-bold text-brand-orange">
-                    {role.code}
-                  </span>
-                  <Badge variant={role.isSystem ? 'blue' : 'default'} size="sm">
-                    {role.isSystem ? 'PROTECTED' : 'CUSTOM'}
-                  </Badge>
-                </div>
-                <h3 className="text-sm font-bold text-white mb-1">{role.name}</h3>
-                <p className="text-xs text-neutral-400 mb-4 leading-relaxed">
-                  {role.description}
-                </p>
-              </div>
-              <div className="border-t border-neutral-800/80 pt-3 flex justify-between items-center text-xs text-neutral-400 font-mono">
-                <span>{role.permissionCount} Permissions</span>
-                <span className="text-neutral-500">{role.assignedUserCount} Users</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Permission Modules Breakdown */}
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold flex items-center">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 mr-2 inline-block" />
-            Granular Permissions Catalogue
-          </h2>
-          <span className="text-xs text-neutral-500 font-mono">
-            6 Functional Bounded Contexts
-          </span>
-        </div>
-
-        <div className="space-y-4">
-          {modules.map((mod) => (
-            <Card key={mod.name} className="p-5">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm font-bold text-white">{mod.name}</h3>
-                <span className="text-xs font-mono text-neutral-500">
-                  {mod.permissions.length} actions
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {mod.permissions.map((perm) => (
-                  <span
-                    key={perm}
-                    className="px-2.5 py-1 rounded bg-neutral-950 border border-neutral-800 font-mono text-xs text-neutral-300 hover:border-neutral-700"
+        {/* Roles Table */}
+        <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50 border-b border-slate-200">
+                <TableRow>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Role Name &amp; Code</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Scope &amp; Purpose</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Permissions</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Assigned Users</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Type</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {roles.map((r) => (
+                  <TableRow
+                    key={r.code}
+                    className={`border-b border-slate-100 hover:bg-slate-50/80 cursor-pointer ${
+                      selectedRoleCode === r.code ? 'bg-orange-50/40' : ''
+                    }`}
+                    onClick={() => setSelectedRoleCode(r.code)}
                   >
-                    {perm}
-                  </span>
+                    <TableCell>
+                      <div className="font-bold text-xs text-slate-900">{r.name}</div>
+                      <div className="text-[10px] font-mono text-[#0284C7] font-semibold mt-0.5">{r.code}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs text-slate-600">{r.description}</div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {r.permissionCount} perms
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center font-mono text-xs text-slate-700 font-semibold">
+                      {r.assignedUserCount}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={r.isSystem ? 'orange' : 'default'} size="sm">
+                        {r.isSystem ? 'SYSTEM' : 'CUSTOM'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      </main>
     </div>
   );
 }

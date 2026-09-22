@@ -1,3 +1,16 @@
+import fs from 'fs';
+import path from 'path';
+
+// Automatically ensure public directory and brand logo are populated
+try {
+  if (!fs.existsSync('./public')) fs.mkdirSync('./public', { recursive: true });
+  if (fs.existsSync('./logo.png') && !fs.existsSync('./public/logo.png')) {
+    fs.copyFileSync('./logo.png', './public/logo.png');
+  }
+} catch (e) {
+  // Non-fatal if filesystem is read-only
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

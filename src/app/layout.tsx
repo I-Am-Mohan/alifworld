@@ -6,13 +6,13 @@ export const metadata: Metadata = {
   description:
     'AlifWorld - Bangladesh leading multi-vendor e-commerce platform with transparent wallet ledgers, customer reward clubs, and seller empowerment.',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/brand/logo.png',
+    icon: '/logo.png',
+    apple: '/logo.png',
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#FF6A00',
   width: 'device-width',
   initialScale: 1,
 };
@@ -23,8 +23,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="bn-BD" className="dark">
-      <body className="antialiased bg-black text-white selection:bg-brand-orange selection:text-black">
+    <html lang="en-BD" className="light">
+      <body className="antialiased bg-[#FAF9F6] text-slate-900 selection:bg-brand-orange selection:text-white min-h-screen">
         {children}
       </body>
     </html>

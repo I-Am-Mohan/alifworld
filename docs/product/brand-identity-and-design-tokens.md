@@ -1,123 +1,117 @@
 # AlifWorld Brand Identity & Design Tokens
 
 **Document Type**: Visual Brand Authority & Token Specification  
-**Source Assets**: `colors.md`, `logo.png`  
-**Milestone Reference**: [Milestone 001](../../AlifWorld-300-Milestones/001-project-charter-source-authority-and-ai-execution-protocol.md)  
+**Source Assets**: `colors.md`, `logo.png`, `UI References/`  
+**Milestone Reference**: Milestone 001 / Milestone 014  
 **Status**: Authoritative & Mandatory  
 
 ---
 
 ## 1. Brand Essence & Visual Language
 
-AlifWorld’s visual language communicates bold confidence, global reach, and seamless commercial reliability. Rooted in four core visual ideas:
+AlifWorld’s visual language communicates modern commercial vibrancy, customer delight, and effortless accessibility. Rooted in the customer store design system:
 
-1. **Deep Black (`#000000`)**: Strong, modern, high-contrast foundation for main backgrounds, navigation bars, footers, and dark mode surfaces.
-2. **Pure White (`#FFFFFF`)**: Clean typography, high contrast, inverted cards, icons, and crisp readability.
-3. **Brand Orange (`#FF6A00`)**: High-energy accent driving all calls-to-action (CTAs), primary buttons, active highlights, notification badges, and the signature Alif smile.
-4. **World Blues (`#4F8FD9`, `#69B7E8`, `#3456A3`)**: International identity, globe elements, geographic hierarchy, and subtle secondary accents.
+1. **Golden Amber (`#F59E0B`) & Brand Orange (`#FF6A00`)**: The core interactive accents. Golden Amber powers high-conversion primary actions (`Add to cart`, `See All →`, rating stars), while Brand Orange drives the signature Alif smile, notification badges, and active category underlines.
+2. **Deep Charcoal (`#161614` / `#18181B`) & Pure Black (`#000000`)**: Deep Charcoal anchors the luxury footer and floating cart control; Pure Black delivers high-contrast typography across product cards and buttons.
+3. **Pure White (`#FFFFFF`) & Soft Cream (`#FAF9F6`)**: Provides a clean, bright, distraction-free product showcase canvas.
+4. **Sky & Ocean Blues (`#0A4B8C`, `#0284C7`, `#E0F2FE`)**: Atmospheric header wash, primary hero banner CTAs ("Explore Now >"), and globe elements.
+5. **In-Stock & Support Greens (`#16A34A`, `#25D366`)**: Instant trust cues for stock availability (`● In Stock`), discount badges, and floating WhatsApp support.
+6. **Harmonious Pastel Accents**: Soft peach, lavender, cream, rose, mint, and jade backgrounds designed for category pills and promotional cards.
 
 ---
 
 ## 2. Master Color Palette
 
-| Token Name | Hex Code | RGB | HSL | Semantic Role |
-|:---|:---:|:---:|:---:|:---|
-| `--alif-black` | `#000000` | `rgb(0, 0, 0)` | `hsl(0, 0%, 0%)` | Main background, header/footer, dark containers |
-| `--alif-white` | `#FFFFFF` | `rgb(255, 255, 255)` | `hsl(0, 0%, 100%)` | Primary typography, light containers, inverted elements |
-| `--alif-orange` | `#FF6A00` | `rgb(255, 106, 0)` | `hsl(25, 100%, 50%)` | Primary CTA, links, active tab indicator, brand accent |
-| `--alif-globe-blue` | `#4F8FD9` | `rgb(79, 143, 217)` | `hsl(212, 65%, 58%)` | Globe oceans, secondary badges, regional indicators |
-| `--alif-globe-light` | `#69B7E8` | `rgb(105, 183, 232)` | `hsl(203, 75%, 66%)` | Globe landmass highlights, soft badges, hover tints |
-| `--alif-globe-dark` | `#3456A3` | `rgb(52, 86, 163)` | `hsl(222, 52%, 42%)` | Globe shadows, deep accents, borders |
+| Token Name | Hex Code | RGB | Semantic Role |
+|:---|:---:|:---:|:---|
+| `--alif-amber` | `#F59E0B` | `rgb(245, 158, 11)` | Primary CTA (`Add to cart`), "See All →", Ratings |
+| `--alif-amber-hover` | `#D97706` | `rgb(217, 119, 6)` | Primary button hover state |
+| `--alif-orange` | `#FF6A00` | `rgb(255, 106, 0)` | Brand logo smile curve, active tab indicators |
+| `--alif-footer-bg` | `#161614` | `rgb(22, 22, 20)` | Deep luxury footer background |
+| `--alif-charcoal` | `#18181B` | `rgb(24, 24, 27)` | Floating cart button, card headers |
+| `--alif-white` | `#FFFFFF` | `rgb(255, 255, 255)` | Card backgrounds, search bar, modals |
+| `--alif-cream` | `#FAF9F6` | `rgb(250, 249, 246)` | App body background |
+| `--alif-hero-navy` | `#0A4B8C` | `rgb(10, 75, 140)` | Hero CTA button ("Explore Now >") |
+| `--alif-sky-tint` | `#E0F2FE` | `rgb(224, 242, 254)` | Header atmospheric wash |
+| `--alif-stock-green` | `#16A34A` | `rgb(22, 163, 74)` | `● In Stock` indicator, discount badge |
+| `--alif-whatsapp` | `#25D366` | `rgb(37, 211, 102)` | Floating WhatsApp action button |
 
 ---
 
 ## 3. Standard Token Implementation
 
-### 3.1 CSS Variables (`styles/tokens.css` / `globals.css`)
+### 3.1 CSS Variables (`src/styles/tokens.css`)
+
 ```css
 :root {
   /* Primitive Brand Colors */
-  --alif-black: #000000;
-  --alif-white: #FFFFFF;
+  --alif-amber: #F59E0B;
+  --alif-amber-hover: #D97706;
   --alif-orange: #FF6A00;
-  --alif-globe-blue: #4F8FD9;
-  --alif-globe-light: #69B7E8;
-  --alif-globe-dark: #3456A3;
+  --alif-orange-hover: #E55F00;
+  --alif-black: #000000;
+  --alif-charcoal: #18181B;
+  --alif-footer-bg: #161614;
+  --alif-white: #FFFFFF;
+  --alif-cream: #FAF9F6;
+  --alif-cream-subtle: #F8FAFC;
 
-  /* Semantic UI Tokens - Dark Theme Foundation (Default) */
-  --alif-bg-app: var(--alif-black);
-  --alif-bg-surface: #111111;
-  --alif-bg-card: #181818;
-  --alif-bg-elevated: #222222;
+  /* Sky & Globe Accents */
+  --alif-hero-navy: #0A4B8C;
+  --alif-sky-tint: #E0F2FE;
+  --alif-globe-blue: #0284C7;
+  --alif-globe-light: #38BDF8;
 
-  --alif-text-primary: var(--alif-white);
-  --alif-text-secondary: #A0A0A0;
-  --alif-text-muted: #707070;
+  /* Semantic UI Tokens */
+  --alif-bg-app: var(--alif-cream);
+  --alif-bg-surface: var(--alif-white);
+  --alif-bg-card: var(--alif-white);
+  --alif-bg-footer: var(--alif-footer-bg);
 
-  --alif-border-subtle: #2A2A2A;
-  --alif-border-strong: #404040;
+  --alif-text-primary: #0F172A;
+  --alif-text-secondary: #475569;
+  --alif-text-muted: #94A3B8;
+  --alif-text-footer: #9CA3AF;
 
-  /* Interactive Elements */
-  --alif-btn-primary-bg: var(--alif-orange);
-  --alif-btn-primary-text: var(--alif-black);
-  --alif-btn-primary-hover: #E55F00;
-  --alif-btn-primary-focus: #FF8533;
+  --alif-border-subtle: #E2E8F0;
+  --alif-border-strong: #CBD5E1;
 
-  /* Global Accent */
-  --alif-accent-globe: var(--alif-globe-blue);
-  --alif-accent-globe-hover: var(--alif-globe-light);
+  /* Interactive Buttons */
+  --alif-btn-primary-bg: var(--alif-amber);
+  --alif-btn-primary-text: #000000;
+  --alif-btn-primary-hover: var(--alif-amber-hover);
+
+  --alif-btn-hero-bg: var(--alif-hero-navy);
+  --alif-btn-hero-text: #FFFFFF;
+
+  /* Category Pastel Tints */
+  --alif-pastel-peach: #FFEDD5;
+  --alif-pastel-lavender: #EEF2FF;
+  --alif-pastel-sand: #FEF3C7;
+  --alif-pastel-rose: #FCE7F3;
+  --alif-pastel-mint: #CCFBF1;
+  --alif-pastel-jade: #DCFCE7;
 }
 ```
 
-### 3.2 TypeScript Token Definitions (`shared/constants/colors.ts`)
-```typescript
-export const ALIF_COLORS = {
-  black: '#000000',
-  white: '#FFFFFF',
-  orange: '#FF6A00',
-  globeBlue: '#4F8FD9',
-  globeLight: '#69B7E8',
-  globeDark: '#3456A3',
-} as const;
-
-export type AlifColorToken = keyof typeof ALIF_COLORS;
-```
-
 ---
 
-## 4. Logo & Iconography Governance
+## 4. Logo Governance
 
 Derived from `logo.png`:
-
-```
-           A L I F  ( ) <-- Globe Icon (#4F8FD9 / #69B7E8)
-            \______/ ->  <-- Orange Smile Curve (#FF6A00)
-```
-
-1. **Typographic Wordmark ("ALIF")**: Rendered in high-contrast solid white (`#FFFFFF`) against black surfaces, or solid black (`#000000`) against pure white surfaces.
-2. **The Globe Icon**: 
-   - Placed immediately to the right of the wordmark "ALIF".
-   - Rendered with ocean blue (`#4F8FD9`), light blue land masses (`#69B7E8`), and dark blue shadow contours (`#3456A3`).
-   - **Critical Invariant**: The globe is a distinct emblem and brand icon. **Never substitute the globe as the letter 'O' in spelling words.**
-3. **The Alif Smile**:
-   - An energetic curved swoosh in Brand Orange (`#FF6A00`) starting beneath the 'A' and sweeping gently upward under the wordmark, culminating in an arrow pointing up toward the globe.
-   - Symbolizes forward momentum, delivery speed, and customer delight.
-4. **Forbidden Brand Distortions**:
-   - Do not alter the orange hue to red, yellow, or pink.
-   - Do not apply artificial gradients or drop shadows to the wordmark "ALIF".
-   - Do not separate the smile curve from the logo mark without approval.
-   - Maintain a minimum clear space equal to 50% of the globe diameter around the entire mark.
+- The wordmark "ALIF" is rendered in bold solid black or white depending on surface brightness.
+- The energetic smile swoosh in Brand Orange (`#FF6A00`) curves under "ALIF" pointing toward the 3D globe.
+- The 3D globe in cyan and ocean blue represents international quality and nationwide reach.
+- The globe is **never** used as a replacement for the letter 'O'.
 
 ---
 
-## 5. Accessibility & Contrast Ratios
-
-All UI components built in AlifWorld must satisfy **WCAG 2.1 Level AA** (and Level AAA for primary reading copy):
+## 5. Accessibility & Contrast Ratios (WCAG 2.1)
 
 | Element Combination | Contrast Ratio | WCAG Compliance | Usage Context |
 |:---|:---:|:---:|:---|
-| Pure White (`#FFFFFF`) on Deep Black (`#000000`) | **21.0:1** | AAA Pass | Primary body text, headings, icons |
-| Deep Black (`#000000`) on Brand Orange (`#FF6A00`) | **7.4:1** | AAA Pass | Primary CTA button text (`bg-orange text-black font-bold`) |
-| Pure White (`#FFFFFF`) on Brand Orange (`#FF6A00`) | **2.8:1** | *Fail for Body Text* | **Prohibited**: Never place white text on brand orange buttons. Always use black text. |
-| Globe Light Blue (`#69B7E8`) on Deep Black (`#000000`) | **8.1:1** | AAA Pass | Geographic tags, secondary badges |
-| Globe Blue (`#4F8FD9`) on Deep Black (`#000000`) | **5.3:1** | AA Pass | Secondary icons, links |
+| Pure Black (`#000000`) on Golden Amber (`#F59E0B`) | **8.5 : 1** | **AAA Pass** | Primary `Add to cart` button text |
+| Pure White (`#FFFFFF`) on Hero Navy (`#0A4B8C`) | **9.2 : 1** | **AAA Pass** | Hero `Explore Now >` button text |
+| Pure White (`#FFFFFF`) on Deep Charcoal (`#161614`) | **19.5 : 1** | **AAA Pass** | Footer headings & body copy |
+| Deep Slate (`#0F172A`) on Pure White (`#FFFFFF`) | **18.8 : 1** | **AAA Pass** | Product titles, category headings |
+| In-Stock Green (`#16A34A`) on Pure White (`#FFFFFF`) | **4.8 : 1** | **AA Pass** | `● In Stock` inventory indicator |

@@ -1,39 +1,64 @@
 /**
- * Authoritative Brand Tokens for AlifWorld
- * Derived from colors.md and logo.png
+ * Authoritative Brand Tokens for AlifWorld Customer Storefront
+ * Derived from colors.md, logo.png, and the approved customer storefront design.
  */
 
 :root {
   /* Primitive Brand Colors */
-  --alif-black: #000000;
-  --alif-white: #FFFFFF;
+  --alif-amber: #F59E0B;
+  --alif-amber-hover: #D97706;
+  --alif-amber-subtle: #FEF3C7;
   --alif-orange: #FF6A00;
-  --alif-globe-blue: #4F8FD9;
-  --alif-globe-light: #69B7E8;
-  --alif-globe-dark: #3456A3;
+  --alif-orange-hover: #E55F00;
+  --alif-orange-subtle: #FFF7ED;
 
-  /* Semantic Theme Tokens - Dark Foundation Default */
-  --alif-bg-app: var(--alif-black);
-  --alif-bg-surface: #111111;
-  --alif-bg-card: #181818;
-  --alif-bg-elevated: #222222;
+  --alif-black: #000000;
+  --alif-charcoal: #18181B;
+  --alif-footer-bg: #161614;
 
-  --alif-text-primary: var(--alif-white);
-  --alif-text-secondary: #A0A0A0;
-  --alif-text-muted: #707070;
-  --alif-text-inverse: var(--alif-black);
+  --alif-white: #FFFFFF;
+  --alif-cream: #FAF9F6;
+  --alif-cream-subtle: #F8FAFC;
 
-  --alif-border-subtle: #2A2A2A;
-  --alif-border-strong: #404040;
+  /* Sky & Globe Accents */
+  --alif-hero-navy: #0A4B8C;
+  --alif-sky-tint: #E0F2FE;
+  --alif-globe-blue: #0284C7;
+  --alif-globe-light: #38BDF8;
+
+  /* Utility & Functional Colors */
+  --alif-stock-green: #16A34A;
+  --alif-whatsapp: #25D366;
+  --alif-rating-gold: #F59E0B;
+
+  /* Category Pastel Tints */
+  --alif-pastel-peach: #FFEDD5;
+  --alif-pastel-lavender: #EEF2FF;
+  --alif-pastel-sand: #FEF3C7;
+  --alif-pastel-rose: #FCE7F3;
+  --alif-pastel-mint: #CCFBF1;
+  --alif-pastel-jade: #DCFCE7;
+
+  /* Semantic Theme Tokens */
+  --alif-bg-app: var(--alif-cream);
+  --alif-bg-surface: var(--alif-white);
+  --alif-bg-card: var(--alif-white);
+  --alif-bg-footer: var(--alif-footer-bg);
+
+  --alif-text-primary: #0F172A;
+  --alif-text-secondary: #475569;
+  --alif-text-muted: #94A3B8;
+  --alif-text-footer: #9CA3AF;
+  --alif-text-inverse: #FFFFFF;
+
+  --alif-border-subtle: #E2E8F0;
+  --alif-border-strong: #CBD5E1;
 
   /* Interactive Elements */
-  --alif-btn-primary-bg: var(--alif-orange);
-  --alif-btn-primary-text: var(--alif-black);
-  --alif-btn-primary-hover: #E55F00;
-  --alif-btn-primary-focus: #FF8533;
+  --alif-btn-primary-bg: var(--alif-amber);
+  --alif-btn-primary-text: #000000;
+  --alif-btn-primary-hover: var(--alif-amber-hover);
 
-  /* Brand Accents */
-  --alif-accent-globe: var(--alif-globe-blue);
-  --alif-accent-globe-light: var(--alif-globe-light);
-  --alif-accent-globe-dark: var(--alif-globe-dark);
+  --alif-btn-hero-bg: var(--alif-hero-navy);
+  --alif-btn-hero-text: #FFFFFF;
 }

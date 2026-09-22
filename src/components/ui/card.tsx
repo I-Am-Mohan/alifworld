@@ -7,9 +7,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Card({ className = '', elevated = false, children, ...props }: CardProps) {
   return (
     <div
-      className={`rounded-xl border border-neutral-800 ${
-        elevated ? 'bg-neutral-900 shadow-xl' : 'bg-neutral-900/40 backdrop-blur-sm'
-      } p-6 ${className}`}
+      className={`rounded-xl border border-slate-200/90 bg-white ${
+        elevated ? 'shadow-md shadow-slate-200/60' : 'shadow-sm shadow-slate-100'
+      } p-6 transition-all ${className}`}
       {...props}
     >
       {children}
@@ -27,7 +27,7 @@ export function CardHeader({ className = '', children, ...props }: React.HTMLAtt
 
 export function CardTitle({ className = '', children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={`text-lg font-bold text-white ${className}`} {...props}>
+    <h3 className={`text-lg font-bold text-slate-900 tracking-tight ${className}`} {...props}>
       {children}
     </h3>
   );
@@ -35,7 +35,7 @@ export function CardTitle({ className = '', children, ...props }: React.HTMLAttr
 
 export function CardContent({ className = '', children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`text-sm text-neutral-400 ${className}`} {...props}>
+    <div className={`text-sm text-slate-600 leading-relaxed ${className}`} {...props}>
       {children}
     </div>
   );

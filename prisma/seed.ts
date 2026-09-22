@@ -123,6 +123,11 @@ async function seed() {
     { code: 'finance:adjust', name: 'Maker-Checker Approval', module: 'FINANCE', description: 'Approve high-value balance adjustments' },
     { code: 'finance:payout', name: 'Process Payouts', module: 'FINANCE', description: 'Authorize seller withdrawal disbursements' },
 
+    // Inventory & Warehouses
+    { code: 'inventory:read', name: 'View Inventory', module: 'INVENTORY', description: 'Inspect stock balances, warehouse stock, and movement ledgers' },
+    { code: 'inventory:write', name: 'Manage Inventory', module: 'INVENTORY', description: 'Intake stock, adjust balances, and manage warehouses' },
+    { code: 'inventory:adjust', name: 'Audit Adjustments', module: 'INVENTORY', description: 'Execute damage, write-off, and audit stock adjustments' },
+
     // System
     { code: 'system:config', name: 'Platform Settings', module: 'SYSTEM', description: 'Manage platform configuration and flags' },
     { code: 'system:audit_read', name: 'View Audit Logs', module: 'SYSTEM', description: 'Review security and compliance audits' },
@@ -175,6 +180,7 @@ async function seed() {
         'sellers:read', 'sellers:verify', 'sellers:suspend',
         'catalog:read', 'catalog:write', 'catalog:publish', 'catalog:archive',
         'orders:read', 'orders:manage', 'orders:cancel',
+        'inventory:read', 'inventory:write', 'inventory:adjust',
         'finance:read',
         'system:config', 'system:audit_read',
       ],
@@ -184,14 +190,14 @@ async function seed() {
       name: 'Operations & Logistics Manager',
       description: 'Fulfillment, warehouse, and courier tracking coordinator',
       isSystem: true,
-      permissions: ['orders:read', 'orders:manage', 'catalog:read', 'sellers:read', 'users:read'],
+      permissions: ['orders:read', 'orders:manage', 'catalog:read', 'sellers:read', 'users:read', 'inventory:read', 'inventory:write', 'inventory:adjust'],
     },
     {
       code: 'SUPPORT',
       name: 'Customer Support Agent',
       description: 'First-tier customer and merchant support representative',
       isSystem: true,
-      permissions: ['users:read', 'orders:read', 'catalog:read', 'sellers:read'],
+      permissions: ['users:read', 'orders:read', 'catalog:read', 'sellers:read', 'inventory:read'],
     },
     {
       code: 'FINANCE',
@@ -212,6 +218,7 @@ async function seed() {
         'seller:profile:manage', 'seller:staff:manage',
         'catalog:read', 'catalog:write', 'catalog:publish', 'catalog:archive',
         'orders:read', 'orders:manage',
+        'inventory:read', 'inventory:write', 'inventory:adjust',
         'finance:read',
       ],
     },
@@ -220,7 +227,7 @@ async function seed() {
       name: 'Store Staff Member',
       description: 'Delegated staff handling order packing and product drafts',
       isSystem: true,
-      permissions: ['catalog:read', 'catalog:write', 'orders:read', 'orders:manage'],
+      permissions: ['catalog:read', 'catalog:write', 'orders:read', 'orders:manage', 'inventory:read', 'inventory:write'],
     },
     {
       code: 'CUSTOMER',
@@ -693,6 +700,361 @@ async function seed() {
     }
 
     console.info('✅ Seeded catalog categories, brands, products, variants, and media.');
+  }
+
+  // ----------------------------------------------------------------------------
+  // 7. Warehouses, Inventory Stock Balances, Reservations & Movement Ledgers
+  // ----------------------------------------------------------------------------
+  if (merchantStore) {
+    // 7.1 Warehouses
+    const dhakaHub = await (prisma as any).warehouse.upsert({
+      where: { code: 'DHK-HUB-01' },
+      create: {
+        id: generateId(ID_PREFIXES.WAREHOUSE),
+        sellerId: null, // Platform fulfillment hub
+        name: 'Dhaka Central Fulfillment Hub',
+        code: 'DHK-HUB-01',
+        division: 'DHAKA',
+        district: 'Dhaka',
+        upazila: 'Tejgaon',
+        addressLine: 'Plot 14-16, Tejgaon Industrial Area, Dhaka-1208',
+        postalCode: '1208',
+        isPlatformHub: true,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    const bananiDepot = await (prisma as any).warehouse.upsert({
+      where: { code: 'DHK-DTH-01' },
+      create: {
+        id: generateId(ID_PREFIXES.WAREHOUSE),
+        sellerId: merchantStore.id, // Merchant-owned warehouse
+        name: 'Dhaka Tech Banani Depot',
+        code: 'DHK-DTH-01',
+        division: 'DHAKA',
+        district: 'Dhaka',
+        upazila: 'Banani',
+        addressLine: 'Road 11, Block D, Banani, Dhaka-1213',
+        postalCode: '1213',
+        isPlatformHub: false,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    await (prisma as any).warehouse.upsert({
+      where: { code: 'CTG-HUB-01' },
+      create: {
+        id: generateId(ID_PREFIXES.WAREHOUSE),
+        sellerId: null, // Regional platform hub
+        name: 'Chittagong Port Logistics Hub',
+        code: 'CTG-HUB-01',
+        division: 'CHITTAGONG',
+        district: 'Chittagong',
+        upazila: 'Agrabad',
+        addressLine: 'Agrabad Commercial Area, Chittagong-4100',
+        postalCode: '4100',
+        isPlatformHub: true,
+        isActive: true,
+        version: 1,
+      },
+      update: {},
+    });
+
+    // 7.2 Stock Balances
+    const phoneVariant = await (prisma as any).productVariant.findUnique({
+      where: { sku: 'WLT-PRX60-BLU-128' },
+    });
+
+    const earbudsVariant = await (prisma as any).productVariant.findUnique({
+      where: { sku: 'MI-BUDS5P-WHT' },
+    });
+
+    if (phoneVariant && earbudsVariant) {
+      // Balance 1: Walton Phone at Central Hub (80 on-hand, 5 reserved, 1 damaged -> 74 available)
+      const bal1 = await (prisma as any).stockBalance.upsert({
+        where: {
+          warehouseId_variantId: {
+            warehouseId: dhakaHub.id,
+            variantId: phoneVariant.id,
+          },
+        },
+        create: {
+          id: generateId(ID_PREFIXES.STOCK_BALANCE),
+          warehouseId: dhakaHub.id,
+          variantId: phoneVariant.id,
+          onHand: 80,
+          reserved: 5,
+          damaged: 1,
+          quarantined: 0,
+          lowStockThreshold: 10,
+          reorderPoint: 20,
+          version: 1,
+        },
+        update: {},
+      });
+
+      // Balance 2: Walton Phone at Banani Depot (30 on-hand, 0 reserved, 0 damaged -> 30 available)
+      const bal2 = await (prisma as any).stockBalance.upsert({
+        where: {
+          warehouseId_variantId: {
+            warehouseId: bananiDepot.id,
+            variantId: phoneVariant.id,
+          },
+        },
+        create: {
+          id: generateId(ID_PREFIXES.STOCK_BALANCE),
+          warehouseId: bananiDepot.id,
+          variantId: phoneVariant.id,
+          onHand: 30,
+          reserved: 0,
+          damaged: 0,
+          quarantined: 0,
+          lowStockThreshold: 5,
+          reorderPoint: 10,
+          version: 1,
+        },
+        update: {},
+      });
+
+      // Balance 3: Xiaomi Earbuds at Central Hub (120 on-hand, 10 reserved, 2 damaged -> 108 available)
+      const bal3 = await (prisma as any).stockBalance.upsert({
+        where: {
+          warehouseId_variantId: {
+            warehouseId: dhakaHub.id,
+            variantId: earbudsVariant.id,
+          },
+        },
+        create: {
+          id: generateId(ID_PREFIXES.STOCK_BALANCE),
+          warehouseId: dhakaHub.id,
+          variantId: earbudsVariant.id,
+          onHand: 120,
+          reserved: 10,
+          damaged: 2,
+          quarantined: 0,
+          lowStockThreshold: 15,
+          reorderPoint: 30,
+          version: 1,
+        },
+        update: {},
+      });
+
+      // Balance 4: Xiaomi Earbuds at Banani Depot (45 on-hand, 0 reserved, 0 damaged -> 45 available)
+      const bal4 = await (prisma as any).stockBalance.upsert({
+        where: {
+          warehouseId_variantId: {
+            warehouseId: bananiDepot.id,
+            variantId: earbudsVariant.id,
+          },
+        },
+        create: {
+          id: generateId(ID_PREFIXES.STOCK_BALANCE),
+          warehouseId: bananiDepot.id,
+          variantId: earbudsVariant.id,
+          onHand: 45,
+          reserved: 0,
+          damaged: 0,
+          quarantined: 0,
+          lowStockThreshold: 10,
+          reorderPoint: 20,
+          version: 1,
+        },
+        update: {},
+      });
+
+      // 7.3 Stock Reservations (for checkout sessions)
+      const res1Exists = await (prisma as any).stockReservation.findFirst({
+        where: { stockBalanceId: bal1.id },
+      });
+      if (!res1Exists) {
+        await (prisma as any).stockReservation.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_RESERVATION),
+            stockBalanceId: bal1.id,
+            cartId: 'crt_demo_checkout_01',
+            quantity: 5,
+            status: 'ACTIVE',
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 mins TTL
+            version: 1,
+          },
+        });
+      }
+
+      const res2Exists = await (prisma as any).stockReservation.findFirst({
+        where: { stockBalanceId: bal3.id },
+      });
+      if (!res2Exists) {
+        await (prisma as any).stockReservation.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_RESERVATION),
+            stockBalanceId: bal3.id,
+            cartId: 'crt_demo_checkout_02',
+            quantity: 10,
+            status: 'ACTIVE',
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 mins TTL
+            version: 1,
+          },
+        });
+      }
+
+      // 7.4 Immutable Stock Movement Ledger Entries
+      const movementsCount = await (prisma as any).stockMovementLedger.count();
+      if (movementsCount === 0) {
+        // Bal1 initial intake
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal1.id,
+            warehouseId: dhakaHub.id,
+            variantId: phoneVariant.id,
+            movementType: 'RECEIVE',
+            quantityDelta: 80,
+            onHandAfter: 80,
+            reservedAfter: 0,
+            availableAfter: 80,
+            sourceType: 'PURCHASE_ORDER',
+            sourceId: 'PO-2026-001',
+            actorId: 'usr_superadmin',
+            reason: 'Initial platform hub inventory intake',
+          },
+        });
+        // Bal1 reservation
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal1.id,
+            warehouseId: dhakaHub.id,
+            variantId: phoneVariant.id,
+            movementType: 'RESERVE',
+            quantityDelta: -5,
+            onHandAfter: 80,
+            reservedAfter: 5,
+            availableAfter: 75,
+            sourceType: 'CHECKOUT_RESERVATION',
+            sourceId: 'crt_demo_checkout_01',
+            actorId: 'usr_customer_demo',
+            reason: 'Buyer checkout session reservation',
+          },
+        });
+        // Bal1 damage adjustment
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal1.id,
+            warehouseId: dhakaHub.id,
+            variantId: phoneVariant.id,
+            movementType: 'DAMAGE',
+            quantityDelta: -1,
+            onHandAfter: 80,
+            reservedAfter: 5,
+            availableAfter: 74,
+            sourceType: 'AUDIT_ADJUSTMENT',
+            sourceId: bal1.id,
+            actorId: 'usr_superadmin',
+            reason: 'Package seal damaged during offloading inspection',
+          },
+        });
+
+        // Bal2 initial intake
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal2.id,
+            warehouseId: bananiDepot.id,
+            variantId: phoneVariant.id,
+            movementType: 'RECEIVE',
+            quantityDelta: 30,
+            onHandAfter: 30,
+            reservedAfter: 0,
+            availableAfter: 30,
+            sourceType: 'PURCHASE_ORDER',
+            sourceId: 'PO-2026-002',
+            actorId: sellerOwnerUser.id,
+            reason: 'Direct merchant stock intake',
+          },
+        });
+
+        // Bal3 initial intake
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal3.id,
+            warehouseId: dhakaHub.id,
+            variantId: earbudsVariant.id,
+            movementType: 'RECEIVE',
+            quantityDelta: 120,
+            onHandAfter: 120,
+            reservedAfter: 0,
+            availableAfter: 120,
+            sourceType: 'PURCHASE_ORDER',
+            sourceId: 'PO-2026-003',
+            actorId: 'usr_superadmin',
+            reason: 'Initial platform hub inventory intake',
+          },
+        });
+        // Bal3 reservation
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal3.id,
+            warehouseId: dhakaHub.id,
+            variantId: earbudsVariant.id,
+            movementType: 'RESERVE',
+            quantityDelta: -10,
+            onHandAfter: 120,
+            reservedAfter: 10,
+            availableAfter: 110,
+            sourceType: 'CHECKOUT_RESERVATION',
+            sourceId: 'crt_demo_checkout_02',
+            actorId: 'usr_customer_demo',
+            reason: 'Buyer checkout session reservation',
+          },
+        });
+        // Bal3 damage
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal3.id,
+            warehouseId: dhakaHub.id,
+            variantId: earbudsVariant.id,
+            movementType: 'DAMAGE',
+            quantityDelta: -2,
+            onHandAfter: 120,
+            reservedAfter: 10,
+            availableAfter: 108,
+            sourceType: 'AUDIT_ADJUSTMENT',
+            sourceId: bal3.id,
+            actorId: 'usr_superadmin',
+            reason: 'Warehouse shelf transit impact testing damage',
+          },
+        });
+
+        // Bal4 initial intake
+        await (prisma as any).stockMovementLedger.create({
+          data: {
+            id: generateId(ID_PREFIXES.STOCK_MOVEMENT),
+            stockBalanceId: bal4.id,
+            warehouseId: bananiDepot.id,
+            variantId: earbudsVariant.id,
+            movementType: 'RECEIVE',
+            quantityDelta: 45,
+            onHandAfter: 45,
+            reservedAfter: 0,
+            availableAfter: 45,
+            sourceType: 'PURCHASE_ORDER',
+            sourceId: 'PO-2026-004',
+            actorId: sellerOwnerUser.id,
+            reason: 'Direct merchant stock intake',
+          },
+        });
+      }
+
+      console.info('✅ Seeded platform warehouses, stock balances, active reservations, and movement ledgers.');
+    }
   }
 
   // Record seed execution in AuditLog

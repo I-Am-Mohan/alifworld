@@ -1,21 +1,30 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
-export const dynamic = 'force-dynamic';
-
 export default function SellerStaffPage() {
-  const staffMembers = [
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [invitePhone, setInvitePhone] = useState('');
+  const [inviteRole, setInviteRole] = useState('SELLER_STAFF');
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+
+  const [staffMembers, setStaffMembers] = useState([
     {
       id: 'stf_01_owner',
       userId: 'usr_seller_zubair_01',
-      name: 'Zubair Ahmed',
-      email: 'zubair.ahmed@example.com',
+      name: 'Rahim Chowdhury',
+      email: 'rahim.chowdhury@dhakatech.com',
       phone: '+8801712345678',
       role: 'SELLER_OWNER',
-      title: 'Store Owner / Founder',
+      title: 'Store Owner & Managing Director',
       isOwner: true,
       status: 'ACTIVE',
       permissions: ['ALL_PERMISSIONS', 'FINANCIAL_WITHDRAWAL', 'KYC_MANAGEMENT', 'STAFF_INVITE'],
@@ -24,231 +33,259 @@ export default function SellerStaffPage() {
     {
       id: 'stf_02_rahim',
       userId: 'usr_seller_staff_01',
-      name: 'Rahim Operations',
-      email: 'staff.seller@alifworld.com',
+      name: 'Tanvir Hossain',
+      email: 'tanvir.operations@dhakatech.com',
       phone: '+8801700000002',
       role: 'SELLER_STAFF',
-      title: 'Fulfillment & Inventory Lead',
+      title: 'Fulfillment & Warehouse Depot Lead',
       isOwner: false,
       status: 'ACTIVE',
       permissions: ['ORDERS_READ', 'ORDERS_UPDATE', 'PRODUCTS_CREATE', 'PRODUCTS_UPDATE', 'COURIER_DISPATCH'],
       joinedAt: '2026-09-15',
     },
-    {
-      id: 'stf_03_karim',
-      userId: 'usr_seller_staff_02',
-      name: 'Karim Support',
-      email: 'karim.support@example.com',
-      phone: '+8801811223344',
-      role: 'SELLER_STAFF',
-      title: 'Customer Service Representative',
+  ]);
+
+  const handleInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail || !inviteName) return;
+
+    const newStaff = {
+      id: `stf_${Date.now()}`,
+      userId: `usr_invited_${Date.now().toString().slice(-4)}`,
+      name: inviteName,
+      email: inviteEmail,
+      phone: invitePhone || '+8801700000000',
+      role: inviteRole,
+      title: inviteRole === 'SELLER_MANAGER' ? 'Store Operations Manager' : 'Store Assistant',
       isOwner: false,
       status: 'INVITED',
-      permissions: ['ORDERS_READ', 'CUSTOMER_MESSAGES_REPLY', 'RETURNS_INSPECT'],
-      joinedAt: '2026-09-22',
-    },
-  ];
+      permissions: ['ORDERS_READ', 'PRODUCTS_CREATE'],
+      joinedAt: new Date().toISOString().split('T')[0],
+    };
+
+    setStaffMembers([...staffMembers, newStaff]);
+    setShowInviteModal(false);
+    setInviteName('');
+    setInviteEmail('');
+    setInvitePhone('');
+    setInviteSuccess(`Invitation successfully sent to ${inviteEmail}.`);
+    setTimeout(() => setInviteSuccess(null), 4000);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
       {/* Header */}
-      <header className="border-b border-neutral-800 pb-6 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-        <div>
-          <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-brand-orange font-bold mb-1">
-            <Link href="/seller" className="hover:underline">
-              Merchant Network
-            </Link>
-            <span>/</span>
-            <span>Delegated Access</span>
+      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-6">
+            <AlifLogo size="sm" href="/" />
+            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <div className="hidden sm:block">
+              <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-bold">
+                Seller Center
+              </span>
+              <h1 className="text-sm font-black text-slate-900 leading-tight">
+                Store Staff Delegation &amp; Access Control
+              </h1>
+            </div>
           </div>
-          <h1 className="text-3xl font-black">Staff & Team Delegation</h1>
-          <p className="text-xs text-neutral-400 mt-1">
-            Manage authorized store staff, order dispatch agents, and customer support representatives scoped to your store.
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Link
-            href="/seller"
-            className="px-4 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm hover:bg-neutral-800 transition-colors"
-          >
-            ← Back to Storefront
-          </Link>
-          <Button className="bg-brand-orange hover:bg-brand-orange/90 text-white font-bold text-sm px-4 py-2 rounded-lg shadow-lg">
-            + Invite New Staff
-          </Button>
+
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={() => setShowInviteModal(true)}
+              className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs shadow-sm shadow-orange-500/25"
+            >
+              + Invite Staff Member
+            </Button>
+            <Link
+              href="/seller"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-all"
+            >
+              ← Dashboard
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Tenant Scope Warning */}
-      <div className="mb-8 p-4 rounded-xl border border-brand-orange/30 bg-brand-orange/10 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <span className="p-2 rounded-lg bg-brand-orange/20 text-brand-orange font-bold text-xs font-mono">
-            TENANT SCOPED
-          </span>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+        {inviteSuccess && (
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2">
+            <span>✓</span>
+            <span>{inviteSuccess}</span>
+          </div>
+        )}
+
+        {/* Info Banner */}
+        <div className="p-4 rounded-xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h4 className="text-sm font-bold text-white">Multi-Tenant RBAC Isolation Enforced</h4>
-            <p className="text-xs text-neutral-400">
-              Staff members invited here only have access to store ID <span className="font-mono text-brand-orange">sel_dhaka_tech_01</span>. They cannot view platform admin data or other stores.
+            <h2 className="text-sm font-bold text-slate-900">Multi-Tenant Scoped Staff Delegation</h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Staff members inherit operational capabilities (product drafting, order packing, courier handoff) scoped exclusively to your merchant store.
             </p>
           </div>
+          <span className="text-xs font-mono font-bold text-[#EA580C] bg-white border border-orange-200 px-3 py-1 rounded-full">
+            ADR-0024 RBAC
+          </span>
         </div>
-        <Badge variant="outline" className="border-brand-orange text-brand-orange text-xs hidden sm:inline-flex">
-          Role Assignment Scope
-        </Badge>
-      </div>
 
-      {/* Staff Delegation Table */}
-      <Card className="border-neutral-800 bg-neutral-900/40 backdrop-blur">
-        <CardHeader className="pb-3 border-b border-neutral-800">
-          <div className="flex justify-between items-center">
+        {/* Staff Table */}
+        <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
+          <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-lg font-bold text-white">Active Store Staff ({staffMembers.length})</CardTitle>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Role-based authorization mapped via UserRoleAssignment scoped to this merchant tenant.
+              <CardTitle className="text-sm font-bold text-slate-900">Authorized Store Staff ({staffMembers.length})</CardTitle>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Manage access delegations and assigned operational roles
               </p>
             </div>
-            <span className="text-xs font-mono text-neutral-500">Max seats: 5 included</span>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-neutral-900/60">
-              <TableRow className="border-neutral-800 hover:bg-transparent">
-                <TableHead className="text-neutral-400 font-bold text-xs">Team Member</TableHead>
-                <TableHead className="text-neutral-400 font-bold text-xs">Store Role</TableHead>
-                <TableHead className="text-neutral-400 font-bold text-xs">Assigned Permissions</TableHead>
-                <TableHead className="text-neutral-400 font-bold text-xs">Status</TableHead>
-                <TableHead className="text-neutral-400 font-bold text-xs">Joined</TableHead>
-                <TableHead className="text-neutral-400 font-bold text-xs text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {staffMembers.map((member) => (
-                <TableRow key={member.id} className="border-neutral-800 hover:bg-neutral-800/30">
-                  <TableCell className="py-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center font-bold text-xs text-brand-orange">
-                        {member.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-white text-sm flex items-center gap-1.5">
-                          {member.name}
-                          {member.isOwner && (
-                            <span className="text-[10px] bg-brand-orange/20 text-brand-orange px-1.5 py-0.5 rounded font-bold">
-                              Owner
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-neutral-400 font-mono">{member.email}</div>
-                        <div className="text-[11px] text-neutral-500 font-mono">{member.phone}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-xs font-semibold text-neutral-200">{member.title}</div>
-                    <div className="text-[10px] font-mono text-neutral-500">{member.role}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1 max-w-xs">
-                      {member.permissions.slice(0, 3).map((perm) => (
-                        <span
-                          key={perm}
-                          className="text-[10px] font-mono bg-neutral-800 border border-neutral-700 text-neutral-300 px-1.5 py-0.5 rounded"
-                        >
-                          {perm}
-                        </span>
-                      ))}
-                      {member.permissions.length > 3 && (
-                        <span className="text-[10px] font-mono text-brand-orange self-center">
-                          +{member.permissions.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {member.status === 'ACTIVE' ? (
-                      <Badge className="bg-emerald-950 text-emerald-400 border border-emerald-800 text-[10px]">
-                        ACTIVE
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-amber-950 text-amber-400 border border-amber-800 text-[10px]">
-                        INVITED
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-neutral-400 font-mono">
-                    {member.joinedAt}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {member.isOwner ? (
-                      <span className="text-xs text-neutral-500 italic">Primary Account</span>
-                    ) : (
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-neutral-700 bg-neutral-800 text-neutral-300 hover:text-white text-xs h-7 px-2.5"
-                        >
-                          Permissions
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-400 hover:text-red-300 hover:bg-red-950/40 text-xs h-7 px-2.5"
-                        >
-                          Revoke
-                        </Button>
-                      </div>
-                    )}
-                  </TableCell>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50 border-b border-slate-200">
+                <TableRow>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Staff Member &amp; Contact</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Store Role</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Assigned Permissions</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Joined Date</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Preset Role Descriptions */}
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-neutral-800 bg-neutral-900/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-white flex items-center justify-between">
-              <span>Order Dispatch & Packing</span>
-              <span className="text-[10px] font-mono text-neutral-500">Preset A</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-neutral-400 space-y-1">
-            <p>Can print packaging slips, manifest shipments to Steadfast / Pathao, and update parcel tracking IDs.</p>
-            <p className="text-[11px] text-brand-orange font-semibold pt-1">No access to store revenue or payouts.</p>
-          </CardContent>
+              </TableHeader>
+              <TableBody>
+                {staffMembers.map((member) => (
+                  <TableRow key={member.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                    <TableCell>
+                      <div className="font-bold text-xs text-slate-900">{member.name}</div>
+                      <div className="text-[11px] text-slate-500">{member.email}</div>
+                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">{member.phone}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs font-semibold text-slate-800">{member.title}</div>
+                      <Badge variant={member.isOwner ? 'orange' : 'blue'} size="sm" className="mt-1">
+                        {member.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {member.permissions.slice(0, 3).map((perm) => (
+                          <span
+                            key={perm}
+                            className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200"
+                          >
+                            {perm}
+                          </span>
+                        ))}
+                        {member.permissions.length > 3 && (
+                          <span className="text-[10px] font-mono text-slate-500 px-1 py-0.5">
+                            +{member.permissions.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={member.status === 'ACTIVE' ? 'success' : 'warning'}
+                        size="sm"
+                      >
+                        {member.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-slate-500 font-mono">
+                      {member.joinedAt}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </Card>
+      </main>
 
-        <Card className="border-neutral-800 bg-neutral-900/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-white flex items-center justify-between">
-              <span>Catalog & Inventory Manager</span>
-              <span className="text-[10px] font-mono text-neutral-500">Preset B</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-neutral-400 space-y-1">
-            <p>Can create product listings, modify prices, update stock SKU counts, and manage seasonal campaigns.</p>
-            <p className="text-[11px] text-brand-orange font-semibold pt-1">Cannot alter store bank payout accounts.</p>
-          </CardContent>
-        </Card>
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-lg font-black text-slate-900 mb-1">Invite Store Staff Member</h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Delegate order packing and product catalog access to an authorized employee.
+            </p>
 
-        <Card className="border-neutral-800 bg-neutral-900/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-white flex items-center justify-between">
-              <span>Customer Care Specialist</span>
-              <span className="text-[10px] font-mono text-neutral-500">Preset C</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-xs text-neutral-400 space-y-1">
-            <p>Can communicate with buyers in real-time chat, review return claims, and issue customer vouchers.</p>
-            <p className="text-[11px] text-brand-orange font-semibold pt-1">Masked customer phone numbers enforced.</p>
-          </CardContent>
-        </Card>
-      </div>
+            <form onSubmit={handleInvite} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Asif Mahmud"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="asif@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Bangladesh Phone (+880)
+                </label>
+                <input
+                  type="text"
+                  placeholder="+8801700000000"
+                  value={invitePhone}
+                  onChange={(e) => setInvitePhone(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Role Delegation
+                </label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
+                >
+                  <option value="SELLER_STAFF">Store Staff (Drafting &amp; Order Packing)</option>
+                  <option value="SELLER_MANAGER">Store Manager (Full Catalog &amp; Courier Management)</option>
+                </select>
+              </div>
+
+              <div className="pt-2 flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowInviteModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold"
+                >
+                  Send Invitation
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

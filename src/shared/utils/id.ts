@@ -41,9 +41,12 @@ export const ID_PREFIXES = {
   STORE_SETTINGS: 'set',
   BRAND: 'brd',
   MEDIA: 'med',
-  PRODUCT_MEDIA: 'med',
   SHIPMENT: 'shp',
   INVENTORY: 'inv',
+  WAREHOUSE: 'whs',
+  STOCK_BALANCE: 'stb',
+  STOCK_RESERVATION: 'res',
+  STOCK_MOVEMENT: 'mov',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];

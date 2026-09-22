@@ -37,6 +37,7 @@ export const MODEL_DELETION_POLICIES: Record<string, DeletionPolicy> = {
   OrderSnapshot: 'IMMUTABLE',
   OrderItemSnapshot: 'IMMUTABLE',
   ProductSlugHistory: 'IMMUTABLE',
+  StockMovementLedger: 'IMMUTABLE',
 
   // Category 2: Soft-Deletable Domain Entities
   SystemConfig: 'SOFT_DELETE',
@@ -55,6 +56,8 @@ export const MODEL_DELETION_POLICIES: Record<string, DeletionPolicy> = {
   ProductVariant: 'SOFT_DELETE',
   ProductMedia: 'SOFT_DELETE',
   Warehouse: 'SOFT_DELETE',
+  StockBalance: 'SOFT_DELETE',
+  StockReservation: 'SOFT_DELETE',
 
   // Category 3: Ephemeral Records with TTL Purge Policy
   HealthProbe: 'EPHEMERAL',

@@ -2,8 +2,8 @@ import React from 'react';
 
 export function Table({ className = '', children, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-neutral-800">
-      <table className={`w-full text-left text-sm text-neutral-300 ${className}`} {...props}>
+    <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table className={`w-full text-left text-sm text-slate-700 ${className}`} {...props}>
         {children}
       </table>
     </div>
@@ -12,7 +12,7 @@ export function Table({ className = '', children, ...props }: React.TableHTMLAtt
 
 export function TableHeader({ className = '', children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={`border-b border-neutral-800 bg-neutral-900/70 text-xs uppercase tracking-wider text-neutral-400 font-semibold ${className}`} {...props}>
+    <thead className={`border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500 font-semibold ${className}`} {...props}>
       {children}
     </thead>
   );
@@ -20,7 +20,7 @@ export function TableHeader({ className = '', children, ...props }: React.HTMLAt
 
 export function TableBody({ className = '', children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className={`divide-y divide-neutral-800/60 bg-neutral-950/40 ${className}`} {...props}>
+    <tbody className={`divide-y divide-slate-100 bg-white ${className}`} {...props}>
       {children}
     </tbody>
   );
@@ -28,7 +28,7 @@ export function TableBody({ className = '', children, ...props }: React.HTMLAttr
 
 export function TableRow({ className = '', children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={`transition-colors hover:bg-neutral-900/40 ${className}`} {...props}>
+    <tr className={`transition-colors hover:bg-slate-50/80 ${className}`} {...props}>
       {children}
     </tr>
   );
@@ -36,7 +36,7 @@ export function TableRow({ className = '', children, ...props }: React.HTMLAttri
 
 export function TableHead({ className = '', children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className={`px-4 py-3 font-semibold ${className}`} {...props}>
+    <th className={`px-4 py-3 font-semibold text-slate-700 ${className}`} {...props}>
       {children}
     </th>
   );
@@ -44,7 +44,7 @@ export function TableHead({ className = '', children, ...props }: React.ThHTMLAt
 
 export function TableCell({ className = '', children, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={`px-4 py-3.5 ${className}`} {...props}>
+    <td className={`px-4 py-3.5 text-slate-700 ${className}`} {...props}>
       {children}
     </td>
   );

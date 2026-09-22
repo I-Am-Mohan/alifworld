@@ -1,20 +1,23 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
-export const dynamic = 'force-dynamic';
-
 export default function AdminUsersPage() {
-  // Demonstration baseline seed users reflecting AlifWorld actors
-  const sampleUsers = [
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRole, setSelectedRole] = useState('ALL');
+
+  const [users, setUsers] = useState([
     {
-      id: 'usr_1j7x000000000000superadmin',
+      id: 'usr_superadmin',
       name: 'Platform Super Administrator',
       email: 'admin@alifworld.com',
-      phone: '+880 1700-000000',
+      phone: '+8801700000000',
       status: 'ACTIVE',
       roles: ['SUPER_ADMIN'],
       isEmailVerified: true,
@@ -22,10 +25,10 @@ export default function AdminUsersPage() {
       createdAt: '2026-09-22',
     },
     {
-      id: 'usr_1j7x000000000000sellerown1',
-      name: 'Rahim Chowdhury (Dhaka Tech)',
+      id: 'usr_sellerown1',
+      name: 'Rahim Chowdhury',
       email: 'rahim@dhakatech.com',
-      phone: '+880 1711-223344',
+      phone: '+8801711223344',
       status: 'ACTIVE',
       roles: ['SELLER_OWNER'],
       sellerId: 'sel_dhaka_tech_01',
@@ -34,10 +37,10 @@ export default function AdminUsersPage() {
       createdAt: '2026-09-22',
     },
     {
-      id: 'usr_1j7x000000000000customer01',
+      id: 'usr_customer01',
       name: 'Tasnim Ahmed',
       email: 'tasnim@example.com',
-      phone: '+880 1819-556677',
+      phone: '+8801819556677',
       status: 'ACTIVE',
       roles: ['CUSTOMER'],
       isEmailVerified: true,
@@ -45,10 +48,10 @@ export default function AdminUsersPage() {
       createdAt: '2026-09-22',
     },
     {
-      id: 'usr_1j7x000000000000rider0001',
+      id: 'usr_rider0001',
       name: 'Kamrul Hasan (Pathao Courier)',
       email: 'kamrul@courier.alifworld.com',
-      phone: '+880 1912-998877',
+      phone: '+8801912998877',
       status: 'ACTIVE',
       roles: ['RIDER'],
       isEmailVerified: false,
@@ -56,178 +59,156 @@ export default function AdminUsersPage() {
       createdAt: '2026-09-22',
     },
     {
-      id: 'usr_1j7x000000000000finance01',
+      id: 'usr_finance01',
       name: 'Farhana Sultana',
       email: 'farhana.finance@alifworld.com',
-      phone: '+880 1755-443322',
+      phone: '+8801555112233',
       status: 'ACTIVE',
       roles: ['FINANCE'],
       isEmailVerified: true,
       isPhoneVerified: true,
       createdAt: '2026-09-22',
     },
-  ];
+  ]);
+
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.phone.includes(searchQuery);
+
+    const matchesRole = selectedRole === 'ALL' || u.roles.includes(selectedRole);
+
+    return matchesSearch && matchesRole;
+  });
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
       {/* Header */}
-      <header className="border-b border-neutral-800 pb-6 mb-8 flex justify-between items-center">
-        <div>
-          <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-brand-orange font-bold mb-1">
-            <Link href="/admin" className="hover:underline">
-              Platform Operations
-            </Link>
-            <span>/</span>
-            <span>Identity & Access</span>
+      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-6">
+            <AlifLogo size="sm" href="/" />
+            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <div className="hidden sm:block">
+              <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-bold">
+                Platform Operations
+              </span>
+              <h1 className="text-sm font-black text-slate-900 leading-tight">
+                User Management Directory
+              </h1>
+            </div>
           </div>
-          <h1 className="text-3xl font-black">User Management</h1>
-          <p className="text-xs text-neutral-400 mt-1">
-            Browse users, inspect verification states, manage E.164 phone identities, and assign RBAC roles.
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Link
-            href="/admin/roles"
-            className="px-4 py-2 rounded-lg border border-neutral-700 bg-neutral-900 text-sm hover:bg-neutral-800 font-semibold"
-          >
-            Role Matrix & Permissions →
-          </Link>
-          <Link
-            href="/admin"
-            className="px-4 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm hover:bg-neutral-800"
-          >
-            ← Back to Console
-          </Link>
+
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/admin"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-all"
+            >
+              ← Admin Portal
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Control Bar: Search & Filters */}
-      <Card className="mb-6 p-4">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="w-full md:w-96">
-            <Input
-              placeholder="Search by name, email, or +880 phone..."
-              defaultValue=""
-            />
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+        {/* Top Controls */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-xl font-black text-slate-950">Identity &amp; Role Directory</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Inspect user identities, Bangladesh E.164 phone numbers, and tenant-scoped role delegations.
+            </p>
           </div>
-          <div className="flex space-x-2 w-full md:w-auto overflow-x-auto">
-            <Button variant="primary" size="sm">
-              All Users (5)
-            </Button>
-            <Button variant="outline" size="sm">
-              Customers
-            </Button>
-            <Button variant="outline" size="sm">
-              Sellers
-            </Button>
-            <Button variant="outline" size="sm">
-              Staff / Admins
-            </Button>
-            <Button variant="outline" size="sm">
-              Riders
-            </Button>
+          <div className="flex items-center space-x-3 w-full sm:w-auto">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, email, phone..."
+              className="w-full sm:w-64 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF6A00]"
+            />
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-[#FF6A00]"
+            >
+              <option value="ALL">All Roles</option>
+              <option value="SUPER_ADMIN">Super Admin</option>
+              <option value="SELLER_OWNER">Seller Owner</option>
+              <option value="CUSTOMER">Customer</option>
+              <option value="RIDER">Rider</option>
+              <option value="FINANCE">Finance</option>
+            </select>
           </div>
         </div>
-      </Card>
 
-      {/* Users Table */}
-      <Card className="p-0 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User / Identity</TableHead>
-              <TableHead>Contact & Verification</TableHead>
-              <TableHead>Role Assignments</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Tenant Scope</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sampleUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>
-                  <div>
-                    <div className="font-bold text-white text-sm">{user.name}</div>
-                    <div className="text-xs font-mono text-neutral-500">{user.id}</div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-xs space-y-1">
-                    <div className="flex items-center space-x-1.5">
-                      <span className="text-neutral-300">{user.email}</span>
-                      {user.isEmailVerified && (
-                        <span className="text-[10px] text-emerald-400" title="Email Verified">
-                          ✓
+        {/* Users Table */}
+        <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50 border-b border-slate-200">
+                <TableRow>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">User Name &amp; ID</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Contact Details</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Assigned Roles</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Verifications</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Created Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((u) => (
+                  <TableRow key={u.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                    <TableCell>
+                      <div className="font-bold text-xs text-slate-900">{u.name}</div>
+                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">{u.id}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-xs text-slate-700">{u.email}</div>
+                      <div className="text-[11px] font-mono text-[#0284C7] mt-0.5">{u.phone}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {u.roles.map((role) => (
+                          <Badge
+                            key={role}
+                            variant={role === 'SUPER_ADMIN' ? 'orange' : role === 'SELLER_OWNER' ? 'blue' : 'default'}
+                            size="sm"
+                          >
+                            {role}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="inline-flex space-x-1">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          u.isEmailVerified ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          EMAIL
                         </span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-1.5 font-mono text-neutral-400">
-                      <span>{user.phone}</span>
-                      {user.isPhoneVerified && (
-                        <span className="text-[10px] text-emerald-400" title="Phone Verified">
-                          ✓
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          u.isPhoneVerified ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          PHONE
                         </span>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {user.roles.map((role) => (
-                      <Badge
-                        key={role}
-                        variant={
-                          role === 'SUPER_ADMIN'
-                            ? 'orange'
-                            : role === 'SELLER_OWNER'
-                            ? 'blue'
-                            : role === 'FINANCE'
-                            ? 'warning'
-                            : 'default'
-                        }
-                        size="sm"
-                      >
-                        {role}
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="success" size="sm">
-                    {user.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {user.sellerId ? (
-                    <span className="font-mono text-xs text-brand-globeLightBlue">
-                      {user.sellerId}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-neutral-500">Global Platform</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      type="button"
-                      className="text-xs px-2.5 py-1 rounded bg-neutral-800 text-neutral-200 hover:bg-neutral-700"
-                    >
-                      Assign Role
-                    </button>
-                    <button
-                      type="button"
-                      className="text-xs px-2.5 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-400 hover:text-white"
-                    >
-                      Audit Trail
-                    </button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="success" size="sm">{u.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-slate-500 font-mono">
+                      {u.createdAt}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      </main>
     </div>
   );
 }

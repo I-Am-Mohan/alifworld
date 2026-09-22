@@ -1,13 +1,17 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
-export const dynamic = 'force-dynamic';
-
 export default function SellerKycPage() {
-  const documents = [
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+
+  const [documents, setDocuments] = useState([
     {
       id: 'kyc_trade_license_01',
       type: 'TRADE_LICENSE',
@@ -31,7 +35,7 @@ export default function SellerKycPage() {
     {
       id: 'kyc_nid_front_01',
       type: 'NID_FRONT',
-      title: 'Owner National Identity Card (Front)',
+      title: 'Owner National Identity Card (Smart NID)',
       number: '5912345678',
       status: 'VERIFIED',
       verifiedAt: '2026-09-22',
@@ -42,125 +46,129 @@ export default function SellerKycPage() {
       id: 'kyc_bank_cheque_01',
       type: 'BANK_CHEQUE_LEAF',
       title: 'Cancelled Bank Cheque Leaf (Settlement Account)',
-      number: 'A/C: 11029384756',
-      status: 'PENDING',
-      verifiedAt: null,
+      number: 'A/C: 11029384756 (BRAC Bank Ltd)',
+      status: 'VERIFIED',
+      verifiedAt: '2026-09-22',
       fileSize: '1.8 MB',
       required: false,
     },
-  ];
+  ]);
+
+  const handleSimulateUpload = () => {
+    setUploadSuccess('Document successfully uploaded to private S3 bucket. Compliance audit entry created.');
+    setTimeout(() => setUploadSuccess(null), 4000);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
       {/* Header */}
-      <header className="border-b border-neutral-800 pb-6 mb-8 flex justify-between items-center">
-        <div>
-          <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-brand-orange font-bold mb-1">
-            <Link href="/seller" className="hover:underline">
-              Merchant Network
-            </Link>
-            <span>/</span>
-            <span>Compliance & Identity</span>
+      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-6">
+            <AlifLogo size="sm" href="/" />
+            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <div className="hidden sm:block">
+              <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-bold">
+                Seller Center
+              </span>
+              <h1 className="text-sm font-black text-slate-900 leading-tight">
+                KYC &amp; Legal Compliance Dossier
+              </h1>
+            </div>
           </div>
-          <h1 className="text-3xl font-black">KYC Document Verification</h1>
-          <p className="text-xs text-neutral-400 mt-1">
-            Government regulatory documents required under Bangladesh e-commerce laws (NBR BIN, Trade License).
-          </p>
+
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={handleSimulateUpload}
+              className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs shadow-sm shadow-orange-500/25"
+            >
+              + Upload Document
+            </Button>
+            <Link
+              href="/seller"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-all"
+            >
+              ← Dashboard
+            </Link>
+          </div>
         </div>
-        <Link
-          href="/seller"
-          className="px-4 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm hover:bg-neutral-800"
-        >
-          ← Back to Dashboard
-        </Link>
       </header>
 
-      {/* Compliance Overview Banner */}
-      <Card className="p-6 mb-8 border-emerald-800/40 bg-emerald-950/20">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
-              <h2 className="text-base font-bold text-white">
-                Regulatory Status: Verified Merchant
-              </h2>
-            </div>
-            <p className="text-xs text-neutral-300">
-              Your business is certified compliant. Customer orders and catalog publishing are fully active.
-            </p>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+        {uploadSuccess && (
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2">
+            <span>✓</span>
+            <span>{uploadSuccess}</span>
           </div>
-          <Badge variant="success" size="md">
-            COMPLIANT (NBR & DNCC)
-          </Badge>
+        )}
+
+        {/* Security & Access Policy Notice */}
+        <div className="p-4 rounded-xl border border-sky-200 bg-sky-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-full bg-[#0284C7] text-white font-bold flex items-center justify-center text-sm shrink-0">
+              🔒
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Encrypted Private Storage Boundary</h2>
+              <p className="text-xs text-slate-600 mt-0.5">
+                KYC dossiers are stored in private S3 buckets and accessed only via short-lived pre-signed URLs. Direct public URL access is prohibited.
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-mono font-bold text-[#0284C7] bg-white border border-sky-200 px-3 py-1 rounded-full">
+            ADR-0024 ENFORCED
+          </span>
         </div>
-      </Card>
 
-      {/* Document List Table */}
-      <Card className="p-0 overflow-hidden mb-8">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Document Type</TableHead>
-              <TableHead>Registration / ID Number</TableHead>
-              <TableHead>Verification Status</TableHead>
-              <TableHead>File Details</TableHead>
-              <TableHead className="text-right">Access Controls</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {documents.map((doc) => (
-              <TableRow key={doc.id}>
-                <TableCell>
-                  <div>
-                    <div className="font-bold text-white text-sm">{doc.title}</div>
-                    <div className="text-xs font-mono text-neutral-500">
-                      {doc.type} {doc.required && <span className="text-brand-orange">*Mandatory</span>}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className="font-mono text-xs text-neutral-300">{doc.number}</span>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      doc.status === 'VERIFIED'
-                        ? 'success'
-                        : doc.status === 'PENDING'
-                        ? 'warning'
-                        : 'danger'
-                    }
-                    size="sm"
-                  >
-                    {doc.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="text-xs text-neutral-400 font-mono">
-                    <span>{doc.fileSize}</span> • <span>PDF</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <button
-                    type="button"
-                    className="text-xs px-3 py-1 rounded bg-neutral-900 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-500 font-semibold"
-                  >
-                    View Signed URL 🔒
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-
-      {/* Security Disclosure Notice */}
-      <div className="p-4 rounded-xl border border-neutral-800 bg-neutral-900/30 text-xs text-neutral-500 flex items-center justify-between">
-        <span>
-          🔒 All KYC documents are stored in encrypted private S3 storage with short-lived presigned URLs. Every access is logged in the compliance audit trail.
-        </span>
-        <span className="font-mono text-[10px] text-neutral-600">AUDIT_LOG_ENABLED</span>
-      </div>
+        {/* Documents Table */}
+        <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
+          <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-sm font-bold text-slate-900">Submitted Legal Documents</CardTitle>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Verified records for Dhaka Tech Electronics (sel_dhaka_tech_01)
+              </p>
+            </div>
+            <Badge variant="success" size="sm">ALL REQUIRED VERIFIED</Badge>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50 border-b border-slate-200">
+                <TableRow>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Document Type &amp; Title</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">Government Identifier</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">File Metadata</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Verification Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {documents.map((doc) => (
+                  <TableRow key={doc.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                    <TableCell>
+                      <div className="font-bold text-xs text-slate-900">{doc.title}</div>
+                      <div className="text-[10px] font-mono text-[#0284C7]">{doc.type}</div>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-slate-700 font-bold">
+                      {doc.number}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-500">
+                      PDF • {doc.fileSize}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="success" size="sm">✓ {doc.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-xs text-slate-500 font-mono">
+                      {doc.verifiedAt}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      </main>
     </div>
   );
 }

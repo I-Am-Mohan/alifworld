@@ -6,21 +6,26 @@ AlifWorld is an enterprise-grade multi-vendor e-commerce platform and digital ec
 
 ## Brand Identity & Design Language
 
-AlifWorld's visual identity is governed by the authoritative brand guidelines (`colors.md` and `logo.png`):
+AlifWorld's visual identity is governed by the customer storefront design guidelines (`colors.md` and `logo.png`):
 
-- **Foundation**: Deep Black (`#000000`) and Pure White (`#FFFFFF`) provide a bold, high-contrast, modern interface foundation.
-- **Brand Interactive Accent**: Brand Orange (`#FF6A00`) drives all primary calls-to-action, highlights, links, and active interactive states.
-- **Global / World Elements**: Globe Blue (`#4F8FD9`), Globe Light Blue (`#69B7E8`), and Globe Dark Blue (`#3456A3`) accent international, geographic, and world-related modules.
+- **Primary Interactive Accent**: Golden Amber (`#F59E0B`) powers primary conversion buttons (`Add to cart`), star ratings, and "See All" highlights, alongside signature Brand Orange (`#FF6A00`) smile and badges.
+- **Foundation & Surfaces**: Pure White (`#FFFFFF`) and Soft Canvas Cream (`#FAF9F6`) provide a crisp, clean shopping surface.
+- **Luxury Dark Footer**: Deep Charcoal (`#161614`) anchors the high-contrast luxury footer.
+- **Atmosphere & Reach**: Hero Deep Navy (`#0A4B8C`), Sky Tint (`#E0F2FE`), and Globe Blue (`#0284C7`) drive brand reach and exploration.
 - **Logo Rule**: The blue globe is an authoritative brand icon and logo element—it is never treated as a replacement character for the letter `O`.
 
 ```css
 :root {
-  --alif-black: #000000;
-  --alif-white: #FFFFFF;
+  --alif-amber: #F59E0B;
   --alif-orange: #FF6A00;
-  --alif-globe-blue: #4F8FD9;
-  --alif-globe-light: #69B7E8;
-  --alif-globe-dark: #3456A3;
+  --alif-footer-bg: #161614;
+  --alif-white: #FFFFFF;
+  --alif-cream: #FAF9F6;
+  --alif-hero-navy: #0A4B8C;
+  --alif-sky-tint: #E0F2FE;
+  --alif-globe-blue: #0284C7;
+  --alif-stock-green: #16A34A;
+  --alif-whatsapp: #25D366;
 }
 ```
 
@@ -66,6 +71,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[User, Role, Permission & Assignment Architecture](docs/architecture/user-roles-permissions-and-role-assignments.md)**: Normalized IAM schema, tenant-scoped role assignments, and Bangladesh E.164 phone normalization.
 - **[Seller, Staff, KYC & Store Settings Architecture](docs/architecture/seller-staff-kyc-and-store-settings.md)**: Multi-tenant merchant isolation, KYC document regulatory verification, delegated store staff, and logistics configurations.
 - **[Catalog Taxonomy, Products, Variants & Media Architecture](docs/architecture/catalog-taxonomy-products-and-media.md)**: Hierarchical product taxonomy, trademark brand registry, multi-SKU variants, BDT integer poisha pricing, and independent Product Points.
+- **[Warehouse Logistics, Inventory Balances & Stock Movements Architecture](docs/architecture/warehouse-inventory-and-stock-movements.md)**: Nationwide fulfillment hubs across 8 Bangladesh divisions, merchant storage depots, atomic reservations, deterministic TTL expiry, and append-only movement ledger.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -94,6 +100,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0023: Model Users, Roles, Permissions, and Role Assignments Architecture](docs/decisions/0023-model-users-roles-permissions-and-role-assignments.md)
   - [ADR 0024: Model Sellers, Seller Staff, KYC Documents, and Store Settings](docs/decisions/0024-model-sellers-seller-staff-kyc-documents-and-store-settings.md)
   - [ADR 0025: Model Catalog Taxonomy, Products, Variants, and Media](docs/decisions/0025-model-catalog-taxonomy-products-variants-and-media.md)
+  - [ADR 0026: Model Warehouses, Inventory Balances, and Stock Movements](docs/decisions/0026-model-warehouses-inventory-balances-and-stock-movements.md)
 
 ---
 
@@ -105,7 +112,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
 | **02** | 011–020 | Repository and Tooling | **Completed (Milestones 011–020)** |
-| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–025 Completed)** |
+| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–026 Completed)** |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
 | **06** | 051–060 | Bangladesh Localization | Planned |

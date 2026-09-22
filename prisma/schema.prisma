@@ -250,6 +250,7 @@ model Seller {
   kycDocuments SellerKycDocument[]
   settings     SellerStoreSettings?
   products     Product[]
+  warehouses   Warehouse[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -475,7 +476,9 @@ model ProductVariant {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product        Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockBalances  StockBalance[]
+  stockMovements StockMovementLedger[]
 
   @@index([productId])
   @@index([isActive])
@@ -528,6 +531,131 @@ model ProductSlugHistory {
   @@index([productId])
   @@map("product_slug_history")
 }
+
+// ------------------------------------------------------------------------------
+// 20. Warehouses & Fulfillment Hubs
+// ------------------------------------------------------------------------------
+/// Platform fulfillment centers and merchant warehouse facilities across Bangladesh
+model Warehouse {
+  id            String    @id @default(uuid())
+  sellerId      String?   @map("seller_id") // Null for AlifWorld platform central hub
+  name          String
+  code          String    @unique // e.g. DHK-HUB-01, CTG-HUB-01
+  division      String    // DHAKA, CHITTAGONG, RAJSHAHI, KHULNA, BARISAL, SYLHET, RANGPUR, MYMENSINGH
+  district      String
+  upazila       String?
+  addressLine   String    @map("address_line")
+  postalCode    String?   @map("postal_code")
+  isPlatformHub Boolean   @default(false) @map("is_platform_hub")
+  isActive      Boolean   @default(true) @map("is_active")
+  version       Int       @default(1)
+  deletedAt     DateTime? @map("deleted_at")
+  deletedBy     String?   @map("deleted_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  seller        Seller?               @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  stockBalances StockBalance[]
+  movements     StockMovementLedger[]
+
+  @@index([sellerId])
+  @@index([division, district])
+  @@index([isActive])
+  @@index([deletedAt])
+  @@map("warehouses")
+}
+
+// ------------------------------------------------------------------------------
+// 21. Warehouse Inventory Balances
+// ------------------------------------------------------------------------------
+/// Physical on-hand, reserved, damaged, and quarantined stock balances per warehouse/variant
+model StockBalance {
+  id                String    @id @default(uuid())
+  warehouseId       String    @map("warehouse_id")
+  variantId         String    @map("variant_id")
+  onHand            Int       @default(0) @map("on_hand") // Physical count present in facility
+  reserved          Int       @default(0) // Quantity locked in active checkout reservations
+  damaged           Int       @default(0) // Broken or unfulfillable inventory
+  quarantined       Int       @default(0) // Pending quality inspection or customer return RMA
+  lowStockThreshold Int       @default(5) @map("low_stock_threshold")
+  reorderPoint      Int       @default(10) @map("reorder_point")
+  version           Int       @default(1) // Optimistic concurrency control for atomic updates
+  deletedAt         DateTime? @map("deleted_at")
+  deletedBy         String?   @map("deleted_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  warehouse    Warehouse             @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  variant      ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  reservations StockReservation[]
+  movements    StockMovementLedger[]
+
+  @@unique([warehouseId, variantId])
+  @@index([variantId])
+  @@index([warehouseId])
+  @@index([deletedAt])
+  @@map("stock_balances")
+}
+
+// ------------------------------------------------------------------------------
+// 22. Atomic Stock Reservations
+// ------------------------------------------------------------------------------
+/// Time-limited atomic stock reservations during buyer checkout with deterministic expiry
+model StockReservation {
+  id             String    @id @default(uuid())
+  stockBalanceId String    @map("stock_balance_id")
+  orderId        String?   @map("order_id")
+  cartId         String?   @map("cart_id")
+  quantity       Int
+  status         String    @default("ACTIVE") // ACTIVE, COMMITTED, RELEASED, EXPIRED
+  expiresAt      DateTime  @map("expires_at") // Deterministic TTL cutoff
+  committedAt    DateTime? @map("committed_at")
+  releasedAt     DateTime? @map("released_at")
+  version        Int       @default(1)
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  stockBalance StockBalance @relation(fields: [stockBalanceId], references: [id], onDelete: Restrict)
+
+  @@index([stockBalanceId, status])
+  @@index([expiresAt, status])
+  @@index([orderId])
+  @@index([cartId])
+  @@map("stock_reservations")
+}
+
+// ------------------------------------------------------------------------------
+// 23. Immutable Stock Movement Ledger
+// ------------------------------------------------------------------------------
+/// Append-only audit trail recording every inventory balance adjustment and reservation
+model StockMovementLedger {
+  id             String   @id @default(uuid())
+  stockBalanceId String   @map("stock_balance_id")
+  warehouseId    String   @map("warehouse_id")
+  variantId      String   @map("variant_id")
+  movementType   String   @map("movement_type") // RECEIVE, RESERVE, RELEASE, COMMIT, ADJUST, RETURN, DAMAGE, WRITE_OFF
+  quantityDelta  Int      @map("quantity_delta") // Signed delta (+/-)
+  onHandAfter    Int      @map("on_hand_after")
+  reservedAfter  Int      @map("reserved_after")
+  availableAfter Int      @map("available_after")
+  sourceType     String   @map("source_type") // PURCHASE_ORDER, CHECKOUT_RESERVATION, ORDER_FULFILLMENT, RETURN_RMA, AUDIT_ADJUSTMENT
+  sourceId       String   @map("source_id")
+  actorId        String?  @map("actor_id")
+  reason         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  stockBalance StockBalance   @relation(fields: [stockBalanceId], references: [id], onDelete: Restrict)
+  warehouse    Warehouse      @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  variant      ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([variantId, warehouseId])
+  @@index([stockBalanceId, createdAt])
+  @@index([sourceType, sourceId])
+  @@map("stock_movement_ledger")
+}
+
 
 
 
