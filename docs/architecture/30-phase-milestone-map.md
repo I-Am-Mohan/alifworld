@@ -39,7 +39,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **009**: Environment, branching, and release strategy *(Completed)*
 - **010**: Definition-of-done and requirements traceability matrix *(Completed)*
 
-### Phase 02: Repository and Tooling (Milestones 011–020)
+### Phase 02: Repository and Tooling (Milestones 011–020) — *(Completed)*
 *Phase Objective: Build a deterministic, reproducible local developer experience and baseline CI pipeline.*
 
 - **011**: Inspect the existing repository and preserve useful work *(Completed)*
@@ -51,7 +51,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **017**: Implement the required Bun command contract *(Completed)*
 - **018**: Establish unit, integration, and end-to-end test frameworks *(Completed)*
 - **019**: Create local development infrastructure profiles (Postgres, Redis, Meilisearch) *(Completed)*
-- **020**: Build the baseline continuous-integration quality gate
+- **020**: Build the baseline continuous-integration quality gate *(Completed)*
 
 ### Phase 03: Data Architecture (Milestones 021–030)
 *Phase Objective: Establish normalized PostgreSQL schemas, constraints, indexes, and migrations via Prisma.*

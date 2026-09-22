@@ -33,7 +33,9 @@
     "infra:core": "docker compose --profile core up -d",
     "infra:down": "docker compose down",
     "infra:logs": "docker compose logs -f",
-    "infra:reset": "docker compose down -v && docker compose --profile full up -d"
+    "infra:reset": "docker compose down -v && docker compose --profile full up -d",
+    "ci:check": "bun run format:check && bun run lint && bun run typecheck && bun run test && bun run openapi && bun run build:local",
+    "commitlint": "commitlint"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
