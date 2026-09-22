@@ -22,8 +22,15 @@ import {
   Sparkles,
   Info,
   ShieldAlert,
+  ArrowLeftRight,
+  Languages,
+  Check,
+  X,
+  Coins,
 } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import { CurrencyConfig, DEFAULT_CURRENCIES, parseCurrencies, formatCurrencyAmount } from '@/shared/types/currency';
+import { LanguageDefinition } from '@/i18n/types';
 
 type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'features';
 
@@ -34,9 +41,20 @@ export default function AdminSetupPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // New locale & currency input state
-  const [newLocaleCode, setNewLocaleCode] = useState('');
-  const [newCurrencyCode, setNewCurrencyCode] = useState('');
+  // 3-Option Currency Management State
+  const [newCurrencyName, setNewCurrencyName] = useState('');
+  const [newCurrencySymbol, setNewCurrencySymbol] = useState('');
+  const [newCurrencyPosition, setNewCurrencyPosition] = useState<'left' | 'right'>('left');
+
+  // Database-driven platform languages state
+  const [languages, setLanguages] = useState<LanguageDefinition[]>([]);
+  const [loadingLanguages, setLoadingLanguages] = useState(false);
+  const [newLangCode, setNewLangCode] = useState('');
+  const [newLangName, setNewLangName] = useState('');
+  const [newLangNativeName, setNewLangNativeName] = useState('');
+  const [newLangWord, setNewLangWord] = useState('');
+  const [newLangDirection, setNewLangDirection] = useState<'ltr' | 'rtl'>('ltr');
+  const [showAddLangModal, setShowAddLangModal] = useState(false);
 
   // Password / secret reveals
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
@@ -51,7 +69,7 @@ export default function AdminSetupPage() {
     PLATFORM_DEFAULT_LOCALE: 'bn-BD',
     PLATFORM_LOCALES: 'bn-BD,en-BD',
     PLATFORM_CURRENCY: 'BDT',
-    PLATFORM_CURRENCIES: 'BDT,USD',
+    PLATFORM_CURRENCIES: JSON.stringify(DEFAULT_CURRENCIES),
     STORAGE_PROVIDER: 'INTERNAL',
     STORAGE_S3_ENDPOINT: 'http://localhost:9000',
     STORAGE_S3_REGION: 'us-east-1',
@@ -102,7 +120,27 @@ export default function AdminSetupPage() {
     FEATURE_CART_TTL_AUTO_CANCEL: 'true',
   });
 
-  // Fetch settings from API on mount
+  const loadLanguages = async () => {
+    try {
+      setLoadingLanguages(true);
+      const res = await fetch('/api/v1/system/languages');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setLanguages(json.data.languages || []);
+          if (json.data.defaultLocale) {
+            updateSetting('PLATFORM_DEFAULT_LOCALE', json.data.defaultLocale);
+          }
+        }
+      }
+    } catch {
+      // Fallback silently to defaults
+    } finally {
+      setLoadingLanguages(false);
+    }
+  };
+
+  // Fetch settings and database languages on mount
   useEffect(() => {
     async function loadSetup() {
       try {
@@ -121,6 +159,7 @@ export default function AdminSetupPage() {
       }
     }
     loadSetup();
+    loadLanguages();
   }, []);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -133,11 +172,6 @@ export default function AdminSetupPage() {
   };
 
   const toggleSetting = (key: string) => {
-    // Invariant protection: points cash convertible can never be enabled
-    if (key === 'FEATURE_POINTS_CASH_CONVERTIBLE') {
-      showToast('Product Points are strictly non-convertible to fiat currency by architecture invariant.', 'error');
-      return;
-    }
     const current = settings[key] === 'true';
     updateSetting(key, current ? 'false' : 'true');
   };
@@ -157,6 +191,7 @@ export default function AdminSetupPage() {
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
         showToast('All platform setups and configurations saved successfully to database!');
+        await loadLanguages();
       } else {
         throw new Error(json?.error?.message || 'Failed to save settings');
       }
@@ -167,54 +202,162 @@ export default function AdminSetupPage() {
     }
   };
 
-  // Locale list management
-  const locales = (settings.PLATFORM_LOCALES || 'bn-BD,en-BD')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const addLocale = () => {
-    if (!newLocaleCode.trim()) return;
-    const clean = newLocaleCode.trim();
-    if (!locales.includes(clean)) {
-      const updated = [...locales, clean].join(',');
-      updateSetting('PLATFORM_LOCALES', updated);
-      setNewLocaleCode('');
+  // ---------------------------------------------------------------------------
+  // Database-Backed Language Management Handlers
+  // ---------------------------------------------------------------------------
+  const handleSetDefaultLanguage = async (code: string) => {
+    try {
+      const res = await fetch('/api/v1/system/languages/default', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defaultLocale: code }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        updateSetting('PLATFORM_DEFAULT_LOCALE', code);
+        await loadLanguages();
+        showToast(`Default platform language updated to '${code}' in database`);
+      } else {
+        throw new Error(json.error?.message || 'Failed to set default language');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'error');
     }
   };
 
-  const removeLocale = (code: string) => {
-    if (code === settings.PLATFORM_DEFAULT_LOCALE) {
-      showToast('Cannot remove default platform locale', 'error');
+  const handleAddLanguage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanCode = newLangCode.trim().toLowerCase();
+    const cleanName = newLangName.trim();
+    const cleanNative = newLangNativeName.trim();
+    const cleanWord = newLangWord.trim();
+
+    if (!cleanCode || !cleanName || !cleanNative || !cleanWord) {
+      showToast('All language fields are required', 'error');
       return;
     }
-    const updated = locales.filter((l) => l !== code).join(',');
-    updateSetting('PLATFORM_LOCALES', updated);
+
+    try {
+      const res = await fetch('/api/v1/system/languages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: cleanCode,
+          name: cleanName,
+          nativeName: cleanNative,
+          wordForLanguage: cleanWord,
+          direction: newLangDirection,
+          isActive: true,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        showToast(`Language '${cleanName}' registered successfully in database`);
+        setNewLangCode('');
+        setNewLangName('');
+        setNewLangNativeName('');
+        setNewLangWord('');
+        setNewLangDirection('ltr');
+        setShowAddLangModal(false);
+        await loadLanguages();
+      } else {
+        throw new Error(json.error?.message || 'Failed to register language');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
   };
 
-  // Currency list management
-  const currencies = (settings.PLATFORM_CURRENCIES || 'BDT,USD')
-    .split(',')
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
+  const handleToggleLanguageStatus = async (code: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/v1/system/languages/${code}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        showToast(`Language '${code}' ${!currentStatus ? 'activated' : 'deactivated'} in database`);
+        await loadLanguages();
+      } else {
+        throw new Error(json.error?.message || 'Failed to update language');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const handleDeleteLanguage = async (code: string) => {
+    if (code === settings.PLATFORM_DEFAULT_LOCALE) {
+      showToast('Cannot delete the default platform language', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/v1/system/languages/${code}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        showToast(`Language '${code}' removed from database`);
+        await loadLanguages();
+      } else {
+        throw new Error(json.error?.message || 'Failed to remove language');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // 3-Option Currency Management Handlers (Name, Symbol, Position: left|right)
+  // ---------------------------------------------------------------------------
+  const currencies: CurrencyConfig[] = parseCurrencies(settings.PLATFORM_CURRENCIES);
 
   const addCurrency = () => {
-    if (!newCurrencyCode.trim()) return;
-    const clean = newCurrencyCode.trim().toUpperCase();
-    if (!currencies.includes(clean)) {
-      const updated = [...currencies, clean].join(',');
-      updateSetting('PLATFORM_CURRENCIES', updated);
-      setNewCurrencyCode('');
-    }
-  };
-
-  const removeCurrency = (code: string) => {
-    if (code === settings.PLATFORM_CURRENCY) {
-      showToast('Cannot remove default launch currency (BDT)', 'error');
+    const cleanName = newCurrencyName.trim().toUpperCase();
+    const cleanSymbol = newCurrencySymbol.trim();
+    if (!cleanName || !cleanSymbol) {
+      showToast('Both Currency Name (e.g. INR) and Symbol (e.g. ₹) are required', 'error');
       return;
     }
-    const updated = currencies.filter((c) => c !== code).join(',');
-    updateSetting('PLATFORM_CURRENCIES', updated);
+    if (currencies.some((c) => c.name === cleanName)) {
+      showToast(`Currency '${cleanName}' already exists`, 'error');
+      return;
+    }
+    const updated = [
+      ...currencies,
+      { name: cleanName, symbol: cleanSymbol, position: newCurrencyPosition },
+    ];
+    updateSetting('PLATFORM_CURRENCIES', JSON.stringify(updated));
+    setNewCurrencyName('');
+    setNewCurrencySymbol('');
+    setNewCurrencyPosition('left');
+    showToast(`Currency ${cleanName} (${cleanSymbol}) added with position: ${newCurrencyPosition}`);
+  };
+
+  const removeCurrency = (name: string) => {
+    if (name === settings.PLATFORM_CURRENCY) {
+      showToast(`Cannot remove the primary platform currency (${name})`, 'error');
+      return;
+    }
+    if (currencies.length <= 1) {
+      showToast('At least one platform currency must be configured', 'error');
+      return;
+    }
+    const updated = currencies.filter((c) => c.name !== name);
+    updateSetting('PLATFORM_CURRENCIES', JSON.stringify(updated));
+    showToast(`Currency ${name} removed`);
+  };
+
+  const toggleCurrencyPosition = (name: string) => {
+    const updated = currencies.map((c) =>
+      c.name === name
+        ? { ...c, position: (c.position === 'left' ? 'right' : 'left') as 'left' | 'right' }
+        : c
+    );
+    updateSetting('PLATFORM_CURRENCIES', JSON.stringify(updated));
+    const target = updated.find((c) => c.name === name);
+    showToast(`Position for ${name} switched to ${target?.position}`);
   };
 
   const handleSendTestSms = async () => {
@@ -314,18 +457,34 @@ export default function AdminSetupPage() {
       </div>
 
       {/* Tab 1: Localization & Currencies */}
+      {/* Tab 1: Localization & Multi-Currency */}
       {activeTab === 'localization' && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
-            <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-base font-black text-slate-900">Regional &amp; Localization Parameters</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Set authoritative operational business timezone, launch locales, and multi-currency configurations.
-              </p>
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-8 shadow-xs">
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <Globe className="w-5 h-5 text-amber-600" />
+                  <span>Regional &amp; Localization Parameters</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Platform business timezone, dynamic database-managed languages, and 3-option multi-currency settings.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={loadLanguages}
+                disabled={loadingLanguages}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shrink-0"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingLanguages ? 'animate-spin' : ''}`} />
+                <span>Sync DB Locales</span>
+              </button>
             </div>
 
+            {/* Timezone and Default Language */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Timezone */}
+              {/* Platform Timezone */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Platform Timezone
@@ -348,145 +507,414 @@ export default function AdminSetupPage() {
                 </span>
               </div>
 
-              {/* Default Locale */}
+              {/* Default Language (Database-Driven) */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Default Platform Language
+                  Default Platform Language (Database Controlled)
                 </label>
                 <select
                   value={settings.PLATFORM_DEFAULT_LOCALE}
-                  onChange={(e) => updateSetting('PLATFORM_DEFAULT_LOCALE', e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
+                  onChange={(e) => handleSetDefaultLanguage(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200 font-medium"
                 >
-                  {locales.map((loc) => (
-                    <option key={loc} value={loc}>
-                      {loc === 'bn-BD' ? 'bn-BD (বাংলা - বাংলাদেশ)' : loc === 'en-BD' ? 'en-BD (English - Bangladesh)' : loc}
-                    </option>
-                  ))}
+                  {languages.length > 0 ? (
+                    languages.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.name} ({l.nativeName}) — [{l.code}] {l.isDefault ? '• ACTIVE DEFAULT' : ''}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="bn">বাংলা (Bengali) — [bn]</option>
+                      <option value="en">English — [en]</option>
+                    </>
+                  )}
                 </select>
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  Initial storefront language fallback for visitors without a stored preference.
+                  System default locale stored in PostgreSQL <code className="text-amber-700 font-mono">system_configs</code> table.
                 </span>
               </div>
             </div>
 
-            {/* Supported Locales List & Add/Remove */}
-            <div className="pt-4 border-t border-slate-100">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Supported Customer Locales (Add / Remove)
-              </label>
-
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                {locales.map((loc) => (
-                  <div
-                    key={loc}
-                    className="flex items-center space-x-1.5 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl text-xs font-bold text-amber-900"
-                  >
-                    <span>{loc}</span>
-                    {loc === settings.PLATFORM_DEFAULT_LOCALE ? (
-                      <span className="text-[9px] bg-amber-200/80 px-1 py-0.2 rounded text-amber-950 font-mono">
-                        DEFAULT
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => removeLocale(loc)}
-                        className="text-amber-700 hover:text-rose-600 p-0.5 rounded transition-colors"
-                        title="Remove locale"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center space-x-2 max-w-sm">
-                <input
-                  type="text"
-                  value={newLocaleCode}
-                  onChange={(e) => setNewLocaleCode(e.target.value)}
-                  placeholder="e.g. ar-SA, fr-FR"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs outline-none focus:border-amber-500 focus:bg-white"
-                />
+            {/* Section: Supported Platform Languages (Database Controlled) */}
+            <div className="pt-6 border-t border-slate-100 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-1.5">
+                    <Languages className="w-4 h-4 text-amber-600" />
+                    <span>Supported Platform Languages (Database Controlled)</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Dynamic language registry managed in the database. Active languages automatically power the customer storefront language switcher.
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={addLocale}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shrink-0 transition-colors inline-flex items-center space-x-1"
+                  onClick={() => setShowAddLangModal(!showAddLangModal)}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shrink-0 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Locale</span>
+                  <span>{showAddLangModal ? 'Close Form' : 'Add Supported Language'}</span>
                 </button>
+              </div>
+
+              {/* Add Language Form (Expandable) */}
+              {showAddLangModal && (
+                <form
+                  onSubmit={handleAddLanguage}
+                  className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-4 animate-in fade-in duration-150"
+                >
+                  <div className="text-xs font-bold text-amber-950 flex items-center space-x-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Register New Platform Language in Database</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Language Code *
+                      </label>
+                      <input
+                        type="text"
+                        value={newLangCode}
+                        onChange={(e) => setNewLangCode(e.target.value)}
+                        placeholder="e.g. ar, hi, ur"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-amber-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Display Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={newLangName}
+                        onChange={(e) => setNewLangName(e.target.value)}
+                        placeholder="e.g. Arabic, Hindi"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-amber-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Native Script *
+                      </label>
+                      <input
+                        type="text"
+                        value={newLangNativeName}
+                        onChange={(e) => setNewLangNativeName(e.target.value)}
+                        placeholder="e.g. العربية, हिन्दी"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-amber-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Word for &quot;Language&quot; *
+                      </label>
+                      <input
+                        type="text"
+                        value={newLangWord}
+                        onChange={(e) => setNewLangWord(e.target.value)}
+                        placeholder="e.g. لغة, भाषा"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-amber-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Direction *
+                      </label>
+                      <select
+                        value={newLangDirection}
+                        onChange={(e) => setNewLangDirection(e.target.value as 'ltr' | 'rtl')}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-amber-500"
+                      >
+                        <option value="ltr">LTR (Left to Right)</option>
+                        <option value="rtl">RTL (Right to Left)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddLangModal(false)}
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors shadow-xs"
+                    >
+                      Save Language to Database
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Registered Languages Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {languages.map((l) => {
+                  const isDefault = l.code === settings.PLATFORM_DEFAULT_LOCALE || l.isDefault;
+                  return (
+                    <div
+                      key={l.code}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        isDefault
+                          ? 'border-amber-300 bg-amber-50/40 shadow-xs ring-1 ring-amber-200'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-black text-slate-900">{l.name}</span>
+                            <span className="text-xs text-slate-600 font-semibold">({l.nativeName})</span>
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-mono font-bold text-slate-700 uppercase">
+                              {l.code}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-mono font-semibold text-slate-600 uppercase">
+                              {l.direction}
+                            </span>
+                            <span className="text-[11px] text-slate-500 italic">
+                              &ldquo;{l.wordForLanguage}&rdquo;
+                            </span>
+                          </div>
+                        </div>
+
+                        {isDefault ? (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
+                            DEFAULT
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLanguage(l.code)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Remove language from database"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleLanguageStatus(l.code, l.isActive)}
+                          disabled={isDefault}
+                          className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors ${
+                            l.isActive
+                              ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          } ${isDefault ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${l.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                          <span>{l.isActive ? 'Active' : 'Inactive'}</span>
+                        </button>
+
+                        {!isDefault && l.isActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetDefaultLanguage(l.code)}
+                            className="text-amber-700 hover:text-amber-900 font-bold text-[11px] hover:underline cursor-pointer"
+                          >
+                            Set as Default
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Currency Settings */}
-            <div className="pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Default Platform Currency
-                </label>
-                <select
-                  value={settings.PLATFORM_CURRENCY}
-                  onChange={(e) => updateSetting('PLATFORM_CURRENCY', e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                >
-                  {currencies.map((curr) => (
-                    <option key={curr} value={curr}>
-                      {curr === 'BDT' ? 'BDT (৳ - Bangladeshi Taka Minor Poisha)' : curr}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Authoritative monetary base unit. Order snapshots, ledger postings, and wallet balances are stored in integer poisha.
-                </span>
+            {/* Section: Multi-Currency Management (3 Options: Name, Symbol, Position) */}
+            <div className="pt-6 border-t border-slate-100 space-y-6">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-1.5">
+                  <Coins className="w-4 h-4 text-emerald-600" />
+                  <span>Currency Management (3 Configurable Options)</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Manage platform settlement currencies with 3 required specifications: <strong>1. Currency Name (Code)</strong>, <strong>2. Currency Symbol</strong>, and <strong>3. Position (Left vs Right)</strong>.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  Supported Settlement Currencies (Add / Remove)
-                </label>
-                <div className="flex flex-wrap items-center gap-2 mb-3">
-                  {currencies.map((curr) => (
-                    <div
-                      key={curr}
-                      className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl text-xs font-bold text-emerald-900"
-                    >
-                      <span>{curr}</span>
-                      {curr === settings.PLATFORM_CURRENCY ? (
-                        <span className="text-[9px] bg-emerald-200 px-1 py-0.2 rounded text-emerald-950 font-mono">
-                          PRIMARY
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => removeCurrency(curr)}
-                          className="text-emerald-700 hover:text-rose-600 p-0.5 rounded transition-colors"
-                          title="Remove currency"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+              {/* Default Platform Currency Selector */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Default Platform Base Currency
+                  </label>
+                  <select
+                    value={settings.PLATFORM_CURRENCY}
+                    onChange={(e) => updateSetting('PLATFORM_CURRENCY', e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200 font-medium"
+                  >
+                    {currencies.map((curr) => (
+                      <option key={curr.name} value={curr.name}>
+                        {curr.name} ({curr.symbol}) — Symbol on {curr.position === 'left' ? `Left (${curr.symbol} 100)` : `Right (100 ${curr.symbol})`}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[11px] text-slate-400 mt-1 block">
+                    Authoritative base unit. Order snapshots, ledger postings, and wallet balances are denominated in this currency.
+                  </span>
                 </div>
 
-                <div className="flex items-center space-x-2 max-w-sm">
-                  <input
-                    type="text"
-                    value={newCurrencyCode}
-                    onChange={(e) => setNewCurrencyCode(e.target.value)}
-                    placeholder="e.g. EUR, GBP"
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs uppercase outline-none focus:border-amber-500 focus:bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCurrency}
-                    className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shrink-0 transition-colors inline-flex items-center space-x-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Currency</span>
-                  </button>
+                {/* Add New Currency Form with 3 Options */}
+                <div className="bg-slate-50/80 rounded-2xl border border-slate-200 p-4 space-y-3">
+                  <div className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                    <Plus className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Add New Currency (Specify 3 Options)</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {/* Option 1: Currency Name */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        1. Name (Code) *
+                      </label>
+                      <input
+                        type="text"
+                        value={newCurrencyName}
+                        onChange={(e) => setNewCurrencyName(e.target.value)}
+                        placeholder="e.g. INR, USD, EUR"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs uppercase outline-none focus:border-amber-500 font-bold"
+                      />
+                    </div>
+
+                    {/* Option 2: Currency Symbol */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        2. Symbol *
+                      </label>
+                      <input
+                        type="text"
+                        value={newCurrencySymbol}
+                        onChange={(e) => setNewCurrencySymbol(e.target.value)}
+                        placeholder="e.g. ₹, $, €, ৳"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs outline-none focus:border-amber-500 font-bold"
+                      />
+                    </div>
+
+                    {/* Option 3: Currency Position */}
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1">
+                        3. Position *
+                      </label>
+                      <select
+                        value={newCurrencyPosition}
+                        onChange={(e) => setNewCurrencyPosition(e.target.value as 'left' | 'right')}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs outline-none focus:border-amber-500 font-medium"
+                      >
+                        <option value="left">Left ({newCurrencySymbol || '৳'} 100)</option>
+                        <option value="right">Right (100 {newCurrencySymbol || '৳'})</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-slate-500">
+                      Preview:{' '}
+                      <strong className="text-slate-900">
+                        {newCurrencyPosition === 'left'
+                          ? `${newCurrencySymbol || '৳'} 1,500.00`
+                          : `1,500.00 ${newCurrencySymbol || '৳'}`}
+                      </strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={addCurrency}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors inline-flex items-center space-x-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Currency</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Registered Currencies Cards */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5">
+                  Registered Platform Currencies ({currencies.length})
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {currencies.map((curr) => {
+                    const isPrimary = curr.name === settings.PLATFORM_CURRENCY;
+                    return (
+                      <div
+                        key={curr.name}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          isPrimary
+                            ? 'border-emerald-300 bg-emerald-50/40 shadow-xs ring-1 ring-emerald-200'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100/80 text-emerald-900 font-black text-base flex items-center justify-center shrink-0">
+                              {curr.symbol}
+                            </div>
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm font-black text-slate-900">{curr.name}</span>
+                                <span className="text-xs text-slate-500 font-semibold font-mono">({curr.symbol})</span>
+                              </div>
+                              <span className="text-xs font-bold text-slate-700 mt-0.5 block">
+                                {formatCurrencyAmount(1250, curr)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {isPrimary ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[9px] uppercase tracking-wider">
+                              PRIMARY
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => removeCurrency(curr.name)}
+                              className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Remove currency"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                          {/* Position Switcher Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => toggleCurrencyPosition(curr.name)}
+                            className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] transition-colors cursor-pointer"
+                            title="Click to toggle symbol position between left and right"
+                          >
+                            <ArrowLeftRight className="w-3 h-3 text-slate-500" />
+                            <span>
+                              Position: {curr.position === 'left' ? 'Left' : 'Right'} (
+                              {curr.position === 'left' ? `${curr.symbol} 100` : `100 ${curr.symbol}`})
+                            </span>
+                          </button>
+
+                          {!isPrimary && (
+                            <button
+                              type="button"
+                              onClick={() => updateSetting('PLATFORM_CURRENCY', curr.name)}
+                              className="text-emerald-700 hover:text-emerald-900 font-bold text-[11px] hover:underline cursor-pointer"
+                            >
+                              Make Primary
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -1162,9 +1590,8 @@ export default function AdminSetupPage() {
                 },
                 {
                   key: 'FEATURE_POINTS_CASH_CONVERTIBLE',
-                  title: 'Points Cash Convertible (LOCKED)',
-                  desc: 'Product Points are independent discrete reward units and strictly non-convertible to fiat money.',
-                  locked: true,
+                  title: 'Points Cash Convertible',
+                  desc: 'Enable or disable converting customer loyalty Product Points into wallet balance or checkout cash discounts.',
                 },
               ].map((flag) => {
                 const isEnabled = settings[flag.key] === 'true';
@@ -1176,22 +1603,16 @@ export default function AdminSetupPage() {
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold text-slate-900">{flag.title}</span>
-                        {flag.locked && (
-                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded font-mono font-bold">
-                            INVARIANT
-                          </span>
-                        )}
                       </div>
                       <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{flag.desc}</p>
                     </div>
 
                     <button
                       type="button"
-                      disabled={flag.locked}
                       onClick={() => toggleSetting(flag.key)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        flag.locked ? 'opacity-40 cursor-not-allowed' : ''
-                      } ${isEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        isEnabled ? 'bg-emerald-500' : 'bg-slate-300'
+                      }`}
                     >
                       <span
                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${

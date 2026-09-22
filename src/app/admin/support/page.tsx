@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Headphones } from 'lucide-react';
 import { AdminPlaceholderPage } from '@/components/admin/admin-placeholder-page';

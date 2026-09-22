@@ -86,9 +86,6 @@ export default function AdminLoginPage() {
           <div className="flex items-center space-x-3">
             <AlifLogo size="sm" href="/" />
             <div className="h-5 w-px bg-slate-200" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md">
-              Operations IAM
-            </span>
           </div>
 
           <div className="flex items-center space-x-3">

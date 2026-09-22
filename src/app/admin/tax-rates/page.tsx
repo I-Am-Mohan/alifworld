@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { Percent } from 'lucide-react';
 import { AdminPlaceholderPage } from '@/components/admin/admin-placeholder-page';

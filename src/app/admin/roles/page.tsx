@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { AdminPlaceholderPage } from '@/components/admin/admin-placeholder-page';

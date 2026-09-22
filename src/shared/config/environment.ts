@@ -16,8 +16,8 @@ import { z } from 'zod';
 export const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   NEXT_PUBLIC_CDN_URL: z.string().url().default('http://localhost:9000/alifworld-media'),
-  NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(['bn-BD', 'en-BD']).default('bn-BD'),
-  NEXT_PUBLIC_BASE_CURRENCY: z.literal('BDT').default('BDT'),
+  NEXT_PUBLIC_DEFAULT_LOCALE: z.string().default('bn-BD'),
+  NEXT_PUBLIC_BASE_CURRENCY: z.string().default('BDT'),
 });
 
 export type ClientEnv = z.infer<typeof clientEnvSchema>;
@@ -32,10 +32,10 @@ export const serverEnvSchema = clientEnvSchema.extend({
   PORT: z.coerce.number().int().positive().default(3000),
   APP_URL: z.string().url().default('http://localhost:3000'),
   API_URL: z.string().url().default('http://localhost:3000/api/v1'),
-  TZ: z.literal('Asia/Dhaka').default('Asia/Dhaka'),
-  DEFAULT_LOCALE: z.enum(['bn-BD', 'en-BD']).default('bn-BD'),
+  TZ: z.string().default('Asia/Dhaka'),
+  DEFAULT_LOCALE: z.string().default('bn-BD'),
   SUPPORTED_LOCALES: z.string().default('en-BD,bn-BD'),
-  BASE_CURRENCY: z.literal('BDT').default('BDT'),
+  BASE_CURRENCY: z.string().default('BDT'),
 
   // PostgreSQL Database & Connection Pooling
   DATABASE_URL: z
@@ -155,14 +155,7 @@ export const serverEnvSchema = clientEnvSchema.extend({
     .default(true),
   MAKER_CHECKER_THRESHOLD_POISHA: z.coerce.number().int().positive().default(5000000), // 50,000 BDT
   FEATURE_POINTS_CASH_CONVERTIBLE: z
-    .preprocess(
-      (val) => val === 'true' || val === true,
-      z.literal(false, {
-        errorMap: () => ({
-          message: 'Locked Invariant: Product Points are non-convertible loyalty metric and can never be converted to cash.',
-        }),
-      })
-    )
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
     .default(false),
   FEATURE_ADVANCED_SHOPPING_ENABLED: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())

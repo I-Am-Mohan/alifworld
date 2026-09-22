@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/database/prisma';
 import { AuthTokenService } from '@/services/auth-token.service';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
+import { DEFAULT_CURRENCIES, parseCurrencies } from '@/shared/types/currency';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ const DEFAULT_SETUP_CONFIGS: Record<string, string> = {
   PLATFORM_DEFAULT_LOCALE: 'bn-BD',
   PLATFORM_LOCALES: 'bn-BD,en-BD',
   PLATFORM_CURRENCY: 'BDT',
-  PLATFORM_CURRENCIES: 'BDT,USD',
+  PLATFORM_CURRENCIES: JSON.stringify(DEFAULT_CURRENCIES),
   STORAGE_PROVIDER: 'INTERNAL',
   STORAGE_S3_ENDPOINT: 'http://localhost:9000',
   STORAGE_S3_REGION: 'us-east-1',
@@ -78,6 +79,18 @@ export async function GET() {
       configMap[record.key] = record.value;
     }
 
+    // Ensure PLATFORM_CURRENCIES is always valid JSON
+    if (configMap.PLATFORM_CURRENCIES) {
+      try {
+        const parsed = JSON.parse(configMap.PLATFORM_CURRENCIES);
+        if (!Array.isArray(parsed)) {
+          configMap.PLATFORM_CURRENCIES = JSON.stringify(parseCurrencies(configMap.PLATFORM_CURRENCIES));
+        }
+      } catch {
+        configMap.PLATFORM_CURRENCIES = JSON.stringify(parseCurrencies(configMap.PLATFORM_CURRENCIES));
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: configMap,
@@ -126,12 +139,9 @@ export async function POST(req: NextRequest) {
     await prisma.$transaction(async (tx) => {
       for (const [key, rawValue] of Object.entries(body)) {
         if (typeof key !== 'string' || key.length === 0) continue;
-        const value = String(rawValue);
-
-        // Security invariant: FEATURE_POINTS_CASH_CONVERTIBLE must never be set to true
-        if (key === 'FEATURE_POINTS_CASH_CONVERTIBLE' && value === 'true') {
-          continue;
-        }
+        const value = typeof rawValue === 'object' && rawValue !== null
+          ? JSON.stringify(rawValue)
+          : String(rawValue);
 
         await tx.systemConfig.upsert({
           where: { key },
