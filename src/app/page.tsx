@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   MapPin,
   Search,
@@ -646,14 +647,14 @@ export default function CustomerStorePage() {
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-4 sm:space-x-6 shrink-0">
-            <button
-              type="button"
-              onClick={() => showToast('Account Portal')}
+            <Link
+              href="/register"
               className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors"
+              title="Sign In / Register"
             >
               <User className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
               <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">Account</span>
-            </button>
+            </Link>
 
             <button
               type="button"

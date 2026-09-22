@@ -144,6 +144,47 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/register': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Register Customer Account',
+        description: 'Registers a new customer account, assigns CUSTOMER role, initializes 4 segregated wallets (MAIN, SHOPPING, GOOD_LUCK, CHARITY), and dispatches email verification OTP.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CustomerRegisterRequest' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Customer registered successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/CustomerRegisterResponse' },
+              },
+            },
+          },
+          '409': {
+            description: 'Account with email or phone already exists',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Validation failed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/token/policy': {
       get: {
         tags: ['Authentication'],
@@ -808,6 +849,38 @@ export const openApiSpec = {
               error: { type: 'string' },
             },
             required: ['active'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      CustomerRegisterRequest: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', example: 'Tanvir Ahmed' },
+          email: { type: 'string', format: 'email', example: 'tanvir@example.com' },
+          phone: { type: 'string', example: '+8801700112233' },
+          password: { type: 'string', format: 'password', example: 'Dhaka@Commerce#2026!' },
+          locale: { type: 'string', enum: ['bn-BD', 'en-BD'], default: 'bn-BD' },
+          acceptTerms: { type: 'boolean', example: true },
+        },
+        required: ['name', 'email', 'password', 'acceptTerms'],
+      },
+      CustomerRegisterResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              userId: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
+              email: { type: 'string', example: 'tanvir@example.com' },
+              name: { type: 'string', example: 'Tanvir Ahmed' },
+              phone: { type: 'string', example: '+8801700112233', nullable: true },
+              status: { type: 'string', example: 'ACTIVE' },
+              isEmailVerified: { type: 'boolean', example: false },
+              message: { type: 'string', example: 'Account registered successfully. A 6-digit verification code has been sent to your email.' },
+            },
+            required: ['userId', 'email', 'name', 'status', 'isEmailVerified', 'message'],
           },
         },
         required: ['success', 'data'],
