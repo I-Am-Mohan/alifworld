@@ -295,3 +295,26 @@ export const env: ServerEnv = new Proxy({} as ServerEnv, {
     return cachedServerEnv[prop as keyof ServerEnv];
   },
 });
+
+/**
+ * Convenient structured application configuration getter.
+ */
+export function getAppConfig() {
+  return {
+    appEnv: env.APP_ENV,
+    timezone: env.TZ,
+    baseCurrency: env.BASE_CURRENCY,
+    supportedLocales: env.SUPPORTED_LOCALES,
+    gates: {
+      featureAffiliateMultiTierEnabled: env.FEATURE_AFFILIATE_MULTI_TIER_ENABLED,
+      maxAffiliateDepth: env.MAX_AFFILIATE_DEPTH,
+      featureLotteryEnabled: env.FEATURE_LOTTERY_ENABLED,
+      featureMfsDirectDebitEnabled: env.FEATURE_MFS_DIRECT_DEBIT_ENABLED,
+      featureNbrTaxIntegrationEnabled: env.FEATURE_NBR_TAX_INTEGRATION_ENABLED,
+      featureMakerCheckerPayoutEnabled: env.FEATURE_MAKER_CHECKER_PAYOUT_ENABLED,
+      featurePointsCashConvertible: env.FEATURE_POINTS_CASH_CONVERTIBLE,
+      featureAdvancedShoppingEnabled: env.FEATURE_ADVANCED_SHOPPING_ENABLED,
+    },
+  };
+}
+

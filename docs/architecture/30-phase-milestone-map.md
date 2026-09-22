@@ -49,7 +49,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **015**: Configure linting, formatting, type checking, and commit quality *(Completed)*
 - **016**: Implement typed environment validation and secret boundaries *(Completed)*
 - **017**: Implement the required Bun command contract *(Completed)*
-- **018**: Establish unit, integration, and end-to-end test frameworks
+- **018**: Establish unit, integration, and end-to-end test frameworks *(Completed)*
 - **019**: Create local development infrastructure profiles (Postgres, Redis, Meilisearch)
 - **020**: Build the baseline continuous-integration quality gate
 

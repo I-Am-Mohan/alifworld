@@ -27,6 +27,7 @@
 | [**ADR-0015**](0015-linting-formatting-and-commit-quality.md) | Linting, Formatting, Type Checking, and Commit Quality Standards | 2026-09-22 | **Accepted** | Phase 02 / M015 | Architecture & DevOps | Standardized ESLint, Prettier, strict TypeScript, Commitlint Conventional Commits, package.json quality script contract, and preservation of UI References assets. |
 | [**ADR-0016**](0016-typed-environment-validation-and-secret-boundaries.md) | Typed Environment Validation and Secret Boundaries Architecture | 2026-09-22 | **Accepted** | Phase 02 / M016 | Architecture & Security | Implemented Zod-validated dual schema (clientEnv/serverEnv), runtime secret boundary proxy guards, invariant enforcement (single-tier referral, non-convertible points), and credential redaction. |
 | [**ADR-0017**](0017-bun-command-contract-and-lifecycle-scripts.md) | Bun Command Contract and Lifecycle Scripts Standardization | 2026-09-22 | **Accepted** | Phase 02 / M017 | Architecture & DevOps | Standardized dev:local, dev:production, build:local, production:production (compiled only, never next dev), database, worker, openapi, and granular testing scripts. |
+| [**ADR-0018**](0018-testing-frameworks-and-test-pyramid.md) | Testing Frameworks, Test Pyramid Architecture, and Execution Standards | 2026-09-22 | **Accepted** | Phase 02 / M018 | Architecture & QA | Established native Bun test runner framework, 3-tier testing pyramid (unit, integration, e2e smoke), hermetic testing standards, and test helper fixtures. |
 
 ---
 
