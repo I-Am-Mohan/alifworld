@@ -144,6 +144,56 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/token/policy': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Authentication Token Policy Discovery',
+        description: 'Returns authoritative token TTL configurations, cookie parameters, and password complexity requirements.',
+        responses: {
+          '200': {
+            description: 'Token policy retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/TokenPolicyResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/token/introspect': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Introspect Access Token',
+        description: 'RFC 7662 compliant token introspection verifying active state, tokenVersion, and session validity.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/TokenIntrospectRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Token introspection result',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/TokenIntrospectResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Validation failed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/orders': {
       post: {
         tags: ['Order'],
@@ -665,6 +715,102 @@ export const openApiSpec = {
           status: { type: 'string', example: 'HEALTHY' },
         },
         required: ['currentMigration', 'appliedMigrationsCount', 'expandContractPhase', 'status'],
+      },
+      TokenPolicyResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              tokenPolicies: {
+                type: 'object',
+                properties: {
+                  accessTokenTtlSeconds: { type: 'integer', example: 900 },
+                  webRefreshTokenTtlSeconds: { type: 'integer', example: 604800 },
+                  mobileRefreshTokenTtlSeconds: { type: 'integer', example: 2592000 },
+                  sessionInactivityTimeoutSeconds: { type: 'integer', example: 172800 },
+                  maxActiveSessionsPerUser: { type: 'integer', example: 5 },
+                  otpTokenTtlSeconds: { type: 'integer', example: 300 },
+                  maxOtpAttempts: { type: 'integer', example: 3 },
+                },
+                required: ['accessTokenTtlSeconds', 'webRefreshTokenTtlSeconds', 'mobileRefreshTokenTtlSeconds', 'maxActiveSessionsPerUser'],
+              },
+              cookieSettings: {
+                type: 'object',
+                properties: {
+                  accessTokenCookie: { type: 'string', example: 'aw_access_token' },
+                  refreshTokenCookie: { type: 'string', example: 'aw_refresh_token' },
+                  httpOnly: { type: 'boolean', example: true },
+                  sameSite: { type: 'string', example: 'lax' },
+                  path: { type: 'string', example: '/' },
+                },
+              },
+              passwordRequirements: {
+                type: 'object',
+                properties: {
+                  minLength: { type: 'integer', example: 8 },
+                  maxLength: { type: 'integer', example: 128 },
+                  rules: {
+                    type: 'array',
+                    items: { type: 'string' },
+                  },
+                },
+              },
+              supportedClientTypes: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'],
+              },
+              supportedTokenTypes: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['Bearer'],
+              },
+            },
+            required: ['tokenPolicies', 'cookieSettings', 'passwordRequirements'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      TokenIntrospectRequest: {
+        type: 'object',
+        properties: {
+          token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+        },
+        required: ['token'],
+      },
+      TokenIntrospectResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              active: { type: 'boolean', example: true },
+              sub: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
+              email: { type: 'string', example: 'customer@alifworld.com' },
+              roles: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['CUSTOMER'],
+              },
+              permissions: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['orders:read', 'orders:create'],
+              },
+              sellerId: { type: 'string', nullable: true },
+              clientType: { type: 'string', example: 'WEB' },
+              tokenVersion: { type: 'integer', example: 1 },
+              exp: { type: 'integer', example: 1727006400 },
+              iat: { type: 'integer', example: 1727005500 },
+              error: { type: 'string' },
+            },
+            required: ['active'],
+          },
+        },
+        required: ['success', 'data'],
       },
     },
   },

@@ -108,6 +108,8 @@ model User {
   name            String?
   avatarUrl       String?   @map("avatar_url")
   status          String    @default("ACTIVE") // ACTIVE, PENDING_VERIFICATION, SUSPENDED, DELETED
+  passwordHash    String?   @map("password_hash")
+  tokenVersion    Int       @default(1) @map("token_version")
   isEmailVerified Boolean   @default(false) @map("is_email_verified")
   isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
   lastLoginAt     DateTime? @map("last_login_at")
@@ -126,6 +128,8 @@ model User {
   wallets         Wallet[]
   pointAccount    PointAccount?
   userRanks       UserRank[]
+  sessions        UserSession[]
+  otpTokens       OtpToken[]
 
   @@index([status])
   @@index([deletedAt])
@@ -1468,6 +1472,63 @@ model LeaderboardSnapshot {
   @@index([category, period, periodStart])
   @@map("leaderboard_snapshots")
 }
+
+// ==============================================================================
+// 9. IDENTITY, AUTHENTICATION & SESSIONS (Milestone 031)
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 50. User Session & Refresh Token
+// ------------------------------------------------------------------------------
+/// Active authentication sessions, device metadata, and refresh token tracking
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  sessionToken     String    @unique @map("session_token")
+  refreshTokenHash String?   @map("refresh_token_hash")
+  deviceInfo       String?   @map("device_info")
+  ipAddress        String?   @map("ip_address")
+  userAgent        String?   @map("user_agent")
+  clientType       String    @default("WEB") @map("client_type") // WEB, MOBILE_FLUTTER, POS, ADMIN_PORTAL
+  expiresAt        DateTime  @map("expires_at")
+  lastActiveAt     DateTime  @default(now()) @map("last_active_at")
+  isRevoked        Boolean   @default(false) @map("is_revoked")
+  revokedAt        DateTime? @map("revoked_at")
+  revokedReason    String?   @map("revoked_reason")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRevoked])
+  @@index([sessionToken])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+// ------------------------------------------------------------------------------
+// 51. Ephemeral OTP & Verification Token
+// ------------------------------------------------------------------------------
+/// One-time verification tokens for email confirmation, phone SMS OTP, and 2FA
+model OtpToken {
+  id          String    @id @default(uuid())
+  userId      String?   @map("user_id")
+  identifier  String    // Email address or E.164 phone (+880...)
+  purpose     String    // EMAIL_VERIFICATION, PHONE_VERIFICATION, PASSWORD_RESET, LOGIN_2FA
+  tokenHash   String    @map("token_hash")
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  isUsed      Boolean   @default(false) @map("is_used")
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([identifier, purpose, isUsed])
+  @@index([expiresAt])
+  @@map("otp_tokens")
+}
+
 
 
 

@@ -68,6 +68,8 @@ export const ID_PREFIXES = {
   RANK_DEFINITION: 'rnk',
   USER_RANK: 'urk',
   LEADERBOARD_SNAPSHOT: 'lbs',
+  SESSION: 'ses',
+  OTP: 'otp',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];

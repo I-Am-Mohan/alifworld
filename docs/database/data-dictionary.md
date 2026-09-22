@@ -4,14 +4,14 @@
 **Database**: PostgreSQL 16 (Managed AWS Aurora / RDS compatible)  
 **ORM**: Prisma 5.20+ with raw connection poolers  
 **Monetary Precision**: Integer minor units (poisha, where $1\text{ BDT} = 100\text{ poisha}$)  
-**Total Canonical Models**: 49 Models  
-**Reference Invariants**: ADR-0003, ADR-0022, ADR-0027, ADR-0028, ADR-0029, ADR-0030  
+**Total Canonical Models**: 51 Models  
+**Reference Invariants**: ADR-0003, ADR-0022, ADR-0027, ADR-0028, ADR-0029, ADR-0030, ADR-0031  
 
 ---
 
 ## 1. Overview & Deletion Policy Taxonomy
 
-AlifWorld classifies all 49 relational tables into three strict lifecycle deletion categories:
+AlifWorld classifies all 51 relational tables into three strict lifecycle deletion categories:
 
 | Deletion Policy | Description | Audit Strategy |
 |---|---|---|
@@ -38,31 +38,31 @@ AlifWorld classifies all 49 relational tables into three strict lifecycle deleti
 | 11 | `SellerStaff` | `seller_staff` | **SOFT_DELETE** | 3. Multi-Tenant Seller & Governance |
 | 12 | `SellerKycDocument` | `seller_kyc_documents` | **SOFT_DELETE** | 3. Multi-Tenant Seller & Governance |
 | 13 | `SellerStoreSettings` | `seller_store_settings` | **SOFT_DELETE** | 3. Multi-Tenant Seller & Governance |
-| 14 | `Category` | `categories` | **SOFT_DELETE** | 4. Product Catalog & Taxonomy |
-| 15 | `Brand` | `brands` | **SOFT_DELETE** | 4. Product Catalog & Taxonomy |
-| 16 | `Product` | `products` | **SOFT_DELETE** | 4. Product Catalog & Taxonomy |
-| 17 | `ProductVariant` | `product_variants` | **SOFT_DELETE** | 4. Product Catalog & Taxonomy |
-| 18 | `ProductMedia` | `product_media` | **SOFT_DELETE** | 4. Product Catalog & Taxonomy |
-| 19 | `ProductSlugHistory` | `product_slug_histories` | **IMMUTABLE** | 4. Product Catalog & Taxonomy |
-| 20 | `Warehouse` | `warehouses` | **SOFT_DELETE** | 5. Warehousing, Stock & Inventory |
-| 21 | `StockBalance` | `stock_balances` | **SOFT_DELETE** | 5. Warehousing, Stock & Inventory |
-| 22 | `StockReservation` | `stock_reservations` | **SOFT_DELETE** | 5. Warehousing, Stock & Inventory |
-| 23 | `StockMovementLedger` | `stock_movement_ledger` | **IMMUTABLE** | 5. Warehousing, Stock & Inventory |
-| 24 | `Cart` | `carts` | **SOFT_DELETE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 25 | `CartItem` | `cart_items` | **SOFT_DELETE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 26 | `Order` | `orders` | **SOFT_DELETE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 27 | `SellerFulfillmentGroup` | `seller_fulfillment_groups` | **SOFT_DELETE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 28 | `OrderItem` | `order_items` | **SOFT_DELETE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 29 | `OrderStatusHistory` | `order_status_history` | **IMMUTABLE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 30 | `Shipment` | `shipments` | **SOFT_DELETE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 31 | `ShipmentEvent` | `shipment_events` | **IMMUTABLE** | 6. Carts, Orders, Fulfillment & Logistics |
-| 32 | `Payment` | `payments` | **IMMUTABLE** | 7. Customer Payments & Gateway Inflows |
-| 33 | `Refund` | `refunds` | **IMMUTABLE** | 7. Customer Payments & Gateway Inflows |
-| 34 | `RefundItem` | `refund_items` | **IMMUTABLE** | 7. Customer Payments & Gateway Inflows |
-| 35 | `CommissionLedger` | `commission_ledger` | **IMMUTABLE** | 7. Customer Payments & Gateway Inflows |
-| 36 | `SellerSettlement` | `seller_settlements` | **SOFT_DELETE** | 7. Customer Payments & Gateway Inflows |
-| 37 | `SellerPayout` | `seller_payouts` | **IMMUTABLE** | 7. Customer Payments & Gateway Inflows |
-| 38 | `PaymentWebhookLog` | `payment_webhook_logs` | **IMMUTABLE** | 7. Customer Payments & Gateway Inflows |
+| 14 | `Category` | `categories` | **SOFT_DELETE** | 4. Product Catalog & Media |
+| 15 | `Brand` | `brands` | **SOFT_DELETE** | 4. Product Catalog & Media |
+| 16 | `Product` | `products` | **SOFT_DELETE** | 4. Product Catalog & Media |
+| 17 | `ProductVariant` | `product_variants` | **SOFT_DELETE** | 4. Product Catalog & Media |
+| 18 | `ProductMedia` | `product_media` | **SOFT_DELETE** | 4. Product Catalog & Media |
+| 19 | `ProductSlugHistory` | `product_slug_history` | **IMMUTABLE** | 4. Product Catalog & Media |
+| 20 | `Warehouse` | `warehouses` | **SOFT_DELETE** | 5. Multi-Warehouse Inventory & Logistics |
+| 21 | `StockBalance` | `stock_balances` | **SOFT_DELETE** | 5. Multi-Warehouse Inventory & Logistics |
+| 22 | `StockReservation` | `stock_reservations` | **SOFT_DELETE** | 5. Multi-Warehouse Inventory & Logistics |
+| 23 | `StockMovementLedger` | `stock_movement_ledgers` | **IMMUTABLE** | 5. Multi-Warehouse Inventory & Logistics |
+| 24 | `Cart` | `carts` | **EPHEMERAL** | 6. Orders, Carts & Fulfillment |
+| 25 | `CartItem` | `cart_items` | **EPHEMERAL** | 6. Orders, Carts & Fulfillment |
+| 26 | `Order` | `orders` | **SOFT_DELETE** | 6. Orders, Carts & Fulfillment |
+| 27 | `SellerFulfillmentGroup` | `seller_fulfillment_groups` | **SOFT_DELETE** | 6. Orders, Carts & Fulfillment |
+| 28 | `OrderItem` | `order_items` | **SOFT_DELETE** | 6. Orders, Carts & Fulfillment |
+| 29 | `OrderStatusHistory` | `order_status_history` | **IMMUTABLE** | 6. Orders, Carts & Fulfillment |
+| 30 | `Shipment` | `shipments` | **SOFT_DELETE** | 6. Orders, Carts & Fulfillment |
+| 31 | `ShipmentEvent` | `shipment_events` | **IMMUTABLE** | 6. Orders, Carts & Fulfillment |
+| 32 | `Payment` | `payments` | **IMMUTABLE** | 7. Payments, Settlements & Commissions |
+| 33 | `Refund` | `refunds` | **IMMUTABLE** | 7. Payments, Settlements & Commissions |
+| 34 | `RefundItem` | `refund_items` | **IMMUTABLE** | 7. Payments, Settlements & Commissions |
+| 35 | `CommissionLedger` | `commission_ledgers` | **IMMUTABLE** | 7. Payments, Settlements & Commissions |
+| 36 | `SellerSettlement` | `seller_settlements` | **SOFT_DELETE** | 7. Payments, Settlements & Commissions |
+| 37 | `SellerPayout` | `seller_payouts` | **SOFT_DELETE** | 7. Payments, Settlements & Commissions |
+| 38 | `PaymentWebhookLog` | `payment_webhook_logs` | **IMMUTABLE** | 7. Payments, Settlements & Commissions |
 | 39 | `Wallet` | `wallets` | **SOFT_DELETE** | 8. Wallets, Ledgers, Points & Ranks |
 | 40 | `LedgerAccount` | `ledger_accounts` | **SOFT_DELETE** | 8. Wallets, Ledgers, Points & Ranks |
 | 41 | `LedgerJournal` | `ledger_journals` | **IMMUTABLE** | 8. Wallets, Ledgers, Points & Ranks |
@@ -74,6 +74,8 @@ AlifWorld classifies all 49 relational tables into three strict lifecycle deleti
 | 47 | `RankDefinition` | `rank_definitions` | **SOFT_DELETE** | 8. Wallets, Ledgers, Points & Ranks |
 | 48 | `UserRank` | `user_ranks` | **SOFT_DELETE** | 8. Wallets, Ledgers, Points & Ranks |
 | 49 | `LeaderboardSnapshot` | `leaderboard_snapshots` | **IMMUTABLE** | 8. Wallets, Ledgers, Points & Ranks |
+| 50 | `UserSession` | `user_sessions` | **EPHEMERAL** | 9. Identity, Authentication & Sessions |
+| 51 | `OtpToken` | `otp_tokens` | **EPHEMERAL** | 9. Identity, Authentication & Sessions |
 
 ---
 

@@ -71,18 +71,21 @@ describe('Migration, Seed & Database Data Dictionary Workflows (Milestone 030)',
     'RankDefinition',
     'UserRank',
     'LeaderboardSnapshot',
+    // 9. Identity, Authentication & Sessions (Phase 04, Models 50-51)
+    'UserSession',
+    'OtpToken',
   ];
 
-  describe('Prisma Schema Model Completeness (49 Models)', () => {
+  describe('Prisma Schema Model Completeness (Canonical Models)', () => {
     it('verifies that prisma/schema.prisma exists and is readable', () => {
       const schemaPath = resolve(process.cwd(), 'prisma/schema.prisma');
       expect(existsSync(schemaPath)).toBe(true);
     });
 
-    it('parses exactly 49 canonical models from schema.prisma', () => {
+    it('parses all canonical models from schema.prisma (51 models)', () => {
       const models = parsePrismaSchema();
-      expect(models.length).toBe(49);
-      expect(EXPECTED_CANONICAL_MODELS.length).toBe(49);
+      expect(models.length).toBe(EXPECTED_CANONICAL_MODELS.length);
+      expect(models.length).toBe(51);
     });
 
     it('contains every expected canonical model by name', () => {
@@ -196,7 +199,7 @@ describe('Migration, Seed & Database Data Dictionary Workflows (Milestone 030)',
       const md = generateDataDictionaryMarkdown();
 
       expect(md).toContain('# AlifWorld Production PostgreSQL Data Dictionary');
-      expect(md).toContain('Total Canonical Models: 49 Models');
+      expect(md).toContain('Total Canonical Models: 51 Models');
       expect(md).toContain('Expand-and-Contract Migration Workflow');
       expect(md).toContain('Rollback & Forward-Fix Playbook');
 
@@ -213,6 +216,8 @@ describe('Migration, Seed & Database Data Dictionary Workflows (Milestone 030)',
       expect(md).toContain('`PointEvent`');
       expect(md).toContain('`RewardRule`');
       expect(md).toContain('`LeaderboardSnapshot`');
+      expect(md).toContain('`UserSession`');
+      expect(md).toContain('`OtpToken`');
     });
 
     it('verifies that docs/database/data-dictionary.md file is in sync', () => {
@@ -220,7 +225,7 @@ describe('Migration, Seed & Database Data Dictionary Workflows (Milestone 030)',
       expect(existsSync(docPath)).toBe(true);
 
       const existingContent = readFileSync(docPath, 'utf-8');
-      expect(existingContent).toContain('Total Canonical Models: 49 Models');
+      expect(existingContent).toContain('Total Canonical Models: 51 Models');
       expect(existingContent).toContain('Expand-and-Contract (Parallel Run)');
     });
   });
