@@ -8,6 +8,7 @@
 
 export * from './authz.types';
 export * from './object-authz.types';
+export * from './security-test-matrix.types';
 export * from './policy-engine';
 export * from './object-authorization.service';
 export * from './guard.helper';
