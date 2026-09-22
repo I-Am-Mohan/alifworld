@@ -87,6 +87,10 @@
     {
       "name": "Customer & Ownership",
       "description": "Customer self-service, profile anti-tampering, and object-level ownership checks"
+    },
+    {
+      "name": "Audit & Compliance",
+      "description": "Immutable security event auditing, business operation logs, and compliance exploration"
     }
   ],
   "paths": {
@@ -3456,6 +3460,173 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit": {
+      "get": {
+        "tags": [
+          "Audit & Compliance"
+        ],
+        "summary": "Explore Historical Audit Logs",
+        "description": "Returns paginated, multi-parameter filtered immutable audit log records. Strictly requires Super Administrator authority or system:audit_read permission.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "actorId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorRole",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resource",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit logs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials required"
+          },
+          "403": {
+            "description": "Forbidden: Requires system:audit_read permission"
+          },
+          "422": {
+            "description": "Validation failed on query parameters"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit/{id}": {
+      "get": {
+        "tags": [
+          "Audit & Compliance"
+        ],
+        "summary": "Get Audit Log Entry by ID",
+        "description": "Retrieves a single immutable audit log entry by its primary identifier with complete state diff and sanitized metadata.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "aud_12345"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit log entry retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication credentials required"
+          },
+          "403": {
+            "description": "Forbidden: Requires system:audit_read permission"
+          },
+          "404": {
+            "description": "Audit log record not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Audit & Compliance"
+        ],
+        "summary": "Prohibited Mutation (Immutable Audit Invariant)",
+        "description": "Always returns HTTP 405. Audit records are append-only under ADR-0022 and can never be deleted.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "405": {
+            "description": "Method Not Allowed: Audit logs are immutable append-only records."
           }
         }
       }

@@ -13,6 +13,7 @@ import { OrderRepository } from '@/repositories/order.repository';
 import { CancelOrderSchema } from '@/validators/order.validator';
 import { AppError, ValidationError, NotFoundError } from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
+import { auditService } from '@/shared/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,19 @@ export async function POST(
         actorRole: actor.roles[0] || 'CUSTOMER',
         reason,
       },
+    });
+
+    // 5. Record immutable business audit log with state diff
+    await auditService.logBusinessEvent({
+      action: 'ORDER_CANCELLED',
+      resource: 'ORDER',
+      resourceId: order.id,
+      actorId: actor.userId,
+      actorRole: actor.roles[0] || 'CUSTOMER',
+      before: { status: order.status },
+      after: { status: 'CANCELLED' },
+      metadata: { reason, orderNumber: order.orderNumber },
+      req,
     });
 
     return NextResponse.json(

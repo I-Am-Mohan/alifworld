@@ -10,15 +10,27 @@
 import { NextRequest } from 'next/server';
 import { getPrismaClient } from '@/shared/database/prisma';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import { AuditLogEntry, SanitizedAuditMetadata } from './audit.interface';
+import { AuthorizationError, NotFoundError } from '@/shared/errors/app-error';
+import { ActorContext } from '@/shared/authz/authz.types';
+import { SystemRoleCode } from '@/features/identity/types';
+import { PaginatedResponse } from '@/shared/database/base-repository';
+import {
+  AuditLogEntry,
+  AuditAction,
+  AuditLogQueryParams,
+  SanitizedAuditMetadata,
+} from './audit.interface';
 import { redactSensitiveData } from './redactor';
 import { computeAuditDiff } from './audit-diff';
+import { AuditRepository, AuditLogRecord } from './audit.repository';
 
 export class AuditService {
   private prismaClient?: any;
+  private readonly repository: AuditRepository;
 
-  constructor(prisma?: any) {
+  constructor(prisma?: any, repository?: AuditRepository) {
     this.prismaClient = prisma;
+    this.repository = repository || new AuditRepository();
   }
 
   private get prisma() {
@@ -69,6 +81,127 @@ export class AuditService {
       console.error(
         `[AUDIT_LOG_PERSIST_ERROR] Failed to persist audit entry for action=${entry.action}:`,
         err?.message || err
+      );
+    }
+  }
+
+  /**
+   * High-level helper for logging security perimeter and identity events.
+   * Automatically extracts request telemetry, applies redaction, and logs without throwing.
+   */
+  async logSecurityEvent(params: {
+    action: AuditAction;
+    resource: string;
+    resourceId?: string | null;
+    actorId?: string | null;
+    actorRole?: string | null;
+    req?: NextRequest;
+    metadata?: Record<string, unknown>;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+    requestId?: string | null;
+  }): Promise<void> {
+    const meta = params.req ? AuditService.extractRequestMeta(params.req) : null;
+
+    await this.log({
+      action: params.action,
+      resource: params.resource,
+      resourceId: params.resourceId ?? null,
+      actorId: params.actorId ?? null,
+      actorRole: params.actorRole ?? 'ANONYMOUS',
+      ipAddress: params.ipAddress || meta?.ipAddress || null,
+      userAgent: params.userAgent || meta?.userAgent || null,
+      requestId: params.requestId || meta?.requestId || null,
+      metadata: params.metadata,
+    });
+  }
+
+  /**
+   * High-level helper for logging state-modifying business transactions.
+   * Computes a redaction-safe before/after diff and captures request telemetry.
+   */
+  async logBusinessEvent(
+    params: {
+      action: AuditAction;
+      resource: string;
+      resourceId?: string | null;
+      actorId?: string | null;
+      actorRole?: string | null;
+      before?: Record<string, any> | null;
+      after?: Record<string, any> | null;
+      req?: NextRequest;
+      metadata?: Record<string, unknown>;
+      ipAddress?: string | null;
+      userAgent?: string | null;
+      requestId?: string | null;
+    },
+    txClient?: any
+  ): Promise<void> {
+    const meta = params.req ? AuditService.extractRequestMeta(params.req) : null;
+
+    await this.log(
+      {
+        action: params.action,
+        resource: params.resource,
+        resourceId: params.resourceId ?? null,
+        actorId: params.actorId ?? null,
+        actorRole: params.actorRole ?? 'UNKNOWN',
+        ipAddress: params.ipAddress || meta?.ipAddress || null,
+        userAgent: params.userAgent || meta?.userAgent || null,
+        requestId: params.requestId || meta?.requestId || null,
+        before: params.before,
+        after: params.after,
+        metadata: params.metadata,
+      },
+      txClient
+    );
+  }
+
+  /**
+   * Asserts administrative authorization and retrieves paginated historical audit logs.
+   */
+  async queryAuditLogs(
+    actor: ActorContext,
+    params: AuditLogQueryParams = {}
+  ): Promise<PaginatedResponse<AuditLogRecord>> {
+    this.assertAuditReadAccess(actor);
+    return await this.repository.findLogs(params);
+  }
+
+  /**
+   * Asserts administrative authorization and retrieves a single audit record by ID.
+   */
+  async getAuditLogById(actor: ActorContext, id: string): Promise<AuditLogRecord> {
+    this.assertAuditReadAccess(actor);
+    const record = await this.repository.findById(id);
+    if (!record) {
+      throw new NotFoundError(`Audit log entry '${id}' not found`);
+    }
+    return record;
+  }
+
+  /**
+   * Enforces role and permission check for inspecting audit logs.
+   */
+  private assertAuditReadAccess(actor: ActorContext): void {
+    const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+    if (isSuperAdmin) {
+      return;
+    }
+
+    const hasPermission =
+      actor.permissions?.includes('system:audit_read') ||
+      actor.permissions?.includes('audit:read') ||
+      actor.permissions?.includes('system:read');
+
+    if (!hasPermission) {
+      throw new AuthorizationError(
+        'Lacks system:audit_read administrative permission to inspect audit trails.',
+        {
+          code: 'FORBIDDEN',
+          requiredPermission: 'system:audit_read',
+          actorId: actor.userId,
+        }
       );
     }
   }

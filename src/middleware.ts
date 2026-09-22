@@ -27,6 +27,7 @@ import {
   buildSecurityHeaders,
   applySecurityHeaders,
 } from '@/shared/security/headers';
+import { auditService } from '@/shared/audit';
 
 export async function middleware(req: NextRequest): Promise<NextResponse> {
   const pathname = req.nextUrl.pathname;
@@ -38,6 +39,18 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // If this is a preflight OPTIONS request, respond immediately
   if (corsResult.isPreflight) {
     if (req.headers.get('origin') && !corsResult.isOriginAllowed) {
+      // Log security event for disallowed CORS preflight
+      await auditService.logSecurityEvent({
+        action: 'CORS_VIOLATION_DETECTED',
+        resource: 'PERIMETER',
+        req,
+        requestId,
+        metadata: {
+          origin: req.headers.get('origin'),
+          method: req.headers.get('access-control-request-method') || 'UNKNOWN',
+        },
+      });
+
       // Disallowed cross-origin preflight: reject with 403
       const forbiddenRes = new NextResponse(
         JSON.stringify({
@@ -66,6 +79,20 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // 2. Validate CSRF Protection for state-modifying requests
   const csrfResult = verifyRequestCsrf(req);
   if (!csrfResult.valid) {
+    // Log security event for CSRF violation
+    await auditService.logSecurityEvent({
+      action: 'CSRF_VIOLATION_DETECTED',
+      resource: 'PERIMETER',
+      req,
+      requestId,
+      metadata: {
+        code: csrfResult.code,
+        reason: csrfResult.reason,
+        method: req.method,
+        pathname,
+      },
+    });
+
     const errorResponse = NextResponse.json(
       {
         success: false,

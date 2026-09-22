@@ -17,6 +17,7 @@ import { OrderRepository, CreateOrderFulfillmentGroupInput } from '@/repositorie
 import { CheckoutInput } from '@/validators/order.validator';
 import { ValidationError, NotFoundError, ConflictError, AuthorizationError } from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
+import { auditService } from '@/shared/audit';
 
 // Standard logistics rates in minor integer poisha (1 BDT = 100 poisha)
 export const SHIPPING_RATES_POISHA = {
@@ -177,6 +178,21 @@ export class OrderFulfillmentService {
     // 7. Mark cart as converted
     await this.cartRepo.markConverted(cartId);
 
+    // 8. Record immutable business audit log for order placement
+    await auditService.logBusinessEvent({
+      action: 'ORDER_CREATED',
+      resource: 'ORDER',
+      resourceId: createdOrder.id,
+      actorId: customerId,
+      actorRole: 'CUSTOMER',
+      metadata: {
+        orderNumber: createdOrder.orderNumber,
+        totalPoisha: createdOrder.totalPoisha.toString(),
+        totalProductPoints: createdOrder.totalProductPoints,
+        fulfillmentGroupsCount: fulfillmentGroups.length,
+      },
+    });
+
     return createdOrder;
   }
 
@@ -220,6 +236,22 @@ export class OrderFulfillmentService {
       'SELLER',
       reason ?? `Seller updated fulfillment group ${sfg.groupNumber} to ${nextStatus}`
     );
+
+    // Record immutable audit log
+    await auditService.logBusinessEvent({
+      action: 'FULFILLMENT_GROUP_STATUS_CHANGED',
+      resource: 'SELLER_FULFILLMENT_GROUP',
+      resourceId: groupId,
+      actorId,
+      actorRole: 'SELLER',
+      before: { status: sfg.status },
+      after: { status: nextStatus },
+      metadata: {
+        orderId: sfg.orderId,
+        sellerId,
+        reason: reason ?? `Seller updated fulfillment group ${sfg.groupNumber} to ${nextStatus}`,
+      },
+    });
 
     return updated;
   }
@@ -277,6 +309,21 @@ export class OrderFulfillmentService {
         'HANDED_OVER_TO_COURIER'
       );
     }
+
+    // Record immutable audit log
+    await auditService.logBusinessEvent({
+      action: 'SHIPMENT_DISPATCHED',
+      resource: 'SHIPMENT',
+      resourceId: shipment.id,
+      actorId: sellerId,
+      actorRole: 'SELLER',
+      metadata: {
+        fulfillmentGroupId: groupId,
+        shipmentNumber,
+        courierProvider,
+        trackingNumber: options.trackingNumber ?? null,
+      },
+    });
 
     return shipment;
   }
