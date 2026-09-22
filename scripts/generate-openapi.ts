@@ -48,6 +48,8 @@ export const openApiSpec = {
     { name: 'Payments & Settlements', description: 'Customer payment gateways, webhooks, partial refunds, 5% platform commissions, settlements, and BEFTN payouts' },
     { name: 'Database & Migrations', description: 'Data dictionary discovery, zero-downtime migration status, and schema health' },
     { name: 'Internationalization & Localization', description: 'Dynamic language management, default locale settings, and multilingual platform support' },
+    { name: 'Seller Portal', description: 'Storefront management, settings, staff delegation, and KYC compliance' },
+    { name: 'Identity & Access Management', description: 'RBAC roles, granular permissions, and identity governance' },
   ],
   paths: {
     '/api/health/live': {
@@ -1287,6 +1289,142 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+    },
+    '/api/v1/seller/staff': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'List Store Staff Members',
+        description: 'Returns all active staff members with assigned roles and permissions for a merchant store. Strictly tenant-isolated.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'sellerId',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', example: 'sel_1j7x4b9e8m02k3f8' },
+            description: 'Optional store identifier (required for Super Admin bypass)',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Staff members retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden: Cross-tenant access violation' },
+        },
+      },
+      post: {
+        tags: ['Seller Portal'],
+        summary: 'Add or Invite Store Staff Member',
+        description: 'Adds an existing user or invites a new person via email/phone as a store staff or manager. Assigns scoped role in IAM and emits outbox event.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  sellerId: { type: 'string', example: 'sel_1j7x4b9e8m02k3f8' },
+                  userId: { type: 'string', example: 'usr_1j7x4b9e8m02k3f8' },
+                  email: { type: 'string', example: 'staff@store.com' },
+                  phone: { type: 'string', example: '+8801712345678' },
+                  name: { type: 'string', example: 'Staff Name' },
+                  roleCode: { type: 'string', example: 'SELLER_STAFF' },
+                  permissions: { type: 'array', items: { type: 'string' } },
+                },
+                required: ['sellerId'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Staff member added successfully' },
+          '400': { description: 'Bad Request' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden: Cross-tenant or lacking permissions' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+      delete: {
+        tags: ['Seller Portal'],
+        summary: 'Remove Store Staff Member',
+        description: 'Removes a staff member from the merchant store and revokes their scoped IAM role assignment.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  sellerId: { type: 'string', example: 'sel_1j7x4b9e8m02k3f8' },
+                  userId: { type: 'string', example: 'usr_1j7x4b9e8m02k3f8' },
+                },
+                required: ['sellerId', 'userId'],
+              },
+            },
+          },
+        },
+        parameters: [
+          {
+            name: 'sellerId',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', example: 'sel_1j7x4b9e8m02k3f8' },
+          },
+          {
+            name: 'userId',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', example: 'usr_1j7x4b9e8m02k3f8' },
+          },
+        ],
+        responses: {
+          '200': { description: 'Staff member removed successfully' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/seller/staff/invite': {
+      post: {
+        tags: ['Seller Portal'],
+        summary: 'Invite Store Staff Member via Email',
+        description: 'Invites a user by email to join the merchant store staff with specified permissions.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  sellerId: { type: 'string', example: 'sel_1j7x4b9e8m02k3f8' },
+                  email: { type: 'string', example: 'staff@store.com' },
+                  name: { type: 'string', example: 'Staff Member' },
+                  phone: { type: 'string', example: '+8801712345678' },
+                  roleCode: { type: 'string', enum: ['SELLER_STAFF', 'SELLER_MANAGER'], default: 'SELLER_STAFF' },
+                  permissions: { type: 'array', items: { type: 'string' } },
+                },
+                required: ['sellerId', 'email', 'name'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Staff invitation created successfully' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '422': { description: 'Validation failed' },
         },
       },
     },

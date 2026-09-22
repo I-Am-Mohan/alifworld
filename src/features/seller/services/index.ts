@@ -5,3 +5,4 @@
 export * from './seller-service';
 export * from './seller-kyc-service';
 export * from './seller-settings-service';
+export * from './seller-staff-service';

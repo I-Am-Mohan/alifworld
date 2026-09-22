@@ -113,13 +113,12 @@ export class UserRoleAssignmentRepository extends BaseRepository {
         target = await (this.db as any).userRoleAssignment.findFirst({
           where: this.whereNotDeleted({ id: params.assignmentId }),
         });
-      } else if (params.userId && params.roleId) {
+      } else if (params.userId && (params.roleId || params.sellerId)) {
+        const where: any = { userId: params.userId };
+        if (params.roleId) where.roleId = params.roleId;
+        if (params.sellerId) where.sellerId = params.sellerId;
         target = await (this.db as any).userRoleAssignment.findFirst({
-          where: this.whereNotDeleted({
-            userId: params.userId,
-            roleId: params.roleId,
-            sellerId: params.sellerId || null,
-          }),
+          where: this.whereNotDeleted(where),
         });
       }
 

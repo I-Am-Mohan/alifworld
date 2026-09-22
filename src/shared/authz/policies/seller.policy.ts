@@ -91,6 +91,8 @@ export class SellerPolicy implements IPolicy {
     switch (action) {
       case 'read':
       case 'seller:read':
+      case 'staff:read':
+      case 'seller:staff:read':
         return { granted: true, code: 'GRANTED', reason: 'Authorized store staff/owner read access.', policyName: this.name };
 
       case 'manage':

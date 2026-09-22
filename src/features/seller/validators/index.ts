@@ -155,12 +155,42 @@ export type VerifyKycDocumentInput = z.infer<typeof VerifyKycDocumentInputSchema
  */
 export const AddSellerStaffInputSchema = z.object({
   sellerId: SellerIdSchema,
-  userId: UserIdSchema,
+  userId: UserIdSchema.optional(),
+  email: z.string().trim().email('Invalid email address').optional(),
+  phone: BangladeshPhoneSchema.optional(),
+  name: z.string().trim().min(2).max(100).optional(),
   roleCode: z.string().trim().default('SELLER_STAFF'),
+  permissions: z.array(z.string().trim()).default([]),
+}).refine(
+  (data) => Boolean(data.userId || data.email || data.phone),
+  { message: 'At least one of userId, email, or Bangladesh phone must be provided to add staff' }
+);
+
+export type AddSellerStaffInput = z.infer<typeof AddSellerStaffInputSchema>;
+
+/**
+ * Invite Seller Staff Input Schema
+ */
+export const InviteSellerStaffInputSchema = z.object({
+  sellerId: SellerIdSchema,
+  email: z.string().trim().email('Invalid email address'),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100),
+  phone: BangladeshPhoneSchema.optional(),
+  roleCode: z.enum(['SELLER_STAFF', 'SELLER_MANAGER']).default('SELLER_STAFF'),
   permissions: z.array(z.string().trim()).default([]),
 });
 
-export type AddSellerStaffInput = z.infer<typeof AddSellerStaffInputSchema>;
+export type InviteSellerStaffInput = z.infer<typeof InviteSellerStaffInputSchema>;
+
+/**
+ * Remove Seller Staff Input Schema
+ */
+export const RemoveSellerStaffInputSchema = z.object({
+  sellerId: SellerIdSchema,
+  userId: UserIdSchema,
+});
+
+export type RemoveSellerStaffInput = z.infer<typeof RemoveSellerStaffInputSchema>;
 
 /**
  * Update Seller Store Settings Schema (OCC Version Protected)
