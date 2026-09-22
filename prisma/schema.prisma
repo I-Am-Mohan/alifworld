@@ -1,0 +1,90 @@
+// ==============================================================================
+// AlifWorld PostgreSQL & Prisma Foundations Schema
+// Reference: docs/architecture/postgresql-and-prisma-foundations.md
+// Invariants: Single application, BDT/poisha precision, auditability, outbox
+// ==============================================================================
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------------------------------------------------
+// 1. System Configuration & Rule Versioning
+// ------------------------------------------------------------------------------
+/// Platform configuration parameters, financial rule versions, and feature toggles
+model SystemConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
+
+// ------------------------------------------------------------------------------
+// 2. Health & Operational Telemetry Probes
+// ------------------------------------------------------------------------------
+/// Readiness and operational probe logs for system health monitoring
+model HealthProbe {
+  id        String   @id @default(uuid())
+  probeType String   @map("probe_type") // "live" | "ready"
+  status    String   // "healthy" | "degraded" | "unhealthy"
+  latencyMs Int      @map("latency_ms")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([probeType, createdAt])
+  @@map("health_probes")
+}
+
+// ------------------------------------------------------------------------------
+// 3. Transactional Outbox Pattern
+// ------------------------------------------------------------------------------
+/// Guarantees at-least-once asynchronous domain event processing via BullMQ
+model OutboxEvent {
+  id            String    @id @default(uuid())
+  eventType     String    @map("event_type")
+  aggregateType String    @map("aggregate_type")
+  aggregateId   String    @map("aggregate_id")
+  payload       Json
+  status        String    @default("PENDING") // PENDING, PROCESSING, PROCESSED, FAILED
+  attempts      Int       @default(0)
+  lastError     String?   @map("last_error")
+  processedAt   DateTime? @map("processed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([aggregateType, aggregateId])
+  @@map("outbox_events")
+}
+
+// ------------------------------------------------------------------------------
+// 4. Immutable Audit Trail
+// ------------------------------------------------------------------------------
+/// Security and compliance audit log for sensitive operations and state changes
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?  @map("actor_id")
+  actorRole   String?  @map("actor_role")
+  action      String
+  resource    String
+  resourceId  String?  @map("resource_id")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([actorId, createdAt])
+  @@index([resource, resourceId])
+  @@map("audit_logs")
+}

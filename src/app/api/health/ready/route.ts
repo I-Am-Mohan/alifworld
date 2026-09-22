@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAppConfig } from '@/shared/config/environment';
+import { checkDatabaseHealth } from '@/shared/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const config = getAppConfig();
+    const dbHealth = await checkDatabaseHealth();
+    const isDbHealthy = dbHealth.status === 'healthy';
 
     return NextResponse.json(
       {
@@ -23,6 +26,12 @@ export async function GET() {
           checks: {
             process: 'healthy',
             configuration: 'valid',
+            database: isDbHealthy ? 'connected' : 'disconnected',
+            databaseDetails: {
+              status: dbHealth.status,
+              latencyMs: dbHealth.latencyMs,
+              ...(dbHealth.error ? { error: dbHealth.error } : {}),
+            },
             gates: {
               pointsCashConvertible: config.gates.featurePointsCashConvertible,
               affiliateDepth: config.gates.maxAffiliateDepth,

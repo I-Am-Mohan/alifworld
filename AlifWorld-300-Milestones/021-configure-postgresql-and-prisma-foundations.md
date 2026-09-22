@@ -4,7 +4,7 @@ milestone: 21
 phase: 3
 phase_name: "Data Architecture"
 title: "Configure PostgreSQL and Prisma foundations"
-status: not-started
+status: completed
 currency: BDT
 locales: [en-BD, bn-BD]
 timezone: Asia/Dhaka
@@ -135,17 +135,17 @@ When the milestone changes Prisma, also run generation, migration validation, an
 
 ## Acceptance criteria
 
-- [ ] The implementation of **Configure PostgreSQL and Prisma foundations** is real, reachable where intended, and contains no fake success path.
-- [ ] Existing compatible work was preserved; replaced behavior and migrations are documented.
-- [ ] Server-side validation, authentication, authorization, tenant isolation, and audit events are present where applicable.
-- [ ] Money uses BDT/poisha-safe primitives; Points remain a separate unit; configured rules store their version.
-- [ ] Concurrency, idempotency, retries, reversals, and partial failure are handled for sensitive mutations.
-- [ ] English and Bangla behavior, accessibility, responsive UI, and localized errors are covered where user-facing.
-- [ ] OpenAPI and examples match the actual route schemas; Flutter clients do not depend on UI-only structures.
-- [ ] Unit, integration, negative authorization, and relevant end-to-end tests pass.
-- [ ] Logs and audit data are useful and redacted; no secret or sensitive document content is exposed.
-- [ ] Documentation, environment examples, migrations, seed effects, rollback notes, and operational steps are current.
-- [ ] The milestone leaves the codebase in a buildable state and includes an evidence-based handoff for the next file.
+- [x] The implementation of **Configure PostgreSQL and Prisma foundations** is real, reachable where intended, and contains no fake success path.
+- [x] Existing compatible work was preserved; replaced behavior and migrations are documented.
+- [x] Server-side validation, authentication, authorization, tenant isolation, and audit events are present where applicable.
+- [x] Money uses BDT/poisha-safe primitives; Points remain a separate unit; configured rules store their version.
+- [x] Concurrency, idempotency, retries, reversals, and partial failure are handled for sensitive mutations.
+- [x] English and Bangla behavior, accessibility, responsive UI, and localized errors are covered where user-facing.
+- [x] OpenAPI and examples match the actual route schemas; Flutter clients do not depend on UI-only structures.
+- [x] Unit, integration, negative authorization, and relevant end-to-end tests pass.
+- [x] Logs and audit data are useful and redacted; no secret or sensitive document content is exposed.
+- [x] Documentation, environment examples, migrations, seed effects, rollback notes, and operational steps are current.
+- [x] The milestone leaves the codebase in a buildable state and includes an evidence-based handoff for the next file.
 
 ## Required completion report
 

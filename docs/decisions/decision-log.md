@@ -30,6 +30,7 @@
 | [**ADR-0018**](0018-testing-frameworks-and-test-pyramid.md) | Testing Frameworks, Test Pyramid Architecture, and Execution Standards | 2026-09-22 | **Accepted** | Phase 02 / M018 | Architecture & QA | Established native Bun test runner framework, 3-tier testing pyramid (unit, integration, e2e smoke), hermetic testing standards, and test helper fixtures. |
 | [**ADR-0019**](0019-local-development-infrastructure-profiles.md) | Local Development Infrastructure Profiles (Docker Compose) | 2026-09-22 | **Accepted** | Phase 02 / M019 | Architecture & DevOps | Created Docker Compose profiles for PostgreSQL, Redis, MinIO S3, Meilisearch, Mailpit, automated bucket setup, and package.json infra scripts. |
 | [**ADR-0020**](0020-baseline-continuous-integration-quality-gate.md) | Baseline Continuous Integration Quality Gate and Phase 02 Certification | 2026-09-22 | **Accepted** | Phase 02 / M020 | Architecture & DevOps | Implemented GitHub Actions CI quality gate, local ci:check parity, sequential quality verification, and certified Phase 02 completion. |
+| [**ADR-0021**](0021-postgresql-and-prisma-foundations.md) | PostgreSQL and Prisma Database Foundations Architecture | 2026-09-22 | **Accepted** | Phase 03 / M021 | Architecture & Data Eng | Configured Prisma ORM 5+ with PostgreSQL 16, global singleton connection management, error translation to AppErrors, BaseRepository, and foundational models. |
 
 ---
 
