@@ -327,17 +327,145 @@ async function seed() {
     console.info(`✅ Seeded super administrator user (${adminEmail}).`);
   }
 
+  // ----------------------------------------------------------------------------
+  // 5. Initial Merchant Store, Staff, KYC Documents & Settings
+  // ----------------------------------------------------------------------------
+  const sellerOwnerEmail = 'rahim@dhakatech.com';
+  const sellerOwnerPhone = '+8801711223344';
+  const sellerSlug = 'dhaka-tech';
+
+  let sellerOwnerUser = await (prisma as any).user.findFirst({
+    where: { email: sellerOwnerEmail },
+  });
+
+  if (!sellerOwnerUser) {
+    const userId = generateId(ID_PREFIXES.USER);
+    sellerOwnerUser = await (prisma as any).user.create({
+      data: {
+        id: userId,
+        email: sellerOwnerEmail,
+        phone: sellerOwnerPhone,
+        name: 'Rahim Chowdhury (Store Owner)',
+        status: 'ACTIVE',
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        version: 1,
+      },
+    });
+  }
+
+  let merchantStore = await (prisma as any).seller.findFirst({
+    where: { slug: sellerSlug },
+  });
+
+  if (!merchantStore) {
+    const sellerId = generateId(ID_PREFIXES.SELLER);
+    merchantStore = await (prisma as any).seller.create({
+      data: {
+        id: sellerId,
+        ownerUserId: sellerOwnerUser.id,
+        businessName: 'Dhaka Tech Electronics',
+        slug: sellerSlug,
+        tradeLicenseNumber: 'TRAD/DNCC/042189/2024',
+        binNumber: '0012345678901',
+        tinNumber: '123456789012',
+        status: 'VERIFIED',
+        verifiedAt: new Date(),
+        verifiedBy: superAdminUser?.id || 'SYSTEM_SEED',
+        version: 1,
+      },
+    });
+
+    // Seed store settings
+    const settingsId = generateId(ID_PREFIXES.STORE_SETTINGS);
+    await (prisma as any).sellerStoreSettings.create({
+      data: {
+        id: settingsId,
+        sellerId: merchantStore.id,
+        supportEmail: 'support@dhakatech.com',
+        supportPhone: sellerOwnerPhone,
+        defaultCourier: 'PATHAO',
+        pickupAddress: {
+          division: 'Dhaka',
+          district: 'Dhaka',
+          upazila: 'Dhanmondi',
+          streetAddress: 'House 12, Road 4, Dhanmondi R/A',
+          postalCode: '1205',
+        },
+        returnAddress: {
+          division: 'Dhaka',
+          district: 'Dhaka',
+          upazila: 'Dhanmondi',
+          streetAddress: 'House 12, Road 4, Dhanmondi R/A',
+          postalCode: '1205',
+        },
+        vacationMode: false,
+        version: 1,
+      },
+    });
+
+    // Seed verified Trade License KYC document
+    const kycId = generateId(ID_PREFIXES.KYC_DOCUMENT);
+    await (prisma as any).sellerKycDocument.create({
+      data: {
+        id: kycId,
+        sellerId: merchantStore.id,
+        documentType: 'TRADE_LICENSE',
+        documentNumber: 'TRAD/DNCC/042189/2024',
+        fileUrl: `sellers/${merchantStore.id}/kyc/trade_license.pdf`,
+        fileSize: 1048576,
+        mimeType: 'application/pdf',
+        status: 'VERIFIED',
+        verifiedAt: new Date(),
+        verifiedBy: superAdminUser?.id || 'SYSTEM_SEED',
+        version: 1,
+      },
+    });
+
+    // Add owner to staff
+    const staffId = generateId(ID_PREFIXES.STAFF);
+    await (prisma as any).sellerStaff.create({
+      data: {
+        id: staffId,
+        sellerId: merchantStore.id,
+        userId: sellerOwnerUser.id,
+        roleCode: 'SELLER_OWNER',
+        permissions: ['*'],
+        version: 1,
+      },
+    });
+
+    // Assign SELLER_OWNER role in IAM scoped to merchantStore.id
+    const sellerOwnerRoleId = roleMap.get('SELLER_OWNER');
+    if (sellerOwnerRoleId) {
+      const assignmentId = generateId(ID_PREFIXES.ROLE_ASSIGNMENT);
+      await (prisma as any).userRoleAssignment.create({
+        data: {
+          id: assignmentId,
+          userId: sellerOwnerUser.id,
+          roleId: sellerOwnerRoleId,
+          sellerId: merchantStore.id,
+          assignedBy: 'SYSTEM_SEED',
+          version: 1,
+        },
+      });
+    }
+
+    console.info(`✅ Seeded verified merchant store 'Dhaka Tech Electronics' (${merchantStore.id}).`);
+  }
+
   // Record seed execution in AuditLog
   await (prisma as any).auditLog.create({
     data: {
       action: 'DATABASE_SEED',
-      resource: 'IAM',
+      resource: 'IAM_AND_SELLER',
       actorRole: 'SYSTEM',
       metadata: {
         timestamp: new Date().toISOString(),
         keysSeeded: initialConfigs.map((c) => c.key),
         rolesSeeded: rolesData.map((r) => r.code),
         permissionsSeeded: permissionsData.length,
+        merchantSeeded: merchantStore?.slug,
       },
     },
   });

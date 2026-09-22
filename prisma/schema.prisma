@@ -118,6 +118,8 @@ model User {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   roleAssignments UserRoleAssignment[]
+  ownedSellers    Seller[]             @relation("UserOwnedSellers")
+  sellerStaff     SellerStaff[]
 
   @@index([status])
   @@index([deletedAt])
@@ -220,4 +222,122 @@ model UserRoleAssignment {
   @@index([deletedAt])
   @@map("user_role_assignments")
 }
+
+// ------------------------------------------------------------------------------
+// 10. Multi-Vendor Merchant (Seller)
+// ------------------------------------------------------------------------------
+/// Registered merchant entity operating a storefront within the AlifWorld ecosystem
+model Seller {
+  id                 String    @id @default(uuid())
+  ownerUserId        String    @map("owner_user_id")
+  businessName       String    @map("business_name")
+  slug               String    @unique
+  tradeLicenseNumber String?   @map("trade_license_number")
+  binNumber          String?   @map("bin_number") // NBR Business Identification Number
+  tinNumber          String?   @map("tin_number")
+  status             String    @default("DRAFT") // DRAFT, PENDING_VERIFICATION, VERIFIED, SUSPENDED, REJECTED
+  rejectionReason    String?   @map("rejection_reason")
+  verifiedAt         DateTime? @map("verified_at")
+  verifiedBy         String?   @map("verified_by")
+  version            Int       @default(1)
+  deletedAt          DateTime? @map("deleted_at")
+  deletedBy          String?   @map("deleted_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  owner        User                 @relation("UserOwnedSellers", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  staff        SellerStaff[]
+  kycDocuments SellerKycDocument[]
+  settings     SellerStoreSettings?
+
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("sellers")
+}
+
+// ------------------------------------------------------------------------------
+// 11. Seller Staff Delegation
+// ------------------------------------------------------------------------------
+/// Delegated staff members operating within an isolated seller tenant boundary
+model SellerStaff {
+  id          String    @id @default(uuid())
+  sellerId    String    @map("seller_id")
+  userId      String    @map("user_id")
+  roleCode    String    @default("SELLER_STAFF") @map("role_code") // SELLER_OWNER, SELLER_STAFF, STORE_MANAGER
+  permissions String[]  @default([])
+  version     Int       @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, userId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("seller_staff")
+}
+
+// ------------------------------------------------------------------------------
+// 12. Seller KYC Verification Documents
+// ------------------------------------------------------------------------------
+/// Cryptographically protected and audited KYC regulatory verification documents
+model SellerKycDocument {
+  id              String    @id @default(uuid())
+  sellerId        String    @map("seller_id")
+  documentType    String    @map("document_type") // TRADE_LICENSE, NID_FRONT, NID_BACK, BIN_CERTIFICATE, BANK_CHEQUE_LEAF, TIN_CERTIFICATE
+  documentNumber  String?   @map("document_number")
+  fileUrl         String    @map("file_url") // Private S3 object key (never public)
+  fileSize        Int       @map("file_size")
+  mimeType        String    @map("mime_type")
+  status          String    @default("PENDING") // PENDING, VERIFIED, REJECTED
+  rejectionReason String?   @map("rejection_reason")
+  verifiedAt      DateTime? @map("verified_at")
+  verifiedBy      String?   @map("verified_by")
+  version         Int       @default(1)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId, documentType])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("seller_kyc_documents")
+}
+
+// ------------------------------------------------------------------------------
+// 13. Seller Store Settings & Operational Profile
+// ------------------------------------------------------------------------------
+/// Physical store profile, pickup/return logistics addresses, and courier routing
+model SellerStoreSettings {
+  id              String    @id @default(uuid())
+  sellerId        String    @unique @map("seller_id")
+  logoUrl         String?   @map("logo_url")
+  bannerUrl       String?   @map("banner_url")
+  supportEmail    String?   @map("support_email")
+  supportPhone    String?   @map("support_phone")
+  pickupAddress   Json?     @map("pickup_address") // division, district, upazila, street
+  returnAddress   Json?     @map("return_address")
+  defaultCourier  String?   @map("default_courier") // PATHAO, STEADFAST, REDX, IN_HOUSE
+  vacationMode    Boolean   @default(false) @map("vacation_mode")
+  vacationMessage String?   @map("vacation_message")
+  version         Int       @default(1)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([deletedAt])
+  @@map("seller_store_settings")
+}
+
 

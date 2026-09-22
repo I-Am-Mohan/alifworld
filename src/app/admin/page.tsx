@@ -145,6 +145,24 @@ export default function AdminPortalPage() {
               </p>
             </div>
           </Link>
+
+          <Link
+            href="/admin/sellers"
+            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group md:col-span-2"
+          >
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-mono font-bold text-brand-orange">SEL-01</span>
+                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
+                  Review Merchants & KYC Dossiers →
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-1">Merchant Verification & KYC Dossiers</h3>
+              <p className="text-xs text-neutral-400">
+                Audit seller registrations, verify government regulatory credentials (NBR BIN/TIN, City Corporation Trade Licenses), manage commission tiers, and enforce multi-tenant separation.
+              </p>
+            </div>
+          </Link>
         </div>
       </section>
     </div>

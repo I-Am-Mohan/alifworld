@@ -36,6 +36,9 @@ export const ID_PREFIXES = {
   PERMISSION: 'prm',
   ROLE_PERMISSION: 'rpm',
   ROLE_ASSIGNMENT: 'ura',
+  STAFF: 'stf',
+  KYC_DOCUMENT: 'kyc',
+  STORE_SETTINGS: 'set',
   SHIPMENT: 'shp',
   INVENTORY: 'inv',
 } as const;
