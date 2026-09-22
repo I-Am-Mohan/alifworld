@@ -21,6 +21,7 @@
 | [**ADR-0009**](0009-environment-branching-and-release-strategy.md) | Environment Topology, Trunk-Based Development, and Zero-Downtime Release Strategy | 2026-09-22 | **Accepted** | Phase 01 / M009 | DevOps & Architecture | Defined 4-tier environments; adopted Trunk-Based Development with short-lived branches; mandated zero-downtime rolling releases, health probes, and Expand-and-Contract database migrations. |
 | [**ADR-0010**](0010-definition-of-done-and-requirements-traceability.md) | Canonical Definition of Done and Requirements Traceability Matrix Framework | 2026-09-22 | **Accepted** | Phase 01 / M010 | QA & Governance | Established 7-pillar Canonical Definition of Done; adopted 25-category master Requirements Traceability Matrix; formally concluded Phase 01 governance foundation. |
 | [**ADR-0011**](0011-repository-inspection-and-preservation-baseline.md) | Existing Repository Inspection, Baseline Audit, and Asset Preservation Strategy | 2026-09-22 | **Accepted** | Phase 02 / M011 | Architecture & Engineering | Completed 100% preservation audit of Phase 01 assets; implemented root .gitignore; aligned Next.js src/ directory structure and @/* path aliases. |
+| [**ADR-0012**](0012-initialize-nextjs-typescript-application-with-bun.md) | Next.js TypeScript Application Initialization with Bun | 2026-09-22 | **Accepted** | Phase 02 / M012 | Architecture & Engineering | Initialized single Next.js App Router codebase, strict TypeScript, Bun script contract, Tailwind brand tokens, standalone container output, and health probes. |
 
 ---
 
