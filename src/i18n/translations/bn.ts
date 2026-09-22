@@ -350,7 +350,6 @@ export const bn = {
     modulesTitle: 'অপারেশনাল মডিউল ও পরিচালনা',
     recentOrders: 'সাম্প্রতিক প্ল্যাটফর্ম অর্ডার',
     systemInvariants: 'প্ল্যাটফর্ম নীতি ও আর্কিটেকচার',
-    fillAdminCredentials: 'ডেমো অ্যাডমিন তথ্য পূরণ করুন',
   },
 };
 

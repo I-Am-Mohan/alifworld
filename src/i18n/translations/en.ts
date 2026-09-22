@@ -328,11 +328,11 @@ export const en = {
     selectLanguage: 'Select Language',
   },
   admin: {
-    loginTitle: 'Admin Operations Console',
+    loginTitle: 'Login to your account',
     loginSubtitle: 'Authorized AlifWorld administrative personnel only',
     emailOrPhone: 'Email or Mobile Number',
     password: 'Password',
-    signIn: 'Sign In to Console',
+    signIn: 'Sign in',
     signingIn: 'Authenticating...',
     loginFailed: 'Invalid administrative credentials.',
     unauthorized: 'Access denied. Your account does not have administrative privileges.',
@@ -350,7 +350,6 @@ export const en = {
     modulesTitle: 'Operational Modules & Governance',
     recentOrders: 'Recent Platform Orders',
     systemInvariants: 'Platform Invariants & Architecture',
-    fillAdminCredentials: 'Fill Demo Admin Credentials',
   },
 };
 

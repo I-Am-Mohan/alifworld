@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center gap-3">
         <div className="w-9 h-9 border-4 border-[#F59E0B] border-t-transparent rounded-full animate-spin" />
         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Verifying IAM Credentials...
+          Loading...
         </span>
       </div>
     );
