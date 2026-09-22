@@ -40,6 +40,10 @@ export const MODEL_DELETION_POLICIES: Record<string, DeletionPolicy> = {
   // Category 2: Soft-Deletable Domain Entities
   SystemConfig: 'SOFT_DELETE',
   User: 'SOFT_DELETE',
+  Role: 'SOFT_DELETE',
+  Permission: 'SOFT_DELETE',
+  UserRoleAssignment: 'SOFT_DELETE',
+  RolePermission: 'SOFT_DELETE',
   Seller: 'SOFT_DELETE',
   Category: 'SOFT_DELETE',
   Product: 'SOFT_DELETE',

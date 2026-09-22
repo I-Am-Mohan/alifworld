@@ -88,6 +88,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0020: Baseline Continuous Integration Quality Gate and Phase 02 Certification](docs/decisions/0020-baseline-continuous-integration-quality-gate.md)
   - [ADR 0021: PostgreSQL and Prisma Database Foundations Architecture](docs/decisions/0021-postgresql-and-prisma-foundations.md)
   - [ADR 0022: Identifiers, Timestamps, Lifecycle Fields, and Deletion Policy Standardization](docs/decisions/0022-standardize-identifiers-timestamps-lifecycle-fields-and-deletion-policy.md)
+  - [ADR 0023: Model Users, Roles, Permissions, and Role Assignments Architecture](docs/decisions/0023-model-users-roles-permissions-and-role-assignments.md)
 
 ---
 
@@ -99,7 +100,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
 | **02** | 011–020 | Repository and Tooling | **Completed (Milestones 011–020)** |
-| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–022 Completed)** |
+| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–023 Completed)** |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
 | **06** | 051–060 | Bangladesh Localization | Planned |

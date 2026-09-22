@@ -102,6 +102,51 @@ export default function AdminPortalPage() {
           ))}
         </div>
       </section>
+
+      {/* Operational Modules & Subsystems */}
+      <section>
+        <h2 className="text-xl font-bold mb-4 flex items-center">
+          <span className="w-3 h-3 rounded-full bg-brand-orange mr-2.5 inline-block" />
+          Platform Domains & Administration
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link
+            href="/admin/users"
+            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
+          >
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-mono font-bold text-brand-orange">IAM-01</span>
+                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
+                  Open Directory →
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-1">User Management & Identities</h3>
+              <p className="text-xs text-neutral-400">
+                Browse platform users, manage Bangladesh E.164 phones, inspect verification states, and delegate roles.
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/roles"
+            className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80 transition-all flex flex-col justify-between group"
+          >
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-mono font-bold text-brand-globeLightBlue">IAM-02</span>
+                <span className="text-xs text-neutral-500 group-hover:text-white transition-colors">
+                  Open Matrix →
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-1">RBAC Roles & Permissions</h3>
+              <p className="text-xs text-neutral-400">
+                Inspect 9 standard system roles, configure granular permission matrices, and audit multi-tenant scopes.
+              </p>
+            </div>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

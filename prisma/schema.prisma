@@ -96,3 +96,128 @@ model AuditLog {
   @@index([resource, resourceId])
   @@map("audit_logs")
 }
+
+// ------------------------------------------------------------------------------
+// 5. User Account & Identity
+// ------------------------------------------------------------------------------
+/// Core user account representing customers, sellers, admins, operations, and riders
+model User {
+  id              String    @id @default(uuid())
+  email           String?   @unique
+  phone           String?   @unique
+  name            String?
+  avatarUrl       String?   @map("avatar_url")
+  status          String    @default("ACTIVE") // ACTIVE, PENDING_VERIFICATION, SUSPENDED, DELETED
+  isEmailVerified Boolean   @default(false) @map("is_email_verified")
+  isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
+  lastLoginAt     DateTime? @map("last_login_at")
+  version         Int       @default(1)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  roleAssignments UserRoleAssignment[]
+
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ------------------------------------------------------------------------------
+// 6. Role Definition
+// ------------------------------------------------------------------------------
+/// RBAC roles determining functional capabilities and access tiers across the platform
+model Role {
+  id          String    @id @default(uuid())
+  code        String    @unique // SUPER_ADMIN, ADMIN, OPERATIONS, SUPPORT, FINANCE, SELLER_OWNER, SELLER_STAFF, CUSTOMER, RIDER
+  name        String
+  description String?
+  isSystem    Boolean   @default(false) @map("is_system")
+  version     Int       @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+  userAssignments UserRoleAssignment[]
+
+  @@index([isSystem])
+  @@index([deletedAt])
+  @@map("roles")
+}
+
+// ------------------------------------------------------------------------------
+// 7. Granular Permission
+// ------------------------------------------------------------------------------
+/// Atomic authorization permission grants mapped to bounded contexts and operations
+model Permission {
+  id          String    @id @default(uuid())
+  code        String    @unique // e.g. "users:read", "users:write", "sellers:verify"
+  name        String
+  module      String    // IAM, SELLER, CATALOG, ORDER, FINANCE, SYSTEM
+  description String?
+  version     Int       @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  rolePermissions RolePermission[]
+
+  @@index([module])
+  @@index([deletedAt])
+  @@map("permissions")
+}
+
+// ------------------------------------------------------------------------------
+// 8. Role-Permission Junction
+// ------------------------------------------------------------------------------
+/// Associates roles with their granular permissions
+model RolePermission {
+  id           String    @id @default(uuid())
+  roleId       String    @map("role_id")
+  permissionId String    @map("permission_id")
+  version      Int       @default(1)
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+  @@index([deletedAt])
+  @@map("role_permissions")
+}
+
+// ------------------------------------------------------------------------------
+// 9. User Role Assignment
+// ------------------------------------------------------------------------------
+/// Assigns roles to users with optional multi-tenant seller scoping
+model UserRoleAssignment {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  roleId     String    @map("role_id")
+  sellerId   String?   @map("seller_id") // Optional tenant scoping for seller staff/owner
+  assignedBy String?   @map("assigned_by")
+  version    Int       @default(1)
+  deletedAt  DateTime? @map("deleted_at")
+  deletedBy  String?   @map("deleted_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([roleId])
+  @@index([sellerId])
+  @@index([deletedAt])
+  @@map("user_role_assignments")
+}
+
