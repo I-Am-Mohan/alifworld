@@ -72,6 +72,11 @@ export const ID_PREFIXES = {
   FAMILY: 'fam',
   OTP: 'otp',
   OAUTH_ACCOUNT: 'oac',
+  PRODUCT_TRANSLATION: 'ptr',
+  CATEGORY_TRANSLATION: 'ctr',
+  BRAND_TRANSLATION: 'btr',
+  CMS_CONTENT: 'cms',
+  CMS_CONTENT_TRANSLATION: 'cmt',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];

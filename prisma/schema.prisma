@@ -42,7 +42,7 @@ model SystemConfig {
 model HealthProbe {
   id        String   @id @default(uuid())
   probeType String   @map("probe_type") // "live" | "ready"
-  status    String   // "healthy" | "degraded" | "unhealthy"
+  status    String // "healthy" | "degraded" | "unhealthy"
   latencyMs Int      @map("latency_ms")
   metadata  Json?
   createdAt DateTime @default(now()) @map("created_at")
@@ -81,16 +81,16 @@ model OutboxEvent {
 // ------------------------------------------------------------------------------
 /// Security and compliance audit log for sensitive operations and state changes
 model AuditLog {
-  id          String   @id @default(uuid())
-  actorId     String?  @map("actor_id")
-  actorRole   String?  @map("actor_role")
-  action      String
-  resource    String
-  resourceId  String?  @map("resource_id")
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
-  metadata    Json?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  actorRole  String?  @map("actor_role")
+  action     String
+  resource   String
+  resourceId String?  @map("resource_id")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([actorId, createdAt])
   @@index([resource, resourceId])
@@ -170,7 +170,7 @@ model Permission {
   id          String    @id @default(uuid())
   code        String    @unique // e.g. "users:read", "users:write", "sellers:verify"
   name        String
-  module      String    // IAM, SELLER, CATALOG, ORDER, FINANCE, SYSTEM
+  module      String // IAM, SELLER, CATALOG, ORDER, FINANCE, SYSTEM
   description String?
   version     Int       @default(1)
   deletedAt   DateTime? @map("deleted_at")
@@ -256,10 +256,10 @@ model Seller {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  owner        User                 @relation("UserOwnedSellers", fields: [ownerUserId], references: [id], onDelete: Restrict)
-  staff        SellerStaff[]
-  kycDocuments SellerKycDocument[]
-  settings     SellerStoreSettings?
+  owner             User                     @relation("UserOwnedSellers", fields: [ownerUserId], references: [id], onDelete: Restrict)
+  staff             SellerStaff[]
+  kycDocuments      SellerKycDocument[]
+  settings          SellerStoreSettings?
   products          Product[]
   warehouses        Warehouse[]
   fulfillmentGroups SellerFulfillmentGroup[]
@@ -383,9 +383,10 @@ model Category {
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children Category[] @relation("CategoryHierarchy")
-  products Product[]
+  parent       Category?             @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children     Category[]            @relation("CategoryHierarchy")
+  products     Product[]
+  translations CategoryTranslation[]
 
   @@index([parentId])
   @@index([isActive])
@@ -398,20 +399,21 @@ model Category {
 // ------------------------------------------------------------------------------
 /// Approved brand registry for catalog categorization and trademark compliance
 model Brand {
-  id          String    @id @default(uuid())
-  name        String
-  slug        String    @unique
-  logoUrl     String?   @map("logo_url")
-  website     String?
-  isVerified  Boolean   @default(true) @map("is_verified")
-  isActive    Boolean   @default(true) @map("is_active")
-  version     Int       @default(1)
-  deletedAt   DateTime? @map("deleted_at")
-  deletedBy   String?   @map("deleted_by")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id         String    @id @default(uuid())
+  name       String
+  slug       String    @unique
+  logoUrl    String?   @map("logo_url")
+  website    String?
+  isVerified Boolean   @default(true) @map("is_verified")
+  isActive   Boolean   @default(true) @map("is_active")
+  version    Int       @default(1)
+  deletedAt  DateTime? @map("deleted_at")
+  deletedBy  String?   @map("deleted_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  products Product[]
+  products     Product[]
+  translations BrandTranslation[]
 
   @@index([isActive])
   @@index([deletedAt])
@@ -450,12 +452,13 @@ model Product {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  seller      Seller               @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  category    Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  brand       Brand?               @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  variants    ProductVariant[]
-  media       ProductMedia[]
-  slugHistory ProductSlugHistory[]
+  seller       Seller               @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  category     Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  brand        Brand?               @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  variants     ProductVariant[]
+  media        ProductMedia[]
+  slugHistory  ProductSlugHistory[]
+  translations ProductTranslation[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -515,7 +518,7 @@ model ProductMedia {
   id           String    @id @default(uuid())
   productId    String    @map("product_id")
   mediaType    String    @default("IMAGE") @map("media_type") // IMAGE, VIDEO
-  url          String    // S3 permanent storage URL
+  url          String // S3 permanent storage URL
   altText      String?   @map("alt_text")
   altTextBn    String?   @map("alt_text_bn")
   isPrimary    Boolean   @default(false) @map("is_primary")
@@ -554,7 +557,107 @@ model ProductSlugHistory {
 }
 
 // ------------------------------------------------------------------------------
-// 20. Warehouses & Fulfillment Hubs
+// 20. Localized Catalog and CMS Content
+// ------------------------------------------------------------------------------
+/// Normalized product translations keyed by canonical locale.
+model ProductTranslation {
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  locale      String
+  title       String
+  description String   @db.Text
+  warranty    String?
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, locale])
+  @@index([locale])
+  @@map("product_translations")
+}
+
+/// Normalized category translations keyed by canonical locale.
+model CategoryTranslation {
+  id          String   @id @default(uuid())
+  categoryId  String   @map("category_id")
+  locale      String
+  name        String
+  description String?
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@index([locale])
+  @@map("category_translations")
+}
+
+/// Normalized brand translations keyed by canonical locale.
+model BrandTranslation {
+  id        String   @id @default(uuid())
+  brandId   String   @map("brand_id")
+  locale    String
+  name      String
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, locale])
+  @@index([locale])
+  @@map("brand_translations")
+}
+
+/// Versioned, publishable CMS content container owned by an administrator.
+model CmsContent {
+  id          String    @id @default(uuid())
+  contentType String    @map("content_type")
+  slug        String    @unique
+  status      String    @default("DRAFT") // DRAFT, REVIEW, PUBLISHED, ARCHIVED
+  publishedAt DateTime? @map("published_at")
+  publishedBy String?   @map("published_by")
+  version     Int       @default(1)
+  createdBy   String?   @map("created_by")
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  translations CmsContentTranslation[]
+
+  @@index([contentType, status])
+  @@index([deletedAt])
+  @@map("cms_contents")
+}
+
+/// Locale-specific CMS payload. Structured JSON allows page-builder blocks without schema duplication.
+model CmsContentTranslation {
+  id             String   @id @default(uuid())
+  contentId      String   @map("content_id")
+  locale         String
+  title          String
+  body           Json
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  version        Int      @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  content CmsContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, locale])
+  @@index([locale])
+  @@map("cms_content_translations")
+}
+
+// ------------------------------------------------------------------------------
+// 21. Warehouses & Fulfillment Hubs
 // ------------------------------------------------------------------------------
 /// Platform fulfillment centers and merchant warehouse facilities across Bangladesh
 model Warehouse {
@@ -562,7 +665,7 @@ model Warehouse {
   sellerId      String?   @map("seller_id") // Null for AlifWorld platform central hub
   name          String
   code          String    @unique // e.g. DHK-HUB-01, CTG-HUB-01
-  division      String    // DHAKA, CHITTAGONG, RAJSHAHI, KHULNA, BARISAL, SYLHET, RANGPUR, MYMENSINGH
+  division      String // DHAKA, CHITTAGONG, RAJSHAHI, KHULNA, BARISAL, SYLHET, RANGPUR, MYMENSINGH
   district      String
   upazila       String?
   addressLine   String    @map("address_line")
@@ -821,9 +924,9 @@ model SellerFulfillmentGroup {
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  seller    Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  warehouse Warehouse?  @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  order       Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  seller      Seller             @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  warehouse   Warehouse?         @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
   items       OrderItem[]
   shipments   Shipment[]
   refunds     Refund[]
@@ -1187,7 +1290,7 @@ model Wallet {
   id              String    @id @default(uuid())
   userId          String?   @map("user_id")
   sellerId        String?   @map("seller_id")
-  type            String    // MAIN, SHOPPING, GOOD_LUCK, CHARITY, SYSTEM_RESERVE
+  type            String // MAIN, SHOPPING, GOOD_LUCK, CHARITY, SYSTEM_RESERVE
   currency        String    @default("BDT")
   availablePoisha BigInt    @default(0) @map("available_poisha")
   pendingPoisha   BigInt    @default(0) @map("pending_poisha")
@@ -1219,7 +1322,7 @@ model LedgerAccount {
   id          String    @id @default(uuid())
   code        String    @unique // e.g. 1010-CASH-GATEWAY, 2010-CUSTOMER-MAIN-LIABILITY
   name        String
-  type        String    // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  type        String // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
   currency    String    @default("BDT")
   description String?
   isActive    Boolean   @default(true) @map("is_active")
@@ -1241,17 +1344,17 @@ model LedgerAccount {
 // ------------------------------------------------------------------------------
 /// Atomic, balanced financial transaction header strictly conserving Sum(Debits) == Sum(Credits)
 model LedgerJournal {
-  id             String    @id @default(uuid())
-  journalNumber  String    @unique @map("journal_number") // e.g. JRN-20260922-XXXX
+  id             String   @id @default(uuid())
+  journalNumber  String   @unique @map("journal_number") // e.g. JRN-20260922-XXXX
   description    String
-  referenceType  String    @map("reference_type") // ORDER_PAYMENT, REWARD_DISTRIBUTION, REFUND_ADJUSTMENT, SETTLEMENT_CLEARING, WITHDRAWAL
-  referenceId    String?   @map("reference_id")
-  totalPoisha    BigInt    @map("total_poisha")
-  idempotencyKey String?   @unique @map("idempotency_key")
-  ruleVersion    String?   @map("rule_version")
-  reversalOfId   String?   @unique @map("reversal_of_id")
-  postedAt       DateTime  @default(now()) @map("posted_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
+  referenceType  String   @map("reference_type") // ORDER_PAYMENT, REWARD_DISTRIBUTION, REFUND_ADJUSTMENT, SETTLEMENT_CLEARING, WITHDRAWAL
+  referenceId    String?  @map("reference_id")
+  totalPoisha    BigInt   @map("total_poisha")
+  idempotencyKey String?  @unique @map("idempotency_key")
+  ruleVersion    String?  @map("rule_version")
+  reversalOfId   String?  @unique @map("reversal_of_id")
+  postedAt       DateTime @default(now()) @map("posted_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   originalJournal LedgerJournal?  @relation("JournalReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
   reversalJournal LedgerJournal?  @relation("JournalReversal")
@@ -1271,7 +1374,7 @@ model LedgerPosting {
   journalId    String   @map("journal_id")
   accountId    String   @map("account_id")
   walletId     String?  @map("wallet_id")
-  direction    String   // DEBIT, CREDIT
+  direction    String // DEBIT, CREDIT
   amountPoisha BigInt   @map("amount_poisha")
   currency     String   @default("BDT")
   description  String?
@@ -1320,7 +1423,7 @@ model PointEvent {
   id             String   @id @default(uuid())
   pointAccountId String   @map("point_account_id")
   eventType      String   @map("event_type") // ORDER_EARNED, ORDER_RELEASED, REFUND_REVERSED, REWARD_AWARDED, EXPIRATION
-  points         Int      // Positive for credits, negative for debits/clawbacks
+  points         Int // Positive for credits, negative for debits/clawbacks
   orderId        String?  @map("order_id")
   orderItemId    String?  @map("order_item_id")
   ruleVersion    String   @default("v1.0.0") @map("rule_version")
@@ -1345,7 +1448,7 @@ model RewardRule {
   version       String    @default("v1.0.0")
   name          String
   description   String?
-  splits        Json      // Object mapping wallet targets to bps (e.g. { MAIN: 5000, SHOPPING: 2000, GOOD_LUCK: 1500, CHARITY: 500, SERVICE_CHARGE: 1000 })
+  splits        Json // Object mapping wallet targets to bps (e.g. { MAIN: 5000, SHOPPING: 2000, GOOD_LUCK: 1500, CHARITY: 500, SERVICE_CHARGE: 1000 })
   isActive      Boolean   @default(true) @map("is_active")
   effectiveFrom DateTime  @default(now()) @map("effective_from")
   effectiveTo   DateTime? @map("effective_to")
@@ -1395,10 +1498,10 @@ model RewardAllocation {
 /// Recognition tier and star band definitions with qualification thresholds and pool shares
 model RankDefinition {
   id              String    @id @default(uuid())
-  category        String    // CUSTOMER_CLUB, CUSTOMER_STAR, SELLER_CLUB, SELLER_STAR
-  code            String    // BRONZE, SILVER, GOLD, MEGA_STAR, SUPER_STAR, STAR
+  category        String // CUSTOMER_CLUB, CUSTOMER_STAR, SELLER_CLUB, SELLER_STAR
+  code            String // BRONZE, SILVER, GOLD, MEGA_STAR, SUPER_STAR, STAR
   title           String
-  period          String    // DAILY, WEEKLY, MONTHLY, YEARLY
+  period          String // DAILY, WEEKLY, MONTHLY, YEARLY
   pointThreshold  Int?      @map("point_threshold")
   starPositionMin Int?      @map("star_position_min")
   starPositionMax Int?      @map("star_position_max")
@@ -1428,7 +1531,7 @@ model UserRank {
   userId                String?   @map("user_id")
   sellerId              String?   @map("seller_id")
   rankDefinitionId      String    @map("rank_definition_id")
-  period                String    // DAILY, WEEKLY, MONTHLY, YEARLY
+  period                String // DAILY, WEEKLY, MONTHLY, YEARLY
   periodDate            DateTime  @map("period_date")
   qualifyingPoints      Int       @map("qualifying_points")
   position              Int?
@@ -1456,8 +1559,8 @@ model UserRank {
 /// Historical competitive ranking leaderboard snapshots for daily, weekly, monthly, and yearly awards
 model LeaderboardSnapshot {
   id                String   @id @default(uuid())
-  category          String   // CUSTOMER, SELLER
-  period            String   // DAILY, WEEKLY, MONTHLY, YEARLY
+  category          String // CUSTOMER, SELLER
+  period            String // DAILY, WEEKLY, MONTHLY, YEARLY
   periodStart       DateTime @map("period_start")
   periodEnd         DateTime @map("period_end")
   actorId           String   @map("actor_id")
@@ -1512,16 +1615,16 @@ model UserSession {
 // ------------------------------------------------------------------------------
 /// One-time verification tokens for email confirmation, phone SMS OTP, and 2FA
 model OtpToken {
-  id          String    @id @default(uuid())
-  userId      String?   @map("user_id")
-  identifier  String    // Email address or E.164 phone (+880...)
-  purpose     String    // EMAIL_VERIFICATION, PHONE_VERIFICATION, PASSWORD_RESET, LOGIN_2FA
-  tokenHash   String    @map("token_hash")
-  attempts    Int       @default(0)
-  maxAttempts Int       @default(3) @map("max_attempts")
-  isUsed      Boolean   @default(false) @map("is_used")
-  expiresAt   DateTime  @map("expires_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  identifier  String // Email address or E.164 phone (+880...)
+  purpose     String // EMAIL_VERIFICATION, PHONE_VERIFICATION, PASSWORD_RESET, LOGIN_2FA
+  tokenHash   String   @map("token_hash")
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3) @map("max_attempts")
+  isUsed      Boolean  @default(false) @map("is_used")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1537,16 +1640,16 @@ model OtpToken {
 model OAuthAccount {
   id             String    @id @default(uuid())
   userId         String    @map("user_id")
-  provider       String    // GOOGLE, FACEBOOK, APPLE
+  provider       String // GOOGLE, FACEBOOK, APPLE
   providerUserId String    @map("provider_user_id") // Provider's unique subject identifier (sub/id)
-  email          String?   // Email reported by provider at linking time
+  email          String? // Email reported by provider at linking time
   displayName    String?   @map("display_name")
   avatarUrl      String?   @map("avatar_url")
   accessToken    String?   @map("access_token")
   refreshToken   String?   @map("refresh_token")
   expiresAt      DateTime? @map("expires_at")
   scope          String?
-  metadata       Json?     // Sanitized provider profile payload
+  metadata       Json? // Sanitized provider profile payload
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
@@ -1557,11 +1660,3 @@ model OAuthAccount {
   @@index([email])
   @@map("oauth_accounts")
 }
-
-
-
-
-
-
-
-

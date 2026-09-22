@@ -3630,6 +3630,119 @@
           }
         }
       }
+    },
+    "/api/v1/content/{slug}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Read published localized CMS content",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "bn-BD"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published content returned with locale fallback"
+          },
+          "404": {
+            "description": "Published content not found"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/content": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Create localized CMS content",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CmsContentWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "CMS content created"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "403": {
+            "description": "Administrator access required"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/content/{id}": {
+      "patch": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Update localized CMS content with optimistic concurrency",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CmsContentWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "CMS content updated"
+          },
+          "403": {
+            "description": "Administrator access required"
+          },
+          "409": {
+            "description": "Version conflict"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3657,6 +3770,68 @@
           "success",
           "data"
         ]
+      },
+      "CmsContentWriteRequest": {
+        "type": "object",
+        "required": [
+          "contentType",
+          "slug",
+          "translations"
+        ],
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "example": "landing_page"
+          },
+          "slug": {
+            "type": "string",
+            "example": "about-alifworld"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "REVIEW",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "translations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "locale",
+                "title",
+                "body"
+              ],
+              "properties": {
+                "locale": {
+                  "type": "string",
+                  "example": "bn-BD"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "body": {
+                  "type": "object",
+                  "additionalProperties": true
+                },
+                "seoTitle": {
+                  "type": "string"
+                },
+                "seoDescription": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       },
       "ApiErrorEnvelope": {
         "type": "object",
