@@ -23,6 +23,7 @@
 | [**ADR-0011**](0011-repository-inspection-and-preservation-baseline.md) | Existing Repository Inspection, Baseline Audit, and Asset Preservation Strategy | 2026-09-22 | **Accepted** | Phase 02 / M011 | Architecture & Engineering | Completed 100% preservation audit of Phase 01 assets; implemented root .gitignore; aligned Next.js src/ directory structure and @/* path aliases. |
 | [**ADR-0012**](0012-initialize-nextjs-typescript-application-with-bun.md) | Next.js TypeScript Application Initialization with Bun | 2026-09-22 | **Accepted** | Phase 02 / M012 | Architecture & Engineering | Initialized single Next.js App Router codebase, strict TypeScript, Bun script contract, Tailwind brand tokens, standalone container output, and health probes. |
 | [**ADR-0013**](0013-directory-structure-and-module-boundaries.md) | Directory Structure and Module Boundaries Architecture | 2026-09-22 | **Accepted** | Phase 02 / M013 | Architecture & Engineering | Established physical directory hierarchy, 4-tier layer isolation, public feature exports, multi-tenant seller scoping, and shared domain primitives. |
+| [**ADR-0014**](0014-design-system-and-brand-tokens.md) | AlifWorld Design System and Brand Tokens Architecture | 2026-09-22 | **Accepted** | Phase 02 / M014 | Architecture & Design | Standardized 3-tier design tokens, standalone globe logo governance, WCAG 2.1 AAA contrast compliance, and atomic UI component suite (Button, Card, Badge, Input, Table). |
 
 ---
 

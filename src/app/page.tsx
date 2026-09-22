@@ -1,23 +1,13 @@
 import Link from 'next/link';
+import { AlifLogo } from '@/components/brand/logo';
+import { Badge, Card } from '@/components/ui';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col justify-between bg-black text-white">
       {/* Top Navigation Bar */}
       <header className="border-b border-neutral-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-globeDarkBlue via-brand-globeBlue to-brand-globeLightBlue flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
-            A
-          </div>
-          <div>
-            <span className="text-xl font-black tracking-tight text-white">
-              ALIF<span className="text-brand-orange">WORLD</span>
-            </span>
-            <span className="hidden sm:inline-block ml-2 text-xs uppercase tracking-widest text-neutral-400 font-medium">
-              Bangladesh
-            </span>
-          </div>
-        </div>
+        <AlifLogo size="md" href="/" />
 
         <nav className="flex items-center space-x-6 text-sm font-medium">
           <Link
@@ -45,10 +35,10 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20 max-w-5xl mx-auto">
-        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full border border-neutral-800 bg-neutral-900/60 text-neutral-300 text-xs font-semibold uppercase tracking-wider mb-8">
-          <span className="text-brand-orange">Phase 02</span>
+        <div className="inline-flex items-center space-x-2 mb-8">
+          <Badge variant="orange" size="md">Phase 02</Badge>
           <span className="text-neutral-600">•</span>
-          <span>Next.js Modular Monolith with Bun</span>
+          <Badge variant="default" size="md">AlifWorld Design System &amp; Brand Tokens</Badge>
         </div>
 
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-white max-w-4xl leading-tight sm:leading-none">
@@ -83,7 +73,7 @@ export default function HomePage() {
 
         {/* Feature Grid */}
         <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
-          <div className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 backdrop-blur-sm">
+          <Card>
             <div className="w-8 h-8 rounded-lg bg-brand-orange/10 border border-brand-orange/30 flex items-center justify-center text-brand-orange font-bold text-sm mb-4">
               ৳
             </div>
@@ -92,9 +82,9 @@ export default function HomePage() {
               Every monetary transaction is strictly recorded in integer Poisha (1 BDT = 100 poisha)
               under double-entry journal balance constraints.
             </p>
-          </div>
+          </Card>
 
-          <div className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 backdrop-blur-sm">
+          <Card>
             <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-brand-globeBlue font-bold text-sm mb-4">
               ★
             </div>
@@ -103,9 +93,9 @@ export default function HomePage() {
               Points snapshot at checkout and credit to customer balances only upon
               return window completion, preventing reward leakage.
             </p>
-          </div>
+          </Card>
 
-          <div className="p-6 rounded-xl border border-neutral-800 bg-neutral-900/40 backdrop-blur-sm">
+          <Card>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-sm mb-4">
               ✓
             </div>
@@ -114,7 +104,7 @@ export default function HomePage() {
               Built-in safeguards (GATE-01 to GATE-07) prevent multi-tier pyramids or
               unlicensed gaming, guaranteeing 100% Bangladesh legal adherence.
             </p>
-          </div>
+          </Card>
         </div>
       </section>
 
