@@ -15,7 +15,6 @@ import {
   ArrowUpRight,
   CheckCircle2,
   TrendingUp,
-  Sparkles,
   RefreshCw,
   ChevronRight,
   Building2,
@@ -118,82 +117,39 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  // Recent platform orders sample
-  const recentOrders = [
-    {
-      id: 'ORD-20260922-0001',
-      customer: 'Tanvir Ahmed',
-      division: 'Dhaka',
-      amountPoisha: 2534850,
-      points: 450,
-      status: 'PROCESSING',
-      date: '10 mins ago',
-    },
-    {
-      id: 'ORD-20260922-0002',
-      customer: 'Nusrat Jahan',
-      division: 'Chittagong',
-      amountPoisha: 1850000,
-      points: 280,
-      status: 'PAID',
-      date: '35 mins ago',
-    },
-    {
-      id: 'ORD-20260922-0003',
-      customer: 'Farhan Kabir',
-      division: 'Sylhet',
-      amountPoisha: 4290000,
-      points: 750,
-      status: 'SHIPPED',
-      date: '1 hour ago',
-    },
-    {
-      id: 'ORD-20260922-0004',
-      customer: 'Sadia Rahman',
-      division: 'Rajshahi',
-      amountPoisha: 980000,
-      points: 120,
-      status: 'DELIVERED',
-      date: '3 hours ago',
-    },
-  ];
+  interface RecentOrderView {
+    id: string;
+    customer: string;
+    division: string;
+    amountPoisha: number;
+    points: number;
+    status: string;
+    date: string;
+  }
+
+  // Recent platform orders (empty by default; populated as live transactions occur)
+  const recentOrders: RecentOrderView[] = [];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-150">
-      {/* Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-950 to-neutral-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-slate-900/10">
-        <div className="pointer-events-none absolute -right-16 -bottom-16 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute right-40 top-0 w-64 h-64 rounded-full bg-blue-500/10 blur-3xl" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-400/20 text-amber-400 text-[11px] font-bold px-3 py-1 rounded-full mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Bangladesh E-Commerce Operational Gateway</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              {t('admin.dashboard')}
-            </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              {t('admin.dashboardDesc')}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 text-center min-w-[120px]">
-              <div className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">
-                Operational Time
-              </div>
-              <div className="text-sm font-black text-amber-400 mt-0.5">Asia/Dhaka (GMT+6)</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 text-center min-w-[120px]">
-              <div className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">
-                Currency Base
-              </div>
-              <div className="text-sm font-black text-emerald-400 mt-0.5">BDT (৳ Minor Poisha)</div>
-            </div>
-          </div>
+    <div className="space-y-6 animate-in fade-in duration-150">
+      {/* Dashboard Clean Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Operational overview, transactions, and system health status.
+          </p>
         </div>
+        <button
+          onClick={handleRefresh}
+          className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors shadow-xs w-fit"
+          title="Refresh metrics"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
+        </button>
       </div>
 
       {/* 6 Key Operational Metrics Cards */}
@@ -393,59 +349,71 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200/80 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="pb-3">Order Number</th>
-                  <th className="pb-3">Customer / Region</th>
-                  <th className="pb-3">Amount (BDT)</th>
-                  <th className="pb-3">Points</th>
-                  <th className="pb-3">Status</th>
-                  <th className="pb-3 text-right">Time</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 font-mono font-bold text-slate-900">
-                      {order.id}
-                    </td>
-                    <td className="py-3">
-                      <div className="font-semibold text-slate-900">{order.customer}</div>
-                      <div className="text-[10px] text-slate-400">{order.division} Division</div>
-                    </td>
-                    <td className="py-3 font-mono font-bold text-slate-900">
-                      ৳{(order.amountPoisha / 100).toLocaleString('en-BD', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3">
-                      <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md text-[10px]">
-                        +{order.points} pts
-                      </span>
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          order.status === 'DELIVERED'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : order.status === 'SHIPPED'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : order.status === 'PROCESSING'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-3 text-right text-slate-400 font-mono text-[10px]">
-                      {order.date}
-                    </td>
+          {recentOrders.length === 0 ? (
+            <div className="py-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-3 shadow-xs">
+                <ShoppingBag className="w-6 h-6 stroke-[1.8]" />
+              </div>
+              <p className="text-sm font-bold text-slate-800">No data available</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                Live platform orders will appear here as customers place purchases across stores.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200/80 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="pb-3">Order Number</th>
+                    <th className="pb-3">Customer / Region</th>
+                    <th className="pb-3">Amount (BDT)</th>
+                    <th className="pb-3">Points</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3 text-right">Time</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {recentOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 font-mono font-bold text-slate-900">
+                        {order.id}
+                      </td>
+                      <td className="py-3">
+                        <div className="font-semibold text-slate-900">{order.customer}</div>
+                        <div className="text-[10px] text-slate-400">{order.division} Division</div>
+                      </td>
+                      <td className="py-3 font-mono font-bold text-slate-900">
+                        ৳{(order.amountPoisha / 100).toLocaleString('en-BD', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3">
+                        <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md text-[10px]">
+                          +{order.points} pts
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            order.status === 'DELIVERED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : order.status === 'SHIPPED'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : order.status === 'PROCESSING'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right text-slate-400 font-mono text-[10px]">
+                        {order.date}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* Architecture Invariants & Compliance Status Card */}

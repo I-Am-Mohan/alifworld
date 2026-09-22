@@ -2,12 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { LucideIcon, ArrowLeft, Sliders, Sparkles, CheckCircle2 } from 'lucide-react';
+import { LucideIcon, ArrowLeft, Sliders, Construction } from 'lucide-react';
 
 interface AdminPlaceholderPageProps {
   category: string;
   title: string;
-  description: string;
+  description?: string;
   icon: LucideIcon;
   features?: string[];
 }
@@ -17,10 +17,9 @@ export function AdminPlaceholderPage({
   title,
   description,
   icon: Icon,
-  features = [],
 }: AdminPlaceholderPageProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-150">
       {/* Breadcrumb Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -34,42 +33,28 @@ export function AdminPlaceholderPage({
 
         <Link
           href="/admin"
-          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors w-fit"
+          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors w-fit shadow-xs"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Dashboard Overview</span>
         </Link>
       </div>
 
-      {/* Main Empty / In-Progress Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-2xl mx-auto shadow-xs">
-        <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-5 shadow-xs">
+      {/* Main Under Development Card */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-xl mx-auto shadow-xs">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-4 shadow-xs">
           <Icon className="w-8 h-8 stroke-[1.8]" />
         </div>
 
-        <div className="inline-flex items-center space-x-1.5 text-[10px] uppercase tracking-widest font-mono font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 mb-3">
-          <Sparkles className="w-3 h-3 text-amber-600" />
-          <span>Operational Module Active</span>
+        <div className="inline-flex items-center space-x-1.5 text-[11px] uppercase tracking-wider font-mono font-bold text-amber-800 bg-amber-100/90 px-3.5 py-1 rounded-full border border-amber-300 mb-3 shadow-2xs">
+          <Construction className="w-3.5 h-3.5 text-amber-700" />
+          <span>Under development</span>
         </div>
 
-        <h2 className="text-xl font-black text-slate-900">{title} Workspace</h2>
+        <h2 className="text-xl font-black text-slate-900">{title}</h2>
         <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-          {description}
+          {description || 'This section is currently under development and will be available in an upcoming phase.'}
         </p>
-
-        {features.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-slate-100 text-left max-w-md mx-auto space-y-2.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-              Capabilities Configured in this Phase:
-            </span>
-            {features.map((feat, idx) => (
-              <div key={idx} className="flex items-start space-x-2 text-xs text-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>{feat}</span>
-              </div>
-            ))}
-          </div>
-        )}
 
         <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-3">
           <Link
@@ -77,7 +62,7 @@ export function AdminPlaceholderPage({
             className="px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-bold text-amber-800 transition-colors inline-flex items-center space-x-1.5"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Configure in Setup</span>
+            <span>Platform Setup</span>
           </Link>
           <Link
             href="/admin"
