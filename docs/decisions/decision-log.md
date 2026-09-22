@@ -26,6 +26,7 @@
 | [**ADR-0014**](0014-design-system-and-brand-tokens.md) | AlifWorld Design System and Brand Tokens Architecture | 2026-09-22 | **Accepted** | Phase 02 / M014 | Architecture & Design | Standardized 3-tier design tokens, standalone globe logo governance, WCAG 2.1 AAA contrast compliance, and atomic UI component suite (Button, Card, Badge, Input, Table). |
 | [**ADR-0015**](0015-linting-formatting-and-commit-quality.md) | Linting, Formatting, Type Checking, and Commit Quality Standards | 2026-09-22 | **Accepted** | Phase 02 / M015 | Architecture & DevOps | Standardized ESLint, Prettier, strict TypeScript, Commitlint Conventional Commits, package.json quality script contract, and preservation of UI References assets. |
 | [**ADR-0016**](0016-typed-environment-validation-and-secret-boundaries.md) | Typed Environment Validation and Secret Boundaries Architecture | 2026-09-22 | **Accepted** | Phase 02 / M016 | Architecture & Security | Implemented Zod-validated dual schema (clientEnv/serverEnv), runtime secret boundary proxy guards, invariant enforcement (single-tier referral, non-convertible points), and credential redaction. |
+| [**ADR-0017**](0017-bun-command-contract-and-lifecycle-scripts.md) | Bun Command Contract and Lifecycle Scripts Standardization | 2026-09-22 | **Accepted** | Phase 02 / M017 | Architecture & DevOps | Standardized dev:local, dev:production, build:local, production:production (compiled only, never next dev), database, worker, openapi, and granular testing scripts. |
 
 ---
 

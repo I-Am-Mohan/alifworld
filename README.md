@@ -57,6 +57,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Design System & Brand Tokens](docs/architecture/design-system-and-brand-tokens.md)**: 3-tier token hierarchy, standalone globe logo governance, WCAG 2.1 AAA contrast compliance, and atomic UI component suite.
 - **[Code Quality & Commit Standards](docs/architecture/code-quality-and-commit-standards.md)**: Automated ESLint, Prettier, strict TypeScript verification, Commitlint Conventional Commits, and UI References asset protection.
 - **[Environment Validation & Secret Boundaries](docs/architecture/environment-validation-and-secret-boundaries.md)**: Zod-validated runtime environment, secret boundary proxy guard, invariant guarantees, and credential redaction.
+- **[Bun Command Contract & Lifecycle Scripts](docs/architecture/bun-command-contract-and-lifecycle-scripts.md)**: Authoritative command contract (`dev:local`, `dev:production`, `build:local`, `production:production`), database migrations, workers, and OpenAPI.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -76,6 +77,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0014: AlifWorld Design System and Brand Tokens Architecture](docs/decisions/0014-design-system-and-brand-tokens.md)
   - [ADR 0015: Linting, Formatting, Type Checking, and Commit Quality Standards](docs/decisions/0015-linting-formatting-and-commit-quality.md)
   - [ADR 0016: Typed Environment Validation and Secret Boundaries Architecture](docs/decisions/0016-typed-environment-validation-and-secret-boundaries.md)
+  - [ADR 0017: Bun Command Contract and Lifecycle Scripts Standardization](docs/decisions/0017-bun-command-contract-and-lifecycle-scripts.md)
 
 ---
 
@@ -86,7 +88,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 | Phase | Milestone Range | Phase Theme | Status |
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
-| **02** | 011–020 | Repository and Tooling | **In Progress (Milestones 011–016 Completed)** |
+| **02** | 011–020 | Repository and Tooling | **In Progress (Milestones 011–017 Completed)** |
 | **03** | 021–030 | Data Architecture | Planned |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
