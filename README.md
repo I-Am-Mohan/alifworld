@@ -53,6 +53,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Definition of Done & Requirements Traceability Matrix](docs/architecture/definition-of-done-and-traceability-matrix.md)**: 7-pillar canonical Definition of Done and 25-category bidirectional requirements traceability matrix.
 - **[Repository Inspection & Asset Preservation Inventory](docs/architecture/repository-inspection-and-preservation-inventory.md)**: 100% preservation baseline of Phase 01 assets, root `.gitignore`, and Next.js `src/` directory alignment.
 - **[Next.js Application Initialization with Bun](docs/architecture/nextjs-application-initialization.md)**: Single Next.js TypeScript App Router setup, Bun command contract, standalone Docker output, and health probes.
+- **[Directory Structure & Module Boundaries](docs/architecture/directory-structure-and-module-boundaries.md)**: 4-tier layer isolation, public feature contracts, multi-tenant seller scoping, and shared domain primitives.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -68,6 +69,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0010: Canonical Definition of Done and Requirements Traceability Matrix Framework](docs/decisions/0010-definition-of-done-and-requirements-traceability.md)
   - [ADR 0011: Existing Repository Inspection, Baseline Audit, and Asset Preservation Strategy](docs/decisions/0011-repository-inspection-and-preservation-baseline.md)
   - [ADR 0012: Next.js TypeScript Application Initialization with Bun](docs/decisions/0012-initialize-nextjs-typescript-application-with-bun.md)
+  - [ADR 0013: Directory Structure and Module Boundaries Architecture](docs/decisions/0013-directory-structure-and-module-boundaries.md)
 
 ---
 
@@ -78,7 +80,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 | Phase | Milestone Range | Phase Theme | Status |
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
-| **02** | 011–020 | Repository and Tooling | **In Progress (Milestones 011–012 Completed)** |
+| **02** | 011–020 | Repository and Tooling | **In Progress (Milestones 011–013 Completed)** |
 | **03** | 021–030 | Data Architecture | Planned |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
