@@ -19,21 +19,26 @@ generator client {
 // ------------------------------------------------------------------------------
 /// Platform configuration parameters, financial rule versions, and feature toggles
 model SystemConfig {
-  id          String   @id @default(uuid())
-  key         String   @unique
+  id          String    @id @default(uuid())
+  key         String    @unique
   value       String
   description String?
-  isPublic    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  isPublic    Boolean   @default(false)
+  version     Int       @default(1)
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
+  @@index([deletedAt])
   @@map("system_configs")
 }
 
 // ------------------------------------------------------------------------------
 // 2. Health & Operational Telemetry Probes
 // ------------------------------------------------------------------------------
-/// Readiness and operational probe logs for system health monitoring
+/// Readiness and operational probe logs for system health monitoring (TTL ephemeral)
 model HealthProbe {
   id        String   @id @default(uuid())
   probeType String   @map("probe_type") // "live" | "ready"
@@ -43,6 +48,7 @@ model HealthProbe {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([probeType, createdAt])
+  @@index([createdAt])
   @@map("health_probes")
 }
 
@@ -58,6 +64,7 @@ model OutboxEvent {
   payload       Json
   status        String    @default("PENDING") // PENDING, PROCESSING, PROCESSED, FAILED
   attempts      Int       @default(0)
+  version       Int       @default(1)
   lastError     String?   @map("last_error")
   processedAt   DateTime? @map("processed_at")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -65,6 +72,7 @@ model OutboxEvent {
 
   @@index([status, createdAt])
   @@index([aggregateType, aggregateId])
+  @@index([processedAt])
   @@map("outbox_events")
 }
 

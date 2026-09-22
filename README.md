@@ -62,6 +62,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Local Development Infrastructure Profiles](docs/architecture/local-development-infrastructure-profiles.md)**: Multi-profile Docker Compose environment (PostgreSQL 16, Redis 7, MinIO S3, Meilisearch, Mailpit), automated bucket setup, and health probes.
 - **[Continuous Integration & Quality Gates](docs/architecture/continuous-integration-and-quality-gates.md)**: Automated GitHub Actions pipeline, local `bun run ci:check` parity, sequential quality verification, and Phase 02 certification.
 - **[PostgreSQL & Prisma Foundations](docs/architecture/postgresql-and-prisma-foundations.md)**: Prisma ORM 5+ with PostgreSQL 16, connection management, error translation, BaseRepository, and foundational infrastructure models.
+- **[Identifiers, Lifecycle & Deletion Policy](docs/architecture/identifiers-lifecycle-and-deletion-policy.md)**: Prefixed k-sortable IDs, UTC/Dhaka timestamps, OCC versioning, and 3-tier deletion policy.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -86,6 +87,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0019: Local Development Infrastructure Profiles (Docker Compose)](docs/decisions/0019-local-development-infrastructure-profiles.md)
   - [ADR 0020: Baseline Continuous Integration Quality Gate and Phase 02 Certification](docs/decisions/0020-baseline-continuous-integration-quality-gate.md)
   - [ADR 0021: PostgreSQL and Prisma Database Foundations Architecture](docs/decisions/0021-postgresql-and-prisma-foundations.md)
+  - [ADR 0022: Identifiers, Timestamps, Lifecycle Fields, and Deletion Policy Standardization](docs/decisions/0022-standardize-identifiers-timestamps-lifecycle-fields-and-deletion-policy.md)
 
 ---
 
@@ -97,7 +99,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
 | **02** | 011–020 | Repository and Tooling | **Completed (Milestones 011–020)** |
-| **03** | 021–030 | Data Architecture | **In Progress (Milestone 021 Completed)** |
+| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–022 Completed)** |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
 | **06** | 051–060 | Bangladesh Localization | Planned |

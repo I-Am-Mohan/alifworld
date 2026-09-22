@@ -11,6 +11,13 @@
 import { prisma } from './prisma';
 import { translateDatabaseError } from './error-translator';
 import { AuthorizationError } from '@/shared/errors/app-error';
+import {
+  whereActive,
+  assertModelDeletable,
+  assertOptimisticVersion,
+  createSoftDeletePayload,
+  createRestorePayload,
+} from './lifecycle';
 
 export interface OffsetPaginationParams {
   page?: number;
@@ -87,11 +94,48 @@ export function assertSellerScope(entitySellerId: string | null | undefined, aut
 }
 
 /**
- * Base Repository providing transactional execution and unified error mapping.
+ * Base Repository providing transactional execution, lifecycle management, and unified error mapping.
  */
 export abstract class BaseRepository {
   protected get db() {
     return prisma;
+  }
+
+  /**
+   * Applies the soft-delete filter (deletedAt: null) to a query where clause.
+   */
+  protected whereNotDeleted<T extends object>(whereClause: T = {} as T): T & { deletedAt: null } {
+    return whereActive(whereClause);
+  }
+
+  /**
+   * Asserts that a model is permitted to be deleted under project deletion policy.
+   * Throws ValidationError if model is classified as IMMUTABLE.
+   */
+  protected assertCanDelete(modelName: string): void {
+    assertModelDeletable(modelName);
+  }
+
+  /**
+   * Asserts that an optimistic concurrency version matches expected version.
+   * Throws ConflictError upon version discrepancy.
+   */
+  protected assertVersion(currentVersion: number, expectedVersion: number, entityId?: string): void {
+    assertOptimisticVersion(currentVersion, expectedVersion, entityId);
+  }
+
+  /**
+   * Generates database patch payload for soft-deleting an entity.
+   */
+  protected createSoftDeletePatch(actorId?: string) {
+    return createSoftDeletePayload(actorId);
+  }
+
+  /**
+   * Generates database patch payload for restoring a soft-deleted entity.
+   */
+  protected createRestorePatch() {
+    return createRestorePayload();
   }
 
   /**
