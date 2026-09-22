@@ -18,16 +18,16 @@ import {
   applyCorsHeaders,
 } from '@/shared/security/cors';
 import {
-  verifyRequestCsrf,
-  generateCsrfToken,
-  getCsrfCookieOptions,
+  verifyRequestCsrfEdge,
+  generateCsrfTokenEdge,
+  getCsrfCookieOptionsEdge,
   CSRF_COOKIE_NAME,
-} from '@/shared/security/csrf';
+} from '@/shared/security/csrf-edge';
 import {
   buildSecurityHeaders,
   applySecurityHeaders,
 } from '@/shared/security/headers';
-import { auditService } from '@/shared/audit';
+import { logEdgeSecurityEvent } from '@/shared/audit/edge-audit';
 import {
   resolveLocaleFromRequest,
   extractLocaleFromPath,
@@ -44,15 +44,14 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // If this is a preflight OPTIONS request, respond immediately
   if (corsResult.isPreflight) {
     if (req.headers.get('origin') && !corsResult.isOriginAllowed) {
-      // Log security event for disallowed CORS preflight
-      await auditService.logSecurityEvent({
+      // Log security event using an Edge-safe structured logger.
+      logEdgeSecurityEvent({
         action: 'CORS_VIOLATION_DETECTED',
-        resource: 'PERIMETER',
-        req,
+        request: req,
         requestId,
         metadata: {
-          origin: req.headers.get('origin'),
-          method: req.headers.get('access-control-request-method') || 'UNKNOWN',
+          origin: req.headers.get('origin') || undefined,
+          requestedMethod: req.headers.get('access-control-request-method') || 'UNKNOWN',
         },
       });
 
@@ -82,19 +81,16 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   }
 
   // 2. Validate CSRF Protection for state-modifying requests
-  const csrfResult = verifyRequestCsrf(req);
+  const csrfResult = await verifyRequestCsrfEdge(req);
   if (!csrfResult.valid) {
-    // Log security event for CSRF violation
-    await auditService.logSecurityEvent({
+    // Log security event using an Edge-safe structured logger.
+    logEdgeSecurityEvent({
       action: 'CSRF_VIOLATION_DETECTED',
-      resource: 'PERIMETER',
-      req,
+      request: req,
       requestId,
       metadata: {
         code: csrfResult.code,
         reason: csrfResult.reason,
-        method: req.method,
-        pathname,
       },
     });
 
@@ -156,8 +152,8 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // 5. Provision anti-CSRF token cookie if absent (for browser clients)
   const existingCsrfCookie = req.cookies.get(CSRF_COOKIE_NAME)?.value;
   if (!existingCsrfCookie) {
-    const newToken = generateCsrfToken();
-    const cookieOpts = getCsrfCookieOptions(newToken);
+    const newToken = await generateCsrfTokenEdge();
+    const cookieOpts = getCsrfCookieOptionsEdge(newToken);
     response.cookies.set({
       name: cookieOpts.name,
       value: cookieOpts.value,
