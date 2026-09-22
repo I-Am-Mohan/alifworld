@@ -295,7 +295,7 @@ async function seed() {
   const adminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'itsmohan025@gmail.com';
   const adminPhone = process.env.INITIAL_SUPERADMIN_PHONE || '+8801700000025';
   const adminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin123456';
-  const adminName = 'Platform Super Administrator (Mohan)';
+  const adminName = 'Mohan Biswas';
 
   const passwordHash = hashPassword(adminPassword);
 

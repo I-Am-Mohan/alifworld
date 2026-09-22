@@ -351,7 +351,7 @@ export default function AdminSetupPage() {
               {/* Default Locale */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Default Platform Locale
+                  Default Platform Language
                 </label>
                 <select
                   value={settings.PLATFORM_DEFAULT_LOCALE}

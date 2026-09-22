@@ -33,6 +33,11 @@ import {
   Shield,
   KeyRound,
   ExternalLink,
+  Edit3,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
@@ -56,6 +61,143 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+  // Profile modal states
+  const [profileTab, setProfileTab] = useState<'profile' | 'password'>('profile');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+
+  // Password change states
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+
+  const openProfileModal = () => {
+    setProfileDropdownOpen(false);
+    setProfileTab('profile');
+    setIsEditingProfile(false);
+    setEditName(user?.name || '');
+    setEditEmail(user?.email || '');
+    setEditPhone(user?.phone || '');
+    setProfileError(null);
+    setProfileSuccess(null);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    setProfileModalOpen(true);
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(null);
+
+    if (!editName.trim()) {
+      setProfileError('Please provide a valid name.');
+      return;
+    }
+    if (!editEmail.trim()) {
+      setProfileError('Please provide a valid email address.');
+      return;
+    }
+
+    setProfileSaving(true);
+    try {
+      const res = await fetch('/api/v1/auth/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          email: editEmail.trim().toLowerCase(),
+          phone: editPhone.trim() || null,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || 'Failed to update profile details.');
+      }
+
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: json.data.name,
+              email: json.data.email,
+              phone: json.data.phone,
+            }
+          : null
+      );
+
+      setProfileSuccess('Profile details updated successfully! Super Admin email and details updated.');
+      setIsEditingProfile(false);
+    } catch (err: any) {
+      setProfileError(err.message || 'Error saving profile details.');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!currentPassword) {
+      setPasswordError('Current password is required.');
+      return;
+    }
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirm password do not match.');
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const res = await fetch('/api/v1/auth/password/change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error?.message || 'Failed to change password.');
+      }
+
+      setPasswordSuccess('Password changed successfully! Redirecting to sign in with your new password...');
+      setTimeout(() => {
+        setProfileModalOpen(false);
+        router.push('/admin/login');
+        router.refresh();
+      }, 1500);
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to change password.');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -209,12 +351,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
 
           <AlifLogo size="sm" href="/admin" />
-
-          <div className="hidden sm:flex items-center space-x-2 pl-3 border-l border-slate-200">
-            <span className="text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200/70 px-2 py-0.5 rounded-md font-mono">
-              Admin Console
-            </span>
-          </div>
         </div>
 
         {/* Right side tools: Language & Profile Avatar */}
@@ -263,24 +399,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <div className="p-1 space-y-0.5">
                   <button
                     type="button"
-                    onClick={() => {
-                      setProfileDropdownOpen(false);
-                      setProfileModalOpen(true);
-                    }}
+                    onClick={openProfileModal}
                     className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-900 rounded-xl flex items-center space-x-2 transition-colors"
                   >
                     <User className="w-4 h-4 text-amber-600" />
                     <span>Profile Management</span>
                   </button>
-
-                  <Link
-                    href="/admin/setup"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-900 rounded-xl flex items-center space-x-2 transition-colors"
-                  >
-                    <Sliders className="w-4 h-4 text-amber-600" />
-                    <span>Platform Setup</span>
-                  </Link>
 
                   <Link
                     href="/"
@@ -395,10 +519,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Profile Management Interactive Modal */}
       {profileModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-7 space-y-5">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm shadow-xs">
                   {user?.name ? user.name.charAt(0).toUpperCase() : 'M'}
                 </div>
                 <div>
@@ -409,70 +534,354 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 type="button"
                 onClick={() => setProfileModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Full Name
-                </label>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-900">
-                  {user?.name || 'Platform Super Administrator (Mohan)'}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Email Address
-                </label>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900">
-                  {user?.email || 'itsmohan025@gmail.com'}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Bangladesh Mobile Phone
-                </label>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900">
-                  {user?.phone || '+8801700000025'}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Assigned RBAC Roles
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {user?.roles.map((r) => (
-                    <span
-                      key={r}
-                      className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-bold font-mono text-[10px]"
-                    >
-                      {r}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-[11px] text-emerald-600 font-bold flex items-center space-x-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Identity Active &amp; Verified</span>
-              </span>
+            {/* Navigation Tabs */}
+            <div className="flex rounded-xl bg-slate-100 p-1 gap-1">
               <button
                 type="button"
-                onClick={() => setProfileModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors"
+                onClick={() => {
+                  setProfileTab('profile');
+                  setProfileError(null);
+                  setProfileSuccess(null);
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
+                  profileTab === 'profile'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
               >
-                Close
+                <User className="w-3.5 h-3.5 text-amber-600" />
+                <span>Profile Details</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileTab('password');
+                  setPasswordError(null);
+                  setPasswordSuccess(null);
+                }}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
+                  profileTab === 'password'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                <span>Change Password</span>
               </button>
             </div>
+
+            {/* Tab 1: Profile Details */}
+            {profileTab === 'profile' && (
+              <div className="space-y-4 text-xs">
+                {profileSuccess && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center space-x-2 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{profileSuccess}</span>
+                  </div>
+                )}
+
+                {profileError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{profileError}</span>
+                  </div>
+                )}
+
+                {!isEditingProfile ? (
+                  <div className="space-y-3.5">
+                    <div>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Full Name
+                      </span>
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-900">
+                        {user?.name || 'Platform Super Administrator (Mohan)'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          Email Address
+                        </span>
+                        <span className="text-[10px] text-amber-700 font-bold bg-amber-50 border border-amber-200/60 px-1.5 py-0.5 rounded">
+                          Super Admin Login ID
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900">
+                        {user?.email || 'itsmohan025@gmail.com'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Bangladesh Mobile Phone
+                      </span>
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900">
+                        {user?.phone || '+8801700000025'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                        Assigned RBAC Roles
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {user?.roles.map((r) => (
+                          <span
+                            key={r}
+                            className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-bold font-mono text-[10px]"
+                          >
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-emerald-600 font-bold flex items-center space-x-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Identity Active &amp; Verified</span>
+                      </span>
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingProfile(true);
+                            setEditName(user?.name || '');
+                            setEditEmail(user?.email || '');
+                            setEditPhone(user?.phone || '');
+                            setProfileError(null);
+                            setProfileSuccess(null);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold transition-colors inline-flex items-center space-x-1.5 cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5 text-amber-700" />
+                          <span>Edit Details</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setProfileModalOpen(false)}
+                          className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSaveProfile} className="space-y-3.5">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        required
+                        className="w-full p-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Email Address (Admin Login ID)
+                      </label>
+                      <input
+                        type="email"
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                        required
+                        className="w-full p-2.5 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
+                      />
+                      <p className="text-[10px] text-amber-700 mt-1 font-medium">
+                        Super Admin email can be changed here. You will use this new email to sign in to the platform.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Bangladesh Mobile Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        placeholder="+8801700000025"
+                        className="w-full p-2.5 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                        Assigned RBAC Roles (System Fixed)
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 opacity-80">
+                        {user?.roles.map((r) => (
+                          <span
+                            key={r}
+                            className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-bold font-mono text-[10px]"
+                          >
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingProfile(false)}
+                        className="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={profileSaving}
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-xs transition-all disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        {profileSaving ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Saving Changes...</span>
+                          </>
+                        ) : (
+                          <span>Save Changes</span>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Change Password */}
+            {profileTab === 'password' && (
+              <form onSubmit={handleChangePassword} className="space-y-3.5 text-xs">
+                {passwordSuccess && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center space-x-2 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{passwordSuccess}</span>
+                  </div>
+                )}
+
+                {passwordError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showCurrentPassword ? 'text' : 'password'}
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      required
+                      placeholder="Enter current password"
+                      className="w-full p-2.5 pr-10 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      placeholder="At least 8 characters (mixed case, number, symbol)"
+                      className="w-full p-2.5 pr-10 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      placeholder="Re-enter new password"
+                      className="w-full p-2.5 pr-10 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl text-[11px] text-amber-900 leading-relaxed">
+                  For platform security, changing the admin password will immediately secure your account and require signing in with your new credentials.
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setProfileModalOpen(false)}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passwordSaving}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-xs transition-all disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
+                  >
+                    {passwordSaving ? (
+                      <>
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                        <span>Updating Password...</span>
+                      </>
+                    ) : (
+                      <>
+                        <KeyRound className="w-3.5 h-3.5" />
+                        <span>Update Password</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
