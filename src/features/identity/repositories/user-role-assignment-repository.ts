@@ -90,6 +90,18 @@ export class UserRoleAssignmentRepository extends BaseRepository {
   }
 
   /**
+   * Finds an active role assignment by ID with associated role metadata.
+   */
+  public async findById(id: string): Promise<any> {
+    return this.executeSafe(async () => {
+      return (this.db as any).userRoleAssignment.findFirst({
+        where: this.whereNotDeleted({ id }),
+        include: { role: true },
+      });
+    }, 'UserRoleAssignmentRepository.findById');
+  }
+
+  /**
    * Revokes a role assignment via soft-deletion.
    */
   public async revokeRole(params: RevokeRoleParams): Promise<void> {

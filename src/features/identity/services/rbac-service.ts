@@ -85,6 +85,14 @@ export class RbacService {
    * - SELLER_OWNER can only assign SELLER_STAFF for their own sellerId.
    */
   public async assignRole(actorUserId: string, input: AssignRoleInput): Promise<void> {
+    // 1. Actor privilege verification
+    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const actorIsAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
+
+    if (!actorIsSuperAdmin && !actorIsAdmin && !input.sellerId) {
+      throw new AuthorizationError('Insufficient privileges to assign platform roles.');
+    }
+
     const targetRole = await this.roleRepo.findById(input.roleId);
     if (!targetRole) {
       throw new NotFoundError(`Role with id '${input.roleId}' not found.`);
@@ -99,12 +107,8 @@ export class RbacService {
       );
     }
 
-    // Actor privilege verification
-    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
-    const actorIsAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
-
-    if (targetRole.code === SystemRoleCode.SUPER_ADMIN && !actorIsSuperAdmin) {
-      throw new AuthorizationError('Only a Super Administrator can assign the SUPER_ADMIN role.');
+    if ((targetRole.code === SystemRoleCode.SUPER_ADMIN || targetRole.code === SystemRoleCode.ADMIN) && !actorIsSuperAdmin) {
+      throw new AuthorizationError(`Only a Super Administrator can assign administrative roles (${targetRole.code}).`);
     }
 
     if (!actorIsSuperAdmin && !actorIsAdmin) {
@@ -148,6 +152,20 @@ export class RbacService {
     const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
     const actorIsAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
 
+    // Identify target role being revoked
+    let targetRoleCode: string | null = null;
+    if (input.roleId) {
+      const role = await this.roleRepo.findById(input.roleId);
+      targetRoleCode = role?.code || null;
+    } else if (input.assignmentId) {
+      const assignment = await this.roleAssignmentRepo.findById(input.assignmentId);
+      targetRoleCode = assignment?.role?.code || null;
+    }
+
+    if ((targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) && !actorIsSuperAdmin) {
+      throw new AuthorizationError(`Only a Super Administrator can revoke administrative roles (${targetRoleCode}).`);
+    }
+
     if (!actorIsSuperAdmin && !actorIsAdmin && !input.sellerId) {
       throw new AuthorizationError('Insufficient privileges to revoke platform roles.');
     }
@@ -175,7 +193,10 @@ export class RbacService {
    * Creates a custom role and maps permissions to it.
    */
   public async createRole(actorUserId: string, input: CreateRoleInput): Promise<RoleModel> {
-    await this.assertPermission(actorUserId, 'roles:manage');
+    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    if (!actorIsSuperAdmin) {
+      throw new AuthorizationError('Only a Super Administrator can create custom system roles.');
+    }
 
     const role = await this.roleRepo.create({
       code: input.code,

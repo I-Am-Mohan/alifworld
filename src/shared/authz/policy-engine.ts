@@ -21,6 +21,7 @@ import { CatalogPolicy } from './policies/catalog.policy';
 import { OrderPolicy } from './policies/order.policy';
 import { WalletPolicy } from './policies/wallet.policy';
 import { RolePolicy } from './policies/role.policy';
+import { SystemPolicy } from './policies/system.policy';
 import { AuditService } from '@/shared/audit/audit.service';
 import { AUDIT_ACTIONS } from '@/shared/audit/audit.interface';
 import { AuthorizationError, ComplianceGateError } from '@/shared/errors/app-error';
@@ -43,6 +44,7 @@ export class PolicyEngine {
     const orderPolicy = new OrderPolicy();
     const walletPolicy = new WalletPolicy();
     const rolePolicy = new RolePolicy();
+    const systemPolicy = new SystemPolicy();
 
     this.register(userPolicy);
     this.register(sellerPolicy);
@@ -50,6 +52,7 @@ export class PolicyEngine {
     this.register(orderPolicy);
     this.register(walletPolicy);
     this.register(rolePolicy);
+    this.register(systemPolicy);
 
     // Register common aliases
     this.policies.set('PRODUCT', catalogPolicy);
@@ -58,6 +61,9 @@ export class PolicyEngine {
     this.policies.set('FINANCE', walletPolicy);
     this.policies.set('PAYMENT', walletPolicy);
     this.policies.set('SETTLEMENT', walletPolicy);
+    this.policies.set('CONFIG', systemPolicy);
+    this.policies.set('SYSTEM_CONFIG', systemPolicy);
+    this.policies.set('AUDIT', systemPolicy);
   }
 
   /**

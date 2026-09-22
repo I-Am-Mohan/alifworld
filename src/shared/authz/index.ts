@@ -15,3 +15,4 @@ export * from './policies/catalog.policy';
 export * from './policies/order.policy';
 export * from './policies/wallet.policy';
 export * from './policies/role.policy';
+export * from './policies/system.policy';

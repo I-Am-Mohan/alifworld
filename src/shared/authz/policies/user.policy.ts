@@ -93,13 +93,13 @@ export class UserPolicy implements IPolicy {
             policyName: this.name,
           };
         }
-        if (isSuperAdmin || actor.permissions.includes('users:delete')) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to soft-delete user accounts.', policyName: this.name };
+        if (isSuperAdmin) {
+          return { granted: true, code: 'GRANTED', reason: 'Super Administrator authorized to soft-delete user accounts.', policyName: this.name };
         }
         return {
           granted: false,
           code: 'FORBIDDEN',
-          reason: 'Lacks users:delete permission.',
+          reason: 'Only a Super Administrator has account soft-deletion privileges.',
           policyName: this.name,
         };
       }

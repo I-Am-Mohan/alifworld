@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/database/prisma';
-import { AuthTokenService } from '@/services/auth-token.service';
+import { authenticateRequest, defaultPolicyEngine } from '@/shared/authz';
+import { AppError } from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { DEFAULT_CURRENCIES, parseCurrencies } from '@/shared/types/currency';
 
 export const dynamic = 'force-dynamic';
-
-const authTokenService = new AuthTokenService();
 
 const DEFAULT_SETUP_CONFIGS: Record<string, string> = {
   PLATFORM_TIMEZONE: 'Asia/Dhaka',
@@ -108,21 +107,14 @@ export async function GET() {
 
 /**
  * POST /api/v1/system/setup
- * Updates platform operational settings (Admin protected).
+ * Updates platform operational settings (Admin & Super Admin protected with SystemPolicy).
  */
 export async function POST(req: NextRequest) {
   try {
-    const auth = await authTokenService.authenticateRequest(req).catch(() => null);
-    if (!auth || (!auth.user.roles.includes('SUPER_ADMIN') && !auth.user.roles.includes('ADMIN'))) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: { code: 'FORBIDDEN', message: 'Administrative authorization required' },
-        },
-        { status: 403 }
-      );
-    }
+    // 1. Authenticate request credentials
+    const actor = authenticateRequest(req);
 
+    // 2. Parse request JSON body
     const body = await req.json().catch(() => ({}));
     if (typeof body !== 'object' || body === null) {
       return NextResponse.json(
@@ -133,6 +125,12 @@ export async function POST(req: NextRequest) {
         { status: 422 }
       );
     }
+
+    // 3. Enforce SystemPolicy: Admins cannot modify SUPER_ADMIN_ONLY_CONFIG_KEYS
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      data: { keys: Object.keys(body), config: body },
+    });
 
     const updatedKeys: string[] = [];
 
@@ -147,13 +145,13 @@ export async function POST(req: NextRequest) {
           where: { key },
           update: {
             value,
-            updatedBy: auth.user.id,
+            updatedBy: actor.userId,
           },
           create: {
             id: generateId(ID_PREFIXES.CONFIG),
             key,
             value,
-            description: `Configured via Admin Setup by ${auth.user.email || auth.user.id}`,
+            description: `Configured via Admin Setup by ${actor.userId}`,
             isPublic: false,
           },
         });
@@ -163,8 +161,8 @@ export async function POST(req: NextRequest) {
       await tx.auditLog.create({
         data: {
           id: generateId(ID_PREFIXES.AUDIT),
-          actorId: auth.user.id,
-          actorRole: auth.user.roles[0] || 'SUPER_ADMIN',
+          actorId: actor.userId,
+          actorRole: actor.roles[0] || 'SUPER_ADMIN',
           action: 'PLATFORM_SETUP_UPDATED',
           resource: 'SystemConfig',
           resourceId: 'SETUP_CONFIGURATION',
@@ -185,6 +183,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
+    if (error instanceof AppError) {
+      return NextResponse.json(error.toJSON(), { status: error.statusCode });
+    }
     return NextResponse.json(
       {
         success: false,

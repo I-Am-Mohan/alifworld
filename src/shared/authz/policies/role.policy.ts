@@ -35,24 +35,24 @@ export class RolePolicy implements IPolicy {
 
       case 'manage':
       case 'roles:manage':
-        if (isSuperAdmin || actor.permissions.includes('roles:manage')) {
+        if (isSuperAdmin) {
           return { granted: true, code: 'GRANTED', reason: 'Authorized to manage custom roles.', policyName: this.name };
         }
         return {
           granted: false,
           code: 'FORBIDDEN',
-          reason: 'Lacks roles:manage permission.',
+          reason: 'Only a Super Administrator can create or modify system roles and permission sets.',
           policyName: this.name,
         };
 
       case 'assign':
       case 'roles:assign': {
-        // 1. Only SUPER_ADMIN can assign SUPER_ADMIN
-        if (targetRoleCode === SystemRoleCode.SUPER_ADMIN && !isSuperAdmin) {
+        // 1. Only SUPER_ADMIN can assign administrative roles (SUPER_ADMIN or ADMIN)
+        if ((targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) && !isSuperAdmin) {
           return {
             granted: false,
             code: 'PRIVILEGE_ESCALATION',
-            reason: 'Only a Super Administrator can assign the SUPER_ADMIN role.',
+            reason: `Only a Super Administrator can assign administrative roles (${targetRoleCode}).`,
             policyName: this.name,
           };
         }
@@ -96,6 +96,16 @@ export class RolePolicy implements IPolicy {
 
       case 'revoke':
       case 'roles:revoke': {
+        // 1. Only SUPER_ADMIN can revoke administrative roles (SUPER_ADMIN or ADMIN)
+        if ((targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) && !isSuperAdmin) {
+          return {
+            granted: false,
+            code: 'PRIVILEGE_ESCALATION',
+            reason: `Only a Super Administrator can revoke administrative roles (${targetRoleCode}).`,
+            policyName: this.name,
+          };
+        }
+
         if (isSuperAdmin || isPlatformAdmin || actor.permissions.includes('roles:assign')) {
           return { granted: true, code: 'GRANTED', reason: 'Administrator authorized to revoke role.', policyName: this.name };
         }
