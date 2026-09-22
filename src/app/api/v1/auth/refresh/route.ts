@@ -3,11 +3,13 @@ import { refreshTokenSchema } from '@/validators/auth.validator';
 import { AuthTokenService } from '@/services/auth-token.service';
 import { TOKEN_POLICIES } from '@/shared/auth/token-policy';
 import { extractBearerToken } from '@/shared/auth/jwt';
-import { AppError, TokenReuseDetectedError } from '@/shared/errors/app-error';
+import { AppError, RateLimitError, TokenReuseDetectedError } from '@/shared/errors/app-error';
+import { assertRateLimit, applyRateLimitHeaders, getRateLimitPolicies } from '@/shared/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 const authTokenService = new AuthTokenService();
+const policies = getRateLimitPolicies();
 
 /**
  * POST /api/v1/auth/refresh
@@ -15,25 +17,15 @@ const authTokenService = new AuthTokenService();
  * Rotates a single-use refresh token within an authenticated token family.
  * Validates family lineage and detects token replay/reuse attacks.
  * 
- * For Web clients (clientType='WEB'):
- * Accepts refresh token from HttpOnly cookie `aw_refresh_token` (or request payload),
- * rotates token, and sets new secure HttpOnly cookies for both access and refresh tokens.
- * 
- * For Mobile Flutter clients (clientType='MOBILE_FLUTTER'):
- * Accepts refresh token from JSON payload or Authorization header,
- * returns renewed RFC 6749 Bearer access and rotating refresh tokens in the JSON payload.
- * 
- * Security Invariant (Milestone 035, ADR-0031):
- * If a previously rotated (consumed) refresh token from this family is presented:
- * 1. The entire token family and active sessions are revoked immediately.
- * 2. User's global tokenVersion is incremented.
- * 3. Security breach audit event is logged.
- * 4. Cookies are cleared and HTTP 401 REFRESH_TOKEN_REUSE_DETECTED is returned.
+ * Rate-limited to 30 requests per minute.
  */
 export async function POST(req: NextRequest) {
   let requestedClientType: 'WEB' | 'MOBILE_FLUTTER' | 'POS' | 'ADMIN_PORTAL' = 'WEB';
 
   try {
+    // 1. Enforce rate limiting on token rotation
+    const rateLimitResult = await assertRateLimit(req, policies.AUTH_TOKEN_REFRESH);
+
     const body = await req.json().catch(() => ({}));
     const parseResult = refreshTokenSchema.safeParse(body);
 
@@ -53,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     requestedClientType = parseResult.data.clientType;
 
-    // 1. Extract token: check payload first, then HttpOnly cookie, then Authorization header
+    // 2. Extract token: check payload first, then HttpOnly cookie, then Authorization header
     let token = parseResult.data.refreshToken || null;
 
     if (!token) {
@@ -77,7 +69,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Perform atomic single-use rotation and reuse detection
+    // 3. Perform atomic single-use rotation and reuse detection
     const result = await authTokenService.rotateRefreshToken(token, requestedClientType);
 
     const response = NextResponse.json(
@@ -101,7 +93,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
 
-    // 3. Set secure HttpOnly cookies for web browsers
+    // 4. Set secure HttpOnly cookies for web browsers
     if (requestedClientType === 'WEB') {
       for (const cookieOpt of result.cookies) {
         response.cookies.set({
@@ -116,8 +108,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    applyRateLimitHeaders(response, rateLimitResult);
     return response;
   } catch (error: any) {
+    if (error instanceof RateLimitError) {
+      const rateLimitResponse = NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+          },
+        },
+        { status: 429 }
+      );
+      rateLimitResponse.headers.set('Retry-After', String(error.retryAfterSeconds));
+      return rateLimitResponse;
+    }
+
     const errorResponse = NextResponse.json(
       {
         success: false,

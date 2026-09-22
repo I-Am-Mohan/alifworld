@@ -77,6 +77,16 @@ export class ConflictError extends AppError {
 export class RateLimitError extends AppError {
   readonly statusCode = 429;
   readonly errorCode = 'RATE_LIMIT_EXCEEDED';
+  readonly retryAfterSeconds: number;
+
+  constructor(
+    message: string = 'Too many requests. Please try again later.',
+    retryAfterSeconds: number = 60,
+    details?: Record<string, unknown>
+  ) {
+    super(message, { retryAfterSeconds, ...details });
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
 }
 
 export class InternalServerError extends AppError {
