@@ -12,6 +12,7 @@ import { BaseRepository, parseOffsetPagination, formatPaginatedResult, Paginated
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { nextVersion } from '@/shared/database/lifecycle';
 import { NotFoundError, ConflictError } from '@/shared/errors/app-error';
+import { ActorContext } from '@/shared/authz/authz.types';
 import { UserModel, UserFilterOptions } from '../types';
 
 export interface CreateUserData {
@@ -45,6 +46,22 @@ export class UserRepository extends BaseRepository {
       });
       return user as UserModel | null;
     }, 'UserRepository.findById');
+  }
+
+  /**
+   * Finds an active user by ID, strictly enforcing self-ownership or administrative access.
+   */
+  public async findOwnedById(id: string, actor: ActorContext): Promise<UserModel> {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new NotFoundError(`User '${id}' not found`);
+    }
+    this.assertEntityOwnership(user, actor, {
+      ownerField: 'id',
+      allowAdmin: true,
+      message: 'Cannot view profile belonging to another user',
+    });
+    return user;
   }
 
   /**

@@ -39,7 +39,7 @@ describe('Domain Error Hierarchy & Envelope Serialization', () => {
   it('serializes AuthorizationError to HTTP 403 standard envelope', () => {
     const err = new AuthorizationError('Forbidden: Insufficient privileges');
     expect(err.statusCode).toBe(403);
-    expect(err.errorCode).toBe('UNAUTHORIZED');
+    expect(err.errorCode).toBe('FORBIDDEN');
   });
 
   it('serializes ComplianceGateError with gate metadata', () => {

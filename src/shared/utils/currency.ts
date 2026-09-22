@@ -54,3 +54,18 @@ export function formatProductPoints(
   }
   return `${new Intl.NumberFormat('en-US').format(num)} PP`;
 }
+
+/**
+ * Safely converts object properties containing BigInt values into strings
+ * so the object can be serialized cleanly by JSON.stringify / NextResponse.json.
+ */
+export function serializeBigInt<T>(data: T): T {
+  if (data === null || data === undefined) {
+    return data;
+  }
+  return JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    )
+  );
+}

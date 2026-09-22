@@ -10,7 +10,8 @@
 
 import { BaseRepository } from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import { NotFoundError, ValidationError } from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
+import { ActorContext } from '@/shared/authz/authz.types';
 
 export interface AddCartItemInput {
   variantId: string;
@@ -56,11 +57,11 @@ export class CartRepository extends BaseRepository {
   }
 
   /**
-   * Finds a cart by ID.
+   * Finds a cart by ID with optional actor ownership verification.
    */
-  async findById(cartId: string) {
+  async findById(cartId: string, actor?: ActorContext) {
     return this.executeSafe(async () => {
-      return (this.db as any).cart.findFirst({
+      const cart = await (this.db as any).cart.findFirst({
         where: this.whereNotDeleted({ id: cartId }),
         include: {
           items: {
@@ -72,7 +73,40 @@ export class CartRepository extends BaseRepository {
           },
         },
       });
+
+      if (cart && actor) {
+        this.assertCartOwnership(cart, actor);
+      }
+
+      return cart;
     }, 'CartRepository.findById');
+  }
+
+  /**
+   * Asserts that a cart belongs to the specified actor, or actor is Super Admin / Admin.
+   * Throws AuthorizationError with code OWNERSHIP_VIOLATION if violated.
+   */
+  assertCartOwnership(cart: any, actor: ActorContext): void {
+    if (!cart) return;
+    if (cart.userId) {
+      this.assertEntityOwnership(cart, actor, {
+        ownerField: 'userId',
+        allowAdmin: true,
+        message: `Ownership violation: Cart '${cart.id}' belongs to another customer`,
+      });
+    }
+  }
+
+  /**
+   * Retrieves a cart by ID, strictly enforcing object-level ownership.
+   */
+  async findOwnedById(cartId: string, actor: ActorContext) {
+    const cart = await this.findById(cartId);
+    if (!cart) {
+      throw new NotFoundError(`Cart '${cartId}' not found`);
+    }
+    this.assertCartOwnership(cart, actor);
+    return cart;
   }
 
   /**

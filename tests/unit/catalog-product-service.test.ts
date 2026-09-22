@@ -191,6 +191,7 @@ describe('ProductService: Catalog Management & Tenant Isolation', () => {
     );
 
     await service.updateProduct('usr_owner_01', 'prd_walton_01', 1, {
+      version: 1,
       slug: 'walton-primo-s8-pro-2026',
     });
 

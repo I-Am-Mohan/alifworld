@@ -332,6 +332,7 @@ describe('Inventory Reservation & Stock Lifecycle', () => {
         warehouseId,
         variantId,
         quantity: 6,
+        ttlMinutes: 15,
         cartId: 'crt_buyer_greedy',
       })
     ).rejects.toThrow(ConflictError);
@@ -350,6 +351,7 @@ describe('Inventory Reservation & Stock Lifecycle', () => {
       warehouseId,
       variantId,
       quantity: 3,
+      ttlMinutes: 15,
       cartId: 'crt_abandoned',
     });
 
@@ -378,6 +380,7 @@ describe('Inventory Reservation & Stock Lifecycle', () => {
       warehouseId,
       variantId,
       quantity: 5,
+      ttlMinutes: 15,
       cartId: 'crt_purchased',
     });
 

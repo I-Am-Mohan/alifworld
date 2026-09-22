@@ -118,6 +118,17 @@ export class OrderPolicy implements IPolicy {
         return { granted: true, code: 'GRANTED', reason: 'Admin authorized to cancel orders.', policyName: this.name };
       }
 
+      // Customer attempting to cancel another customer's order
+      if (isCustomer && resource.ownerId && resource.ownerId !== actor.userId) {
+        return {
+          granted: false,
+          code: 'OWNERSHIP_VIOLATION',
+          reason: 'Cannot cancel an order placed by another customer.',
+          policyName: this.name,
+          diagnostics: { actorId: actor.userId, orderOwnerId: resource.ownerId },
+        };
+      }
+
       // Customer cancelling own pending order
       if (isCustomer && resource.ownerId === actor.userId) {
         const orderStatus = resource.status || resource.data?.status;

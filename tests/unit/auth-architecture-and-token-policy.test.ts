@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import {
   TOKEN_POLICIES,
   PASSWORD_POLICY,
@@ -219,27 +219,32 @@ describe('Authentication Architecture & Token Policy (Milestone 031)', () => {
       }
     }
 
-    const mockRepo = new MockSessionRepository();
-    const authService = new AuthTokenService(mockRepo as unknown as SessionRepository, TEST_SECRET);
+    let mockRepo: MockSessionRepository;
+    let authService: AuthTokenService;
+    let testUser: UserAuthDetails;
 
-    const testUser: UserAuthDetails = {
-      id: 'usr_01',
-      email: 'customer@alifworld.com',
-      phone: '+8801700000001',
-      status: 'ACTIVE',
-      tokenVersion: 1,
-      roleAssignments: [
-        {
-          role: {
-            code: 'CUSTOMER',
-            rolePermissions: [
-              { permission: { code: 'orders:read' } },
-              { permission: { code: 'orders:create' } },
-            ],
+    beforeEach(() => {
+      mockRepo = new MockSessionRepository();
+      authService = new AuthTokenService(mockRepo as unknown as SessionRepository, TEST_SECRET);
+      testUser = {
+        id: 'usr_01',
+        email: 'customer@alifworld.com',
+        phone: '+8801700000001',
+        status: 'ACTIVE',
+        tokenVersion: 1,
+        roleAssignments: [
+          {
+            role: {
+              code: 'CUSTOMER',
+              rolePermissions: [
+                { permission: { code: 'orders:read' } },
+                { permission: { code: 'orders:create' } },
+              ],
+            },
           },
-        },
-      ],
-    };
+        ],
+      };
+    });
 
     it('issues token pair with correct roles, permissions, and cookies', async () => {
       const result = await authService.issueTokenPair({

@@ -71,9 +71,14 @@ export const RecordShipmentEventSchema = z.object({
   carrierPayload: z.record(z.unknown()).optional(),
 });
 
+export const CancelOrderSchema = z.object({
+  reason: z.string().trim().min(3, 'Cancellation reason must be at least 3 characters').max(500),
+});
+
 export type AddCartItemInput = z.infer<typeof AddCartItemSchema>;
 export type UpdateCartItemInput = z.infer<typeof UpdateCartItemSchema>;
 export type CheckoutInput = z.infer<typeof CheckoutInputSchema>;
 export type FulfillmentStatusTransitionInput = z.infer<typeof FulfillmentStatusTransitionSchema>;
 export type DispatchShipmentInput = z.infer<typeof DispatchShipmentSchema>;
 export type RecordShipmentEventInput = z.infer<typeof RecordShipmentEventSchema>;
+export type CancelOrderInput = z.infer<typeof CancelOrderSchema>;

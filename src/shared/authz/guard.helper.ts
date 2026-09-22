@@ -10,9 +10,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractBearerToken, verifyJwt } from '@/shared/auth/jwt';
 import { TOKEN_POLICIES, AccessTokenClaims } from '@/shared/auth/token-policy';
-import { AuthenticationError, AppError } from '@/shared/errors/app-error';
-import { ActorContext, ResourceContext, PolicyDecision } from './authz.types';
+import { AuthenticationError, AuthorizationError, AppError } from '@/shared/errors/app-error';
+import { ActorContext, ResourceContext, PolicyDecision, ResourceType } from './authz.types';
+import {
+  ObjectResourceDescriptor,
+  ObjectAccessIntent,
+  ObjectAuthorizationDecision,
+} from './object-authz.types';
 import { defaultPolicyEngine, PolicyEngine } from './policy-engine';
+import { defaultObjectAuthzService, ObjectAuthorizationService } from './object-authorization.service';
+import { SystemRoleCode } from '@/features/identity/types';
 
 /**
  * Creates an ActorContext from verified AccessTokenClaims and request headers.
@@ -71,6 +78,143 @@ export async function authorizeRequest(
   const actor = authenticateRequest(req);
   const decision = await engine.assert(actor, action, resource);
   return { actor, decision };
+}
+
+/**
+ * Asserts customer self-service ownership against target user identifier.
+ * Throws AuthorizationError (403) with code OWNERSHIP_VIOLATION if not self or admin.
+ */
+export function assertCustomerOwnership(
+  actor: ActorContext,
+  targetUserId: string,
+  message: string = 'Cannot access resource belonging to another customer'
+): void {
+  const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+  if (isSuperAdmin) return;
+
+  const isPlatformAdmin = actor.roles?.includes(SystemRoleCode.ADMIN);
+  if (isPlatformAdmin) return;
+
+  if (actor.userId !== targetUserId) {
+    throw new AuthorizationError(message, {
+      code: 'OWNERSHIP_VIOLATION',
+      actorId: actor.userId,
+      targetUserId,
+    });
+  }
+}
+
+/**
+ * Asserts seller tenant containment against target merchant identifier.
+ * Throws AuthorizationError (403) with code TENANT_VIOLATION if not matching or super admin.
+ */
+export function assertSellerTenant(
+  actor: ActorContext,
+  targetSellerId: string,
+  message: string = 'Cannot access resource belonging to another merchant store'
+): void {
+  const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+  if (isSuperAdmin) return;
+
+  if (!actor.sellerId || actor.sellerId !== targetSellerId) {
+    throw new AuthorizationError(message, {
+      code: 'TENANT_VIOLATION',
+      actorSellerId: actor.sellerId || null,
+      targetSellerId,
+    });
+  }
+}
+
+/**
+ * Authenticates request and evaluates object-level authorization with optional database resolution.
+ */
+export async function authorizeObjectRequest(
+  req: NextRequest,
+  action: string,
+  objectOrDescriptor:
+    | ObjectResourceDescriptor
+    | { resourceType: ResourceType; objectId: string; data?: any; reason?: string },
+  service: ObjectAuthorizationService = defaultObjectAuthzService
+): Promise<{
+  actor: ActorContext;
+  decision: ObjectAuthorizationDecision;
+  descriptor: ObjectResourceDescriptor;
+}> {
+  const actor = authenticateRequest(req);
+
+  // If descriptor has no ownerId or sellerId and is a type/id pair, resolve from database
+  if ('resourceType' in objectOrDescriptor) {
+    const { decision, descriptor } = await service.resolveAndAssert(
+      actor,
+      action,
+      objectOrDescriptor.resourceType,
+      objectOrDescriptor.objectId,
+      { data: objectOrDescriptor.data, reason: objectOrDescriptor.reason }
+    );
+    return { actor, decision, descriptor };
+  }
+
+  // Otherwise descriptor is already provided
+  const decision = await service.assert({
+    actor,
+    action,
+    object: objectOrDescriptor,
+  });
+
+  return { actor, decision, descriptor: objectOrDescriptor };
+}
+
+/**
+ * Higher-order Route Handler wrapper enforcing object-level authorization policies.
+ */
+export function withObjectAuthorization<TResponse = any>(
+  action: string,
+  descriptorOrResolver:
+    | ObjectResourceDescriptor
+    | ((req: NextRequest, params?: any) => Promise<ObjectResourceDescriptor | { resourceType: ResourceType; objectId: string; data?: any; reason?: string }> | ObjectResourceDescriptor | { resourceType: ResourceType; objectId: string; data?: any; reason?: string }),
+  handler: (
+    req: NextRequest,
+    ctx: {
+      actor: ActorContext;
+      decision: ObjectAuthorizationDecision;
+      descriptor: ObjectResourceDescriptor;
+      params?: any;
+    }
+  ) => Promise<NextResponse<TResponse>>,
+  service: ObjectAuthorizationService = defaultObjectAuthzService
+) {
+  return async (req: NextRequest, routeParams?: any): Promise<NextResponse> => {
+    try {
+      const target =
+        typeof descriptorOrResolver === 'function'
+          ? await descriptorOrResolver(req, routeParams)
+          : descriptorOrResolver;
+
+      const { actor, decision, descriptor } = await authorizeObjectRequest(req, action, target, service);
+
+      return await handler(req, {
+        actor,
+        decision,
+        descriptor,
+        params: routeParams?.params,
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        return NextResponse.json(error.toJSON(), { status: error.statusCode });
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INTERNAL_SERVER_ERROR',
+            message: error.message || 'An unexpected internal error occurred.',
+          },
+        },
+        { status: 500 }
+      );
+    }
+  };
 }
 
 /**

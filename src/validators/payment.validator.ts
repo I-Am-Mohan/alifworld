@@ -26,11 +26,22 @@ export const PayoutChannelSchema = z.enum([
   'NAGAD_DISBURSEMENT',
 ]);
 
+export const PoishaInputSchema = z
+  .bigint()
+  .or(z.number().int().positive().transform(BigInt))
+  .or(z.string().regex(/^\d+$/).transform(BigInt));
+
+export const PoishaNonNegativeInputSchema = z
+  .bigint()
+  .or(z.number().int().nonnegative().transform(BigInt))
+  .or(z.string().regex(/^\d+$/).transform(BigInt));
+
 export const InitiatePaymentSchema = z.object({
   orderId: z.string().min(1, 'Order ID is required'),
   customerId: z.string().min(1, 'Customer ID is required'),
   gatewayProvider: GatewayProviderSchema,
-  amountPoisha: z.bigint().or(z.number().int().positive().transform(BigInt)),
+  amountPoisha: PoishaInputSchema,
+  currency: z.string().default('BDT').optional(),
   idempotencyKey: z.string().min(8).optional(),
 });
 
@@ -45,8 +56,8 @@ export const GatewayWebhookSchema = z.object({
 export const RefundItemSchema = z.object({
   orderItemId: z.string().min(1, 'Order Item ID is required'),
   quantity: z.number().int().positive('Quantity must be positive'),
-  amountPoisha: z.bigint().or(z.number().int().positive().transform(BigInt)),
-  taxPoisha: z.bigint().or(z.number().int().nonnegative().transform(BigInt)).optional(),
+  amountPoisha: PoishaInputSchema,
+  taxPoisha: PoishaNonNegativeInputSchema.optional(),
   productPoints: z.number().int().nonnegative().optional(),
 });
 
@@ -54,7 +65,8 @@ export const ProcessRefundSchema = z.object({
   paymentId: z.string().min(1, 'Payment ID is required'),
   orderId: z.string().min(1, 'Order ID is required'),
   fulfillmentGroupId: z.string().optional(),
-  amountPoisha: z.bigint().or(z.number().int().positive().transform(BigInt)),
+  amountPoisha: PoishaInputSchema,
+  reversalPoints: z.number().int().nonnegative().optional(),
   reason: z.enum([
     'DAMAGED_GOODS',
     'DEFECTIVE',
@@ -81,7 +93,7 @@ export const DisbursePayoutSchema = z.object({
   accountNumber: z.string().min(4, 'Valid account number required'),
   accountTitle: z.string().optional(),
   routingNumber: z.string().optional(),
-  amountPoisha: z.bigint().or(z.number().int().positive().transform(BigInt)),
+  amountPoisha: PoishaInputSchema,
 });
 
 export type InitiatePaymentInput = z.infer<typeof InitiatePaymentSchema>;
@@ -89,3 +101,10 @@ export type GatewayWebhookInput = z.infer<typeof GatewayWebhookSchema>;
 export type ProcessRefundInput = z.infer<typeof ProcessRefundSchema>;
 export type CreateSettlementBatchInput = z.infer<typeof CreateSettlementBatchSchema>;
 export type DisbursePayoutInput = z.infer<typeof DisbursePayoutSchema>;
+
+// Backward-compatible camelCase aliases
+export const createPaymentSchema = InitiatePaymentSchema;
+export const paymentWebhookSchema = GatewayWebhookSchema;
+export const processRefundSchema = ProcessRefundSchema;
+export const createSettlementSchema = CreateSettlementBatchSchema;
+export const createPayoutSchema = DisbursePayoutSchema;

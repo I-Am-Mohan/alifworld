@@ -11,6 +11,8 @@
 import { prisma } from './prisma';
 import { translateDatabaseError } from './error-translator';
 import { AuthorizationError } from '@/shared/errors/app-error';
+import { ActorContext } from '@/shared/authz/authz.types';
+import { SystemRoleCode } from '@/features/identity/types';
 import {
   whereActive,
   assertModelDeletable,
@@ -51,7 +53,7 @@ export interface PaginatedResponse<T> {
 export function parseOffsetPagination(params: OffsetPaginationParams = {}): OffsetPaginationResult {
   const page = Math.max(1, Math.floor(Number(params.page) || 1));
   const maxLimit = params.maxLimit && params.maxLimit > 0 ? params.maxLimit : 100;
-  const rawLimit = Math.floor(Number(params.limit) || 20);
+  const rawLimit = params.limit !== undefined && !isNaN(Number(params.limit)) ? Math.floor(Number(params.limit)) : 20;
   const limit = Math.max(1, Math.min(rawLimit, maxLimit));
   const skip = (page - 1) * limit;
 
@@ -89,7 +91,11 @@ export function formatPaginatedResult<T>(
  */
 export function assertSellerScope(entitySellerId: string | null | undefined, authorizedSellerId: string): void {
   if (!entitySellerId || entitySellerId !== authorizedSellerId) {
-    throw new AuthorizationError('Tenant isolation violation: Access to entity outside seller scope is forbidden');
+    throw new AuthorizationError('Tenant isolation violation: Access to entity outside seller scope is forbidden', {
+      code: 'TENANT_VIOLATION',
+      entitySellerId: entitySellerId || null,
+      authorizedSellerId,
+    });
   }
 }
 
@@ -106,6 +112,43 @@ export function buildSellerWhere<T extends object>(
   return {
     ...whereActive(criteria),
     sellerId,
+  };
+}
+
+/**
+ * Enforces strict object-level ownership by verifying that an entity's ownerId
+ * matches the authenticated user context.
+ *
+ * Invariant: Milestone 047 - Object-level ownership checks prevent cross-user data access.
+ */
+export function assertOwnership(
+  entityOwnerId: string | null | undefined,
+  authorizedUserId: string,
+  message: string = 'Ownership violation: Access to entity outside user ownership is forbidden'
+): void {
+  if (!entityOwnerId || entityOwnerId !== authorizedUserId) {
+    throw new AuthorizationError(message, {
+      code: 'OWNERSHIP_VIOLATION',
+      entityOwnerId: entityOwnerId || null,
+      authorizedUserId,
+    });
+  }
+}
+
+/**
+ * Builds a query where clause strictly scoped to an ownerId (default: userId) and active records (deletedAt: null).
+ * Ensures ownership scoping is enforced inside database queries, not after data retrieval.
+ *
+ * Invariant: Milestone 047 - Scoped database queries enforce object-level ownership.
+ */
+export function buildOwnerWhere<T extends object>(
+  ownerId: string,
+  criteria: T = {} as T,
+  ownerField: string = 'userId'
+): T & { deletedAt: null; [key: string]: any } {
+  return {
+    ...whereActive(criteria),
+    [ownerField]: ownerId,
   };
 }
 
@@ -135,6 +178,133 @@ export abstract class BaseRepository {
     whereClause: T = {} as T
   ): T & { sellerId: string; deletedAt: null } {
     return buildSellerWhere(sellerId, whereClause);
+  }
+
+  /**
+   * Applies both soft-delete (deletedAt: null) and owner scope directly to a query where clause.
+   * Ensures ownership scoping is enforced at the database query level.
+   *
+   * Invariant: Milestone 047 - Apply ownerId scope inside repository queries.
+   */
+  protected whereOwnerScope<T extends object>(
+    ownerId: string,
+    whereClause: T = {} as T,
+    ownerField: string = 'userId'
+  ): T & { deletedAt: null; [key: string]: any } {
+    return buildOwnerWhere(ownerId, whereClause, ownerField);
+  }
+
+  /**
+   * Asserts that an entity's ownerId matches the authenticated actor, or actor is Super Admin.
+   * Throws AuthorizationError with code OWNERSHIP_VIOLATION if not matching.
+   */
+  public assertEntityOwnership<T extends Record<string, any>>(
+    entity: T | null | undefined,
+    actor: ActorContext,
+    options: {
+      ownerField?: string;
+      allowAdmin?: boolean;
+      message?: string;
+    } = {}
+  ): void {
+    if (!entity) return;
+
+    const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+    if (isSuperAdmin) return;
+
+    if (options.allowAdmin && actor.roles?.includes(SystemRoleCode.ADMIN)) {
+      return;
+    }
+
+    const field = options.ownerField || (entity.customerId !== undefined ? 'customerId' : entity.ownerId !== undefined ? 'ownerId' : 'userId');
+    const ownerId = entity[field];
+
+    assertOwnership(
+      ownerId,
+      actor.userId,
+      options.message ?? `Ownership violation: Actor '${actor.userId}' does not own entity '${entity.id || 'unidentified'}'`
+    );
+  }
+
+  /**
+   * Asserts that an entity belongs to the actor's merchant tenant, or actor is Super Admin.
+   * Throws AuthorizationError with code TENANT_VIOLATION if not matching.
+   */
+  public assertEntityTenant<T extends Record<string, any>>(
+    entity: T | null | undefined,
+    actor: ActorContext,
+    options: {
+      sellerField?: string;
+      allowAdmin?: boolean;
+      message?: string;
+    } = {}
+  ): void {
+    if (!entity) return;
+
+    const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+    if (isSuperAdmin) return;
+
+    if (options.allowAdmin && actor.roles?.includes(SystemRoleCode.ADMIN)) {
+      return;
+    }
+
+    const field = options.sellerField || 'sellerId';
+    const sellerId = entity[field];
+
+    if (!sellerId || !actor.sellerId || sellerId !== actor.sellerId) {
+      throw new AuthorizationError(
+        options.message ?? `Tenant isolation violation: Actor seller '${actor.sellerId || 'none'}' cannot access tenant '${sellerId}'`,
+        {
+          code: 'TENANT_VIOLATION',
+          actorSellerId: actor.sellerId || null,
+          entitySellerId: sellerId || null,
+          entityId: entity.id || null,
+        }
+      );
+    }
+  }
+
+  /**
+   * Builds an automatically scoped query where clause based on the actor's role.
+   * - SuperAdmin / Admin (with bypass): unscoped
+   * - Seller (with sellerId): scoped to sellerField
+   * - Customer/User: scoped to ownerField
+   */
+  public buildActorScopedWhere<T extends object>(
+    actor: ActorContext,
+    options: {
+      ownerField?: string;
+      sellerField?: string;
+      allowAdminBypass?: boolean;
+    } = {},
+    criteria: T = {} as T
+  ): T & { deletedAt: null; [key: string]: any } {
+    const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+    if (isSuperAdmin) {
+      return whereActive(criteria);
+    }
+
+    if (options.allowAdminBypass && actor.roles?.includes(SystemRoleCode.ADMIN)) {
+      return whereActive(criteria);
+    }
+
+    const isSeller =
+      actor.roles?.includes(SystemRoleCode.SELLER_OWNER) ||
+      actor.roles?.includes(SystemRoleCode.SELLER_STAFF);
+
+    if (isSeller && actor.sellerId) {
+      const sellerField = options.sellerField || 'sellerId';
+      return {
+        ...whereActive(criteria),
+        [sellerField]: actor.sellerId,
+      };
+    }
+
+    const ownerField = options.ownerField || 'userId';
+    return {
+      ...whereActive(criteria),
+      [ownerField]: actor.userId,
+    };
   }
 
   /**

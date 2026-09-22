@@ -10,9 +10,11 @@
  * - ADR-0027: Multi-vendor parent orders partitioned into isolated seller fulfillment groups
  */
 
-import { BaseRepository, parseOffsetPagination, formatPaginatedResult, assertSellerScope } from '@/shared/database/base-repository';
+import { BaseRepository, parseOffsetPagination, formatPaginatedResult, assertSellerScope, assertOwnership } from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { NotFoundError, AuthorizationError, ValidationError } from '@/shared/errors/app-error';
+import { ActorContext } from '@/shared/authz/authz.types';
+import { SystemRoleCode } from '@/features/identity/types';
 
 export interface CreateOrderFulfillmentGroupInput {
   sellerId: string;
@@ -233,11 +235,111 @@ export class OrderRepository extends BaseRepository {
         where: this.whereNotDeleted({ id: orderId }),
         include: {
           items: { where: { deletedAt: null } },
-          fulfillmentGroups: { where: { deletedAt: null } },
+          fulfillmentGroups: {
+            where: { deletedAt: null },
+            include: {
+              items: { where: { deletedAt: null } },
+              shipments: { where: { deletedAt: null } },
+            },
+          },
           statusHistory: { orderBy: { createdAt: 'asc' } },
         },
       });
     }, 'OrderRepository.findById');
+  }
+
+  /**
+   * Asserts that an actor is authorized to access the given order.
+   * Strictly enforces customer ownership, seller tenant isolation, and rider assignment.
+   */
+  assertOrderAccess(order: any, actor: ActorContext): void {
+    if (!order) return;
+
+    const isSuperAdmin = actor.roles?.includes(SystemRoleCode.SUPER_ADMIN);
+    if (isSuperAdmin) return;
+
+    const isPlatformAdmin = actor.roles?.includes(SystemRoleCode.ADMIN);
+    if (isPlatformAdmin) return;
+
+    const isCustomer = actor.roles?.includes(SystemRoleCode.CUSTOMER);
+    if (isCustomer) {
+      if (order.customerId !== actor.userId) {
+        throw new AuthorizationError('Cannot view orders placed by another customer.', {
+          code: 'OWNERSHIP_VIOLATION',
+          actorId: actor.userId,
+          orderCustomerId: order.customerId,
+          orderId: order.id,
+        });
+      }
+      return;
+    }
+
+    const isSeller =
+      actor.roles?.includes(SystemRoleCode.SELLER_OWNER) ||
+      actor.roles?.includes(SystemRoleCode.SELLER_STAFF);
+
+    if (isSeller && actor.sellerId) {
+      const groups = order.fulfillmentGroups || [];
+      const hasMatchingGroup = groups.some((g: any) => g.sellerId === actor.sellerId);
+      if (!hasMatchingGroup) {
+        throw new AuthorizationError('Cannot view orders assigned to a different merchant fulfillment group.', {
+          code: 'TENANT_VIOLATION',
+          actorSellerId: actor.sellerId,
+          orderId: order.id,
+        });
+      }
+      return;
+    }
+
+    const isRider = actor.roles?.includes(SystemRoleCode.RIDER);
+    if (isRider) {
+      const groups = order.fulfillmentGroups || [];
+      const hasAssignedShipment = groups.some((g: any) =>
+        (g.shipments || []).some((s: any) => s.riderId === actor.userId || s.assignedRiderId === actor.userId)
+      );
+      if (!hasAssignedShipment) {
+        throw new AuthorizationError('Rider can only inspect orders assigned to their delivery route.', {
+          code: 'OWNERSHIP_VIOLATION',
+          actorId: actor.userId,
+          orderId: order.id,
+        });
+      }
+      return;
+    }
+
+    if (actor.permissions?.includes('orders:read')) {
+      return;
+    }
+
+    throw new AuthorizationError('Lacks privileges to read this order.', {
+      code: 'FORBIDDEN',
+      actorId: actor.userId,
+      orderId: order.id,
+    });
+  }
+
+  /**
+   * Retrieves an order by ID, enforcing object-level authorization against the actor context.
+   */
+  async findOwnedOrderById(orderId: string, actor: ActorContext) {
+    const order = await this.findById(orderId);
+    if (!order) {
+      throw new NotFoundError(`Order '${orderId}' not found`);
+    }
+    this.assertOrderAccess(order, actor);
+    return order;
+  }
+
+  /**
+   * Retrieves an order by order number, enforcing object-level authorization against the actor context.
+   */
+  async findOwnedOrderByNumber(orderNumber: string, actor: ActorContext) {
+    const order = await this.findOrderByNumber(orderNumber);
+    if (!order) {
+      throw new NotFoundError(`Order '${orderNumber}' not found`);
+    }
+    this.assertOrderAccess(order, actor);
+    return order;
   }
 
   /**

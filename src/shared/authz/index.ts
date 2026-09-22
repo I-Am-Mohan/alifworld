@@ -7,7 +7,9 @@
  */
 
 export * from './authz.types';
+export * from './object-authz.types';
 export * from './policy-engine';
+export * from './object-authorization.service';
 export * from './guard.helper';
 export * from './policies/user.policy';
 export * from './policies/seller.policy';

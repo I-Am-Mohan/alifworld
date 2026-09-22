@@ -27,7 +27,7 @@ export class CatalogPolicy implements IPolicy {
       }
 
       // Draft or Archived product: requires admin or matching seller owner/staff
-      if (isSuperAdmin || isPlatformAdmin || actor.permissions.includes('catalog:read')) {
+      if (isSuperAdmin || (isPlatformAdmin && actor.permissions.includes('catalog:read'))) {
         return { granted: true, code: 'GRANTED', reason: 'Admin access to draft/archived catalog item.', policyName: this.name };
       }
 

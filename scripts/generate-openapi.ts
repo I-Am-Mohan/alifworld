@@ -52,6 +52,7 @@ export const openApiSpec = {
     { name: 'Identity & Access Management', description: 'RBAC roles, granular permissions, and identity governance' },
     { name: 'Customer Support', description: 'Omnichannel customer assistance, order incident tickets, and live SLA resolution' },
     { name: 'Logistics & Delivery', description: 'Delivery rider dispatch, assignment lease claiming, and live GPS telemetry' },
+    { name: 'Customer & Ownership', description: 'Customer self-service, profile anti-tampering, and object-level ownership checks' },
   ],
   paths: {
     '/api/health/live': {
@@ -1030,7 +1031,115 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/customer/profile': {
+      get: {
+        tags: ['Customer & Ownership'],
+        summary: 'Get Customer Profile',
+        description: 'Retrieves the authenticated customer\'s own profile. Strictly enforces self-ownership against unauthorized snooping.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Customer profile retrieved',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Forbidden: Ownership violation' },
+        },
+      },
+      put: {
+        tags: ['Customer & Ownership'],
+        summary: 'Update Customer Profile',
+        description: 'Updates customer profile fields. Strictly prevents modifying internal security fields (status, roles, walletBalance) via privilege escalation barriers.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', example: 'Rahim Khan' },
+                  avatarUrl: { type: 'string', example: 'https://cdn.alifworld.com/avatars/usr_1.jpg' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Profile updated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Forbidden: Privilege escalation or ownership violation' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/cart': {
+      get: {
+        tags: ['Customer & Ownership'],
+        summary: 'Get Active Shopping Cart',
+        description: 'Retrieves the authenticated customer\'s own shopping cart, enforcing strict self-ownership.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Shopping cart retrieved',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+        },
+      },
+    },
+    '/api/v1/cart/checkout': {
+      post: {
+        tags: ['Customer & Ownership'],
+        summary: 'Checkout Cart with Ownership Check',
+        description: 'Executes checkout for the customer\'s owned cart. Prevents checking out carts belonging to another user.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  cartId: { type: 'string', example: 'crt_12345' },
+                  checkout: { type: 'object' },
+                },
+                required: ['cartId', 'checkout'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Order created',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Forbidden: Cart ownership violation' },
+        },
+      },
+    },
     '/api/v1/orders': {
+      get: {
+        tags: ['Order'],
+        summary: 'List Scoped Orders',
+        description: 'Returns orders scoped to caller: customers view their own orders; merchants view their fulfillment groups; admins view all orders.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Scoped orders list',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+        },
+      },
       post: {
         tags: ['Order'],
         summary: 'Create Customer Order (Checkout)',
@@ -1088,6 +1197,76 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+    },
+    '/api/v1/orders/{id}': {
+      get: {
+        tags: ['Order', 'Customer & Ownership'],
+        summary: 'Get Order by ID with Object-Level Authorization',
+        description: 'Returns order details if caller is the owning customer, fulfilling merchant, assigned rider, or platform administrator.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'ord_12345' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Order details retrieved',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Forbidden: Ownership or tenant violation' },
+          '404': { description: 'Order not found' },
+        },
+      },
+    },
+    '/api/v1/orders/{id}/cancel': {
+      post: {
+        tags: ['Order', 'Customer & Ownership'],
+        summary: 'Cancel Order (Self-Service Ownership & Status Invariant)',
+        description: 'Allows a customer to cancel their own order only while in eligible pending states (PENDING, PLACED, PAYMENT_PENDING).',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'ord_12345' },
+          },
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  reason: { type: 'string', example: 'Accidentally placed duplicate order' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Order cancelled successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Forbidden: Ownership violation or non-cancellable status' },
+          '404': { description: 'Order not found' },
         },
       },
     },

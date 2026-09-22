@@ -57,6 +57,15 @@ export class OrderFulfillmentService {
       throw new ValidationError('Cannot checkout with an empty cart');
     }
 
+    // Milestone 047: Object-level ownership check - verify cart belongs to the checking-out customer
+    if (cart.userId && cart.userId !== customerId) {
+      throw new AuthorizationError('Cannot checkout cart belonging to another customer', {
+        code: 'OWNERSHIP_VIOLATION',
+        cartUserId: cart.userId,
+        customerId,
+      });
+    }
+
     // 2. Group items by sellerId (Multi-Vendor Partitioning)
     const itemsBySeller = new Map<string, typeof cart.items>();
     for (const item of cart.items) {

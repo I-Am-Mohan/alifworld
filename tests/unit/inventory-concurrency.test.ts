@@ -193,6 +193,7 @@ describe('Inventory Concurrency: Racing on the Last Unit', () => {
       warehouseId,
       variantId,
       quantity: 1,
+      ttlMinutes: 15,
       cartId: 'cart_buyer_alpha',
     });
 
@@ -200,6 +201,7 @@ describe('Inventory Concurrency: Racing on the Last Unit', () => {
       warehouseId,
       variantId,
       quantity: 1,
+      ttlMinutes: 15,
       cartId: 'cart_buyer_beta',
     });
 
@@ -231,6 +233,7 @@ describe('Inventory Concurrency: Racing on the Last Unit', () => {
       warehouseId,
       variantId,
       quantity: 1,
+      ttlMinutes: 15,
       cartId: 'cart_buyer_winner',
     });
 
@@ -240,6 +243,7 @@ describe('Inventory Concurrency: Racing on the Last Unit', () => {
         warehouseId,
         variantId,
         quantity: 1,
+        ttlMinutes: 15,
         cartId: 'cart_buyer_late',
       })
     ).rejects.toThrow(ConflictError);
