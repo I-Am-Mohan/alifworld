@@ -1,166 +1,297 @@
 /**
- * AlifWorld Canonical Environment Configuration & Validation Module
+ * AlifWorld Typed Runtime Environment & Secret Boundaries Configuration
+ * 
+ * Enforces strict Zod validation at process boot and prevents server-side secrets
+ * from leaking into client-side browser bundles.
+ * 
  * Reference: docs/architecture/environment-branching-and-release-strategy.md
+ * Invariants: docs/architecture/project-charter.md
  */
 
-import { Poisha, toPoisha } from '../types/domain-terms';
+import { z } from 'zod';
 
-export type AppEnvironmentTier = 'local' | 'development' | 'staging' | 'production';
+// ==============================================================================
+// 1. CLIENT ENVIRONMENT SCHEMA (Safe to expose in browser bundles)
+// ==============================================================================
+export const clientEnvSchema = z.object({
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+  NEXT_PUBLIC_CDN_URL: z.string().url().default('http://localhost:9000/alifworld-media'),
+  NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(['bn-BD', 'en-BD']).default('bn-BD'),
+  NEXT_PUBLIC_BASE_CURRENCY: z.literal('BDT').default('BDT'),
+});
 
-export interface ComplianceGateConfig {
-  /** GATE-01: Multi-Tier Referral prevention (strictly false by default) */
-  readonly featureAffiliateMultiTierEnabled: boolean;
-  /** GATE-01: Maximum allowed affiliate tree depth (locked to 1) */
-  readonly maxAffiliateDepth: number;
-  /** GATE-02: Good-Luck Lottery / games of chance (strictly false) */
-  readonly featureLotteryEnabled: boolean;
-  /** GATE-03: MFS Direct Debit & automated recurring debit */
-  readonly featureMfsDirectDebitEnabled: boolean;
-  /** GATE-04: Automated NBR VAT Mushak-6.3 tax submission */
-  readonly featureNbrTaxIntegrationEnabled: boolean;
-  /** GATE-05: Dual-operator Maker-Checker for high-value payouts */
-  readonly featureMakerCheckerPayoutEnabled: boolean;
-  /** GATE-05: Payout threshold in Poisha requiring dual-authorization (50,000 BDT) */
-  readonly makerCheckerThresholdPoisha: Poisha;
-  /** GATE-06: Conversion of Product Points into cash (Hard-locked to false) */
-  readonly featurePointsCashConvertible: boolean;
-  /** GATE-07: Advanced Shopping term deposits (strictly false) */
-  readonly featureAdvancedShoppingEnabled: boolean;
-}
+export type ClientEnv = z.infer<typeof clientEnvSchema>;
 
-export interface AppConfig {
-  readonly nodeEnv: 'development' | 'production' | 'test';
-  readonly appEnv: AppEnvironmentTier;
-  readonly port: number;
-  readonly appUrl: string;
-  readonly apiUrl: string;
-  readonly publicAppUrl: string;
-  readonly publicCdnUrl: string;
-  
-  readonly timezone: 'Asia/Dhaka';
-  readonly defaultLocale: 'bn-BD';
-  readonly supportedLocales: readonly ['en-BD', 'bn-BD'];
-  readonly baseCurrency: 'BDT';
+// ==============================================================================
+// 2. SERVER ENVIRONMENT SCHEMA (Restricted to server & worker runtimes)
+// ==============================================================================
+export const serverEnvSchema = clientEnvSchema.extend({
+  // Core Application Runtime
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  APP_ENV: z.enum(['local', 'development', 'staging', 'production']).default('local'),
+  PORT: z.coerce.number().int().positive().default(3000),
+  APP_URL: z.string().url().default('http://localhost:3000'),
+  API_URL: z.string().url().default('http://localhost:3000/api/v1'),
+  TZ: z.literal('Asia/Dhaka').default('Asia/Dhaka'),
+  DEFAULT_LOCALE: z.enum(['bn-BD', 'en-BD']).default('bn-BD'),
+  SUPPORTED_LOCALES: z.string().default('en-BD,bn-BD'),
+  BASE_CURRENCY: z.literal('BDT').default('BDT'),
 
-  readonly database: {
-    readonly url: string;
-    readonly directUrl?: string;
-    readonly poolMin: number;
-    readonly poolMax: number;
-  };
+  // PostgreSQL Database & Connection Pooling
+  DATABASE_URL: z
+    .string()
+    .min(1, 'DATABASE_URL is required')
+    .default('postgresql://alifworld:alifworld_local_secret@localhost:5432/alifworld_dev?schema=public&connection_limit=10'),
+  DIRECT_DATABASE_URL: z.string().optional(),
+  DATABASE_POOL_MIN: z.coerce.number().int().nonnegative().default(2),
+  DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 
-  readonly redis: {
-    readonly url: string;
-    readonly keyPrefix: string;
-    readonly tlsEnabled: boolean;
-  };
+  // Redis Distributed Cache, Locks & BullMQ
+  REDIS_URL: z.string().min(1).default('redis://localhost:6379/0'),
+  REDIS_KEY_PREFIX: z.string().default('alif:'),
+  REDIS_TLS_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(false),
 
-  readonly storage: {
-    readonly endpoint: string;
-    readonly region: string;
-    readonly accessKeyId: string;
-    readonly secretAccessKey: string;
-    readonly bucketName: string;
-    readonly forcePathStyle: boolean;
-    readonly publicBaseUrl: string;
-  };
+  // Authentication, Sessions & Security Secrets
+  JWT_SECRET: z
+    .string()
+    .min(32, 'JWT_SECRET must be at least 32 characters for HMAC SHA-256 security')
+    .default('change_me_to_a_secure_random_string_in_production_min_32_chars'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
+  REFRESH_TOKEN_EXPIRES_IN: z.string().default('30d'),
+  SESSION_SECRET: z
+    .string()
+    .min(32, 'SESSION_SECRET must be at least 32 characters')
+    .default('change_me_to_another_secure_random_string_32_chars'),
+  COOKIE_DOMAIN: z.string().default('localhost'),
+  COOKIE_SECURE: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(false),
+  RATE_LIMIT_GLOBAL_WINDOW_MS: z.coerce.number().int().positive().default(60000),
+  RATE_LIMIT_GLOBAL_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
+  RATE_LIMIT_AUTH_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+  RATE_LIMIT_SMS_OTP_MAX_PER_HOUR: z.coerce.number().int().positive().default(3),
 
-  readonly meilisearch: {
-    readonly host: string;
-    readonly apiKey: string;
-    readonly indexPrefix: string;
-  };
+  // S3-Compatible Object Storage (MinIO / AWS S3)
+  S3_ENDPOINT: z.string().url().default('http://localhost:9000'),
+  S3_REGION: z.string().default('us-east-1'),
+  S3_ACCESS_KEY_ID: z.string().min(1).default('minioadmin'),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).default('minioadmin'),
+  S3_BUCKET_NAME: z.string().min(1).default('alifworld-media'),
+  S3_FORCE_PATH_STYLE: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+  S3_PUBLIC_BASE_URL: z.string().url().default('http://localhost:9000/alifworld-media'),
 
-  readonly gates: ComplianceGateConfig;
+  // Search Engine (Meilisearch with PostgreSQL fallback)
+  MEILISEARCH_HOST: z.string().url().default('http://localhost:7700'),
+  MEILISEARCH_API_KEY: z.string().min(1).default('masterKey123'),
+  MEILISEARCH_INDEX_PREFIX: z.string().default('alif_'),
+
+  // Bangladesh MFS & Payment Gateways
+  BKASH_APP_KEY: z.string().default('mock_bkash_app_key'),
+  BKASH_APP_SECRET: z.string().default('mock_bkash_app_secret'),
+  BKASH_USERNAME: z.string().default('mock_bkash_user'),
+  BKASH_PASSWORD: z.string().default('mock_bkash_pass'),
+  BKASH_BASE_URL: z.string().url().default('https://tokenized.sandbox.bka.sh/v1.2.0-beta'),
+
+  NAGAD_MERCHANT_ID: z.string().default('mock_nagad_merchant'),
+  NAGAD_PUBLIC_KEY: z.string().default('mock_nagad_pubkey'),
+  NAGAD_PRIVATE_KEY: z.string().default('mock_nagad_privkey'),
+  NAGAD_BASE_URL: z
+    .string()
+    .url()
+    .default('http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs'),
+
+  SSLCOMMERZ_STORE_ID: z.string().default('mock_sslcommerz_store'),
+  SSLCOMMERZ_STORE_PASSWD: z.string().default('mock_sslcommerz_passwd'),
+  SSLCOMMERZ_IS_SANDBOX: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+
+  // Bangladesh Logistics Partners
+  PATHAO_CLIENT_ID: z.string().default('mock_pathao_client_id'),
+  PATHAO_CLIENT_SECRET: z.string().default('mock_pathao_client_secret'),
+  PATHAO_USERNAME: z.string().default('mock_pathao_user'),
+  PATHAO_PASSWORD: z.string().default('mock_pathao_pass'),
+  PATHAO_BASE_URL: z.string().url().default('https://courier-api-sandbox.pathao.com'),
+
+  REDX_ACCESS_TOKEN: z.string().default('mock_redx_token'),
+  REDX_BASE_URL: z.string().url().default('https://sandbox.redx.com.bd/v1.0.0-beta'),
+
+  STEADFAST_API_KEY: z.string().default('mock_steadfast_api_key'),
+  STEADFAST_SECRET_KEY: z.string().default('mock_steadfast_secret_key'),
+  STEADFAST_BASE_URL: z.string().url().default('https://portal.steadfast.com.bd/api/v1'),
+
+  // SMS Gateway
+  SMS_GATEWAY_PROVIDER: z.enum(['mock', 'greenweb', 'twilio']).default('mock'),
+  GREENWEB_API_TOKEN: z.string().default('mock_greenweb_token'),
+  TWILIO_ACCOUNT_SID: z.string().default('mock_twilio_sid'),
+  TWILIO_AUTH_TOKEN: z.string().default('mock_twilio_token'),
+  TWILIO_PHONE_NUMBER: z.string().default('+1234567890'),
+
+  // Compliance Approval Gates & Locked Invariants
+  FEATURE_AFFILIATE_MULTI_TIER_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+  MAX_AFFILIATE_DEPTH: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1, 'Locked Invariant: Multi-tier pyramid referral is prohibited. Depth must be exactly 1')
+    .default(1),
+  FEATURE_LOTTERY_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+  FEATURE_MFS_DIRECT_DEBIT_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+  FEATURE_NBR_TAX_INTEGRATION_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+  FEATURE_MAKER_CHECKER_PAYOUT_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+  MAKER_CHECKER_THRESHOLD_POISHA: z.coerce.number().int().positive().default(5000000), // 50,000 BDT
+  FEATURE_POINTS_CASH_CONVERTIBLE: z
+    .preprocess(
+      (val) => val === 'true' || val === true,
+      z.literal(false, {
+        errorMap: () => ({
+          message: 'Locked Invariant: Product Points are non-convertible loyalty metric and can never be converted to cash.',
+        }),
+      })
+    )
+    .default(false),
+  FEATURE_ADVANCED_SHOPPING_ENABLED: z
+    .preprocess((val) => val === 'true' || val === true, z.boolean())
+    .default(true),
+
+  // Observability & Telemetry
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  LOG_FORMAT: z.enum(['json', 'pretty']).default('json'),
+  SENTRY_DSN: z.string().optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
+});
+
+export type ServerEnv = z.infer<typeof serverEnvSchema>;
+
+// ==============================================================================
+// 3. ENVIRONMENT PARSER & REDACTION UTILITY
+// ==============================================================================
+
+const SENSITIVE_KEY_PATTERNS = [
+  /SECRET/i,
+  /KEY/i,
+  /PASSWORD/i,
+  /PASSWD/i,
+  /TOKEN/i,
+  /AUTH/i,
+  /DATABASE_URL/i,
+  /REDIS_URL/i,
+];
+
+/**
+ * Returns true if a key name is considered a secret/credential.
+ */
+export function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
 }
 
 /**
- * Validates and returns the strongly-typed application configuration.
- * Enforces fail-safe regulatory defaults across all environments.
+ * Redacts sensitive credentials from strings or values before logging.
  */
-export function getAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
-  const nodeEnv = (env.NODE_ENV as 'development' | 'production' | 'test') || 'development';
-  const rawAppEnv = env.APP_ENV || (nodeEnv === 'production' ? 'production' : 'local');
-  
-  const validTiers: AppEnvironmentTier[] = ['local', 'development', 'staging', 'production'];
-  const appEnv: AppEnvironmentTier = validTiers.includes(rawAppEnv as AppEnvironmentTier)
-    ? (rawAppEnv as AppEnvironmentTier)
-    : 'local';
-
-  // Strict Compliance Invariant: Points are NEVER cash convertible
-  const pointsCashConvertible = env.FEATURE_POINTS_CASH_CONVERTIBLE === 'true';
-  if (pointsCashConvertible) {
-    throw new Error(
-      'COMPLIANCE VIOLATION (GATE-06): Product Points cannot be configured as cash convertible.'
-    );
+export function redactSecret(key: string, value: unknown): string {
+  if (value === undefined || value === null) return '[UNSET]';
+  if (isSensitiveKey(key)) {
+    return '***[REDACTED]***';
   }
-
-  // Strict Compliance Invariant: Multi-tier referrals prohibited without licensing
-  const affiliateDepth = parseInt(env.MAX_AFFILIATE_DEPTH || '1', 10);
-  const multiTierEnabled = env.FEATURE_AFFILIATE_MULTI_TIER_ENABLED === 'true';
-  if (affiliateDepth > 1 && !multiTierEnabled) {
-    throw new Error(
-      'COMPLIANCE VIOLATION (GATE-01): MAX_AFFILIATE_DEPTH > 1 requires explicit regulatory compliance.'
-    );
-  }
-
-  const makerCheckerThresholdPoisha = env.MAKER_CHECKER_THRESHOLD_POISHA
-    ? (parseInt(env.MAKER_CHECKER_THRESHOLD_POISHA, 10) as Poisha)
-    : toPoisha(50000); // 50,000 BDT default
-
-  return {
-    nodeEnv,
-    appEnv,
-    port: parseInt(env.PORT || '3000', 10),
-    appUrl: env.APP_URL || 'http://localhost:3000',
-    apiUrl: env.API_URL || 'http://localhost:3000/api/v1',
-    publicAppUrl: env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    publicCdnUrl: env.NEXT_PUBLIC_CDN_URL || 'http://localhost:9000/alifworld-media',
-
-    timezone: 'Asia/Dhaka',
-    defaultLocale: 'bn-BD',
-    supportedLocales: ['en-BD', 'bn-BD'] as const,
-    baseCurrency: 'BDT',
-
-    database: {
-      url: env.DATABASE_URL || 'postgresql://alifworld:alifworld_local_secret@localhost:5432/alifworld_dev',
-      directUrl: env.DIRECT_DATABASE_URL,
-      poolMin: parseInt(env.DATABASE_POOL_MIN || '2', 10),
-      poolMax: parseInt(env.DATABASE_POOL_MAX || '10', 10),
-    },
-
-    redis: {
-      url: env.REDIS_URL || 'redis://localhost:6379/0',
-      keyPrefix: env.REDIS_KEY_PREFIX || 'alif:',
-      tlsEnabled: env.REDIS_TLS_ENABLED === 'true',
-    },
-
-    storage: {
-      endpoint: env.S3_ENDPOINT || 'http://localhost:9000',
-      region: env.S3_REGION || 'us-east-1',
-      accessKeyId: env.S3_ACCESS_KEY_ID || 'minioadmin',
-      secretAccessKey: env.S3_SECRET_ACCESS_KEY || 'minioadmin',
-      bucketName: env.S3_BUCKET_NAME || 'alifworld-media',
-      forcePathStyle: env.S3_FORCE_PATH_STYLE !== 'false',
-      publicBaseUrl: env.S3_PUBLIC_BASE_URL || 'http://localhost:9000/alifworld-media',
-    },
-
-    meilisearch: {
-      host: env.MEILISEARCH_HOST || 'http://localhost:7700',
-      apiKey: env.MEILISEARCH_API_KEY || '',
-      indexPrefix: env.MEILISEARCH_INDEX_PREFIX || 'alif_',
-    },
-
-    gates: {
-      featureAffiliateMultiTierEnabled: multiTierEnabled,
-      maxAffiliateDepth: affiliateDepth,
-      featureLotteryEnabled: env.FEATURE_LOTTERY_ENABLED === 'true',
-      featureMfsDirectDebitEnabled: env.FEATURE_MFS_DIRECT_DEBIT_ENABLED === 'true',
-      featureNbrTaxIntegrationEnabled: env.FEATURE_NBR_TAX_INTEGRATION_ENABLED === 'true',
-      featureMakerCheckerPayoutEnabled: env.FEATURE_MAKER_CHECKER_PAYOUT_ENABLED !== 'false',
-      makerCheckerThresholdPoisha,
-      featurePointsCashConvertible: false, // Invariant locked
-      featureAdvancedShoppingEnabled: env.FEATURE_ADVANCED_SHOPPING_ENABLED === 'true',
-    },
-  };
+  return String(value);
 }
+
+/**
+ * Formats Zod errors into clean, redacted error output without leaking sensitive data.
+ */
+function formatZodErrors(issues: z.ZodIssue[]): string {
+  return issues
+    .map((issue) => {
+      const path = issue.path.join('.');
+      return `  - ${path}: ${issue.message}`;
+    })
+    .join('\n');
+}
+
+/**
+ * Validates client environment variables. Safe for browser usage.
+ */
+export function validateClientEnv(
+  input: Record<string, unknown> = (typeof process !== 'undefined' ? process.env : {}) as Record<string, unknown>
+): ClientEnv {
+  const result = clientEnvSchema.safeParse(input);
+  if (!result.success) {
+    const errorMsg = `\n[AlifWorld Configuration Error] Invalid Client Environment Variables:\n${formatZodErrors(
+      result.error.issues
+    )}\n`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  return result.data;
+}
+
+/**
+ * Validates server environment variables. Strictly prohibited in browser runtimes.
+ */
+export function validateServerEnv(
+  input: Record<string, unknown> = (typeof process !== 'undefined' ? process.env : {}) as Record<string, unknown>
+): ServerEnv {
+  // Guard against accidental execution in browser
+  if (typeof window !== 'undefined') {
+    throw new Error(
+      '[Security Violation] Server environment validation attempted in browser context. Server secrets must never be exposed to the client!'
+    );
+  }
+
+  const result = serverEnvSchema.safeParse(input);
+  if (!result.success) {
+    const errorMsg = `\n[AlifWorld Configuration Error] Invalid Server Environment Variables:\n${formatZodErrors(
+      result.error.issues
+    )}\n`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+  return result.data;
+}
+
+// ==============================================================================
+// 4. RUNTIME SINGLETONS & SECRET BOUNDARY GUARDS
+// ==============================================================================
+
+/**
+ * Safe client environment singleton, containing only NEXT_PUBLIC_* variables.
+ */
+export const clientEnv: ClientEnv = validateClientEnv();
+
+/**
+ * Lazily validated server environment singleton.
+ * Uses a Proxy guard to throw an immediate descriptive error if accessed on the client.
+ */
+let cachedServerEnv: ServerEnv | null = null;
+
+export const env: ServerEnv = new Proxy({} as ServerEnv, {
+  get(_target, prop: string | symbol) {
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        `[Security Violation] Attempted to read server environment variable '${String(
+          prop
+        )}' on the client. Only NEXT_PUBLIC_* variables may be accessed in browser code via clientEnv.`
+      );
+    }
+
+    if (!cachedServerEnv) {
+      cachedServerEnv = validateServerEnv();
+    }
+
+    return cachedServerEnv[prop as keyof ServerEnv];
+  },
+});
