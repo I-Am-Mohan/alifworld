@@ -185,6 +185,88 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/email/verify': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Verify Customer Email Address',
+        description: 'Verifies a customer email address using a 6-digit ephemeral OTP token. Validates attempt limits (max 3), marks user email as verified, invalidates token, records audit log, and emits auth.email_verified outbox event.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/VerifyEmailRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Email verified successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/VerifyEmailResponse' },
+              },
+            },
+          },
+          '404': {
+            description: 'User account not found',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Verification code expired, invalid, or attempt lockout',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/email/resend': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Resend Email Verification Code',
+        description: 'Resends a fresh 6-digit verification code with 60-second cooldown enforcement and 3 requests/hour limit. Returns neutral response for unregistered emails to prevent enumeration.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ResendVerificationRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Verification code resent successfully or neutral notice',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ResendVerificationResponse' },
+              },
+            },
+          },
+          '429': {
+            description: 'Rate limit or cooldown exceeded (60s cooldown or max 3 per hour)',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Validation failed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/token/policy': {
       get: {
         tags: ['Authentication'],
@@ -881,6 +963,57 @@ export const openApiSpec = {
               message: { type: 'string', example: 'Account registered successfully. A 6-digit verification code has been sent to your email.' },
             },
             required: ['userId', 'email', 'name', 'status', 'isEmailVerified', 'message'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      VerifyEmailRequest: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email', example: 'tanvir@example.com' },
+          code: { type: 'string', minLength: 6, maxLength: 6, example: '582914' },
+        },
+        required: ['email', 'code'],
+      },
+      VerifyEmailResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              verified: { type: 'boolean', example: true },
+              alreadyVerified: { type: 'boolean', example: false },
+              email: { type: 'string', example: 'tanvir@example.com' },
+              userId: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
+              message: { type: 'string', example: 'Email verified successfully! You can now log in to your AlifWorld account.' },
+            },
+            required: ['verified', 'email', 'message'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      ResendVerificationRequest: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email', example: 'tanvir@example.com' },
+        },
+        required: ['email'],
+      },
+      ResendVerificationResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              success: { type: 'boolean', example: true },
+              alreadyVerified: { type: 'boolean', example: false },
+              message: { type: 'string', example: 'A new 6-digit verification code has been sent to your email.' },
+              cooldownSeconds: { type: 'integer', example: 60 },
+              devVerificationCode: { type: 'string', example: '582914' },
+            },
+            required: ['success', 'message', 'cooldownSeconds'],
           },
         },
         required: ['success', 'data'],

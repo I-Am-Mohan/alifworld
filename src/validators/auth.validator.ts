@@ -86,3 +86,30 @@ export const revokeSessionSchema = z.object({
 });
 
 export type RevokeSessionInput = z.infer<typeof revokeSessionSchema>;
+
+export const verifyEmailSchema = z.object({
+  email: z
+    .string()
+    .min(5, 'Email is required')
+    .max(255, 'Email exceeds maximum allowed length')
+    .email('Please enter a valid email address')
+    .transform((val) => val.trim().toLowerCase()),
+  code: z
+    .string()
+    .length(6, 'Verification code must be exactly 6 digits')
+    .regex(/^\d{6}$/, 'Verification code must contain only numbers'),
+});
+
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+
+export const resendVerificationSchema = z.object({
+  email: z
+    .string()
+    .min(5, 'Email is required')
+    .max(255, 'Email exceeds maximum allowed length')
+    .email('Please enter a valid email address')
+    .transform((val) => val.trim().toLowerCase()),
+});
+
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+
