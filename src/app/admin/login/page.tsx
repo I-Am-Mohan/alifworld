@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
     setError(null);
 
     if (!identifier.trim() || !password) {
-      setError('Please provide your administrative identifier and password.');
+      setError(t('admin.identifierPasswordRequired'));
       return;
     }
 

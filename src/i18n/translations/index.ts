@@ -1,18 +1,30 @@
 import { bn } from './bn';
 import { en } from './en';
+import { getCatalogLeafKeys, validateCatalogPair } from './catalog-validation';
+
+export { getCatalogLeafKeys };
 
 export type TranslationSchema = typeof en;
+export const CATALOG_LOCALES = ['en-BD', 'bn-BD'] as const;
 
 /**
  * Registry of language translation dictionaries.
  * Indexed by canonical BCP 47 locale codes and short codes.
  */
-const dictionaries: Record<string, any> = {
+const dictionaries: Record<string, TranslationSchema> = {
   bn,
   en,
   'bn-bd': bn,
   'en-bd': en,
 };
+
+/**
+ * Returns contract violations between the launch English and Bangla catalogs.
+ * This is consumed by tests and release checks; runtime lookup remains tolerant.
+ */
+export function validateLaunchCatalogs() {
+  return validateCatalogPair(en, bn);
+}
 
 /**
  * Registers a translation dictionary for a given locale code.

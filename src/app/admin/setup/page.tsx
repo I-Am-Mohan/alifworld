@@ -190,13 +190,13 @@ export default function AdminSetupPage() {
       });
       const json = await res.json().catch(() => null);
       if (res.ok && json?.success) {
-        showToast('All platform setups and configurations saved successfully to database!');
+        showToast(t('admin.setupSaved'));
         await loadLanguages();
       } else {
-        throw new Error(json?.error?.message || 'Failed to save settings');
+        throw new Error(json?.error?.message || t('admin.saveSettingsFailed'));
       }
     } catch (err: any) {
-      showToast(err.message || 'Error saving settings', 'error');
+      showToast(err.message || t('admin.saveSettingsError'), 'error');
     } finally {
       setSaving(false);
     }
@@ -216,9 +216,9 @@ export default function AdminSetupPage() {
       if (res.ok && json.success) {
         updateSetting('PLATFORM_DEFAULT_LOCALE', code);
         await loadLanguages();
-        showToast(`Default platform language updated to '${code}' in database`);
+        showToast(t('admin.defaultLanguageUpdated', { code }));
       } else {
-        throw new Error(json.error?.message || 'Failed to set default language');
+        throw new Error(json.error?.message || t('admin.defaultLanguageFailed'));
       }
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -233,7 +233,7 @@ export default function AdminSetupPage() {
     const cleanWord = newLangWord.trim();
 
     if (!cleanCode || !cleanName || !cleanNative || !cleanWord) {
-      showToast('All language fields are required', 'error');
+      showToast(t('admin.languageFieldsRequired'), 'error');
       return;
     }
 
@@ -252,7 +252,7 @@ export default function AdminSetupPage() {
       });
       const json = await res.json();
       if (res.ok && json.success) {
-        showToast(`Language '${cleanName}' registered successfully in database`);
+        showToast(t('admin.languageRegistered', { name: cleanName }));
         setNewLangCode('');
         setNewLangName('');
         setNewLangNativeName('');
@@ -261,7 +261,7 @@ export default function AdminSetupPage() {
         setShowAddLangModal(false);
         await loadLanguages();
       } else {
-        throw new Error(json.error?.message || 'Failed to register language');
+        throw new Error(json.error?.message || t('admin.languageRegisterFailed'));
       }
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -277,10 +277,15 @@ export default function AdminSetupPage() {
       });
       const json = await res.json();
       if (res.ok && json.success) {
-        showToast(`Language '${code}' ${!currentStatus ? 'activated' : 'deactivated'} in database`);
+        showToast(
+          t('admin.languageStatusUpdated', {
+            code,
+            status: !currentStatus ? t('admin.activated') : t('admin.deactivated'),
+          })
+        );
         await loadLanguages();
       } else {
-        throw new Error(json.error?.message || 'Failed to update language');
+        throw new Error(json.error?.message || t('admin.languageUpdateFailed'));
       }
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -289,7 +294,7 @@ export default function AdminSetupPage() {
 
   const handleDeleteLanguage = async (code: string) => {
     if (code === settings.PLATFORM_DEFAULT_LOCALE) {
-      showToast('Cannot delete the default platform language', 'error');
+      showToast(t('admin.defaultLanguageCannotDelete'), 'error');
       return;
     }
     try {
@@ -298,10 +303,10 @@ export default function AdminSetupPage() {
       });
       const json = await res.json();
       if (res.ok && json.success) {
-        showToast(`Language '${code}' removed from database`);
+        showToast(t('admin.languageRemoved', { code }));
         await loadLanguages();
       } else {
-        throw new Error(json.error?.message || 'Failed to remove language');
+        throw new Error(json.error?.message || t('admin.languageRemoveFailed'));
       }
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -317,11 +322,11 @@ export default function AdminSetupPage() {
     const cleanName = newCurrencyName.trim().toUpperCase();
     const cleanSymbol = newCurrencySymbol.trim();
     if (!cleanName || !cleanSymbol) {
-      showToast('Both Currency Name (e.g. INR) and Symbol (e.g. ₹) are required', 'error');
+      showToast(t('admin.currencyNameSymbolRequired'), 'error');
       return;
     }
     if (currencies.some((c) => c.name === cleanName)) {
-      showToast(`Currency '${cleanName}' already exists`, 'error');
+      showToast(t('admin.currencyAlreadyExists', { name: cleanName }), 'error');
       return;
     }
     const updated = [
@@ -332,21 +337,27 @@ export default function AdminSetupPage() {
     setNewCurrencyName('');
     setNewCurrencySymbol('');
     setNewCurrencyPosition('left');
-    showToast(`Currency ${cleanName} (${cleanSymbol}) added with position: ${newCurrencyPosition}`);
+    showToast(
+      t('admin.currencyAdded', {
+        name: cleanName,
+        symbol: cleanSymbol,
+        position: newCurrencyPosition,
+      })
+    );
   };
 
   const removeCurrency = (name: string) => {
     if (name === settings.PLATFORM_CURRENCY) {
-      showToast(`Cannot remove the primary platform currency (${name})`, 'error');
+      showToast(t('admin.primaryCurrencyCannotRemove', { name }), 'error');
       return;
     }
     if (currencies.length <= 1) {
-      showToast('At least one platform currency must be configured', 'error');
+      showToast(t('admin.currencyRequired'), 'error');
       return;
     }
     const updated = currencies.filter((c) => c.name !== name);
     updateSetting('PLATFORM_CURRENCIES', JSON.stringify(updated));
-    showToast(`Currency ${name} removed`);
+    showToast(t('admin.currencyRemoved', { name }));
   };
 
   const toggleCurrencyPosition = (name: string) => {
@@ -357,14 +368,19 @@ export default function AdminSetupPage() {
     );
     updateSetting('PLATFORM_CURRENCIES', JSON.stringify(updated));
     const target = updated.find((c) => c.name === name);
-    showToast(`Position for ${name} switched to ${target?.position}`);
+    showToast(t('admin.currencyPositionSwitched', { name, position: target?.position || '' }));
   };
 
   const handleSendTestSms = async () => {
     setSendingTestSms(true);
     setTimeout(() => {
       setSendingTestSms(false);
-      showToast(`Test SMS dispatched to ${testPhoneNumber} via ${settings.SMS_GATEWAY_PROVIDER}!`);
+      showToast(
+        t('admin.testSmsDispatched', {
+          phone: testPhoneNumber,
+          provider: settings.SMS_GATEWAY_PROVIDER,
+        })
+      );
     }, 1200);
   };
 
