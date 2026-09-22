@@ -115,7 +115,7 @@ describe('Milestone 041 — Seed Roles & Granular Permissions Matrix', () => {
       'SELLER_OWNER', 'SELLER_STAFF', 'CUSTOMER', 'RIDER',
     ];
     for (const r of ['SUPER_ADMIN', 'ADMIN', 'SELLER_OWNER', 'SELLER_STAFF', 'CUSTOMER', 'RIDER']) {
-      expect(systemRoleCodes).toContain(r);
+      expect(systemRoleCodes).toContain(r as SystemRoleCode);
     }
   });
 
