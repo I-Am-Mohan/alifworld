@@ -5,40 +5,42 @@
  */
 
 import { Poisha, toPoisha, ProductPoint } from '../types/domain-terms';
+import { toBengaliNumerals } from './phone';
 
-/**
- * Formats integer Poisha into standard BDT currency representation (e.g., ৳1,250.50 or ১,২৫০.৫০ ৳)
- */
-export function formatPoishaToBdt(
-  poisha: Poisha | number,
-  locale: 'bn-BD' | 'en-BD' = 'bn-BD'
-): string {
-  const bdtValue = (poisha as number) / 100;
-
-  if (locale === 'bn-BD') {
-    const formatted = new Intl.NumberFormat('bn-BD', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(bdtValue);
-    return `৳${formatted}`;
+function asPoisha(value: Poisha | bigint | number): bigint {
+  if (typeof value === 'bigint') return value;
+  if (typeof value === 'number') {
+    if (!Number.isSafeInteger(value)) {
+      throw new Error('Poisha number inputs must be safe integers. Use bigint for large amounts.');
+    }
+    return BigInt(value);
   }
-
-  const formatted = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(bdtValue);
-  return `BDT ${formatted}`;
+  return BigInt(value);
 }
 
-/**
- * Parses user input (string or float number) into exact integer Poisha without precision loss.
- */
-export function parseBdtToPoisha(bdtInput: string | number): Poisha {
-  const num = typeof bdtInput === 'string' ? parseFloat(bdtInput) : bdtInput;
-  if (isNaN(num)) {
-    throw new Error(`Invalid BDT currency input: ${bdtInput}`);
-  }
-  return toPoisha(num);
+function formatMinorUnits(minorUnits: bigint, fractionDigits: number, locale: 'bn-BD' | 'en-BD'): string {
+  const negative = minorUnits < 0n;
+  const absolute = negative ? -minorUnits : minorUnits;
+  const divisor = 10n ** BigInt(fractionDigits);
+  const whole = absolute / divisor;
+  const fraction = fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
+  const formattedWhole = new Intl.NumberFormat(locale === 'bn-BD' ? 'en-US' : 'en-US').format(whole);
+  const result = `${negative ? '-' : ''}${formattedWhole}${fraction}`;
+  return locale === 'bn-BD' ? toBengaliNumerals(result) : result;
+}
+
+/** Formats integer Poisha without converting through a floating-point number. */
+export function formatPoishaToBdt(
+  poisha: Poisha | bigint | number,
+  locale: 'bn-BD' | 'en-BD' = 'bn-BD'
+): string {
+  const formatted = formatMinorUnits(asPoisha(poisha), 2, locale);
+  return locale === 'bn-BD' ? `৳${formatted}` : `BDT ${formatted}`;
+}
+
+/** Parses a BDT amount exactly; excess fractional precision and malformed input are rejected. */
+export function parseBdtToPoisha(bdtInput: string | number | bigint): Poisha {
+  return toPoisha(bdtInput);
 }
 
 /**

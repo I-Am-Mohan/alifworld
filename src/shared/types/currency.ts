@@ -7,6 +7,22 @@
  * 3. Position ('left' | 'right' -> e.g. ৳ 100 vs 100 ৳)
  */
 
+import { z } from 'zod';
+
+export const CURRENCY_MINOR_UNITS = {
+  BDT: 2,
+  USD: 2,
+  INR: 2,
+  EUR: 2,
+  GBP: 2,
+  AED: 2,
+  SAR: 2,
+  JPY: 0,
+} as const;
+
+export type CurrencyCode = keyof typeof CURRENCY_MINOR_UNITS;
+export const CurrencyCodeSchema = z.enum(Object.keys(CURRENCY_MINOR_UNITS) as [CurrencyCode, ...CurrencyCode[]]);
+
 export interface CurrencyConfig {
   name: string;
   symbol: string;
@@ -71,6 +87,35 @@ export function parseCurrencies(raw: string | undefined | null): CurrencyConfig[
   }));
 }
 
+export function isSupportedCurrencyCode(value: string): value is CurrencyCode {
+  return Object.prototype.hasOwnProperty.call(CURRENCY_MINOR_UNITS, value.toUpperCase());
+}
+
+export function assertCurrencyCode(value: string): CurrencyCode {
+  const code = value.toUpperCase();
+  if (!isSupportedCurrencyCode(code)) throw new Error(`Unsupported currency code: ${value}`);
+  return code;
+}
+
+/** Formats integer minor units without converting through JavaScript Number. */
+export function formatMinorUnitAmount(
+  minorUnits: bigint,
+  currency: CurrencyCode = 'BDT',
+  locale: 'en-BD' | 'bn-BD' = 'en-BD'
+): string {
+  const code = assertCurrencyCode(currency);
+  const fractionDigits = CURRENCY_MINOR_UNITS[code];
+  const negative = minorUnits < 0n;
+  const absolute = negative ? -minorUnits : minorUnits;
+  const divisor = 10n ** BigInt(fractionDigits);
+  const whole = absolute / divisor;
+  const fraction = fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
+  const wholeText = new Intl.NumberFormat(locale === 'bn-BD' ? 'en-US' : 'en-US').format(whole);
+  const symbol = DEFAULT_CURRENCIES.find((item) => item.name === code)?.symbol || code;
+  const value = `${negative ? '-' : ''}${wholeText}${fraction}`;
+  return locale === 'bn-BD' && code === 'BDT' ? `৳${value}` : `${symbol} ${value}`;
+}
+
 /**
  * Formats a monetary amount using the designated currency configuration.
  */
@@ -95,12 +140,14 @@ export function formatCurrencyAmount(
       maximumFractionDigits: 2,
     });
   } else if (typeof amount === 'bigint') {
-    // If poisha (BigInt), convert to main unit with 2 decimals
-    const num = Number(amount) / 100;
-    formattedValue = num.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    const code = assertCurrencyCode(config.name);
+    const fractionDigits = CURRENCY_MINOR_UNITS[code];
+    const negative = amount < 0n;
+    const absolute = negative ? -amount : amount;
+    const divisor = 10n ** BigInt(fractionDigits);
+    const whole = absolute / divisor;
+    const fraction = fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
+    formattedValue = `${negative ? '-' : ''}${new Intl.NumberFormat('en-US').format(whole)}${fraction}`;
   } else {
     formattedValue = String(amount);
   }

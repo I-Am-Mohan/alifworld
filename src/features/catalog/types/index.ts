@@ -161,17 +161,17 @@ export interface TaxRule {
 export interface TaxCalculationBreakdown {
   lineItemId?: string;
   title: string;
-  netPricePoisha: number;
+  netPricePoisha: bigint;
   taxRatePercent: number;
-  taxAmountPoisha: number;
-  grossPricePoisha: number;
+  taxAmountPoisha: bigint;
+  grossPricePoisha: bigint;
 }
 
 export interface TaxSnapshot {
   jurisdiction: 'BD';
   effectiveDate: string; // ISO date
-  totalNetPoisha: number;
-  totalTaxPoisha: number;
-  totalGrossPoisha: number;
+  totalNetPoisha: bigint;
+  totalTaxPoisha: bigint;
+  totalGrossPoisha: bigint;
   lines: TaxCalculationBreakdown[];
 }

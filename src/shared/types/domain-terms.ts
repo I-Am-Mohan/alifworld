@@ -5,16 +5,38 @@
 
 /**
  * Monetary primitive representing integer poisha (1 BDT = 100 poisha).
+ * BigInt prevents precision loss for large balances and financial snapshots.
  * Negative values indicate debit or deductions; positive values indicate credit.
  */
-export type Poisha = number & { readonly __brand: unique symbol };
+export type Poisha = bigint & { readonly __brand: unique symbol };
 
-export function toPoisha(bdt: number): Poisha {
-  return Math.round(bdt * 100) as Poisha;
+/**
+ * Parses a BDT major-unit amount without floating-point arithmetic.
+ * At most two fractional digits are accepted because BDT has two minor units.
+ */
+export function toPoisha(bdt: string | number | bigint): Poisha {
+  if (typeof bdt === 'bigint') return bdt as Poisha;
+
+  const raw = typeof bdt === 'number' ? String(bdt) : bdt.trim();
+  if (!/^-?\d+(?:\.\d{1,2})?$/.test(raw)) {
+    throw new Error(`Invalid BDT currency input: ${bdt}`);
+  }
+
+  const negative = raw.startsWith('-');
+  const unsigned = negative ? raw.slice(1) : raw;
+  const [whole, fraction = ''] = unsigned.split('.');
+  const poisha = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+  return (negative ? -poisha : poisha) as Poisha;
 }
 
-export function fromPoisha(poisha: Poisha): number {
-  return poisha / 100;
+/** Returns an exact decimal string; no floating-point conversion is performed. */
+export function fromPoisha(poisha: Poisha | bigint): string {
+  const value = BigInt(poisha);
+  const negative = value < 0n;
+  const absolute = negative ? -value : value;
+  const whole = absolute / 100n;
+  const fraction = (absolute % 100n).toString().padStart(2, '0');
+  return `${negative ? '-' : ''}${whole}.${fraction}`;
 }
 
 /**

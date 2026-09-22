@@ -24,21 +24,19 @@ export function formatLocalizedCurrency(
   locale: string = 'bn-BD'
 ): string {
   const canonical = normalizeToCanonicalLocale(locale);
-  const bdtValue = Number(poisha) / 100;
-
-  if (canonical === 'bn-BD') {
-    const rawFormatted = new Intl.NumberFormat('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(bdtValue);
-    return `৳${toBengaliNumerals(rawFormatted)}`;
-  }
-
-  const formatted = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(bdtValue);
-  return `BDT ${formatted}`;
+  const minorUnits = typeof poisha === 'bigint' ? poisha : (() => {
+    if (!Number.isSafeInteger(poisha)) {
+      throw new Error('Poisha number inputs must be safe integers. Use bigint for large amounts.');
+    }
+    return BigInt(poisha);
+  })();
+  const negative = minorUnits < 0n;
+  const absolute = negative ? -minorUnits : minorUnits;
+  const whole = absolute / 100n;
+  const fraction = (absolute % 100n).toString().padStart(2, '0');
+  const formattedWhole = new Intl.NumberFormat('en-US').format(whole);
+  const formatted = `${negative ? '-' : ''}${formattedWhole}.${fraction}`;
+  return canonical === 'bn-BD' ? `৳${toBengaliNumerals(formatted)}` : `BDT ${formatted}`;
 }
 
 /**

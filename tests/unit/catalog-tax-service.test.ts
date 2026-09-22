@@ -39,9 +39,9 @@ describe('TaxService: NBR Mushak-6.3 VAT Calculations', () => {
     });
 
     // 2,199,000 * 0.05 = 109,950 poisha (৳1,099.50)
-    expect(lineItem.netPricePoisha).toBe(2199000);
-    expect(lineItem.taxAmountPoisha).toBe(109950);
-    expect(lineItem.grossPricePoisha).toBe(2308950); // ৳23,089.50
+    expect(lineItem.netPricePoisha).toBe(2199000n);
+    expect(lineItem.taxAmountPoisha).toBe(109950n);
+    expect(lineItem.grossPricePoisha).toBe(2308950n); // ৳23,089.50
   });
 
   it('handles fractional poisha rounding correctly', () => {
@@ -53,8 +53,8 @@ describe('TaxService: NBR Mushak-6.3 VAT Calculations', () => {
       taxRatePercent: 5.0,
     });
 
-    expect(lineItem.taxAmountPoisha).toBe(10);
-    expect(lineItem.grossPricePoisha).toBe(209);
+    expect(lineItem.taxAmountPoisha).toBe(10n);
+    expect(lineItem.grossPricePoisha).toBe(209n);
   });
 
   it('generates immutable tax snapshot for multi-item order', () => {
@@ -88,12 +88,12 @@ describe('TaxService: NBR Mushak-6.3 VAT Calculations', () => {
     expect(snapshot.lines.length).toBe(3);
 
     // Total Net: 2,000,000 + 1,000,000 + 50,000 = 3,050,000 poisha (৳30,500.00)
-    expect(snapshot.totalNetPoisha).toBe(3050000);
+    expect(snapshot.totalNetPoisha).toBe(3050000n);
 
     // Total Tax: 100,000 + 150,000 + 0 = 250,000 poisha (৳2,500.00)
-    expect(snapshot.totalTaxPoisha).toBe(250000);
+    expect(snapshot.totalTaxPoisha).toBe(250000n);
 
     // Total Gross: 3,050,000 + 250,000 = 3,300,000 poisha (৳33,000.00)
-    expect(snapshot.totalGrossPoisha).toBe(3300000);
+    expect(snapshot.totalGrossPoisha).toBe(3300000n);
   });
 });

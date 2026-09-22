@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { CurrencyCodeSchema } from '@/shared/types/currency';
 
 export const GatewayProviderSchema = z.enum([
   'BKASH',
@@ -41,7 +42,7 @@ export const InitiatePaymentSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required'),
   gatewayProvider: GatewayProviderSchema,
   amountPoisha: PoishaInputSchema,
-  currency: z.string().default('BDT').optional(),
+  currency: CurrencyCodeSchema.default('BDT'),
   idempotencyKey: z.string().min(8).optional(),
 });
 

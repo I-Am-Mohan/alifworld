@@ -72,25 +72,31 @@ export class TaxService {
   }
 
   /**
-   * Calculates tax amount for an amount in poisha.
-   * Rounding rule: Standard banker's / half-up integer rounding to the nearest poisha.
+   * Calculates tax using integer poisha and integer basis points.
+   * Rounding rule: half-up to the nearest poisha.
    */
   public calculateTaxForLineItem(params: {
     lineItemId?: string;
     title: string;
-    netPricePoisha: number;
+    netPricePoisha: bigint | number | string;
     quantity: number;
-    taxRatePercent: number;
+    taxRatePercent: number | string;
   }): TaxCalculationBreakdown {
-    const totalNetPoisha = Math.round(params.netPricePoisha * params.quantity);
-    const taxAmountPoisha = Math.round((totalNetPoisha * params.taxRatePercent) / 100);
+    if (!Number.isSafeInteger(params.quantity) || params.quantity < 1) {
+      throw new Error('Tax quantity must be a positive safe integer.');
+    }
+
+    const unitPricePoisha = this.toPoisha(params.netPricePoisha);
+    const totalNetPoisha = unitPricePoisha * BigInt(params.quantity);
+    const rateBasisPoints = this.percentToBasisPoints(params.taxRatePercent);
+    const taxAmountPoisha = this.roundHalfUp(totalNetPoisha * BigInt(rateBasisPoints), 10000n);
     const grossPricePoisha = totalNetPoisha + taxAmountPoisha;
 
     return {
       lineItemId: params.lineItemId,
       title: params.title,
       netPricePoisha: totalNetPoisha,
-      taxRatePercent: params.taxRatePercent,
+      taxRatePercent: Number(params.taxRatePercent),
       taxAmountPoisha,
       grossPricePoisha,
     };
@@ -104,15 +110,15 @@ export class TaxService {
     lineItems: Array<{
       lineItemId?: string;
       title: string;
-      netPricePoisha: number;
+      netPricePoisha: bigint | number | string;
       quantity: number;
       productTaxRatePercent?: number | null;
       categoryTaxRatePercent?: number | null;
     }>,
     effectiveDate: Date = new Date()
   ): TaxSnapshot {
-    let totalNetPoisha = 0;
-    let totalTaxPoisha = 0;
+    let totalNetPoisha = 0n;
+    let totalTaxPoisha = 0n;
 
     const lines: TaxCalculationBreakdown[] = lineItems.map((item) => {
       const rate = this.resolveTaxRatePercent({
@@ -143,5 +149,31 @@ export class TaxService {
       totalGrossPoisha: totalNetPoisha + totalTaxPoisha,
       lines,
     };
+  }
+
+  private toPoisha(value: bigint | number | string): bigint {
+    if (typeof value === 'bigint') return value;
+    if (typeof value === 'number') {
+      if (!Number.isSafeInteger(value)) throw new Error('Poisha values must be safe integers.');
+      return BigInt(value);
+    }
+    if (!/^-?\d+$/.test(value)) throw new Error('Poisha values must be integer strings.');
+    return BigInt(value);
+  }
+
+  private percentToBasisPoints(value: number | string): number {
+    const raw = String(value);
+    if (!/^(?:0|[1-9]\d{0,2})(?:\.\d{1,2})?$/.test(raw)) {
+      throw new Error(`Invalid tax rate percentage: ${value}`);
+    }
+    const [whole, fraction = ''] = raw.split('.');
+    const basisPoints = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+    if (basisPoints < 0 || basisPoints > 10000) throw new Error(`Tax rate must be between 0 and 100 percent: ${value}`);
+    return basisPoints;
+  }
+
+  private roundHalfUp(numerator: bigint, denominator: bigint): bigint {
+    if (denominator <= 0n) throw new Error('Rounding denominator must be positive.');
+    return (numerator + denominator / 2n) / denominator;
   }
 }
