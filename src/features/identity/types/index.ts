@@ -31,6 +31,7 @@ export enum SystemRoleCode {
   SELLER_STAFF = 'SELLER_STAFF',
   CUSTOMER = 'CUSTOMER',
   RIDER = 'RIDER',
+  SYSTEM_SERVICE = 'SYSTEM_SERVICE',
 }
 
 /**
@@ -54,6 +55,8 @@ export enum PermissionModule {
   ORDER = 'ORDER',
   FINANCE = 'FINANCE',
   SYSTEM = 'SYSTEM',
+  SUPPORT = 'SUPPORT',
+  LOGISTICS = 'LOGISTICS',
 }
 
 /**
@@ -89,6 +92,16 @@ export const CANONICAL_PERMISSIONS = {
   ORDERS_CANCEL: 'orders:cancel',
   ORDERS_REFUND: 'orders:refund',
 
+  // Support & Customer Care
+  SUPPORT_READ: 'support:read',
+  SUPPORT_MANAGE: 'support:manage',
+  SUPPORT_ASSIGN: 'support:assign',
+
+  // Logistics & Rider Delivery
+  RIDER_DISPATCH: 'rider:dispatch',
+  RIDER_STATUS_UPDATE: 'rider:status:update',
+  RIDER_LOCATION_UPDATE: 'rider:location:update',
+
   // Finance & Ledger
   FINANCE_READ: 'finance:read',
   FINANCE_LEDGER: 'finance:ledger',
@@ -98,6 +111,9 @@ export const CANONICAL_PERMISSIONS = {
   // System & Operations
   SYSTEM_CONFIG: 'system:config',
   SYSTEM_AUDIT_READ: 'system:audit_read',
+  SYSTEM_SERVICE_EXECUTE: 'system:service:execute',
+  SYSTEM_OUTBOX_PROCESS: 'system:outbox:process',
+  SYSTEM_RECONCILE: 'system:reconcile',
 } as const;
 
 export type PermissionCode = (typeof CANONICAL_PERMISSIONS)[keyof typeof CANONICAL_PERMISSIONS];

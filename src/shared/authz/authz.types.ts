@@ -40,6 +40,17 @@ export type ResourceType =
   | 'ROLE'
   | 'FINANCE'
   | 'SYSTEM'
+  | 'CUSTOMER'
+  | 'CUSTOMER_PROFILE'
+  | 'RIDER'
+  | 'DELIVERY'
+  | 'SHIPMENT'
+  | 'SUPPORT'
+  | 'TICKET'
+  | 'INQUIRY'
+  | 'SYSTEM_SERVICE'
+  | 'WORKER'
+  | 'SERVICE'
   | string;
 
 /**

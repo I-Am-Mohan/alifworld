@@ -16,3 +16,7 @@ export * from './policies/order.policy';
 export * from './policies/wallet.policy';
 export * from './policies/role.policy';
 export * from './policies/system.policy';
+export * from './policies/customer.policy';
+export * from './policies/rider.policy';
+export * from './policies/support.policy';
+export * from './policies/system-service.policy';

@@ -22,6 +22,10 @@ import { OrderPolicy } from './policies/order.policy';
 import { WalletPolicy } from './policies/wallet.policy';
 import { RolePolicy } from './policies/role.policy';
 import { SystemPolicy } from './policies/system.policy';
+import { CustomerPolicy } from './policies/customer.policy';
+import { RiderPolicy } from './policies/rider.policy';
+import { SupportPolicy } from './policies/support.policy';
+import { SystemServicePolicy } from './policies/system-service.policy';
 import { AuditService } from '@/shared/audit/audit.service';
 import { AUDIT_ACTIONS } from '@/shared/audit/audit.interface';
 import { AuthorizationError, ComplianceGateError } from '@/shared/errors/app-error';
@@ -45,6 +49,10 @@ export class PolicyEngine {
     const walletPolicy = new WalletPolicy();
     const rolePolicy = new RolePolicy();
     const systemPolicy = new SystemPolicy();
+    const customerPolicy = new CustomerPolicy();
+    const riderPolicy = new RiderPolicy();
+    const supportPolicy = new SupportPolicy();
+    const systemServicePolicy = new SystemServicePolicy();
 
     this.register(userPolicy);
     this.register(sellerPolicy);
@@ -53,6 +61,10 @@ export class PolicyEngine {
     this.register(walletPolicy);
     this.register(rolePolicy);
     this.register(systemPolicy);
+    this.register(customerPolicy);
+    this.register(riderPolicy);
+    this.register(supportPolicy);
+    this.register(systemServicePolicy);
 
     // Register common aliases
     this.policies.set('PRODUCT', catalogPolicy);
@@ -64,6 +76,15 @@ export class PolicyEngine {
     this.policies.set('CONFIG', systemPolicy);
     this.policies.set('SYSTEM_CONFIG', systemPolicy);
     this.policies.set('AUDIT', systemPolicy);
+    this.policies.set('CUSTOMER_PROFILE', customerPolicy);
+    this.policies.set('DELIVERY', riderPolicy);
+    this.policies.set('SHIPMENT', riderPolicy);
+    this.policies.set('LOGISTICS', riderPolicy);
+    this.policies.set('TICKET', supportPolicy);
+    this.policies.set('INQUIRY', supportPolicy);
+    this.policies.set('SERVICE', systemServicePolicy);
+    this.policies.set('WORKER', systemServicePolicy);
+    this.policies.set('INTERNAL', systemServicePolicy);
   }
 
   /**

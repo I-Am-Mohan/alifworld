@@ -50,6 +50,8 @@ export const openApiSpec = {
     { name: 'Internationalization & Localization', description: 'Dynamic language management, default locale settings, and multilingual platform support' },
     { name: 'Seller Portal', description: 'Storefront management, settings, staff delegation, and KYC compliance' },
     { name: 'Identity & Access Management', description: 'RBAC roles, granular permissions, and identity governance' },
+    { name: 'Customer Support', description: 'Omnichannel customer assistance, order incident tickets, and live SLA resolution' },
+    { name: 'Logistics & Delivery', description: 'Delivery rider dispatch, assignment lease claiming, and live GPS telemetry' },
   ],
   paths: {
     '/api/health/live': {
@@ -1424,6 +1426,204 @@ export const openApiSpec = {
           '201': { description: 'Staff invitation created successfully' },
           '401': { description: 'Unauthorized' },
           '403': { description: 'Forbidden' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/support/tickets': {
+      get: {
+        tags: ['Customer Support'],
+        summary: 'List Support Tickets',
+        description: 'Returns support tickets scoped to caller: customers see their own, merchants see their store issues, and support agents see the queue.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Tickets retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+          '401': { description: 'Unauthorized' },
+        },
+      },
+      post: {
+        tags: ['Customer Support'],
+        summary: 'Create Customer Support Ticket',
+        description: 'Opens a new incident or inquiry ticket for an authenticated customer or seller.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  subject: { type: 'string', example: 'Damaged item received' },
+                  description: { type: 'string', example: 'The box was torn and contents were broken.' },
+                  category: { type: 'string', enum: ['ORDER_INQUIRY', 'DELIVERY_DELAY', 'PAYMENT_ISSUE', 'REFUND_REQUEST', 'PRODUCT_DEFECT', 'ACCOUNT_SECURITY', 'SELLER_ONBOARDING', 'GENERAL_INQUIRY'], default: 'ORDER_INQUIRY' },
+                  priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH', 'URGENT'], default: 'MEDIUM' },
+                  orderId: { type: 'string', example: 'ord_1j7x4b9e8m02k3f8' },
+                  sellerId: { type: 'string', example: 'sel_1j7x4b9e8m02k3f8' },
+                },
+                required: ['subject', 'description'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Ticket created successfully' },
+          '400': { description: 'Bad Request' },
+          '401': { description: 'Unauthorized' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/support/tickets/{id}': {
+      get: {
+        tags: ['Customer Support'],
+        summary: 'Get Support Ticket Details',
+        description: 'Retrieves complete ticket message thread and status. Enforces ownership and support authorization.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'tkt_12345' },
+          },
+        ],
+        responses: {
+          '200': { description: 'Ticket details retrieved' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden: Ownership violation' },
+          '404': { description: 'Ticket not found' },
+        },
+      },
+      post: {
+        tags: ['Customer Support'],
+        summary: 'Reply to Support Ticket',
+        description: 'Appends a response message from the ticket owner or assigned support agent.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'tkt_12345' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  message: { type: 'string', example: 'We have dispatched your replacement.' },
+                },
+                required: ['message'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Reply posted successfully' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+      patch: {
+        tags: ['Customer Support'],
+        summary: 'Resolve Support Ticket',
+        description: 'Closes or resolves a support ticket.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'tkt_12345' },
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  resolutionNote: { type: 'string', example: 'Replacement issued and customer satisfied.' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Ticket marked resolved' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden' },
+        },
+      },
+    },
+    '/api/v1/rider/assignments': {
+      post: {
+        tags: ['Logistics & Delivery'],
+        summary: 'Accept Delivery Assignment',
+        description: 'Atomically claims an available shipment assignment using lease verification to prevent double-assignment.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  deliveryId: { type: 'string', example: 'shp_1j7x4b9e8m02k3f8' },
+                  leaseToken: { type: 'string', example: 'lse_12345' },
+                },
+                required: ['deliveryId'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Assignment claimed successfully' },
+          '401': { description: 'Unauthorized' },
+          '403': { description: 'Forbidden: Double-assignment or lacking rider role' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/rider/location': {
+      post: {
+        tags: ['Logistics & Delivery'],
+        summary: 'Publish Live Rider GPS Location',
+        description: 'Ingests live coordinates from mobile rider app. Compact JSON, throttled in cache.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  deliveryId: { type: 'string', example: 'shp_1j7x4b9e8m02k3f8' },
+                  latitude: { type: 'number', example: 23.8103 },
+                  longitude: { type: 'number', example: 90.4125 },
+                  speed: { type: 'number', example: 28.5 },
+                  heading: { type: 'number', example: 180.0 },
+                },
+                required: ['latitude', 'longitude'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Location recorded successfully' },
+          '401': { description: 'Unauthorized' },
           '422': { description: 'Validation failed' },
         },
       },
