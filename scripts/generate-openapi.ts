@@ -549,6 +549,145 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/logout': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'User Logout & Session Revocation',
+        description: 'Terminates active session in the database, records audit log, and clears HttpOnly authentication cookies.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Logged out successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LogoutResponse' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/sessions': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'List Active User Sessions & Devices',
+        description: 'Returns all active authenticated sessions and registered devices for the current user, flagging the current session.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'List of active sessions returned',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SessionListResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized or session expired',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/sessions/{sessionId}': {
+      delete: {
+        tags: ['Authentication'],
+        summary: 'Revoke Specific Session/Device',
+        description: 'Revokes a single active session belonging to the authenticated user. If the session is the current one, clears cookies.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'sessionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'The unique ID of the session to terminate',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Session revoked successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RevokeSessionResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '404': {
+            description: 'Session not found or belongs to another user',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/sessions/revoke-others': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Revoke All Other Sessions',
+        description: 'Revokes all active sessions for the current user except the current active session.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'All other sessions revoked successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RevokeOthersResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/sessions/revoke-all': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Revoke All Sessions Globally',
+        description: 'Terminates all active sessions for the user, increments tokenVersion to immediately invalidate all access tokens, clears cookies, and forces re-login.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'All sessions revoked globally',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RevokeAllResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/token/policy': {
       get: {
         tags: ['Authentication'],
@@ -1341,6 +1480,101 @@ export const openApiSpec = {
               generation: { type: 'integer', example: 1 },
             },
             required: ['accessToken', 'refreshToken', 'tokenType', 'expiresIn', 'familyId', 'generation'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      LogoutResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'Logged out successfully' },
+            },
+            required: ['message'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      SessionItem: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', example: 'ses_01j7x4b9e8m02k3f8d7c6b5a1' },
+          clientType: { type: 'string', enum: ['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'], example: 'WEB' },
+          deviceSummary: { type: 'string', example: 'Google Chrome on macOS' },
+          ipAddress: { type: 'string', nullable: true, example: '103.112.*.*' },
+          userAgent: { type: 'string', nullable: true, example: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...' },
+          isCurrent: { type: 'boolean', example: true },
+          createdAt: { type: 'string', format: 'date-time', example: '2026-09-22T12:00:00.000Z' },
+          lastActiveAt: { type: 'string', format: 'date-time', example: '2026-09-22T12:30:00.000Z' },
+          expiresAt: { type: 'string', format: 'date-time', example: '2026-09-29T12:00:00.000Z' },
+        },
+        required: ['id', 'clientType', 'deviceSummary', 'isCurrent', 'createdAt', 'lastActiveAt', 'expiresAt'],
+      },
+      SessionListResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              sessions: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/SessionItem' },
+              },
+              total: { type: 'integer', example: 2 },
+              currentSessionId: { type: 'string', example: 'ses_01j7x4b9e8m02k3f8d7c6b5a1' },
+            },
+            required: ['sessions', 'total', 'currentSessionId'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      RevokeSessionResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'Session revoked successfully' },
+              sessionId: { type: 'string', example: 'ses_01j7x4b9e8m02k3f8d7c6b5a1' },
+              isCurrent: { type: 'boolean', example: false },
+            },
+            required: ['message', 'sessionId', 'isCurrent'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      RevokeOthersResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'All other sessions have been logged out successfully' },
+              revokedCount: { type: 'integer', example: 3 },
+              currentSessionId: { type: 'string', example: 'ses_01j7x4b9e8m02k3f8d7c6b5a1' },
+            },
+            required: ['message', 'revokedCount', 'currentSessionId'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      RevokeAllResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              message: { type: 'string', example: 'All sessions terminated everywhere. Please sign in again.' },
+              tokenVersion: { type: 'integer', example: 2 },
+            },
+            required: ['message', 'tokenVersion'],
           },
         },
         required: ['success', 'data'],

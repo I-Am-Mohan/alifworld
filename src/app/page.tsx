@@ -126,7 +126,7 @@ interface Product {
 }
 
 export default function CustomerStorePage() {
-  const { openAuthModal, user } = useAuthModal();
+  const { openAuthModal, openAccountModal, user } = useAuthModal();
   const { t, locale } = useI18n();
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [selectedDivisionKey, setSelectedDivisionKey] = useState<string>('dhaka');
@@ -654,7 +654,7 @@ export default function CustomerStorePage() {
               type="button"
               onClick={() => {
                 if (user) {
-                  showToast(t('auth.signedInAs', { name: user.name || t('nav.account') }));
+                  openAccountModal();
                 } else {
                   openAuthModal('login');
                 }
@@ -1322,7 +1322,7 @@ export default function CustomerStorePage() {
           type="button"
           onClick={() => {
             if (user) {
-              showToast(t('auth.signedInAs', { name: user.name || t('nav.account') }));
+              openAccountModal();
             } else {
               openAuthModal('login');
             }

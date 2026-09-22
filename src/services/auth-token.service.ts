@@ -21,9 +21,10 @@ import {
   generateRefreshToken,
   verifyJwt,
   hashToken,
+  extractBearerToken,
 } from '@/shared/auth/jwt';
 import { SessionRepository } from '@/repositories/session.repository';
-import { UnauthorizedError, TokenReuseDetectedError } from '@/shared/errors/app-error';
+import { UnauthorizedError, TokenReuseDetectedError, NotFoundError } from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { getPrismaClient } from '@/shared/database/prisma';
 
@@ -478,4 +479,265 @@ export class AuthTokenService {
     await this.sessionRepo.revokeAllUserSessions(userId, reason);
     return newVersion;
   }
+
+  /**
+   * Authenticates an incoming Next.js Request using Bearer token or HttpOnly cookie.
+   * Validates JWT signature, active session state, and user status.
+   */
+  async authenticateRequest(req: {
+    headers: { get: (name: string) => string | null };
+    cookies: { get: (name: string) => { value: string } | undefined };
+  }): Promise<{
+    user: any;
+    session: any;
+    claims: AccessTokenClaims;
+  }> {
+    let token = extractBearerToken(req.headers.get('authorization'));
+    if (!token) {
+      token = req.cookies.get(TOKEN_POLICIES.ACCESS_TOKEN_COOKIE_NAME)?.value || null;
+    }
+
+    if (!token) {
+      throw new UnauthorizedError('Authentication credentials required');
+    }
+
+    const claims = verifyJwt<AccessTokenClaims>(token, this.secret);
+
+    const session = await this.sessionRepo.findSessionById(claims.sessionId);
+    if (!session || session.isRevoked || session.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedError('Session is invalid, revoked, or expired');
+    }
+
+    const user = session.user;
+    if (!user || user.status !== 'ACTIVE') {
+      throw new UnauthorizedError('User account is inactive or suspended');
+    }
+
+    if (user.tokenVersion !== claims.tokenVersion) {
+      throw new UnauthorizedError('Session credentials have changed. Please log in again.');
+    }
+
+    return { user, session, claims };
+  }
+
+  /**
+   * Performs user logout for the current session.
+   */
+  async logout(params: {
+    sessionId?: string;
+    userId?: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+    reason?: string;
+  }): Promise<void> {
+    if (params.sessionId) {
+      await this.sessionRepo.revokeSession(params.sessionId, params.reason || 'USER_LOGOUT');
+    }
+
+    if (params.userId) {
+      try {
+        await this.prisma.auditLog.create({
+          data: {
+            id: generateId(ID_PREFIXES.AUDIT),
+            actorId: params.userId,
+            actorRole: 'CUSTOMER',
+            action: 'AUTH_LOGOUT',
+            resource: 'UserSession',
+            resourceId: params.sessionId || params.userId,
+            ipAddress: params.ipAddress ?? null,
+            userAgent: params.userAgent ?? null,
+            metadata: {
+              sessionId: params.sessionId ?? null,
+              reason: params.reason || 'USER_LOGOUT',
+            },
+          },
+        });
+      } catch {}
+    }
+  }
+
+  /**
+   * Lists all active sessions for a user with user-friendly device info.
+   */
+  async listUserSessions(userId: string, currentSessionId?: string): Promise<FormattedSessionItem[]> {
+    const sessions = await this.sessionRepo.getActiveSessionsForUser(userId);
+
+    return sessions.map((s: any) => {
+      const familyMeta = this.sessionRepo.parseFamilyMetadata(s);
+      const deviceSummary = parseDeviceSummary(s.userAgent, s.clientType, familyMeta.rawDeviceInfo);
+
+      return {
+        id: s.id,
+        clientType: s.clientType as ClientType,
+        deviceSummary,
+        ipAddress: s.ipAddress ? s.ipAddress.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, '$1.$2.*.*') : null,
+        userAgent: s.userAgent,
+        isCurrent: s.id === currentSessionId,
+        createdAt: s.createdAt.toISOString(),
+        lastActiveAt: s.lastActiveAt.toISOString(),
+        expiresAt: s.expiresAt.toISOString(),
+      };
+    });
+  }
+
+  /**
+   * Revokes a specific session belonging to the user.
+   */
+  async revokeSessionForUser(params: {
+    userId: string;
+    sessionId: string;
+    reason?: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }): Promise<void> {
+    const session = await this.sessionRepo.findSessionByIdAndUser(params.sessionId, params.userId);
+    if (!session) {
+      throw new NotFoundError('Session not found or does not belong to user');
+    }
+
+    await this.sessionRepo.revokeSession(params.sessionId, params.reason || 'USER_REVOKED_DEVICE');
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          id: generateId(ID_PREFIXES.AUDIT),
+          actorId: params.userId,
+          actorRole: 'CUSTOMER',
+          action: 'AUTH_SESSION_REVOKED',
+          resource: 'UserSession',
+          resourceId: params.sessionId,
+          ipAddress: params.ipAddress ?? null,
+          userAgent: params.userAgent ?? null,
+          metadata: {
+            sessionId: params.sessionId,
+            reason: params.reason || 'USER_REVOKED_DEVICE',
+          },
+        },
+      });
+    } catch {}
+  }
+
+  /**
+   * Revokes all active sessions for a user except their current session.
+   */
+  async revokeOtherSessionsForUser(params: {
+    userId: string;
+    currentSessionId: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }): Promise<{ revokedCount: number }> {
+    const result = await this.sessionRepo.revokeOtherUserSessions(
+      params.userId,
+      params.currentSessionId,
+      'USER_REVOKED_OTHER_DEVICES'
+    );
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          id: generateId(ID_PREFIXES.AUDIT),
+          actorId: params.userId,
+          actorRole: 'CUSTOMER',
+          action: 'AUTH_OTHER_SESSIONS_REVOKED',
+          resource: 'UserSession',
+          resourceId: params.currentSessionId,
+          ipAddress: params.ipAddress ?? null,
+          userAgent: params.userAgent ?? null,
+          metadata: {
+            currentSessionId: params.currentSessionId,
+            revokedCount: result.count ?? 0,
+          },
+        },
+      });
+    } catch {}
+
+    return { revokedCount: result.count ?? 0 };
+  }
+
+  /**
+   * Globally invalidates all sessions for a user, increments tokenVersion.
+   */
+  async revokeAllSessionsForUser(params: {
+    userId: string;
+    reason?: string;
+    ipAddress?: string | null;
+    userAgent?: string | null;
+  }): Promise<number> {
+    const newVersion = await this.sessionRepo.incrementUserTokenVersion(params.userId);
+    await this.sessionRepo.revokeAllUserSessions(params.userId, params.reason || 'USER_REVOKED_ALL_DEVICES');
+
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          id: generateId(ID_PREFIXES.AUDIT),
+          actorId: params.userId,
+          actorRole: 'CUSTOMER',
+          action: 'AUTH_ALL_SESSIONS_REVOKED',
+          resource: 'User',
+          resourceId: params.userId,
+          ipAddress: params.ipAddress ?? null,
+          userAgent: params.userAgent ?? null,
+          metadata: {
+            newTokenVersion: newVersion,
+            reason: params.reason || 'USER_REVOKED_ALL_DEVICES',
+          },
+        },
+      });
+    } catch {}
+
+    return newVersion;
+  }
+}
+
+export interface FormattedSessionItem {
+  id: string;
+  clientType: ClientType;
+  deviceSummary: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  isCurrent: boolean;
+  createdAt: string;
+  lastActiveAt: string;
+  expiresAt: string;
+}
+
+export function parseDeviceSummary(
+  userAgent?: string | null,
+  clientType?: string,
+  rawDevice?: string | null
+): string {
+  if (rawDevice) {
+    try {
+      const parsed = JSON.parse(rawDevice);
+      if (parsed.deviceSummary) return parsed.deviceSummary;
+    } catch {}
+    if (rawDevice.trim() && !rawDevice.startsWith('{')) return rawDevice;
+  }
+
+  if (clientType === 'MOBILE_FLUTTER') {
+    return 'AlifWorld Mobile App (Flutter)';
+  }
+  if (clientType === 'POS') {
+    return 'AlifWorld POS Terminal';
+  }
+  if (clientType === 'ADMIN_PORTAL') {
+    return 'AlifWorld Admin Workstation';
+  }
+
+  if (!userAgent) return 'Web Browser';
+
+  let browser = 'Web Browser';
+  if (userAgent.includes('Edg/')) browser = 'Microsoft Edge';
+  else if (userAgent.includes('Chrome/')) browser = 'Google Chrome';
+  else if (userAgent.includes('Firefox/')) browser = 'Mozilla Firefox';
+  else if (userAgent.includes('Safari/') && !userAgent.includes('Chrome')) browser = 'Apple Safari';
+
+  let os = 'Unknown OS';
+  if (userAgent.includes('Macintosh') || userAgent.includes('Mac OS')) os = 'macOS';
+  else if (userAgent.includes('Windows')) os = 'Windows';
+  else if (userAgent.includes('Android')) os = 'Android';
+  else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
+  else if (userAgent.includes('Linux')) os = 'Linux';
+
+  return `${browser} on ${os}`;
 }

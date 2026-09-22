@@ -248,6 +248,37 @@ export class SessionRepository {
   }
 
   /**
+   * Revokes all active sessions for a user EXCEPT a specified session (e.g. "log out of other devices").
+   */
+  async revokeOtherUserSessions(userId: string, exceptSessionId: string, reason = 'REVOKED_OTHER_SESSIONS') {
+    return this.prisma.userSession.updateMany({
+      where: {
+        userId,
+        id: { not: exceptSessionId },
+        isRevoked: false,
+      },
+      data: {
+        isRevoked: true,
+        revokedAt: new Date(),
+        revokedReason: reason,
+      },
+    });
+  }
+
+  /**
+   * Finds a session by its ID ensuring it belongs to the specified user.
+   */
+  async findSessionByIdAndUser(sessionId: string, userId: string) {
+    return this.prisma.userSession.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+      },
+      include: { user: true },
+    });
+  }
+
+  /**
    * Retrieves all active sessions for a user.
    */
   async getActiveSessionsForUser(userId: string) {

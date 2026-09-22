@@ -110,6 +110,34 @@ export function getAuthCookieOptions(
 }
 
 /**
+ * Clears both access and refresh authentication cookies on an HTTP response.
+ */
+export function clearAuthCookies(
+  response: { cookies: { set: (options: any) => void } },
+  isProduction: boolean = process.env.NODE_ENV === 'production'
+): void {
+  response.cookies.set({
+    name: TOKEN_POLICIES.ACCESS_TOKEN_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
+
+  response.cookies.set({
+    name: TOKEN_POLICIES.REFRESH_TOKEN_COOKIE_NAME,
+    value: '',
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    path: '/api/v1/auth',
+    maxAge: 0,
+  });
+}
+
+/**
  * Strong password complexity policy:
  * - Minimum 8 characters, maximum 128 characters
  * - At least one uppercase letter

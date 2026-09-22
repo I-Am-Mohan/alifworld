@@ -26,6 +26,9 @@ interface AuthContextType {
   isLoadingUser: boolean;
   securityAlert: string | null;
   clearSecurityAlert: () => void;
+  isAccountOpen: boolean;
+  openAccountModal: () => void;
+  closeAccountModal: () => void;
   openAuthModal: (initialMode?: AuthMode) => void;
   closeAuthModal: () => void;
   setMode: (mode: AuthMode) => void;
@@ -43,6 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSessionState | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [securityAlert, setSecurityAlert] = useState<string | null>(null);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+
+  const openAccountModal = () => {
+    setIsAccountOpen(true);
+  };
+
+  const closeAccountModal = () => {
+    setIsAccountOpen(false);
+  };
 
   const clearSecurityAlert = () => {
     setSecurityAlert(null);
@@ -125,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
     } catch {}
     setUser(null);
+    setIsAccountOpen(false);
     if (typeof window !== 'undefined') {
       window.location.reload();
     }
@@ -139,6 +152,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoadingUser,
         securityAlert,
         clearSecurityAlert,
+        isAccountOpen,
+        openAccountModal,
+        closeAccountModal,
         openAuthModal,
         closeAuthModal,
         setMode,
