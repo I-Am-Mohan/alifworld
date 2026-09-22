@@ -33,7 +33,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **003**: Scope boundaries and modular domain map *(Completed)*
 - **004**: Non-functional requirements, capacity assumptions, and SLOs *(Completed)*
 - **005**: Domain glossary and ubiquitous language *(Completed)*
-- **006**: Single-application modular-monolith architecture decisions
+- **006**: Single-application modular-monolith architecture decisions *(Completed)*
 - **007**: Milestone dependency graph and incremental delivery workflow
 - **008**: Risk register and compliance approval gates
 - **009**: Environment, branching, and release strategy

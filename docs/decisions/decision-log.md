@@ -15,6 +15,7 @@
 | [**ADR-0003**](0003-scope-boundaries-and-domain-map.md) | Scope Boundaries, Bounded Contexts, and Modular Monolith Architecture | 2026-09-22 | **Accepted** | Phase 01 / M003 | Architecture Team | Established 20 bounded contexts; enforced thin route handlers, domain services, repositories; prohibited cross-domain direct table mutations; mandated transactional outbox. |
 | [**ADR-0004**](0004-non-functional-requirements-and-slos.md) | Non-Functional Requirements, Capacity Assumptions, and SLOs | 2026-09-22 | **Accepted** | Phase 01 / M004 | SRE & Architecture | Established 3-tier capacity model (up to 2M DAU / 25k QPS); set 99.95% API availability and 100% financial ledger integrity; defined sub-100ms p95 latency budgets and graceful degradation. |
 | [**ADR-0005**](0005-domain-glossary-and-ubiquitous-language.md) | Ubiquitous Language, Canonical Domain Glossary, and Monetary Typing | 2026-09-22 | **Accepted** | Phase 01 / M005 | Product Governance | Standardized canonical domain glossary; enforced integer Poisha (Poisha branded type, _poisha db columns); locked ProductPoint discrete integer units; established bilingual dictionary. |
+| [**ADR-0006**](0006-single-application-modular-monolith-architecture.md) | Single-Application Modular Monolith Architectural Decisions | 2026-09-22 | **Accepted** | Phase 01 / M006 | Architecture Team | Locked single Next.js monolith repository; established 4-layer dependency model; mandated transactional outbox via BullMQ; configured dual web/worker deployment from single Docker image. |
 
 ---
 
