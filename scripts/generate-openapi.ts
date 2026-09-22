@@ -834,6 +834,37 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/csrf': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Provision Anti-CSRF Token',
+        description: 'Generates an authentic cryptographically signed anti-CSRF token, provisions the aw_csrf cookie, and returns token metadata for client mutation headers.',
+        responses: {
+          '200': {
+            description: 'Anti-CSRF token provisioned successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        csrfToken: { type: 'string', example: '9a8b7c...1727050000000.f4e3d2...' },
+                        headerName: { type: 'string', example: 'x-csrf-token' },
+                        expiresInSeconds: { type: 'number', example: 86400 },
+                      },
+                      required: ['csrfToken', 'headerName', 'expiresInSeconds'],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/token/introspect': {
       post: {
         tags: ['Authentication'],
