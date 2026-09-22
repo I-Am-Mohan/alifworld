@@ -156,3 +156,29 @@ export const changePasswordSchema = z
 export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const oauthInitiateQuerySchema = z.object({
+  returnUrl: z.string().max(1024).optional().default('/'),
+  clientType: z.enum(['WEB', 'MOBILE_FLUTTER']).optional().default('WEB'),
+});
+export type OAuthInitiateQueryInput = z.infer<typeof oauthInitiateQuerySchema>;
+
+export const oauthCallbackQuerySchema = z.object({
+  code: z.string().min(1, 'Authorization code is required'),
+  state: z.string().min(1, 'Anti-CSRF state token is required'),
+});
+export type OAuthCallbackQueryInput = z.infer<typeof oauthCallbackQuerySchema>;
+
+export const oauthVerifySchema = z
+  .object({
+    idToken: z.string().min(1).optional(),
+    accessToken: z.string().min(1).optional(),
+    clientType: z.enum(['WEB', 'MOBILE_FLUTTER', 'POS']).default('MOBILE_FLUTTER'),
+    deviceInfo: z.string().max(255).optional(),
+  })
+  .refine((data) => !!data.idToken || !!data.accessToken, {
+    message: 'Either idToken or accessToken must be provided',
+    path: ['idToken'],
+  });
+export type OAuthVerifyInput = z.infer<typeof oauthVerifySchema>;
+

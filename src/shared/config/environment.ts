@@ -131,6 +131,12 @@ export const serverEnvSchema = clientEnvSchema.extend({
   TWILIO_AUTH_TOKEN: z.string().default('mock_twilio_token'),
   TWILIO_PHONE_NUMBER: z.string().default('+1234567890'),
 
+  // Third-Party OAuth Providers (Google & Facebook)
+  GOOGLE_CLIENT_ID: z.string().default('mock_google_client_id'),
+  GOOGLE_CLIENT_SECRET: z.string().default('mock_google_client_secret'),
+  FACEBOOK_APP_ID: z.string().default('mock_facebook_app_id'),
+  FACEBOOK_APP_SECRET: z.string().default('mock_facebook_app_secret'),
+
   // Compliance Approval Gates & Locked Invariants
   FEATURE_AFFILIATE_MULTI_TIER_ENABLED: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())

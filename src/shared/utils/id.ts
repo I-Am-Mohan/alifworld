@@ -71,6 +71,7 @@ export const ID_PREFIXES = {
   SESSION: 'ses',
   FAMILY: 'fam',
   OTP: 'otp',
+  OAUTH_ACCOUNT: 'oac',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];

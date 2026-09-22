@@ -862,6 +862,170 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/oauth/google': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Initiate Google OAuth Flow',
+        description: 'Initiates Google OpenID Connect authorization code flow with HMAC anti-CSRF state token and HttpOnly nonce cookie.',
+        parameters: [
+          {
+            name: 'returnUrl',
+            in: 'query',
+            description: 'Post-authentication redirection URL',
+            schema: { type: 'string', default: '/' },
+          },
+          {
+            name: 'clientType',
+            in: 'query',
+            description: 'Client platform type',
+            schema: { type: 'string', enum: ['WEB', 'MOBILE_FLUTTER'], default: 'WEB' },
+          },
+        ],
+        responses: {
+          '302': {
+            description: 'Redirects to Google accounts authorization page',
+          },
+        },
+      },
+    },
+    '/api/v1/auth/oauth/google/callback': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Handle Google OAuth Redirect Callback',
+        description: 'Verifies state anti-CSRF cookie, exchanges code for Google tokens, links or registers customer account, initializes 4 segregated wallets, and sets session cookies.',
+        parameters: [
+          {
+            name: 'code',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+          {
+            name: 'state',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '302': {
+            description: 'Redirects to returnUrl with session established in cookies',
+          },
+        },
+      },
+    },
+    '/api/v1/auth/oauth/google/verify': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Verify Google ID Token (Flutter / Mobile)',
+        description: 'Verifies native Google ID token from Flutter SDK, links or provisions customer account, and issues Bearer access and refresh token pair.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/OAuthVerifyRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Authentication successful',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/OAuthVerifyResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Invalid token credentials',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/oauth/facebook': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Initiate Facebook OAuth Flow',
+        description: 'Initiates Facebook OAuth 2.0 authorization code flow with HMAC anti-CSRF state token.',
+        parameters: [
+          {
+            name: 'returnUrl',
+            in: 'query',
+            description: 'Post-authentication redirection URL',
+            schema: { type: 'string', default: '/' },
+          },
+        ],
+        responses: {
+          '302': {
+            description: 'Redirects to Facebook OAuth dialog',
+          },
+        },
+      },
+    },
+    '/api/v1/auth/oauth/facebook/callback': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Handle Facebook OAuth Redirect Callback',
+        description: 'Verifies state anti-CSRF token, exchanges code for Facebook access token, links or registers customer account, provisions wallets, and sets session cookies.',
+        parameters: [
+          {
+            name: 'code',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+          {
+            name: 'state',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+          },
+        ],
+        responses: {
+          '302': {
+            description: 'Redirects to returnUrl with session established in cookies',
+          },
+        },
+      },
+    },
+    '/api/v1/auth/oauth/facebook/verify': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Verify Facebook Access Token (Flutter / Mobile)',
+        description: 'Verifies native Facebook access token from Flutter SDK, links or provisions customer account, and issues Bearer token pair.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/OAuthVerifyRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Authentication successful',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/OAuthVerifyResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Invalid token credentials',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/orders': {
       post: {
         tags: ['Order'],
@@ -1760,6 +1924,32 @@ export const openApiSpec = {
               message: { type: 'string' },
             },
             required: ['sessionsRevoked', 'message'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      OAuthVerifyRequest: {
+        type: 'object',
+        properties: {
+          idToken: { type: 'string', description: 'Google ID token from Flutter SDK' },
+          accessToken: { type: 'string', description: 'Facebook access token from Flutter SDK' },
+          clientType: { type: 'string', enum: ['MOBILE_FLUTTER', 'WEB', 'POS'], default: 'MOBILE_FLUTTER' },
+          deviceInfo: { type: 'string', example: 'Google Pixel 8 (Android 14)' },
+        },
+      },
+      OAuthVerifyResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              user: { $ref: '#/components/schemas/AuthUser' },
+              tokens: { $ref: '#/components/schemas/AuthTokenPair' },
+              sessionId: { type: 'string', example: 'ses_01HA0000000000000000000000' },
+              isNewUser: { type: 'boolean', example: false },
+            },
+            required: ['user', 'tokens', 'sessionId', 'isNewUser'],
           },
         },
         required: ['success', 'data'],

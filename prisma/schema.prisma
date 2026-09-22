@@ -130,6 +130,7 @@ model User {
   userRanks       UserRank[]
   sessions        UserSession[]
   otpTokens       OtpToken[]
+  oauthAccounts   OAuthAccount[]
 
   @@index([status])
   @@index([deletedAt])
@@ -1527,6 +1528,34 @@ model OtpToken {
   @@index([identifier, purpose, isUsed])
   @@index([expiresAt])
   @@map("otp_tokens")
+}
+
+// ------------------------------------------------------------------------------
+// 52. Federated OAuth Identities & Social Providers
+// ------------------------------------------------------------------------------
+/// Federated identity mappings for third-party providers (Google, Facebook, Apple)
+model OAuthAccount {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  provider       String    // GOOGLE, FACEBOOK, APPLE
+  providerUserId String    @map("provider_user_id") // Provider's unique subject identifier (sub/id)
+  email          String?   // Email reported by provider at linking time
+  displayName    String?   @map("display_name")
+  avatarUrl      String?   @map("avatar_url")
+  accessToken    String?   @map("access_token")
+  refreshToken   String?   @map("refresh_token")
+  expiresAt      DateTime? @map("expires_at")
+  scope          String?
+  metadata       Json?     // Sanitized provider profile payload
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@index([email])
+  @@map("oauth_accounts")
 }
 
 
