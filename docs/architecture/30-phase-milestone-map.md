@@ -78,7 +78,7 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **036**: Implement logout, revocation, session, and device management
 - **037**: Implement password reset, password change, and breach-safe controls
 - **038**: Design Bangladesh phone normalization and OTP authentication
-- **039**: Add Google and Apple authentication provider architecture
+- **039**: Add Google and facebook authentication provider architecture
 - **040**: Complete authentication audits, rate limits, and integration tests
 
 ### Phase 05: Authorization, Security, and Tenancy (Milestones 041–050)
