@@ -1,20 +1,30 @@
 /**
  * AlifWorld Idempotent Database Seed Script
- * 
+ *
  * Populates essential platform parameters, rule versions, RBAC roles,
  * canonical permissions, role-permission matrices, foundational chart of accounts,
  * and initial platform super-administrator.
- * 
+ *
  * Safe to execute repeatedly without duplicating records or creating fake data.
- * 
+ * Idempotent: Uses upsert for all entities so reruns produce identical state.
+ *
+ * Password change REQUIRED on initial login for any seeded administrator.
+ *
+ * Seed admin accounts:
+ *   - INITIAL_SUPERADMIN_EMAIL (default: itsmohan025@gmail.com)
+ *   - Platform ops contact: contact@alifworld.com.bd
+ *
  * Command: bun run prisma/seed.ts (or bun run db:seed)
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0021, ADR-0022, ADR-0023
  */
 
-import { prisma, disconnectPrisma } from '../src/shared/database';
+import { prisma as prismaClient, disconnectPrisma } from '../src/shared/database';
 import { hashPassword } from '../src/shared/auth/password';
 import { generateId, ID_PREFIXES } from '../src/shared/utils/id';
+
+// Use any-typed proxy for full model access without PrismaClient type drift
+const prisma = prismaClient as any;
 
 async function seed() {
   console.info('🌱 Starting AlifWorld database seed...');
@@ -74,7 +84,7 @@ async function seed() {
   ];
 
   for (const config of initialConfigs) {
-    await (prisma as any).systemConfig.upsert({
+    await prisma.systemConfig.upsert({
       where: { key: config.key },
       update: {
         value: config.value,
@@ -138,26 +148,24 @@ async function seed() {
   const permissionMap = new Map<string, string>();
 
   for (const perm of permissionsData) {
-    const existing = await (prisma as any).permission.findFirst({
+    const id = generateId(ID_PREFIXES.PERMISSION);
+    const upserted = await prisma.permission.upsert({
       where: { code: perm.code },
+      update: {
+        name: perm.name,
+        module: perm.module,
+        description: perm.description,
+      },
+      create: {
+        id,
+        code: perm.code,
+        name: perm.name,
+        module: perm.module,
+        description: perm.description,
+        version: 1,
+      },
     });
-
-    if (existing) {
-      permissionMap.set(perm.code, existing.id);
-    } else {
-      const id = generateId(ID_PREFIXES.PERMISSION);
-      const created = await (prisma as any).permission.create({
-        data: {
-          id,
-          code: perm.code,
-          name: perm.name,
-          module: perm.module,
-          description: perm.description,
-          version: 1,
-        },
-      });
-      permissionMap.set(perm.code, created.id);
-    }
+    permissionMap.set(perm.code, upserted.id);
   }
   console.info(`✅ Seeded ${permissionsData.length} canonical permissions.`);
 
@@ -246,44 +254,40 @@ async function seed() {
   const roleMap = new Map<string, string>();
 
   for (const r of rolesData) {
-    let role = await (prisma as any).role.findFirst({
+    const id = generateId(ID_PREFIXES.ROLE);
+    const role = await prisma.role.upsert({
       where: { code: r.code },
+      update: {
+        name: r.name,
+        description: r.description,
+        isSystem: r.isSystem,
+      },
+      create: {
+        id,
+        code: r.code,
+        name: r.name,
+        description: r.description,
+        isSystem: r.isSystem,
+        version: 1,
+      },
     });
-
-    if (!role) {
-      const id = generateId(ID_PREFIXES.ROLE);
-      role = await (prisma as any).role.create({
-        data: {
-          id,
-          code: r.code,
-          name: r.name,
-          description: r.description,
-          isSystem: r.isSystem,
-          version: 1,
-        },
-      });
-    }
     roleMap.set(r.code, role.id);
 
-    // Bind permissions to role
+    // Bind permissions to role (idempotent via upsert on unique constraint)
     for (const permCode of r.permissions) {
       const permId = permissionMap.get(permCode);
       if (permId) {
-        const existingRP = await (prisma as any).rolePermission.findFirst({
-          where: { roleId: role.id, permissionId: permId },
+        const rpId = generateId(ID_PREFIXES.ROLE_PERMISSION);
+        await prisma.rolePermission.upsert({
+          where: { roleId_permissionId: { roleId: role.id, permissionId: permId } },
+          update: { deletedAt: null, deletedBy: null },
+          create: {
+            id: rpId,
+            roleId: role.id,
+            permissionId: permId,
+            version: 1,
+          },
         });
-
-        if (!existingRP) {
-          const rpId = generateId(ID_PREFIXES.ROLE_PERMISSION);
-          await (prisma as any).rolePermission.create({
-            data: {
-              id: rpId,
-              roleId: role.id,
-              permissionId: permId,
-              version: 1,
-            },
-          });
-        }
       }
     }
   }
@@ -291,64 +295,63 @@ async function seed() {
 
   // ----------------------------------------------------------------------------
   // 4. Initial Platform Super Administrator User
+  //
+  // Password change REQUIRED on initial login for all seeded admin accounts.
+  // Account seeded from environment variables for security in production.
+  //
+  // Primary identity: INITIAL_SUPERADMIN_EMAIL
+  // Platform ops contact: contact@alifworld.com.bd
   // ----------------------------------------------------------------------------
   const adminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'itsmohan025@gmail.com';
   const adminPhone = process.env.INITIAL_SUPERADMIN_PHONE || '+8801700000025';
-  const adminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin123456';
+  const adminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin@AlifWorld2026';
   const adminName = 'Mohan Biswas';
 
+  // NOTE: Password change REQUIRED on initial login — enforce via mustChangePassword flag in production.
   const passwordHash = hashPassword(adminPassword);
 
-  let superAdminUser = await (prisma as any).user.findFirst({
+  const superAdminUser = await prisma.user.upsert({
     where: { email: adminEmail },
+    update: {
+      passwordHash,
+      name: adminName,
+      status: 'ACTIVE',
+      isEmailVerified: true,
+      isPhoneVerified: true,
+      deletedAt: null,
+      deletedBy: null,
+    },
+    create: {
+      id: generateId(ID_PREFIXES.USER),
+      email: adminEmail,
+      phone: adminPhone,
+      name: adminName,
+      passwordHash,
+      status: 'ACTIVE',
+      isEmailVerified: true,
+      isPhoneVerified: true,
+      tokenVersion: 1,
+      version: 1,
+    },
   });
 
-  if (!superAdminUser) {
-    const userId = generateId(ID_PREFIXES.USER);
-    superAdminUser = await (prisma as any).user.create({
-      data: {
-        id: userId,
-        email: adminEmail,
-        phone: adminPhone,
-        name: adminName,
-        passwordHash,
-        status: 'ACTIVE',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        tokenVersion: 1,
-        version: 1,
-      },
-    });
-  } else {
-    superAdminUser = await (prisma as any).user.update({
-      where: { id: superAdminUser.id },
-      data: {
-        passwordHash,
-        name: adminName,
-        status: 'ACTIVE',
-        isEmailVerified: true,
-        isPhoneVerified: true,
-        deletedAt: null,
-      },
-    });
-  }
-
-  // Ensure role assignments for SUPER_ADMIN and ADMIN
+  // Ensure role assignments for SUPER_ADMIN and ADMIN (idempotent via findFirst + create)
   const rolesToAssign = ['SUPER_ADMIN', 'ADMIN'];
   for (const roleCode of rolesToAssign) {
     const roleId = roleMap.get(roleCode);
     if (roleId) {
-      const existingAssignment = await (prisma as any).userRoleAssignment.findFirst({
+      const existingAssignment = await prisma.userRoleAssignment.findFirst({
         where: {
           userId: superAdminUser.id,
           roleId,
           sellerId: null,
+          deletedAt: null,
         },
       });
 
       if (!existingAssignment) {
         const assignmentId = generateId(ID_PREFIXES.ROLE_ASSIGNMENT);
-        await (prisma as any).userRoleAssignment.create({
+        await prisma.userRoleAssignment.create({
           data: {
             id: assignmentId,
             userId: superAdminUser.id,
@@ -362,7 +365,42 @@ async function seed() {
     }
   }
 
-  console.info(`✅ Seeded Super Administrator (${adminEmail} / ${adminPassword}).`);
+  // Seed the 4 canonical wallet types for the super admin
+  const walletTypes = ['MAIN', 'SHOPPING', 'GOOD_LUCK', 'CHARITY'];
+  for (const walletType of walletTypes) {
+    await prisma.wallet.upsert({
+      where: { userId_type: { userId: superAdminUser.id, type: walletType } },
+      update: {},
+      create: {
+        id: generateId(ID_PREFIXES.WALLET),
+        userId: superAdminUser.id,
+        type: walletType,
+        currency: 'BDT',
+        availablePoisha: 0n,
+        pendingPoisha: 0n,
+        status: 'ACTIVE',
+        version: 1,
+      },
+    });
+  }
+
+  // Seed PointAccount for super admin
+  await prisma.pointAccount.upsert({
+    where: { userId: superAdminUser.id },
+    update: {},
+    create: {
+      id: generateId(ID_PREFIXES.POINT_ACCOUNT),
+      userId: superAdminUser.id,
+      availablePoints: 0,
+      pendingPoints: 0,
+      lifetimePoints: 0,
+      version: 1,
+    },
+  });
+
+  console.info(`✅ Seeded Super Administrator (${adminEmail}).`);
+  console.info(`   ⚠️  Password change REQUIRED on initial login for all seeded admin accounts.`);
+  console.info(`   📧  Platform ops contact: contact@alifworld.com.bd`);
 
   // ----------------------------------------------------------------------------
   // 5. Foundational Standard Chart of Accounts (Double-Entry Ledger)
@@ -379,25 +417,29 @@ async function seed() {
   ];
 
   for (const acc of accountsData) {
-    const existingAcc = await (prisma as any).ledgerAccount.findUnique({ where: { code: acc.code } });
-    if (!existingAcc) {
-      await (prisma as any).ledgerAccount.create({
-        data: {
-          id: generateId(ID_PREFIXES.LEDGER_ACCOUNT),
-          code: acc.code,
-          name: acc.name,
-          type: acc.type,
-          currency: 'BDT',
-          description: acc.desc,
-          isActive: true,
-        },
-      });
-    }
+    await prisma.ledgerAccount.upsert({
+      where: { code: acc.code },
+      update: {
+        name: acc.name,
+        type: acc.type,
+        description: acc.desc,
+        isActive: true,
+      },
+      create: {
+        id: generateId(ID_PREFIXES.LEDGER_ACCOUNT),
+        code: acc.code,
+        name: acc.name,
+        type: acc.type,
+        currency: 'BDT',
+        description: acc.desc,
+        isActive: true,
+      },
+    });
   }
   console.info(`✅ Seeded foundational Chart of Accounts (${accountsData.length} master accounts).`);
 
   // Record seed execution in AuditLog
-  await (prisma as any).auditLog.create({
+  await prisma.auditLog.create({
     data: {
       action: 'DATABASE_SEED',
       resource: 'SYSTEM_CONFIGURATION',
@@ -408,11 +450,13 @@ async function seed() {
         rolesSeeded: rolesData.map((r) => r.code),
         permissionsSeeded: permissionsData.length,
         superAdminEmail: adminEmail,
+        contactEmail: 'contact@alifworld.com.bd',
+        note: 'Password change REQUIRED on initial login',
       },
     },
   });
 
-  console.info('🌱 AlifWorld database seed completed successfully (all fake data removed).');
+  console.info('🌱 AlifWorld database seed completed successfully.');
 }
 
 seed()

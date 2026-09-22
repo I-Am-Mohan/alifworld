@@ -50,8 +50,8 @@ export const BangladeshPhoneSchema = z
  */
 export const EmailSchema = z
   .string()
-  .email('Invalid email address format')
-  .transform((val) => val.trim().toLowerCase());
+  .transform((val) => val.trim().toLowerCase())
+  .pipe(z.string().email('Invalid email address format'));
 
 /**
  * Create User Input Schema
