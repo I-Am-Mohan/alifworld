@@ -122,6 +122,7 @@ model User {
   sellerStaff     SellerStaff[]
   orders          Order[]
   carts           Cart[]
+  payments        Payment[]
 
   @@index([status])
   @@index([deletedAt])
@@ -256,6 +257,9 @@ model Seller {
   fulfillmentGroups SellerFulfillmentGroup[]
   orderItems        OrderItem[]
   cartItems         CartItem[]
+  commissions       CommissionLedger[]
+  settlements       SellerSettlement[]
+  payouts           SellerPayout[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -764,6 +768,9 @@ model Order {
   items             OrderItem[]
   fulfillmentGroups SellerFulfillmentGroup[]
   statusHistory     OrderStatusHistory[]
+  payments          Payment[]
+  refunds           Refund[]
+  commissions       CommissionLedger[]
 
   @@index([customerId, status])
   @@index([orderNumber])
@@ -807,8 +814,10 @@ model SellerFulfillmentGroup {
   order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   seller    Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
   warehouse Warehouse?  @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
-  items     OrderItem[]
-  shipments Shipment[]
+  items       OrderItem[]
+  shipments   Shipment[]
+  refunds     Refund[]
+  commissions CommissionLedger[]
 
   @@index([sellerId, status])
   @@index([orderId])
@@ -849,6 +858,7 @@ model OrderItem {
   fulfillmentGroup SellerFulfillmentGroup @relation(fields: [fulfillmentGroupId], references: [id], onDelete: Cascade)
   seller           Seller                 @relation(fields: [sellerId], references: [id], onDelete: Restrict)
   variant          ProductVariant         @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  refundItems      RefundItem[]
 
   @@index([orderId])
   @@index([fulfillmentGroupId])
@@ -938,6 +948,227 @@ model ShipmentEvent {
   @@index([shipmentId, occurredAt])
   @@map("shipment_events")
 }
+
+// ------------------------------------------------------------------------------
+// 32. Customer Payment Transaction
+// ------------------------------------------------------------------------------
+/// Inward customer payment transaction executed through digital gateway or COD
+model Payment {
+  id                   String    @id @default(uuid())
+  orderId              String    @map("order_id")
+  customerId           String    @map("customer_id")
+  paymentNumber        String    @unique @map("payment_number") // e.g. PAY-20260922-XXXX
+  gatewayProvider      String    @map("gateway_provider") // BKASH, NAGAD, UPAY, ROCKET, SSLCOMMERZ, COD
+  gatewayTransactionId String?   @map("gateway_transaction_id") // bKash trxID / gateway reference
+  status               String    @default("PENDING") // PENDING, AUTHORIZED, CAPTURED, FAILED, CANCELLED, REFUNDED, PARTIALLY_REFUNDED
+  amountPoisha         BigInt    @map("amount_poisha")
+  currency             String    @default("BDT")
+  feePoisha            BigInt    @default(0) @map("fee_poisha")
+  clientIp             String?   @map("client_ip")
+  idempotencyKey       String?   @unique @map("idempotency_key")
+  gatewayPayload       Json?     @map("gateway_payload") // Sanitized provider response
+  authorizedAt         DateTime? @map("authorized_at")
+  capturedAt           DateTime? @map("captured_at")
+  failedAt             DateTime? @map("failed_at")
+  failureReason        String?   @map("failure_reason")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  customer User     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  refunds  Refund[]
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status, createdAt])
+  @@index([gatewayProvider, gatewayTransactionId])
+  @@map("payments")
+}
+
+// ------------------------------------------------------------------------------
+// 33. Customer Refund Transaction
+// ------------------------------------------------------------------------------
+/// Full or partial refund with item-level tracking and automatic ledger reversals
+model Refund {
+  id                       String    @id @default(uuid())
+  paymentId                String    @map("payment_id")
+  orderId                  String    @map("order_id")
+  fulfillmentGroupId       String?   @map("fulfillment_group_id")
+  refundNumber             String    @unique @map("refund_number") // e.g. REF-20260922-XXXX
+  amountPoisha             BigInt    @map("amount_poisha")
+  currency                 String    @default("BDT")
+  status                   String    @default("PENDING") // PENDING, APPROVED, PROCESSED, FAILED, REJECTED
+  gatewayRefundId          String?   @map("gateway_refund_id")
+  reason                   String // DAMAGED_GOODS, DEFECTIVE, OUT_OF_STOCK, CUSTOMER_CANCEL, FRAUD
+  idempotencyKey           String?   @unique @map("idempotency_key")
+  reversalPoints           Int       @default(0) @map("reversal_points") // Product Points reversed
+  sellerDeductionPoisha    BigInt    @default(0) @map("seller_deduction_poisha") // Net debit against seller payout
+  taxReversalPoisha        BigInt    @default(0) @map("tax_reversal_poisha")
+  commissionReversalPoisha BigInt    @default(0) @map("commission_reversal_poisha")
+  initiatedBy              String?   @map("initiated_by")
+  approvedBy               String?   @map("approved_by")
+  processedAt              DateTime? @map("processed_at")
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  payment          Payment                 @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  order            Order                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  fulfillmentGroup SellerFulfillmentGroup? @relation(fields: [fulfillmentGroupId], references: [id], onDelete: SetNull)
+  items            RefundItem[]
+
+  @@index([paymentId])
+  @@index([orderId])
+  @@index([fulfillmentGroupId])
+  @@index([status, createdAt])
+  @@map("refunds")
+}
+
+// ------------------------------------------------------------------------------
+// 34. Item-Level Partial Refund Snapshot
+// ------------------------------------------------------------------------------
+/// Itemized breakdown of returned units, refund amount, and reversed Product Points
+model RefundItem {
+  id            String   @id @default(uuid())
+  refundId      String   @map("refund_id")
+  orderItemId   String   @map("order_item_id")
+  quantity      Int
+  amountPoisha  BigInt   @map("amount_poisha")
+  taxPoisha     BigInt   @default(0) @map("tax_poisha")
+  productPoints Int      @default(0) @map("product_points")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  refund    Refund    @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+
+  @@index([refundId])
+  @@index([orderItemId])
+  @@map("refund_items")
+}
+
+// ------------------------------------------------------------------------------
+// 35. Platform Commission Ledger
+// ------------------------------------------------------------------------------
+/// Immutable financial ledger tracking platform commissions, rule versions, and reversals
+model CommissionLedger {
+  id                 String   @id @default(uuid())
+  sellerId           String   @map("seller_id")
+  orderId            String   @map("order_id")
+  fulfillmentGroupId String   @map("fulfillment_group_id")
+  basisAmountPoisha  BigInt   @map("basis_amount_poisha") // Subtotal basis on which commission was calculated
+  commissionRateBps  Int      @map("commission_rate_bps") // Basis points: e.g. 500 = 5.00%
+  commissionPoisha   BigInt   @map("commission_poisha")
+  ruleVersion        String   @default("v1.0.0") @map("rule_version") // Locked rule version applied
+  status             String   @default("EARNED") // EARNED, REVERSED, SETTLED
+  reversalOfId       String?  @unique @map("reversal_of_id") // Links reversal entry to original
+  notes              String?
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  seller             Seller                 @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  order              Order                  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  fulfillmentGroup   SellerFulfillmentGroup @relation(fields: [fulfillmentGroupId], references: [id], onDelete: Restrict)
+  originalCommission CommissionLedger?      @relation("CommissionReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversalCommission CommissionLedger?      @relation("CommissionReversal")
+
+  @@index([sellerId, status])
+  @@index([orderId])
+  @@index([fulfillmentGroupId])
+  @@index([createdAt])
+  @@map("commission_ledger")
+}
+
+// ------------------------------------------------------------------------------
+// 36. Periodic Merchant Settlement Reconciliation
+// ------------------------------------------------------------------------------
+/// Periodic settlement statement batch aggregating seller fulfilled orders, commissions, and adjustments
+model SellerSettlement {
+  id                    String    @id @default(uuid())
+  sellerId              String    @map("seller_id")
+  settlementNumber      String    @unique @map("settlement_number") // e.g. STL-20260922-XXXX
+  periodStart           DateTime  @map("period_start")
+  periodEnd             DateTime  @map("period_end")
+  grossOrderPoisha      BigInt    @map("gross_order_poisha")
+  shippingFeePoisha     BigInt    @map("shipping_fee_poisha")
+  taxPoisha             BigInt    @map("tax_poisha")
+  commissionPoisha      BigInt    @map("commission_poisha")
+  refundDeductionPoisha BigInt    @default(0) @map("refund_deduction_poisha")
+  netPayoutPoisha       BigInt    @map("net_payout_poisha")
+  status                String    @default("PENDING") // PENDING, AUDITED, APPROVED, DISBURSED
+  auditedBy             String?   @map("audited_by")
+  auditedAt             DateTime? @map("audited_at")
+  approvedBy            String?   @map("approved_by")
+  approvedAt            DateTime? @map("approved_at")
+  disbursedAt           DateTime? @map("disbursed_at")
+  version               Int       @default(1)
+  deletedAt             DateTime? @map("deleted_at")
+  deletedBy             String?   @map("deleted_by")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  seller  Seller         @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  payouts SellerPayout[]
+
+  @@index([sellerId, status])
+  @@index([periodStart, periodEnd])
+  @@index([deletedAt])
+  @@map("seller_settlements")
+}
+
+// ------------------------------------------------------------------------------
+// 37. Merchant Bank / MFS Wire Payout Disbursal
+// ------------------------------------------------------------------------------
+/// Physical electronic funds transfer (BEFTN, RTGS, bKash) disbursing net settled funds to merchant
+model SellerPayout {
+  id               String    @id @default(uuid())
+  settlementId     String    @map("settlement_id")
+  sellerId         String    @map("seller_id")
+  payoutNumber     String    @unique @map("payout_number") // e.g. POT-20260922-XXXX
+  channel          String // BEFTN, RTGS, NPSB, BKASH_DISBURSEMENT, NAGAD_DISBURSEMENT
+  bankName         String?   @map("bank_name")
+  accountNumber    String?   @map("account_number") // Masked reference (last 4 visible)
+  accountTitle     String?   @map("account_title")
+  routingNumber    String?   @map("routing_number")
+  amountPoisha     BigInt    @map("amount_poisha")
+  currency         String    @default("BDT")
+  status           String    @default("PENDING") // PENDING, INITIATED, SUCCESS, FAILED, REVERSED
+  gatewayReference String?   @map("gateway_reference")
+  disbursedAt      DateTime? @map("disbursed_at")
+  failureReason    String?   @map("failure_reason")
+  version          Int       @default(1)
+  deletedAt        DateTime? @map("deleted_at")
+  deletedBy        String?   @map("deleted_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  settlement SellerSettlement @relation(fields: [settlementId], references: [id], onDelete: Restrict)
+  seller     Seller           @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+
+  @@index([settlementId])
+  @@index([sellerId, status])
+  @@index([channel])
+  @@index([deletedAt])
+  @@map("seller_payouts")
+}
+
+// ------------------------------------------------------------------------------
+// 38. Gateway Webhook Ingestion & Cryptographic Verification Log
+// ------------------------------------------------------------------------------
+/// Idempotent webhook event log storing raw payloads, provider signatures, and replay deduplication
+model PaymentWebhookLog {
+  id              String    @id @default(uuid())
+  gatewayProvider String    @map("gateway_provider") // BKASH, NAGAD, SSLCOMMERZ, etc.
+  eventType       String    @map("event_type")
+  externalEventId String?   @map("external_event_id") // Provider's unique event ID for deduplication
+  signature       String?
+  payload         Json
+  status          String    @default("PENDING") // PENDING, VERIFIED, PROCESSED, INVALID_SIGNATURE, DUPLICATE
+  processedAt     DateTime? @map("processed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([gatewayProvider, externalEventId])
+  @@index([status, createdAt])
+  @@map("payment_webhook_logs")
+}
+
 
 
 

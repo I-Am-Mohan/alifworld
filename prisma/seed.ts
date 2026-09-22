@@ -1292,6 +1292,146 @@ async function seed() {
 
       console.info('✅ Seeded demo multi-vendor order, seller fulfillment group, shipment, and audit history.');
     }
+
+    // ----------------------------------------------------------------------------
+    // 9. Payments, Refunds, Platform Commissions, Settlements & Payouts
+    // ----------------------------------------------------------------------------
+    const demoOrder = await (prisma as any).order.findFirst({
+      where: { orderNumber: demoOrderNumber },
+      include: { fulfillmentGroups: true },
+    });
+
+    if (demoOrder && merchantStore) {
+      const existingPayment = await (prisma as any).payment.findFirst({
+        where: { orderId: demoOrder.id },
+      });
+
+      if (!existingPayment) {
+        // 9.1 Seed bKash Customer Payment
+        const paymentId = generateId(ID_PREFIXES.PAYMENT);
+        await (prisma as any).payment.create({
+          data: {
+            id: paymentId,
+            orderId: demoOrder.id,
+            customerId: demoOrder.customerId,
+            paymentNumber: 'PAY-20260922-0001',
+            gatewayProvider: 'BKASH',
+            gatewayTransactionId: 'TRX99201948BK',
+            status: 'CAPTURED',
+            amountPoisha: demoOrder.totalPoisha,
+            currency: 'BDT',
+            feePoisha: BigInt(38023), // ~1.5% bKash gateway processing fee (৳380.23)
+            clientIp: '103.230.104.18',
+            idempotencyKey: 'idemp-pay-seed-001',
+            gatewayPayload: {
+              trxID: 'TRX99201948BK',
+              paymentID: 'BKPAY20260922881',
+              transactionStatus: 'Completed',
+              amount: '25348.50',
+              currency: 'BDT',
+              customerMsisdn: '01700112233',
+              merchantInvoiceNumber: demoOrder.orderNumber,
+            },
+            authorizedAt: new Date(Date.now() - 3600000 * 5),
+            capturedAt: new Date(Date.now() - 3600000 * 5),
+          },
+        });
+
+        // 9.2 Seed bKash Webhook IPN Audit Log
+        await (prisma as any).paymentWebhookLog.create({
+          data: {
+            id: generateId(ID_PREFIXES.WEBHOOK_LOG),
+            gatewayProvider: 'BKASH',
+            eventType: 'PAYMENT_CAPTURE',
+            externalEventId: 'EVT-BK-20260922-9920',
+            signature: 'a4f890c2e9123b7a8d5f6e890123456789abcdef0123456789abcdef01234567',
+            payload: {
+              event: 'payment.captured',
+              trxID: 'TRX99201948BK',
+              paymentID: 'BKPAY20260922881',
+              amount: '25348.50',
+              currency: 'BDT',
+              dateTime: new Date(Date.now() - 3600000 * 5).toISOString(),
+            },
+            status: 'PROCESSED',
+            processedAt: new Date(Date.now() - 3600000 * 5),
+          },
+        });
+
+        const targetFulfillmentGroup = demoOrder.fulfillmentGroups[0];
+        if (targetFulfillmentGroup) {
+          // 9.3 Seed Platform Commission Ledger (5% = 500 bps on gross goods subtotal)
+          const commissionBasis = targetFulfillmentGroup.subtotalPoisha;
+          const commissionAmount = (commissionBasis * BigInt(500)) / BigInt(10000); // 109,950 poisha
+
+          await (prisma as any).commissionLedger.create({
+            data: {
+              id: generateId(ID_PREFIXES.COMMISSION),
+              sellerId: merchantStore.id,
+              orderId: demoOrder.id,
+              fulfillmentGroupId: targetFulfillmentGroup.id,
+              basisAmountPoisha: commissionBasis,
+              commissionRateBps: 500,
+              commissionPoisha: commissionAmount,
+              ruleVersion: 'v1.0.0',
+              status: 'EARNED',
+              notes: 'Standard 5% marketplace commission on consumer electronics category',
+            },
+          });
+
+          // 9.4 Seed Seller Settlement Statement Batch
+          const settlementId = generateId(ID_PREFIXES.SETTLEMENT);
+          const netPayout =
+            targetFulfillmentGroup.subtotalPoisha +
+            targetFulfillmentGroup.shippingFeePoisha +
+            targetFulfillmentGroup.taxPoisha -
+            commissionAmount; // 2,199,000 + 6,000 + 329,850 - 109,950 = 2,424,900 poisha
+
+          const settlement = await (prisma as any).sellerSettlement.create({
+            data: {
+              id: settlementId,
+              sellerId: merchantStore.id,
+              settlementNumber: 'STL-20260922-0001',
+              periodStart: new Date(Date.now() - 86400000 * 7),
+              periodEnd: new Date(),
+              grossOrderPoisha: targetFulfillmentGroup.subtotalPoisha,
+              shippingFeePoisha: targetFulfillmentGroup.shippingFeePoisha,
+              taxPoisha: targetFulfillmentGroup.taxPoisha,
+              commissionPoisha: commissionAmount,
+              refundDeductionPoisha: BigInt(0),
+              netPayoutPoisha: netPayout,
+              status: 'APPROVED',
+              auditedBy: 'usr_superadmin',
+              auditedAt: new Date(Date.now() - 3600000 * 3),
+              approvedBy: 'usr_superadmin',
+              approvedAt: new Date(Date.now() - 3600000 * 2),
+            },
+          });
+
+          // 9.5 Seed Bank Wire Disbursal (City Bank BEFTN Transfer)
+          await (prisma as any).sellerPayout.create({
+            data: {
+              id: generateId(ID_PREFIXES.PAYOUT),
+              settlementId: settlement.id,
+              sellerId: merchantStore.id,
+              payoutNumber: 'POT-20260922-0001',
+              channel: 'BEFTN',
+              bankName: 'City Bank PLC',
+              accountNumber: '1102938475001',
+              accountTitle: 'Dhaka Tech Retail Ltd',
+              routingNumber: '225272345',
+              amountPoisha: netPayout,
+              currency: 'BDT',
+              status: 'SUCCESS',
+              gatewayReference: 'BEFTN-CB-20260922-7721',
+              disbursedAt: new Date(Date.now() - 3600000 * 1),
+            },
+          });
+        }
+
+        console.info('✅ Seeded demo payment, gateway webhook log, commission ledger, settlement, and BEFTN payout.');
+      }
+    }
   }
 
   // Record seed execution in AuditLog
