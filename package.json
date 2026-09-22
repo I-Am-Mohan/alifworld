@@ -28,7 +28,12 @@
     "db:seed": "bun run prisma/seed.ts",
     "db:studio": "prisma studio",
     "worker": "bun run src/workers/index.ts",
-    "openapi": "bun run scripts/generate-openapi.ts"
+    "openapi": "bun run scripts/generate-openapi.ts",
+    "infra:up": "docker compose --profile full up -d",
+    "infra:core": "docker compose --profile core up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "infra:reset": "docker compose down -v && docker compose --profile full up -d"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

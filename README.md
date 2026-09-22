@@ -59,6 +59,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[Environment Validation & Secret Boundaries](docs/architecture/environment-validation-and-secret-boundaries.md)**: Zod-validated runtime environment, secret boundary proxy guard, invariant guarantees, and credential redaction.
 - **[Bun Command Contract & Lifecycle Scripts](docs/architecture/bun-command-contract-and-lifecycle-scripts.md)**: Authoritative command contract (`dev:local`, `dev:production`, `build:local`, `production:production`), database migrations, workers, and OpenAPI.
 - **[Testing Frameworks & QA Architecture](docs/architecture/testing-frameworks-and-quality-assurance.md)**: 3-tier test pyramid (unit, integration, e2e smoke) powered by native Bun runner (`bun:test`), financial invariant verification, and mock fixtures.
+- **[Local Development Infrastructure Profiles](docs/architecture/local-development-infrastructure-profiles.md)**: Multi-profile Docker Compose environment (PostgreSQL 16, Redis 7, MinIO S3, Meilisearch, Mailpit), automated bucket setup, and health probes.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -80,6 +81,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0016: Typed Environment Validation and Secret Boundaries Architecture](docs/decisions/0016-typed-environment-validation-and-secret-boundaries.md)
   - [ADR 0017: Bun Command Contract and Lifecycle Scripts Standardization](docs/decisions/0017-bun-command-contract-and-lifecycle-scripts.md)
   - [ADR 0018: Testing Frameworks, Test Pyramid Architecture, and Execution Standards](docs/decisions/0018-testing-frameworks-and-test-pyramid.md)
+  - [ADR 0019: Local Development Infrastructure Profiles (Docker Compose)](docs/decisions/0019-local-development-infrastructure-profiles.md)
 
 ---
 
@@ -90,7 +92,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 | Phase | Milestone Range | Phase Theme | Status |
 |:---:|:---:|:---|:---:|
 | **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
-| **02** | 011–020 | Repository and Tooling | **In Progress (Milestones 011–018 Completed)** |
+| **02** | 011–020 | Repository and Tooling | **In Progress (Milestones 011–019 Completed)** |
 | **03** | 021–030 | Data Architecture | Planned |
 | **04** | 031–040 | Identity and Authentication | Planned |
 | **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
