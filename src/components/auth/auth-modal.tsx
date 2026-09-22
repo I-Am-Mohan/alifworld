@@ -26,6 +26,7 @@ import { useAuthModal, AuthMode } from './auth-context';
 import { useI18n } from '@/i18n/context';
 import { getBangladeshMobileOperator } from '@/shared/utils/phone';
 import { getBangladeshDistricts } from '@/shared/geo/bangladesh-geo';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 type LoginStep = 'number' | 'unregistered' | 'otp' | 'password' | 'forgot';
 type RegisterStep = 'number' | 'otp' | 'name' | 'password' | 'details' | 'success';
@@ -228,7 +229,7 @@ export function AuthModal() {
     setLoading(true);
     try {
       // Check if user exists
-      const checkRes = await fetch('/api/v1/auth/phone/check', {
+      const checkRes = await csrfFetch('/api/v1/auth/phone/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: cleanPhone }),
@@ -244,7 +245,7 @@ export function AuthModal() {
         setLoginStep('unregistered');
       } else {
         // User exists -> dispatch login OTP
-        const otpRes = await fetch('/api/v1/auth/phone/send-otp', {
+        const otpRes = await csrfFetch('/api/v1/auth/phone/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: cleanPhone, purpose: 'LOGIN' }),
@@ -279,7 +280,7 @@ export function AuthModal() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/phone/verify-login', {
+      const res = await csrfFetch('/api/v1/auth/phone/verify-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: phone.trim(), code, clientType: 'WEB' }),
@@ -310,7 +311,7 @@ export function AuthModal() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await csrfFetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -338,7 +339,7 @@ export function AuthModal() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/password/request-reset', {
+      const res = await csrfFetch('/api/v1/auth/password/request-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -378,7 +379,7 @@ export function AuthModal() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/phone/send-otp', {
+      const res = await csrfFetch('/api/v1/auth/phone/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: cleanPhone, purpose: 'REGISTRATION' }),
@@ -412,7 +413,7 @@ export function AuthModal() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/phone/verify-register', {
+      const res = await csrfFetch('/api/v1/auth/phone/verify-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: phone.trim(), code }),
@@ -473,7 +474,7 @@ export function AuthModal() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/phone/complete-registration', {
+      const res = await csrfFetch('/api/v1/auth/phone/complete-registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -701,7 +702,7 @@ export function AuthModal() {
                       // Automatically send OTP for this number and advance!
                       setLoading(true);
                       try {
-                        const res = await fetch('/api/v1/auth/phone/send-otp', {
+                        const res = await csrfFetch('/api/v1/auth/phone/send-otp', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ phone: phone.trim(), purpose: 'REGISTRATION' }),
@@ -800,7 +801,7 @@ export function AuthModal() {
                         onClick={async () => {
                           setLoading(true);
                           try {
-                            const res = await fetch('/api/v1/auth/phone/send-otp', {
+                            const res = await csrfFetch('/api/v1/auth/phone/send-otp', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ phone: phone.trim(), purpose: 'LOGIN' }),
@@ -1144,7 +1145,7 @@ export function AuthModal() {
                         onClick={async () => {
                           setLoading(true);
                           try {
-                            const res = await fetch('/api/v1/auth/phone/send-otp', {
+                            const res = await csrfFetch('/api/v1/auth/phone/send-otp', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ phone: phone.trim(), purpose: 'REGISTRATION' }),

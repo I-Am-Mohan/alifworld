@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ShieldAlert, X } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 export type AuthMode = 'login' | 'register';
 
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If unauthorized (access token expired), attempt silent refresh using token family
       if (res.status === 401) {
-        const refreshRes = await fetch('/api/v1/auth/refresh', {
+        const refreshRes = await csrfFetch('/api/v1/auth/refresh', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -134,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
+      await csrfFetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
     } catch {}
     setUser(null);
     setIsAccountOpen(false);

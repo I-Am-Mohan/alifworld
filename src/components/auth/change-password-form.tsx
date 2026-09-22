@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { AlertCircle, CheckCircle2, Eye, EyeOff, KeyRound, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 interface ChangePasswordFormProps {
   onPasswordChanged: () => void;
@@ -30,7 +31,7 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
 
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/auth/password/change', {
+      const response = await csrfFetch('/api/v1/auth/password/change', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),

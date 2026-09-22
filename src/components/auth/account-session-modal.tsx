@@ -17,6 +17,7 @@ import {
 import { useAuthModal } from './auth-context';
 import { useI18n } from '@/i18n/context';
 import { ChangePasswordForm } from './change-password-form';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 interface SessionItem {
   id: string;
@@ -80,7 +81,7 @@ export function AccountSessionModal() {
   const handleRevokeSingle = async (sessionId: string) => {
     try {
       setActionLoadingId(sessionId);
-      const res = await fetch(`/api/v1/auth/sessions/${sessionId}`, {
+      const res = await csrfFetch(`/api/v1/auth/sessions/${sessionId}`, {
         method: 'DELETE',
       });
       if (res.ok) {
@@ -103,7 +104,7 @@ export function AccountSessionModal() {
   const handleRevokeOthers = async () => {
     try {
       setActionLoadingId('others');
-      const res = await fetch('/api/v1/auth/sessions/revoke-others', {
+      const res = await csrfFetch('/api/v1/auth/sessions/revoke-others', {
         method: 'POST',
       });
       if (res.ok) {
@@ -121,7 +122,7 @@ export function AccountSessionModal() {
   const handleRevokeAll = async () => {
     try {
       setActionLoadingId('all');
-      const res = await fetch('/api/v1/auth/sessions/revoke-all', {
+      const res = await csrfFetch('/api/v1/auth/sessions/revoke-all', {
         method: 'POST',
       });
       if (res.ok) {

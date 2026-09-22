@@ -14,6 +14,7 @@ import {
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await csrfFetch('/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +61,7 @@ export default function AdminLoginPage() {
 
       if (!hasAdminRole) {
         // Automatically revoke session cookies if unauthorized role
-        await fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
+        await csrfFetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {});
         throw new Error(t('admin.unauthorized'));
       }
 
