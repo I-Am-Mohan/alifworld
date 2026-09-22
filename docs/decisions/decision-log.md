@@ -14,6 +14,7 @@
 | [**ADR-0002**](0002-source-document-reconciliation.md) | Source-Document Reconciliation and Treatment of Ambiguities | 2026-09-22 | **Accepted** | Phase 01 / M002 | Product Governance | Adopted 10-page proposal as Tier 2 authority; resolved Customer Club cycles as Daily/Weekly/Monthly/Yearly; locked 50-20-15-5-10 & 70-15-5-10 splits; gated lottery & advanced shopping. |
 | [**ADR-0003**](0003-scope-boundaries-and-domain-map.md) | Scope Boundaries, Bounded Contexts, and Modular Monolith Architecture | 2026-09-22 | **Accepted** | Phase 01 / M003 | Architecture Team | Established 20 bounded contexts; enforced thin route handlers, domain services, repositories; prohibited cross-domain direct table mutations; mandated transactional outbox. |
 | [**ADR-0004**](0004-non-functional-requirements-and-slos.md) | Non-Functional Requirements, Capacity Assumptions, and SLOs | 2026-09-22 | **Accepted** | Phase 01 / M004 | SRE & Architecture | Established 3-tier capacity model (up to 2M DAU / 25k QPS); set 99.95% API availability and 100% financial ledger integrity; defined sub-100ms p95 latency budgets and graceful degradation. |
+| [**ADR-0005**](0005-domain-glossary-and-ubiquitous-language.md) | Ubiquitous Language, Canonical Domain Glossary, and Monetary Typing | 2026-09-22 | **Accepted** | Phase 01 / M005 | Product Governance | Standardized canonical domain glossary; enforced integer Poisha (Poisha branded type, _poisha db columns); locked ProductPoint discrete integer units; established bilingual dictionary. |
 
 ---
 

@@ -45,6 +45,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 - **[AI Execution Protocol](docs/architecture/ai-execution-protocol.md)**: Strict 10-step protocol, inspection standards, zero-placeholder rule, and verification checklist for autonomous agents.
 - **[Scope Boundaries & Domain Map](docs/architecture/scope-boundaries-and-domain-map.md)**: Definition of the 20 bounded contexts, state machines, and event decoupling.
 - **[Non-Functional Requirements & SLOs](docs/architecture/non-functional-requirements-and-slos.md)**: Performance benchmarks, capacity sizing, availability SLOs, and graceful degradation rules.
+- **[Domain Glossary & Ubiquitous Language](docs/architecture/domain-glossary-and-ubiquitous-language.md)**: Canonical terminology, integer Poisha definitions, Product Point rules, and bilingual dictionary.
 - **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
 - **[Source Document Reconciliation Matrix](docs/product/source-document-reconciliation-matrix.md)**: Cross-document conflict analysis and authoritative resolutions.
 - **[Architecture Decision Records (ADRs)](docs/decisions/decision-log.md)**:
@@ -52,6 +53,7 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
   - [ADR 0002: Source-Document Reconciliation and Treatment of Ambiguities](docs/decisions/0002-source-document-reconciliation.md)
   - [ADR 0003: Scope Boundaries, Bounded Contexts, and Modular Monolith Architecture](docs/decisions/0003-scope-boundaries-and-domain-map.md)
   - [ADR 0004: Non-Functional Requirements, Capacity Assumptions, and SLOs](docs/decisions/0004-non-functional-requirements-and-slos.md)
+  - [ADR 0005: Ubiquitous Language, Canonical Domain Glossary, and Monetary Typing](docs/decisions/0005-domain-glossary-and-ubiquitous-language.md)
 
 ---
 
@@ -61,7 +63,7 @@ The project executes through 30 structured phases, tracked in `AlifWorld-300-Mil
 
 | Phase | Milestone Range | Phase Theme | Status |
 |:---:|:---:|:---|:---:|
-| **01** | 001–010 | Governance and Architecture | **In Progress (Milestones 001–004 Completed)** |
+| **01** | 001–010 | Governance and Architecture | **In Progress (Milestones 001–005 Completed)** |
 | **02** | 011–020 | Repository and Tooling | Planned |
 | **03** | 021–030 | Data Architecture | Planned |
 | **04** | 031–040 | Identity and Authentication | Planned |
