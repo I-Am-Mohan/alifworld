@@ -1055,6 +1055,243 @@ async function seed() {
 
       console.info('✅ Seeded platform warehouses, stock balances, active reservations, and movement ledgers.');
     }
+
+    // ----------------------------------------------------------------------------
+    // 8. Carts, Orders, Multi-Vendor Fulfillment Groups & Shipments
+    // ----------------------------------------------------------------------------
+    const customerEmail = 'shopper@alifworld.com';
+    let demoCustomer = await (prisma as any).user.findFirst({
+      where: { email: customerEmail },
+    });
+
+    if (!demoCustomer) {
+      demoCustomer = await (prisma as any).user.create({
+        data: {
+          id: generateId(ID_PREFIXES.USER),
+          email: customerEmail,
+          phone: '+8801700112233',
+          name: 'Tanvir Ahmed',
+          status: 'ACTIVE',
+          isEmailVerified: true,
+          isPhoneVerified: true,
+          version: 1,
+        },
+      });
+
+      const customerRoleId = roleMap.get('CUSTOMER');
+      if (customerRoleId) {
+        await (prisma as any).userRoleAssignment.create({
+          data: {
+            id: generateId(ID_PREFIXES.ROLE_ASSIGNMENT),
+            userId: demoCustomer.id,
+            roleId: customerRoleId,
+            assignedBy: 'SYSTEM_SEED',
+          },
+        });
+      }
+      console.info(`✅ Seeded demo customer user (${customerEmail}).`);
+    }
+
+    // 8.1 Seed Demo Active Cart
+    const existingCart = await (prisma as any).cart.findFirst({
+      where: { userId: demoCustomer.id, status: 'ACTIVE' },
+    });
+
+    if (!existingCart) {
+      const cartId = generateId(ID_PREFIXES.CART);
+      const cart = await (prisma as any).cart.create({
+        data: {
+          id: cartId,
+          userId: demoCustomer.id,
+          currency: 'BDT',
+          status: 'ACTIVE',
+          notes: 'Customer shopping cart with electronic items',
+        },
+      });
+
+      if (earbudsVariant && merchantStore) {
+        await (prisma as any).cartItem.create({
+          data: {
+            id: generateId(ID_PREFIXES.CART_ITEM),
+            cartId: cart.id,
+            variantId: earbudsVariant.id,
+            sellerId: merchantStore.id,
+            quantity: 2,
+            pricePoisha: BigInt(299000), // ৳2,990.00
+            productPoint: 60, // 60 discrete Product Points per unit
+          },
+        });
+      }
+      console.info('✅ Seeded active customer shopping cart and cart items.');
+    }
+
+    // 8.2 Seed Demo Order, Fulfillment Group, Items, History, and Shipment
+    const demoOrderNumber = 'ORD-20260922-0001';
+    const existingOrder = await (prisma as any).order.findFirst({
+      where: { orderNumber: demoOrderNumber },
+    });
+
+    if (!existingOrder && phoneVariant && merchantStore) {
+      const orderId = generateId(ID_PREFIXES.ORDER);
+      const order = await (prisma as any).order.create({
+        data: {
+          id: orderId,
+          orderNumber: demoOrderNumber,
+          customerId: demoCustomer.id,
+          currency: 'BDT',
+          status: 'PROCESSING',
+          paymentStatus: 'PAID',
+          fulfillmentStatus: 'PARTIALLY_FULFILLED',
+          subtotalPoisha: BigInt(2199000), // ৳21,990.00
+          shippingFeePoisha: BigInt(6000),  // ৳60.00 (Dhaka inside)
+          taxPoisha: BigInt(329850),        // ৳3,298.50 (15% VAT)
+          totalPoisha: BigInt(2534850),      // ৳25,348.50
+          totalProductPoints: 450,          // 450 discrete Product Points (independent from BDT)
+          pointsReleased: false,
+          shippingName: 'Tanvir Ahmed',
+          shippingPhone: '+8801700112233',
+          shippingDivision: 'DHAKA',
+          shippingDistrict: 'Dhaka (Gulshan-2)',
+          shippingAddress: 'House 42, Road 11, Block D, Gulshan-2, Dhaka-1212',
+          shippingPostalCode: '1212',
+          ruleVersion: 'v1.0.0',
+          customerNotes: 'Please ring bell upon arrival.',
+          confirmedAt: new Date(),
+        },
+      });
+
+      // Fulfillment Group
+      const groupId = generateId(ID_PREFIXES.FULFILLMENT_GROUP);
+      const sfg = await (prisma as any).sellerFulfillmentGroup.create({
+        data: {
+          id: groupId,
+          orderId: order.id,
+          sellerId: merchantStore.id,
+          warehouseId: bananiDepot ? bananiDepot.id : null,
+          groupNumber: `${demoOrderNumber}-SFG01`,
+          status: 'HANDED_OVER_TO_COURIER',
+          subtotalPoisha: BigInt(2199000),
+          shippingFeePoisha: BigInt(6000),
+          taxPoisha: BigInt(329850),
+          totalPoisha: BigInt(2534850),
+          sellerCommissionPoisha: BigInt(109950), // 5% = ৳1,099.50
+          sellerPayoutPoisha: BigInt(2424900),     // ৳24,249.00
+          totalProductPoints: 450,
+          courierProvider: 'PATHAO',
+          trackingNumber: 'PTH-DHK-882910',
+          consignmentId: 'CSG-2026-0922-901',
+        },
+      });
+
+      // Order Item snapshot
+      await (prisma as any).orderItem.create({
+        data: {
+          id: generateId(ID_PREFIXES.ORDER_ITEM),
+          orderId: order.id,
+          fulfillmentGroupId: sfg.id,
+          sellerId: merchantStore.id,
+          variantId: phoneVariant.id,
+          productTitle: 'Nexus Pro Smartphone 5G',
+          variantTitle: 'Midnight Black / 128GB',
+          sku: phoneVariant.sku,
+          unitPricePoisha: BigInt(2199000),
+          quantity: 1,
+          totalPoisha: BigInt(2199000),
+          taxRatePercent: 15.0,
+          taxPoisha: BigInt(329850),
+          productPointSnapshot: 450,
+          totalProductPoints: 450,
+          status: 'SHIPPED',
+        },
+      });
+
+      // Append-Only Order Status Audit History
+      await (prisma as any).orderStatusHistory.createMany({
+        data: [
+          {
+            id: generateId(ID_PREFIXES.ORDER_STATUS_HISTORY),
+            orderId: order.id,
+            fromStatus: null,
+            toStatus: 'PENDING_PAYMENT',
+            actorId: demoCustomer.id,
+            actorRole: 'CUSTOMER',
+            reason: 'Buyer submitted order checkout with digital payment selected',
+          },
+          {
+            id: generateId(ID_PREFIXES.ORDER_STATUS_HISTORY),
+            orderId: order.id,
+            fromStatus: 'PENDING_PAYMENT',
+            toStatus: 'CONFIRMED',
+            actorId: 'usr_superadmin',
+            actorRole: 'SYSTEM',
+            reason: 'Payment authorized and settled via bKash gateway',
+          },
+          {
+            id: generateId(ID_PREFIXES.ORDER_STATUS_HISTORY),
+            orderId: order.id,
+            fromStatus: 'CONFIRMED',
+            toStatus: 'PROCESSING',
+            actorId: sellerOwnerUser ? sellerOwnerUser.id : null,
+            actorRole: 'SELLER',
+            reason: 'Merchant accepted fulfillment group and initiated parcel packaging',
+          },
+        ],
+      });
+
+      // Logistics Shipment & Timeline Events
+      const shipmentId = generateId(ID_PREFIXES.SHIPMENT);
+      const shipment = await (prisma as any).shipment.create({
+        data: {
+          id: shipmentId,
+          fulfillmentGroupId: sfg.id,
+          sellerId: merchantStore.id,
+          shipmentNumber: 'SHP-20260922-0001',
+          courierProvider: 'PATHAO',
+          trackingNumber: 'PTH-DHK-882910',
+          consignmentId: 'CSG-2026-0922-901',
+          status: 'IN_TRANSIT',
+          weightGrams: 420,
+          packageCount: 1,
+          shippingCostPoisha: BigInt(6000),
+          shippedAt: new Date(),
+          recipientName: 'Tanvir Ahmed',
+          recipientPhone: '+8801700112233',
+          deliveryAddress: 'House 42, Road 11, Block D, Gulshan-2, Dhaka-1212',
+          division: 'DHAKA',
+          district: 'Dhaka (Gulshan-2)',
+        },
+      });
+
+      await (prisma as any).shipmentEvent.createMany({
+        data: [
+          {
+            id: generateId(ID_PREFIXES.SHIPMENT_EVENT),
+            shipmentId: shipment.id,
+            status: 'LABEL_CREATED',
+            description: 'Merchant generated Pathao delivery consignment label',
+            occurredAt: new Date(Date.now() - 3600000 * 4),
+          },
+          {
+            id: generateId(ID_PREFIXES.SHIPMENT_EVENT),
+            shipmentId: shipment.id,
+            status: 'PICKED_UP',
+            description: 'Pathao courier rider picked up parcel from Dhaka Tech Banani Depot',
+            location: 'Banani, Dhaka',
+            occurredAt: new Date(Date.now() - 3600000 * 2),
+          },
+          {
+            id: generateId(ID_PREFIXES.SHIPMENT_EVENT),
+            shipmentId: shipment.id,
+            status: 'IN_TRANSIT',
+            description: 'Parcel arrived at Tejgaon Central Logistics Hub for route sorting',
+            location: 'Tejgaon Sorting Hub, Dhaka',
+            occurredAt: new Date(Date.now() - 3600000),
+          },
+        ],
+      });
+
+      console.info('✅ Seeded demo multi-vendor order, seller fulfillment group, shipment, and audit history.');
+    }
   }
 
   // Record seed execution in AuditLog

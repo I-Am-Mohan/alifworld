@@ -120,6 +120,8 @@ model User {
   roleAssignments UserRoleAssignment[]
   ownedSellers    Seller[]             @relation("UserOwnedSellers")
   sellerStaff     SellerStaff[]
+  orders          Order[]
+  carts           Cart[]
 
   @@index([status])
   @@index([deletedAt])
@@ -249,8 +251,11 @@ model Seller {
   staff        SellerStaff[]
   kycDocuments SellerKycDocument[]
   settings     SellerStoreSettings?
-  products     Product[]
-  warehouses   Warehouse[]
+  products          Product[]
+  warehouses        Warehouse[]
+  fulfillmentGroups SellerFulfillmentGroup[]
+  orderItems        OrderItem[]
+  cartItems         CartItem[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -479,6 +484,8 @@ model ProductVariant {
   product        Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
   stockBalances  StockBalance[]
   stockMovements StockMovementLedger[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
 
   @@index([productId])
   @@index([isActive])
@@ -554,9 +561,10 @@ model Warehouse {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  seller        Seller?               @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  stockBalances StockBalance[]
-  movements     StockMovementLedger[]
+  seller            Seller?                  @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  stockBalances     StockBalance[]
+  movements         StockMovementLedger[]
+  fulfillmentGroups SellerFulfillmentGroup[]
 
   @@index([sellerId])
   @@index([division, district])
@@ -655,6 +663,282 @@ model StockMovementLedger {
   @@index([sourceType, sourceId])
   @@map("stock_movement_ledger")
 }
+
+// ------------------------------------------------------------------------------
+// 24. Customer Shopping Cart & Session
+// ------------------------------------------------------------------------------
+/// Active or abandoned customer shopping cart and checkout session
+model Cart {
+  id         String    @id @default(uuid())
+  userId     String?   @map("user_id") // Nullable for guest checkout sessions
+  currency   String    @default("BDT")
+  status     String    @default("ACTIVE") // ACTIVE, ABANDONED, CONVERTED, MERGED
+  couponCode String?   @map("coupon_code")
+  notes      String?
+  version    Int       @default(1)
+  deletedAt  DateTime? @map("deleted_at")
+  deletedBy  String?   @map("deleted_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items CartItem[]
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+  @@index([deletedAt])
+  @@map("carts")
+}
+
+// ------------------------------------------------------------------------------
+// 25. Shopping Cart Line Items
+// ------------------------------------------------------------------------------
+/// Line items stored inside an active shopping cart with variant and pricing snapshots
+model CartItem {
+  id           String    @id @default(uuid())
+  cartId       String    @map("cart_id")
+  variantId    String    @map("variant_id")
+  sellerId     String    @map("seller_id")
+  quantity     Int
+  pricePoisha  BigInt    @map("price_poisha") // Snapshot of variant price in poisha
+  productPoint Int       @default(0) @map("product_point") // Discrete integer Product Points per unit
+  version      Int       @default(1)
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  cart    Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  seller  Seller         @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+
+  @@index([cartId])
+  @@index([variantId])
+  @@index([sellerId])
+  @@index([deletedAt])
+  @@map("cart_items")
+}
+
+// ------------------------------------------------------------------------------
+// 26. Customer Parent Order
+// ------------------------------------------------------------------------------
+/// Customer parent order consolidating multi-vendor purchases into a unified checkout
+model Order {
+  id                 String    @id @default(uuid())
+  orderNumber        String    @unique @map("order_number") // e.g. ORD-20260922-XXXX
+  customerId         String    @map("customer_id")
+  status             String    @default("PENDING_PAYMENT") // PENDING_PAYMENT, CONFIRMED, PROCESSING, PARTIALLY_SHIPPED, SHIPPED, DELIVERED, COMPLETED, CANCELLED, REFUNDED
+  paymentStatus      String    @default("UNPAID") @map("payment_status") // UNPAID, AUTHORIZED, PAID, PARTIALLY_REFUNDED, REFUNDED, FAILED
+  fulfillmentStatus  String    @default("UNFULFILLED") @map("fulfillment_status") // UNFULFILLED, PARTIALLY_FULFILLED, FULFILLED, RETURNED
+  currency           String    @default("BDT")
+  subtotalPoisha     BigInt    @map("subtotal_poisha")
+  discountPoisha     BigInt    @default(0) @map("discount_poisha")
+  shippingFeePoisha  BigInt    @default(0) @map("shipping_fee_poisha")
+  taxPoisha          BigInt    @default(0) @map("tax_poisha")
+  totalPoisha        BigInt    @map("total_poisha")
+  totalProductPoints Int       @default(0) @map("total_product_points") // Discrete integer points total
+  pointsReleased     Boolean   @default(false) @map("points_released")
+  pointsReleasedAt   DateTime? @map("points_released_at")
+  shippingName       String    @map("shipping_name")
+  shippingPhone      String    @map("shipping_phone")
+  shippingDivision   String    @map("shipping_division") // DHAKA, CHITTAGONG, etc.
+  shippingDistrict   String    @map("shipping_district")
+  shippingUpazila    String?   @map("shipping_upazila")
+  shippingAddress    String    @map("shipping_address")
+  shippingPostalCode String?   @map("shipping_postal_code")
+  billingAddress     String?   @map("billing_address")
+  ruleVersion        String    @default("v1.0.0") @map("rule_version") // Locked rule version applied
+  customerNotes      String?   @map("customer_notes")
+  adminNotes         String?   @map("admin_notes")
+  cancelReason       String?   @map("cancel_reason")
+  cancelledAt        DateTime? @map("cancelled_at")
+  confirmedAt        DateTime? @map("confirmed_at")
+  completedAt        DateTime? @map("completed_at")
+  version            Int       @default(1)
+  deletedAt          DateTime? @map("deleted_at")
+  deletedBy          String?   @map("deleted_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  customer          User                     @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items             OrderItem[]
+  fulfillmentGroups SellerFulfillmentGroup[]
+  statusHistory     OrderStatusHistory[]
+
+  @@index([customerId, status])
+  @@index([orderNumber])
+  @@index([status, createdAt])
+  @@index([paymentStatus])
+  @@index([shippingDivision, shippingDistrict])
+  @@index([deletedAt])
+  @@map("orders")
+}
+
+// ------------------------------------------------------------------------------
+// 27. Multi-Vendor Seller Fulfillment Group
+// ------------------------------------------------------------------------------
+/// Merchant-scoped fulfillment partition ensuring tenant isolation (merchants see only their group)
+model SellerFulfillmentGroup {
+  id                     String    @id @default(uuid())
+  orderId                String    @map("order_id")
+  sellerId               String    @map("seller_id")
+  warehouseId            String?   @map("warehouse_id")
+  groupNumber            String    @unique @map("group_number") // e.g. SFG-20260922-XXXX-SEL01
+  status                 String    @default("PENDING") // PENDING, ACCEPTED, PACKING, READY_FOR_PICKUP, HANDED_OVER_TO_COURIER, IN_TRANSIT, DELIVERED, CANCELLED, REJECTED
+  subtotalPoisha         BigInt    @map("subtotal_poisha")
+  shippingFeePoisha      BigInt    @default(0) @map("shipping_fee_poisha")
+  taxPoisha              BigInt    @default(0) @map("tax_poisha")
+  totalPoisha            BigInt    @map("total_poisha")
+  sellerCommissionPoisha BigInt    @default(0) @map("seller_commission_poisha")
+  sellerPayoutPoisha     BigInt    @default(0) @map("seller_payout_poisha")
+  totalProductPoints     Int       @default(0) @map("total_product_points")
+  courierProvider        String?   @map("courier_provider") // PATHAO, STEADFAST, PAPERFLY, REDX, IN_HOUSE
+  trackingNumber         String?   @map("tracking_number")
+  consignmentId          String?   @map("consignment_id")
+  pickupDate             DateTime? @map("pickup_date")
+  estimatedDelivery      DateTime? @map("estimated_delivery")
+  deliveredAt            DateTime? @map("delivered_at")
+  version                Int       @default(1)
+  deletedAt              DateTime? @map("deleted_at")
+  deletedBy              String?   @map("deleted_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  seller    Seller      @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  warehouse Warehouse?  @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+  shipments Shipment[]
+
+  @@index([sellerId, status])
+  @@index([orderId])
+  @@index([warehouseId])
+  @@index([status, createdAt])
+  @@index([deletedAt])
+  @@map("seller_fulfillment_groups")
+}
+
+// ------------------------------------------------------------------------------
+// 28. Order Line Item & Snapshot
+// ------------------------------------------------------------------------------
+/// Line item snapshot freezing purchased product, variant, pricing, and independent Product Points
+model OrderItem {
+  id                   String    @id @default(uuid())
+  orderId              String    @map("order_id")
+  fulfillmentGroupId   String    @map("fulfillment_group_id")
+  sellerId             String    @map("seller_id")
+  variantId            String    @map("variant_id")
+  productTitle         String    @map("product_title")
+  variantTitle         String    @map("variant_title")
+  sku                  String
+  unitPricePoisha      BigInt    @map("unit_price_poisha")
+  quantity             Int
+  totalPoisha          BigInt    @map("total_poisha")
+  taxRatePercent       Decimal?  @map("tax_rate_percent") @db.Decimal(5, 2)
+  taxPoisha            BigInt    @default(0) @map("tax_poisha")
+  productPointSnapshot Int       @default(0) @map("product_point_snapshot") // Independent discrete points per unit
+  totalProductPoints   Int       @default(0) @map("total_product_points") // productPointSnapshot * quantity
+  status               String    @default("PENDING") // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, RETURNED
+  version              Int       @default(1)
+  deletedAt            DateTime? @map("deleted_at")
+  deletedBy            String?   @map("deleted_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  order            Order                  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fulfillmentGroup SellerFulfillmentGroup @relation(fields: [fulfillmentGroupId], references: [id], onDelete: Cascade)
+  seller           Seller                 @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  variant          ProductVariant         @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([fulfillmentGroupId])
+  @@index([sellerId])
+  @@index([variantId])
+  @@index([deletedAt])
+  @@map("order_items")
+}
+
+// ------------------------------------------------------------------------------
+// 29. Append-Only Order Status Audit History
+// ------------------------------------------------------------------------------
+/// Immutable chronological log tracking every parent order state transition
+model OrderStatusHistory {
+  id         String   @id @default(uuid())
+  orderId    String   @map("order_id")
+  fromStatus String?  @map("from_status")
+  toStatus   String   @map("to_status")
+  actorId    String?  @map("actor_id")
+  actorRole  String?  @map("actor_role") // CUSTOMER, SELLER, ADMIN, SYSTEM
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@map("order_status_history")
+}
+
+// ------------------------------------------------------------------------------
+// 30. Logistics Shipment & Courier Dispatch
+// ------------------------------------------------------------------------------
+/// Physical parcel package dispatched via courier service (Pathao, Steadfast, etc.)
+model Shipment {
+  id                 String    @id @default(uuid())
+  fulfillmentGroupId String    @map("fulfillment_group_id")
+  sellerId           String    @map("seller_id")
+  shipmentNumber     String    @unique @map("shipment_number") // e.g. SHP-20260922-XXXX
+  courierProvider    String    @map("courier_provider") // PATHAO, STEADFAST, PAPERFLY, REDX, IN_HOUSE
+  trackingNumber     String?   @map("tracking_number")
+  consignmentId      String?   @map("consignment_id")
+  status             String    @default("PENDING") // PENDING, LABEL_CREATED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED_DELIVERY, RETURNED_TO_SELLER
+  weightGrams        Int?      @map("weight_grams")
+  packageCount       Int       @default(1) @map("package_count")
+  shippingCostPoisha BigInt    @default(0) @map("shipping_cost_poisha")
+  shippedAt          DateTime? @map("shipped_at")
+  deliveredAt        DateTime? @map("delivered_at")
+  recipientName      String    @map("recipient_name")
+  recipientPhone     String    @map("recipient_phone")
+  deliveryAddress    String    @map("delivery_address")
+  division           String
+  district           String
+  version            Int       @default(1)
+  deletedAt          DateTime? @map("deleted_at")
+  deletedBy          String?   @map("deleted_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  fulfillmentGroup SellerFulfillmentGroup @relation(fields: [fulfillmentGroupId], references: [id], onDelete: Cascade)
+  events           ShipmentEvent[]
+
+  @@index([fulfillmentGroupId])
+  @@index([sellerId, status])
+  @@index([trackingNumber])
+  @@index([division, district])
+  @@index([deletedAt])
+  @@map("shipments")
+}
+
+// ------------------------------------------------------------------------------
+// 31. Append-Only Shipment Event History
+// ------------------------------------------------------------------------------
+/// Immutable chronological tracking event timeline for a shipment package
+model ShipmentEvent {
+  id             String   @id @default(uuid())
+  shipmentId     String   @map("shipment_id")
+  status         String
+  location       String?
+  description    String
+  carrierPayload Json?    @map("carrier_payload")
+  occurredAt     DateTime @default(now()) @map("occurred_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@index([shipmentId, occurredAt])
+  @@map("shipment_events")
+}
+
 
 
 

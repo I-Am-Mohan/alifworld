@@ -142,6 +142,126 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/orders': {
+      post: {
+        tags: ['Order'],
+        summary: 'Create Customer Order (Checkout)',
+        description: 'Executes checkout from an active cart, partitioning items into seller fulfillment groups with exact poisha pricing and independent Product Points snapshotting.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  cartId: { type: 'string', example: 'crt_1j7x4b9e8m02k3f8d7c6b5a4' },
+                  shippingName: { type: 'string', example: 'Tanvir Ahmed' },
+                  shippingPhone: { type: 'string', example: '+8801700112233' },
+                  shippingDivision: { type: 'string', enum: ['DHAKA', 'CHITTAGONG', 'RAJSHAHI', 'KHULNA', 'BARISAL', 'SYLHET', 'RANGPUR', 'MYMENSINGH'] },
+                  shippingDistrict: { type: 'string', example: 'Dhaka' },
+                  shippingAddress: { type: 'string', example: 'House 42, Road 11, Gulshan-2' },
+                },
+                required: ['cartId', 'shippingName', 'shippingPhone', 'shippingDivision', 'shippingDistrict', 'shippingAddress'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Order created successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/orders/{orderNumber}': {
+      get: {
+        tags: ['Order'],
+        summary: 'Get Order Details & Shipment Tracking',
+        description: 'Returns complete customer parent order details with seller fulfillment groups, courier tracking numbers, and shipment timelines.',
+        parameters: [
+          {
+            name: 'orderNumber',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'ORD-20260922-0001' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Order details and shipment tracking retrieved',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/seller/orders': {
+      get: {
+        tags: ['Order'],
+        summary: 'List Seller Fulfillment Groups',
+        description: 'Multi-tenant scoped query returning fulfillment groups and packing items exclusively belonging to the authenticated merchant.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'List of seller fulfillment groups',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/status': {
+      patch: {
+        tags: ['Order'],
+        summary: 'Transition Fulfillment Group Status',
+        description: 'Advances fulfillment group along state machine (ACCEPTED, PACKING, READY_FOR_PICKUP, HANDED_OVER_TO_COURIER) with strict tenant verification.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string', enum: ['ACCEPTED', 'PACKING', 'READY_FOR_PICKUP', 'HANDED_OVER_TO_COURIER'] },
+                  reason: { type: 'string' },
+                },
+                required: ['status'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Status advanced successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {

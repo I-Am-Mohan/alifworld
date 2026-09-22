@@ -648,15 +648,6 @@ export default function CustomerStorePage() {
           <div className="flex items-center space-x-4 sm:space-x-6 shrink-0">
             <button
               type="button"
-              onClick={() => showToast('Watch & Buy Streams')}
-              className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors"
-            >
-              <Video className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
-              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">Watch &amp; Buy</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => showToast('Account Portal')}
               className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors"
             >
@@ -1252,15 +1243,6 @@ export default function CustomerStorePage() {
         >
           <LayoutGrid className="w-5 h-5" />
           <span className="text-[10px] mt-1 font-semibold">Categories</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => showToast('Watch & Buy Live Channels')}
-          className="flex flex-col items-center text-slate-500 hover:text-slate-900 cursor-pointer"
-        >
-          <Video className="w-5 h-5" />
-          <span className="text-[10px] mt-1 font-semibold">Watch</span>
         </button>
 
         <button
