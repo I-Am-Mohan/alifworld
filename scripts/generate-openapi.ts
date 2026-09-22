@@ -267,6 +267,246 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/auth/phone/check': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Check Phone Registration Status',
+        description: 'Verifies whether a Bangladesh mobile number is already registered in the system, directing client state to login OTP or guided onboarding registration.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PhoneCheckRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Phone check result returned',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PhoneCheckResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Validation failed (invalid phone number)',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/phone/send-otp': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Send Phone Verification OTP',
+        description: 'Dispatches a 6-digit ephemeral OTP to the specified Bangladesh mobile number with 60-second cooldown and hourly rate limits.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PhoneSendOtpRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'OTP dispatched successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PhoneSendOtpResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Invalid phone or purpose mismatch',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '429': {
+            description: 'Cooldown or rate limit exceeded',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/phone/verify-login': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Verify Phone Login OTP & Issue Session',
+        description: 'Verifies 6-digit login OTP for an existing phone user, issues access + rotating refresh tokens, and establishes HttpOnly session cookies.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PhoneVerifyLoginRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Login successful, session established',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LoginResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Invalid, expired OTP or account lockout',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/phone/verify-register': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Verify Registration OTP & Issue Ticket',
+        description: 'Verifies 6-digit OTP for an onboarding mobile number and issues a cryptographically signed HMAC registration ticket.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PhoneVerifyRegisterRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'OTP verified, registration ticket returned',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PhoneVerifyRegisterResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Invalid or expired OTP',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/phone/complete-registration': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'Complete Phone Registration Wizard',
+        description: 'Validates registration ticket, creates customer record, provisions 4 segregated wallets and point account, saves optional demographics, and establishes authenticated session.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PhoneCompleteRegistrationRequest' },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Registration completed and logged in',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LoginResponse' },
+              },
+            },
+          },
+          '422': {
+            description: 'Invalid ticket, password policy mismatch, or validation failure',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/login': {
+      post: {
+        tags: ['Authentication'],
+        summary: 'User Authentication & Token Issuance',
+        description: 'Authenticates a user via email or Bangladesh mobile number, issues short-lived JWT access token and single-use rotating refresh token. Sets HttpOnly cookies for web browsers and provides Bearer tokens for mobile Flutter clients.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/LoginRequest' },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Login successful, tokens issued',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/LoginResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Invalid credentials or account suspended',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+          '422': {
+            description: 'Validation failed',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/auth/me': {
+      get: {
+        tags: ['Authentication'],
+        summary: 'Current Authenticated User Profile',
+        description: 'Retrieves active user profile, assigned RBAC roles, granular permissions, segregated wallet balances, and decoupled loyalty points for the current session.',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'User profile retrieved successfully',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/CurrentUserProfileResponse' },
+              },
+            },
+          },
+          '401': {
+            description: 'Unauthorized or token expired/revoked',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiErrorEnvelope' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/token/policy': {
       get: {
         tags: ['Authentication'],
@@ -1014,6 +1254,202 @@ export const openApiSpec = {
               devVerificationCode: { type: 'string', example: '582914' },
             },
             required: ['success', 'message', 'cooldownSeconds'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      PhoneCheckRequest: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', example: '01711223344', description: 'Bangladesh phone number' },
+        },
+        required: ['phone'],
+      },
+      PhoneCheckResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              phone: { type: 'string', example: '+8801711223344' },
+              exists: { type: 'boolean', example: true },
+              registered: { type: 'boolean', example: true },
+              name: { type: 'string', example: 'Rahim Khan', nullable: true },
+              status: { type: 'string', example: 'ACTIVE', nullable: true },
+            },
+            required: ['phone', 'exists', 'registered'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      PhoneSendOtpRequest: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', example: '01711223344' },
+          purpose: { type: 'string', enum: ['LOGIN', 'REGISTER'], default: 'LOGIN' },
+        },
+        required: ['phone'],
+      },
+      PhoneSendOtpResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              phone: { type: 'string', example: '+8801711223344' },
+              cooldownSeconds: { type: 'integer', example: 60 },
+              expiresInSeconds: { type: 'integer', example: 300 },
+              message: { type: 'string', example: 'Verification code sent successfully.' },
+              devOtp: { type: 'string', example: '123456' },
+            },
+            required: ['phone', 'cooldownSeconds', 'expiresInSeconds', 'message'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      PhoneVerifyLoginRequest: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', example: '01711223344' },
+          code: { type: 'string', minLength: 6, maxLength: 6, example: '123456' },
+          clientType: { type: 'string', enum: ['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'], default: 'WEB' },
+          deviceInfo: { type: 'string', example: 'Chrome on macOS' },
+        },
+        required: ['phone', 'code'],
+      },
+      PhoneVerifyRegisterRequest: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', example: '01711223344' },
+          code: { type: 'string', minLength: 6, maxLength: 6, example: '123456' },
+        },
+        required: ['phone', 'code'],
+      },
+      PhoneVerifyRegisterResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              phone: { type: 'string', example: '+8801711223344' },
+              verified: { type: 'boolean', example: true },
+              verificationTicket: { type: 'string', example: 'regticket_a89f...' },
+              expiresInSeconds: { type: 'integer', example: 1800 },
+              message: { type: 'string', example: 'Phone number verified. Please complete profile details.' },
+            },
+            required: ['phone', 'verified', 'verificationTicket', 'message'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      PhoneCompleteRegistrationRequest: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', example: '01711223344' },
+          verificationTicket: { type: 'string', example: 'regticket_a89f...' },
+          firstName: { type: 'string', example: 'Tanvir' },
+          lastName: { type: 'string', example: 'Ahmed' },
+          password: { type: 'string', format: 'password', example: 'SecureP@ss2026' },
+          confirmPassword: { type: 'string', format: 'password', example: 'SecureP@ss2026' },
+          address: { type: 'string', nullable: true, example: 'House 12, Road 4, Dhanmondi' },
+          division: { type: 'string', nullable: true, example: 'Dhaka' },
+          city: { type: 'string', nullable: true, example: 'Dhaka' },
+          birthday: { type: 'string', format: 'date', nullable: true, example: '1995-06-15' },
+          gender: { type: 'string', enum: ['MALE', 'FEMALE', 'OTHER'], nullable: true, example: 'MALE' },
+          clientType: { type: 'string', enum: ['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'], default: 'WEB' },
+        },
+        required: ['phone', 'verificationTicket', 'firstName', 'lastName', 'password', 'confirmPassword'],
+      },
+      LoginRequest: {
+        type: 'object',
+        properties: {
+          identifier: { type: 'string', example: 'tanvir@example.com', description: 'Email address or Bangladesh mobile number (e.g. 01700112233)' },
+          password: { type: 'string', format: 'password', example: 'Dhaka@Commerce#2026!' },
+          clientType: { type: 'string', enum: ['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'], default: 'WEB' },
+          deviceInfo: { type: 'string', example: 'iPhone 15 Pro (iOS 18.0)' },
+        },
+        required: ['identifier', 'password'],
+      },
+      LoginResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              user: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
+                  email: { type: 'string', example: 'tanvir@example.com' },
+                  phone: { type: 'string', example: '+8801700112233', nullable: true },
+                  name: { type: 'string', example: 'Tanvir Ahmed' },
+                  status: { type: 'string', example: 'ACTIVE' },
+                  isEmailVerified: { type: 'boolean', example: true },
+                  isPhoneVerified: { type: 'boolean', example: true },
+                  roles: { type: 'array', items: { type: 'string' }, example: ['CUSTOMER'] },
+                  permissions: { type: 'array', items: { type: 'string' }, example: ['orders:create', 'orders:read'] },
+                  sellerId: { type: 'string', nullable: true },
+                  lastLoginAt: { type: 'string', format: 'date-time' },
+                },
+                required: ['id', 'status', 'isEmailVerified', 'roles'],
+              },
+              tokens: {
+                type: 'object',
+                properties: {
+                  accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+                  refreshToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
+                  tokenType: { type: 'string', example: 'Bearer' },
+                  expiresIn: { type: 'integer', example: 900 },
+                  refreshExpiresIn: { type: 'integer', example: 604800 },
+                },
+                required: ['accessToken', 'refreshToken', 'tokenType', 'expiresIn'],
+              },
+              sessionId: { type: 'string', example: 'ses_01j7x4b9e8m02k3f8d7c6b5a1' },
+            },
+            required: ['user', 'tokens', 'sessionId'],
+          },
+        },
+        required: ['success', 'data'],
+      },
+      CurrentUserProfileResponse: {
+        type: 'object',
+        properties: {
+          success: { type: 'boolean', example: true },
+          data: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
+              email: { type: 'string', example: 'tanvir@example.com' },
+              phone: { type: 'string', example: '+8801700112233', nullable: true },
+              name: { type: 'string', example: 'Tanvir Ahmed' },
+              avatarUrl: { type: 'string', nullable: true },
+              status: { type: 'string', example: 'ACTIVE' },
+              isEmailVerified: { type: 'boolean', example: true },
+              isPhoneVerified: { type: 'boolean', example: true },
+              roles: { type: 'array', items: { type: 'string' }, example: ['CUSTOMER'] },
+              permissions: { type: 'array', items: { type: 'string' } },
+              sellerId: { type: 'string', nullable: true },
+              wallets: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/Wallet' },
+              },
+              pointAccount: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  id: { type: 'string' },
+                  availablePoints: { type: 'integer' },
+                  pendingPoints: { type: 'integer' },
+                  lifetimePoints: { type: 'integer' },
+                },
+              },
+              lastLoginAt: { type: 'string', format: 'date-time', nullable: true },
+            },
+            required: ['id', 'status', 'isEmailVerified', 'roles', 'wallets'],
           },
         },
         required: ['success', 'data'],

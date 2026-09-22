@@ -33,6 +33,7 @@ import {
   HeartPulse,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
+import { useAuthModal } from '@/components/auth/auth-context';
 
 // Custom Vector SVG Icons
 function BasketIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -122,6 +123,7 @@ interface Product {
 }
 
 export default function CustomerStorePage() {
+  const { openAuthModal, user } = useAuthModal();
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [selectedDivision, setSelectedDivision] = useState<string>('Dhaka, Bangladesh');
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
@@ -647,14 +649,28 @@ export default function CustomerStorePage() {
 
           {/* Quick Actions */}
           <div className="flex items-center space-x-4 sm:space-x-6 shrink-0">
-            <Link
-              href="/register"
-              className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors"
-              title="Sign In / Register"
+            <button
+              type="button"
+              onClick={() => {
+                if (user) {
+                  showToast(`Signed in as ${user.name || 'Customer'}`);
+                } else {
+                  openAuthModal('login');
+                }
+              }}
+              className="flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors cursor-pointer"
+              title={user ? `Account: ${user.name || 'Signed In'}` : 'Sign In / Register'}
             >
-              <User className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
-              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">Account</span>
-            </Link>
+              <div className="relative">
+                <User className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
+                {user && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1 truncate max-w-[65px]">
+                {user ? user.name?.split(' ')[0] || 'Account' : 'Account'}
+              </span>
+            </button>
 
             <button
               type="button"

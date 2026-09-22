@@ -61,6 +61,79 @@ export class UserRepository {
   }
 
   /**
+   * Finds user by email or phone identifier, including RBAC roles and permissions.
+   */
+  async findUserByIdentifier(identifier: string) {
+    const clean = identifier.trim();
+    const isEmail = clean.includes('@');
+
+    let cleanEmail: string | undefined;
+    let cleanPhone: string | undefined;
+    let altPhone: string | undefined;
+
+    if (isEmail) {
+      cleanEmail = clean.toLowerCase();
+    } else {
+      const digits = clean.replace(/[\s\-()]/g, '');
+      if (digits.startsWith('+8801')) {
+        cleanPhone = digits;
+        altPhone = digits.replace('+88', '');
+      } else if (digits.startsWith('8801')) {
+        cleanPhone = `+${digits}`;
+        altPhone = digits.replace('88', '');
+      } else if (digits.startsWith('01')) {
+        cleanPhone = `+88${digits}`;
+        altPhone = digits;
+      } else {
+        cleanEmail = clean.toLowerCase();
+        cleanPhone = clean;
+      }
+    }
+
+    const orClauses: Array<{ email?: string; phone?: string }> = [];
+    if (cleanEmail) orClauses.push({ email: cleanEmail });
+    if (cleanPhone) orClauses.push({ phone: cleanPhone });
+    if (altPhone && altPhone !== cleanPhone) orClauses.push({ phone: altPhone });
+
+    return this.prisma.user.findFirst({
+      where: {
+        OR: orClauses,
+      },
+      include: {
+        roleAssignments: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        ownedSellers: {
+          select: { id: true, status: true },
+        },
+        sellerStaff: {
+          select: { sellerId: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Updates last login timestamp for a user.
+   */
+  async updateLastLogin(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+    });
+  }
+
+  /**
    * Finds user by primary ID with roles and permissions.
    */
   async findUserById(id: string) {

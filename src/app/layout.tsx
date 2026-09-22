@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { AuthWrapper } from '@/components/auth/auth-wrapper';
 
 export const metadata: Metadata = {
   title: 'AlifWorld | Bangladesh Premium Multi-Vendor Marketplace',
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en-BD" className="light">
       <body className="antialiased bg-[#FAF9F6] text-slate-900 selection:bg-brand-orange selection:text-white min-h-screen">
-        {children}
+        <AuthWrapper>{children}</AuthWrapper>
       </body>
     </html>
   );
