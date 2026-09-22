@@ -1,0 +1,39 @@
+/**
+ * Authoritative Brand Tokens for AlifWorld
+ * Derived from colors.md and logo.png
+ */
+
+:root {
+  /* Primitive Brand Colors */
+  --alif-black: #000000;
+  --alif-white: #FFFFFF;
+  --alif-orange: #FF6A00;
+  --alif-globe-blue: #4F8FD9;
+  --alif-globe-light: #69B7E8;
+  --alif-globe-dark: #3456A3;
+
+  /* Semantic Theme Tokens - Dark Foundation Default */
+  --alif-bg-app: var(--alif-black);
+  --alif-bg-surface: #111111;
+  --alif-bg-card: #181818;
+  --alif-bg-elevated: #222222;
+
+  --alif-text-primary: var(--alif-white);
+  --alif-text-secondary: #A0A0A0;
+  --alif-text-muted: #707070;
+  --alif-text-inverse: var(--alif-black);
+
+  --alif-border-subtle: #2A2A2A;
+  --alif-border-strong: #404040;
+
+  /* Interactive Elements */
+  --alif-btn-primary-bg: var(--alif-orange);
+  --alif-btn-primary-text: var(--alif-black);
+  --alif-btn-primary-hover: #E55F00;
+  --alif-btn-primary-focus: #FF8533;
+
+  /* Brand Accents */
+  --alif-accent-globe: var(--alif-globe-blue);
+  --alif-accent-globe-light: var(--alif-globe-light);
+  --alif-accent-globe-dark: var(--alif-globe-dark);
+}

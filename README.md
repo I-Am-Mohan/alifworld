@@ -1,0 +1,87 @@
+# AlifWorld: E-Commerce Platform & Digital Ecosystem
+
+AlifWorld is an enterprise-grade multi-vendor e-commerce platform and digital ecosystem engineered for Bangladesh and regional markets. Built as a high-performance single-codebase Next.js modular monolith, AlifWorld unifies customer shopping, multi-vendor seller operations, customer reward and rank ladders, seller clubs and leaderboards, regional distribution commission engines, and mobile-ready Flutter REST API contracts.
+
+---
+
+## Brand Identity & Design Language
+
+AlifWorld's visual identity is governed by the authoritative brand guidelines (`colors.md` and `logo.png`):
+
+- **Foundation**: Deep Black (`#000000`) and Pure White (`#FFFFFF`) provide a bold, high-contrast, modern interface foundation.
+- **Brand Interactive Accent**: Brand Orange (`#FF6A00`) drives all primary calls-to-action, highlights, links, and active interactive states.
+- **Global / World Elements**: Globe Blue (`#4F8FD9`), Globe Light Blue (`#69B7E8`), and Globe Dark Blue (`#3456A3`) accent international, geographic, and world-related modules.
+- **Logo Rule**: The blue globe is an authoritative brand icon and logo element—it is never treated as a replacement character for the letter `O`.
+
+```css
+:root {
+  --alif-black: #000000;
+  --alif-white: #FFFFFF;
+  --alif-orange: #FF6A00;
+  --alif-globe-blue: #4F8FD9;
+  --alif-globe-light: #69B7E8;
+  --alif-globe-dark: #3456A3;
+}
+```
+
+Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/brand-identity-and-design-tokens.md)
+
+---
+
+## Architectural Pillars
+
+1. **Single Deployable Next.js Application**: Storefront, Admin portal, Seller center, Route Handlers under `/app/api/v1`, BullMQ background workers, and documentation reside in one cohesive TypeScript repository. No distributed microservices.
+2. **Deterministic Financial Ledger**: All monetary amounts are stored in Bangladeshi Taka (BDT) integer minor units (poisha). Product Points are distinct, non-convertible units defined independently by sellers. All wallet operations enforce double-entry accounting.
+3. **Versioned Business Rules**: Percentages, commission splits, reward clubs, and rank thresholds are versioned Admin configurations. Historical transactions are never retroactively recalculated.
+4. **Localization First**: Native support for English (`en-BD`) and Bangla (`bn-BD`) with localized numerals, currency formatting, and `Asia/Dhaka` business calendar cutoffs.
+5. **Strict Source Authority & Approval Gates**: All engineering decisions follow a strict 6-tier precedence order. Unapproved financial or regulatory domains are protected behind disabled feature gates until formally authorized.
+
+---
+
+## Core Documentation & Governance
+
+- **[Project Charter](docs/architecture/project-charter.md)**: Full architecture specification, actors, core domains, and non-negotiable invariants.
+- **[30-Phase Milestone Map](docs/architecture/30-phase-milestone-map.md)**: Master delivery roadmap spanning all 300 milestones across 30 disciplined engineering phases.
+- **[AI Execution Protocol](docs/architecture/ai-execution-protocol.md)**: Strict 10-step protocol, inspection standards, zero-placeholder rule, and verification checklist for autonomous agents.
+- **[Source Authority & Approval Gates](docs/product/source-authority-and-approval-gates.md)**: Precedence hierarchy and unresolved business rule gates requiring stakeholder sign-off.
+- **[Architecture Decision Records (ADRs)](docs/decisions/)**:
+  - [ADR 0001: Project Charter, Core Stack, Financial Invariants, Brand Tokens, and AI Protocol](docs/decisions/0001-project-charter-and-execution-protocol.md)
+
+---
+
+## 300-Milestone Delivery Progress
+
+The project executes through 30 structured phases, tracked in `AlifWorld-300-Milestones/`:
+
+| Phase | Milestone Range | Phase Theme | Status |
+|:---:|:---:|:---|:---:|
+| **01** | 001–010 | Governance and Architecture | **In Progress (Milestone 001 Completed)** |
+| **02** | 011–020 | Repository and Tooling | Planned |
+| **03** | 021–030 | Data Architecture | Planned |
+| **04** | 031–040 | Identity and Authentication | Planned |
+| **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
+| **06** | 051–060 | Bangladesh Localization | Planned |
+| **07** | 061–070 | Seller Lifecycle | Planned |
+| **08** | 071–080 | Catalog Foundations | Planned |
+| **09** | 081–090 | Products and Media | Planned |
+| **10** | 091–100 | Pricing, Tax, and Promotions | Planned |
+| **11** | 101–110 | Inventory and Warehousing | Planned |
+| **12** | 111–120 | Search, Discovery, SEO, and Storefront | Planned |
+| **13** | 121–130 | Customer Experience | Planned |
+| **14** | 131–140 | Checkout and Shipping | Planned |
+| **15** | 141–150 | Orders, Fulfillment, Returns, and Refunds | Planned |
+| **16** | 151–160 | Payments and Seller Finance | Planned |
+| **17** | 161–170 | Wallet Ledger | Planned |
+| **18** | 171–180 | Product Points Engine | Planned |
+| **19** | 181–190 | Customer Rewards and Ranks | Planned |
+| **20** | 191–200 | Seller Rewards, Levels, and Leaderboards | Planned |
+| **21** | 201–210 | Regional Distribution and Commissions | Planned |
+| **22** | 211–220 | Lottery, Ads, Packages, and Affiliate Programs | Planned |
+| **23** | 221–230 | Rider and Delivery | Planned |
+| **24** | 231–240 | Admin, CMS, Support, and Analytics | Planned |
+| **25** | 241–250 | Notifications, Jobs, and Realtime Events | Planned |
+| **26** | 251–260 | REST API, OpenAPI, and Flutter Contracts | Planned |
+| **27** | 261–270 | Caching, Performance, Scale, and Resilience | Planned |
+| **28** | 271–280 | Testing, Security, Compliance, and Quality | Planned |
+| **29** | 281–290 | DevOps, Deployment, and Observability | Planned |
+| **30** | 291–300 | Launch, Handover, and Continuous Improvement | Planned |
