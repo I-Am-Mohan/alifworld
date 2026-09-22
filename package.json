@@ -4,7 +4,7 @@
   "private": true,
   "description": "AlifWorld Single-Application Modular Monolith E-Commerce Platform",
   "scripts": {
-     "dev": "bun run scripts/run-with-env.ts .env.local next dev",
+    "dev": "bun run scripts/run-with-env.ts .env.local next dev",
     "dev:production": "bun run scripts/run-with-env.ts .env.production next dev",
     "build": "bun run scripts/run-with-env.ts .env.production next build",
     "build:dev": "bun run scripts/run-with-env.ts .env.local next build",
@@ -23,6 +23,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:sync": "bun run scripts/run-with-env.ts .env.local prisma db push --schema prisma/schema.prisma",
+    "db:sync:production": "bun run scripts/run-with-env.ts .env.production prisma db push --schema prisma/schema.prisma",
     "db:seed": "bun run prisma/seed.ts",
     "db:studio": "prisma studio",
     "worker": "bun run src/workers/index.ts",
