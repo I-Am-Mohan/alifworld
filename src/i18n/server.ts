@@ -11,6 +11,7 @@ import { headers } from 'next/headers';
 import { CanonicalLocale } from './types';
 import { DEFAULT_LOCALE, normalizeToCanonicalLocale } from './config';
 import { getDictionary, resolveTranslationValue, TranslationSchema } from './translations';
+import { formatPluralMessage } from './fallback';
 import { formatLocalizedText } from '@/shared/utils/localization';
 
 /**
@@ -48,15 +49,23 @@ export function formatServerMessage(
   const dict = getServerTranslations(locale);
   const resolved = resolveTranslationValue(dict, path, params);
 
+  const formatResolved = (message: string): string =>
+    params && message.includes('{count, plural,')
+      ? formatPluralMessage(message, {
+          count: typeof params.count === 'number' ? params.count : Number(params.count ?? 0),
+          params,
+        })
+      : formatLocalizedText(message, params);
+
   if (resolved !== null) {
-    return formatLocalizedText(resolved, params);
+    return formatResolved(resolved);
   }
 
   // Fallback to default dictionary if missing in requested language
   const fallbackDict = getDictionary(DEFAULT_LOCALE);
   const fallback = resolveTranslationValue(fallbackDict, path, params);
   if (fallback !== null) {
-    return formatLocalizedText(fallback, params);
+    return formatResolved(fallback);
   }
 
   // Return key path if missing from all dictionaries

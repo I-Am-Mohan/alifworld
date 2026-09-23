@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { I18nService } from '@/services/i18n.service';
+import { errorResponse } from '@/shared/api/error-response';
+import { authenticateRequest } from '@/shared/authz/guard.helper';
+import { defaultPolicyEngine } from '@/shared/authz';
 import { AppError } from '@/shared/errors/app-error';
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +19,8 @@ export async function PATCH(
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const actor = authenticateRequest(req);
+    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
     const { code } = await params;
     const body = await req.json().catch(() => ({}));
 
@@ -67,6 +72,8 @@ export async function DELETE(
   { params }: { params: Promise<{ code: string }> }
 ) {
   try {
+    const actor = authenticateRequest(_req);
+    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
     const { code } = await params;
 
     const updatedConfig = await i18nService.deleteLanguage(code);
@@ -80,29 +87,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-          },
-        },
-        { status: error.statusCode }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to delete language',
-        },
-      },
-      { status: 500 }
-    );
+    return errorResponse(_req, error, 'Failed to delete language');
   }
 }

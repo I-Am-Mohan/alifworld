@@ -55,6 +55,13 @@ export default function AdminSetupPage() {
   const [newLangWord, setNewLangWord] = useState('');
   const [newLangDirection, setNewLangDirection] = useState<'ltr' | 'rtl'>('ltr');
   const [showAddLangModal, setShowAddLangModal] = useState(false);
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaError, setQaError] = useState<string | null>(null);
+  const [qaReport, setQaReport] = useState<{
+    summary: { missing: number; extra: number; placeholderMismatch: number; empty: number; expansion: number };
+    issues: Array<{ type: string; key: string }>;
+    expansionIssues: Array<{ key: string; ratio: number; limit: number }>;
+  } | null>(null);
 
   // Password / secret reveals
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, boolean>>({});
@@ -137,6 +144,23 @@ export default function AdminSetupPage() {
       // Fallback silently to defaults
     } finally {
       setLoadingLanguages(false);
+    }
+  };
+
+  const loadLocalizationQa = async () => {
+    try {
+      setQaLoading(true);
+      setQaError(null);
+      const res = await fetch('/api/v1/admin/localization/qa?referenceLocale=en-BD&targetLocale=bn-BD');
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error?.message || t('admin.localizationQaLoadFailed'));
+      }
+      setQaReport(json.data.catalog);
+    } catch (error: any) {
+      setQaError(error.message || t('admin.localizationQaLoadFailed'));
+    } finally {
+      setQaLoading(false);
     }
   };
 
@@ -746,6 +770,53 @@ export default function AdminSetupPage() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* Localization QA */}
+            <div className="pt-6 border-t border-slate-100 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center space-x-1.5">
+                    <ShieldAlert className="w-4 h-4 text-amber-600" />
+                    <span>{t('admin.localizationQaTitle')}</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{t('admin.localizationQaDescription')}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadLocalizationQa}
+                  disabled={qaLoading}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${qaLoading ? 'animate-spin' : ''}`} />
+                  <span>{t('admin.localizationQaRun')}</span>
+                </button>
+              </div>
+              {qaError && <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3">{qaError}</p>}
+              {qaReport && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    {Object.entries(qaReport.summary).map(([key, value]) => (
+                      <div key={key} className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">{t(`admin.localizationQa.${key}`)}</p>
+                        <p className="text-lg font-black text-slate-900">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {qaReport.issues.length === 0 && qaReport.expansionIssues.length === 0 ? (
+                    <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3">{t('admin.localizationQaPassed')}</p>
+                  ) : (
+                    <div className="max-h-48 overflow-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
+                      {[...qaReport.issues.map((issue) => ({ key: issue.key, detail: issue.type })), ...qaReport.expansionIssues.map((issue) => ({ key: issue.key, detail: `${issue.ratio}x` }))].map((issue) => (
+                        <div key={`${issue.detail}-${issue.key}`} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                          <code className="text-slate-700 truncate">{issue.key}</code>
+                          <span className="text-amber-700 font-semibold shrink-0">{issue.detail}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Section: Multi-Currency Management (3 Options: Name, Symbol, Position) */}

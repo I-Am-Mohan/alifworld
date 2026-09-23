@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { I18nService } from '@/services/i18n.service';
-import { AppError } from '@/shared/errors/app-error';
+import { errorResponse } from '@/shared/api/error-response';
+import { authenticateRequest } from '@/shared/authz/guard.helper';
+import { defaultPolicyEngine } from '@/shared/authz';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +16,8 @@ const i18nService = new I18nService();
  */
 export async function PATCH(req: NextRequest) {
   try {
+    const actor = authenticateRequest(req);
+    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
     const body = await req.json().catch(() => ({}));
     const { defaultLocale } = body;
 
@@ -41,29 +45,6 @@ export async function PATCH(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-          },
-        },
-        { status: error.statusCode }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Failed to update system default language',
-        },
-      },
-      { status: 500 }
-    );
+    return errorResponse(req, error, 'Failed to update system default language');
   }
 }

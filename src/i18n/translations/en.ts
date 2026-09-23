@@ -399,6 +399,18 @@ export const en = {
     currencyRemoved: 'Currency {name} removed',
     currencyPositionSwitched: 'Position for {name} switched to {position}',
     testSmsDispatched: 'Test SMS dispatched to {phone} via {provider}!',
+    localizationQaTitle: 'Localization Catalog QA',
+    localizationQaDescription: 'Review parity, placeholders, empty values, and translation expansion warnings.',
+    localizationQaRun: 'Run QA Check',
+    localizationQaLoadFailed: 'Unable to load localization QA results.',
+    localizationQaPassed: 'No catalog QA issues were found.',
+    localizationQa: {
+      missing: 'Missing',
+      extra: 'Extra',
+      placeholderMismatch: 'Placeholders',
+      empty: 'Empty',
+      expansion: 'Expansion',
+    },
   },
 };
 

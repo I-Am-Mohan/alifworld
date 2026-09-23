@@ -399,6 +399,18 @@ export const bn = {
     currencyRemoved: '{name} মুদ্রা সরানো হয়েছে',
     currencyPositionSwitched: '{name} মুদ্রার অবস্থান {position} করা হয়েছে',
     testSmsDispatched: '{provider}-এর মাধ্যমে {phone} নম্বরে টেস্ট এসএমএস পাঠানো হয়েছে!',
+    localizationQaTitle: 'লোকালাইজেশন ক্যাটালগ QA',
+    localizationQaDescription: 'ভাষার সমতা, প্লেসহোল্ডার, খালি মান এবং অনুবাদ বিস্তারের সতর্কতা পর্যালোচনা করুন।',
+    localizationQaRun: 'QA পরীক্ষা চালান',
+    localizationQaLoadFailed: 'লোকালাইজেশন QA ফলাফল লোড করা যায়নি।',
+    localizationQaPassed: 'কোনো ক্যাটালগ QA সমস্যা পাওয়া যায়নি।',
+    localizationQa: {
+      missing: 'অনুপস্থিত',
+      extra: 'অতিরিক্ত',
+      placeholderMismatch: 'প্লেসহোল্ডার',
+      empty: 'খালি',
+      expansion: 'বিস্তার',
+    },
   },
 };
 

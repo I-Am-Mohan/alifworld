@@ -11,6 +11,7 @@ import {
   normalizeToCanonicalLocale,
 } from './config';
 import { getDictionary, TranslationSchema } from './translations';
+import { formatPluralMessage } from './fallback';
 import { formatLocalizedText } from '@/shared/utils/localization';
 
 interface I18nContextType {
@@ -145,7 +146,12 @@ export function I18nProvider({
       }
 
       if (params) {
-        result = formatLocalizedText(result as string, params);
+        result = result.includes('{count, plural,')
+          ? formatPluralMessage(result, {
+              count: typeof params.count === 'number' ? params.count : Number(params.count ?? 0),
+              params,
+            })
+          : formatLocalizedText(result as string, params);
       }
 
       return result;
