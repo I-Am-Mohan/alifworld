@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import './globals.css';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { I18nProvider } from '@/i18n/context';
 import { headers } from 'next/headers';
