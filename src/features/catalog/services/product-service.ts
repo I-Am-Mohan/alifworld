@@ -20,6 +20,7 @@ import { ProductModel, ProductStatus } from '../types';
 import { CreateProductInput, UpdateProductInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
 import { IdentifierPolicyService } from './identifier-policy-service';
+import { ProductVersionHistoryService } from './product-version-history-service';
 
 export class ProductService {
   constructor(
@@ -29,7 +30,8 @@ export class ProductService {
     private readonly categoryRepo: CategoryRepository = new CategoryRepository(),
     private readonly sellerRepo: SellerRepository = new SellerRepository(),
     private readonly roleAssignmentRepo: UserRoleAssignmentRepository = new UserRoleAssignmentRepository(),
-    private readonly identifierPolicy: IdentifierPolicyService = new IdentifierPolicyService()
+    private readonly identifierPolicy: IdentifierPolicyService = new IdentifierPolicyService(),
+    private readonly versionHistory: ProductVersionHistoryService = new ProductVersionHistoryService()
   ) {}
 
   /**
@@ -130,6 +132,7 @@ export class ProductService {
       },
     });
 
+    await this.versionHistory.record(product.id, { action: 'PRODUCT_CREATED', actorId: actorUserId });
     return (await this.productRepo.findById(product.id))!;
   }
 
@@ -205,6 +208,7 @@ export class ProductService {
       },
     });
 
+    await this.versionHistory.record(updated.id, { action: 'PRODUCT_UPDATED', actorId: actorUserId });
     return updated;
   }
 

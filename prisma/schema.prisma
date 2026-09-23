@@ -996,6 +996,7 @@ model Product {
   optionSets      ProductOptionSet[]
   approvalRequests ProductApprovalRequest[]
   statusHistory    ProductStatusHistory[]
+  versionHistory   ProductVersionHistory[]
   moderationReviews CatalogModerationReview[]
   duplicateFingerprint ProductDuplicateFingerprint?
 
@@ -1199,6 +1200,27 @@ model CatalogExportJob {
 // ------------------------------------------------------------------------------
 // 23. Catalog Moderation and Duplicate Detection
 // ------------------------------------------------------------------------------
+model ProductVersionHistory {
+  id          String   @id
+  productId   String   @map("product_id")
+  version     Int
+  action      String
+  snapshot    Json
+  actorId     String?  @map("actor_id")
+  actorRole   String?  @map("actor_role")
+  requestId   String?  @map("request_id")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, version])
+  @@index([productId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("product_version_history")
+}
+
 model CatalogModerationReview {
   id              String   @id
   productId       String   @map("product_id")

@@ -2663,6 +2663,18 @@ export const openApiSpec = {
     '/api/v1/admin/catalog/products/{id}/archive': {
       post: { tags: ['Catalog'], summary: 'Archive an approved or published product', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalActionRequest' } } } }, responses: { '200': { description: 'Product archived' }, '409': { description: 'State or version conflict' } } },
     },
+    '/api/v1/seller/catalog/products/{id}/versions': {
+      get: { tags: ['Catalog'], summary: 'List seller-scoped immutable product versions', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product version history' }, '403': { description: 'Seller tenant violation' } } },
+    },
+    '/api/v1/seller/catalog/products/{id}/versions/{version}': {
+      get: { tags: ['Catalog'], summary: 'Read one seller-scoped product version', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'version', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }], responses: { '200': { description: 'Product version snapshot' }, '404': { description: 'Version not found' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/versions': {
+      get: { tags: ['Catalog'], summary: 'List immutable product versions for audit review', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product version history' }, '403': { description: 'Requires catalog administration permission' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/versions/{version}': {
+      get: { tags: ['Catalog'], summary: 'Read one immutable product version for audit review', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'version', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }], responses: { '200': { description: 'Product version snapshot' }, '404': { description: 'Version not found' } } },
+    },
     '/api/v1/admin/catalog/products/{id}/review-history': {
       get: { tags: ['Catalog'], summary: 'Read immutable product status history', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product review history' } } },
     },

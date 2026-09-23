@@ -3,6 +3,7 @@ export * from './brand-repository';
 export * from './product-repository';
 export * from './product-variant-repository';
 export * from './product-media-repository';
+export * from './product-version-history-repository';
 export * from './attribute-repository';
 export * from './tax-rule-repository';
 export * from './product-approval-repository';
