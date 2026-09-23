@@ -46,6 +46,13 @@ export function getRateLimitPolicies(): Record<string, RateLimitPolicy> {
       maxRequests: 5,
     },
 
+    // Seller KYC uploads (5 documents per hour per authenticated user/device/IP)
+    SELLER_KYC_UPLOAD: {
+      keyPrefix: 'seller_kyc_upload',
+      windowMs: 60 * 60 * 1000,
+      maxRequests: 5,
+    },
+
     // Token refresh rotation (30 per 60 seconds)
     AUTH_TOKEN_REFRESH: {
       keyPrefix: 'auth_refresh',

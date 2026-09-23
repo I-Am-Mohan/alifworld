@@ -1,173 +1,97 @@
 'use client';
 
-import React, { useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { useI18n } from '@/i18n/context';
+
+type DocumentRecord = { id: string; documentType: string; documentNumber: string | null; fileSize: number; mimeType: string; status: string; rejectionReason: string | null; verifiedAt: string | null; version: number };
+const documentTypes = ['TRADE_LICENSE', 'NID_FRONT', 'NID_BACK', 'BIN_CERTIFICATE', 'BANK_CHEQUE_LEAF', 'TIN_CERTIFICATE'];
 
 export default function SellerKycPage() {
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const { t } = useI18n();
+  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [sellerId, setSellerId] = useState('');
+  const [documentType, setDocumentType] = useState(documentTypes[0]);
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  const [documents, setDocuments] = useState([
-    {
-      id: 'kyc_trade_license_01',
-      type: 'TRADE_LICENSE',
-      title: 'City Corporation Trade License',
-      number: 'TRAD/DNCC/042189/2024',
-      status: 'VERIFIED',
-      verifiedAt: '2026-09-22',
-      fileSize: '1.2 MB',
-      required: true,
-    },
-    {
-      id: 'kyc_bin_certificate_01',
-      type: 'BIN_CERTIFICATE',
-      title: 'NBR VAT / BIN Registration Certificate',
-      number: '0012345678901',
-      status: 'VERIFIED',
-      verifiedAt: '2026-09-22',
-      fileSize: '850 KB',
-      required: true,
-    },
-    {
-      id: 'kyc_nid_front_01',
-      type: 'NID_FRONT',
-      title: 'Owner National Identity Card (Smart NID)',
-      number: '5912345678',
-      status: 'VERIFIED',
-      verifiedAt: '2026-09-22',
-      fileSize: '2.1 MB',
-      required: true,
-    },
-    {
-      id: 'kyc_bank_cheque_01',
-      type: 'BANK_CHEQUE_LEAF',
-      title: 'Cancelled Bank Cheque Leaf (Settlement Account)',
-      number: 'A/C: 11029384756 (BRAC Bank Ltd)',
-      status: 'VERIFIED',
-      verifiedAt: '2026-09-22',
-      fileSize: '1.8 MB',
-      required: false,
-    },
-  ]);
+  const loadDocuments = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/v1/seller/kyc');
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('sellerKyc.loadFailed'));
+      setDocuments(json.data || []);
+      if (json.data?.[0]?.sellerId) setSellerId(json.data[0].sellerId);
+    } catch (err: any) {
+      setError(err.message || t('sellerKyc.loadFailed'));
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
 
-  const handleSimulateUpload = () => {
-    setUploadSuccess('Document successfully uploaded to private S3 bucket. Compliance audit entry created.');
-    setTimeout(() => setUploadSuccess(null), 4000);
+  useEffect(() => { void loadDocuments(); }, [loadDocuments]);
+
+  const upload = async (event: ChangeEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!sellerId || !file) {
+      setError(t('sellerKyc.fileRequired'));
+      return;
+    }
+    try {
+      setUploading(true);
+      setError(null);
+      setMessage(null);
+      const form = new FormData();
+      form.set('sellerId', sellerId);
+      form.set('documentType', documentType);
+      form.set('documentNumber', documentNumber);
+      form.set('file', file);
+      const response = await fetch('/api/v1/seller/kyc', { method: 'POST', headers: { 'X-Device-ID': 'seller-web' }, body: form });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('sellerKyc.uploadFailed'));
+      setMessage(t('sellerKyc.uploaded'));
+      setFile(null);
+      setDocumentNumber('');
+      await loadDocuments();
+    } catch (err: any) {
+      setError(err.message || t('sellerKyc.uploadFailed'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const viewDocument = async (id: string) => {
+    try {
+      const response = await fetch(`/api/v1/seller/kyc/${id}/view`);
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('sellerKyc.viewFailed'));
+      window.open(json.data.viewUrl, '_blank', 'noopener,noreferrer');
+    } catch (err: any) {
+      setError(err.message || t('sellerKyc.viewFailed'));
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center space-x-6">
-            <AlifLogo size="sm" href="/" />
-            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
-            <div className="hidden sm:block">
-              <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-bold">
-                Seller Center
-              </span>
-              <h1 className="text-sm font-black text-slate-900 leading-tight">
-                KYC &amp; Legal Compliance Dossier
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <Button
-              onClick={handleSimulateUpload}
-              className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs shadow-sm shadow-orange-500/25"
-            >
-              + Upload Document
-            </Button>
-            <Link
-              href="/seller"
-              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-all"
-            >
-              ← Dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
-        {uploadSuccess && (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2">
-            <span>✓</span>
-            <span>{uploadSuccess}</span>
-          </div>
-        )}
-
-        {/* Security & Access Policy Notice */}
-        <div className="p-4 rounded-xl border border-sky-200 bg-sky-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-[#0284C7] text-white font-bold flex items-center justify-center text-sm shrink-0">
-              🔒
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">Encrypted Private Storage Boundary</h2>
-              <p className="text-xs text-slate-600 mt-0.5">
-                KYC dossiers are stored in private S3 buckets and accessed only via short-lived pre-signed URLs. Direct public URL access is prohibited.
-              </p>
-            </div>
-          </div>
-          <span className="text-xs font-mono font-bold text-[#0284C7] bg-white border border-sky-200 px-3 py-1 rounded-full">
-            ADR-0024 ENFORCED
-          </span>
-        </div>
-
-        {/* Documents Table */}
-        <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
-          <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-bold text-slate-900">Submitted Legal Documents</CardTitle>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Verified records for Dhaka Tech Electronics (sel_dhaka_tech_01)
-              </p>
-            </div>
-            <Badge variant="success" size="sm">ALL REQUIRED VERIFIED</Badge>
-          </CardHeader>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-slate-50 border-b border-slate-200">
-                <TableRow>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Document Type &amp; Title</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Government Identifier</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">File Metadata</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Verification Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documents.map((doc) => (
-                  <TableRow key={doc.id} className="border-b border-slate-100 hover:bg-slate-50/80">
-                    <TableCell>
-                      <div className="font-bold text-xs text-slate-900">{doc.title}</div>
-                      <div className="text-[10px] font-mono text-[#0284C7]">{doc.type}</div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-slate-700 font-bold">
-                      {doc.number}
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-500">
-                      PDF • {doc.fileSize}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="success" size="sm">✓ {doc.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-xs text-slate-500 font-mono">
-                      {doc.verifiedAt}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
+    <div className="min-h-screen bg-[#FAF9F6] text-slate-900">
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-sm"><div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"><div className="flex items-center gap-4"><AlifLogo size="sm" href="/" /><h1 className="text-sm font-black">{t('sellerKyc.title')}</h1></div><Link href="/seller" className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold">{t('sellerKyc.dashboard')}</Link></div></header>
+      <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900"><strong>{t('sellerKyc.privateStorage')}</strong><p className="mt-1 text-xs text-sky-800">{t('sellerKyc.privateStorageDescription')}</p></div>
+        {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</div>}
+        {message && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{message}</div>}
+        <form onSubmit={upload} className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-5">
+          <input required value={sellerId} onChange={(event) => setSellerId(event.target.value)} placeholder={t('sellerKyc.sellerId')} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+          <select value={documentType} onChange={(event) => setDocumentType(event.target.value)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm">{documentTypes.map((type) => <option key={type}>{type}</option>)}</select>
+          <input value={documentNumber} onChange={(event) => setDocumentNumber(event.target.value)} placeholder={t('sellerKyc.documentNumber')} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+          <input required type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => setFile(event.target.files?.[0] || null)} className="rounded-xl border border-slate-300 px-3 py-2 text-sm" />
+          <button disabled={uploading} className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50">{uploading ? t('common.loading') : t('sellerKyc.upload')}</button>
+        </form>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="border-b border-slate-200 px-5 py-4"><h2 className="font-black">{t('sellerKyc.documents')}</h2></div>{loading ? <p className="p-5 text-sm text-slate-500">{t('common.loading')}</p> : documents.length === 0 ? <p className="p-5 text-sm text-slate-500">{t('sellerKyc.empty')}</p> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">{t('sellerKyc.type')}</th><th className="px-5 py-3">{t('sellerKyc.file')}</th><th className="px-5 py-3">{t('sellerKyc.status')}</th><th className="px-5 py-3" /></tr></thead><tbody>{documents.map((doc) => <tr key={doc.id} className="border-t border-slate-100"><td className="px-5 py-3 font-semibold">{doc.documentType}<div className="text-xs font-normal text-slate-500">{doc.documentNumber || '—'}</div></td><td className="px-5 py-3 text-xs text-slate-500">{doc.mimeType} · {(doc.fileSize / 1024 / 1024).toFixed(2)} MB</td><td className="px-5 py-3"><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold">{doc.status}</span>{doc.rejectionReason && <div className="mt-1 text-xs text-rose-700">{doc.rejectionReason}</div>}</td><td className="px-5 py-3 text-right"><button type="button" onClick={() => void viewDocument(doc.id)} className="text-xs font-bold text-amber-700 hover:underline">{t('sellerKyc.view')}</button></td></tr>)}</tbody></table></div>}</section>
       </main>
     </div>
   );

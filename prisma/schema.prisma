@@ -510,6 +510,8 @@ model SellerKycDocument {
   fileUrl         String    @map("file_url") // Private S3 object key (never public)
   fileSize        Int       @map("file_size")
   mimeType        String    @map("mime_type")
+  contentSha256   String?   @map("content_sha256")
+  uploadedBy      String?   @map("uploaded_by")
   status          String    @default("PENDING") // PENDING, VERIFIED, REJECTED
   rejectionReason String?   @map("rejection_reason")
   verifiedAt      DateTime? @map("verified_at")

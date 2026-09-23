@@ -8,6 +8,7 @@
  * Invariant: ADR-0003, ADR-0006, ADR-0024
  */
 
+import { createHash } from 'crypto';
 import { SellerKycDocumentRepository } from '../repositories/seller-kyc-document-repository';
 import { SellerRepository } from '../repositories/seller-repository';
 import { UserRoleAssignmentRepository } from '@/features/identity/repositories/user-role-assignment-repository';
@@ -16,12 +17,15 @@ import { prisma } from '@/shared/database/prisma';
 import { SellerKycDocumentModel, KycDocumentStatus, KycDocumentType } from '../types';
 import { SubmitKycDocumentInput, VerifyKycDocumentInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
+import { generateId, ID_PREFIXES } from '@/shared/utils/id';
+import { S3PrivateObjectStorage } from '@/shared/storage/s3-object-storage';
 
 export class SellerKycService {
   constructor(
     private readonly kycRepo: SellerKycDocumentRepository = new SellerKycDocumentRepository(),
     private readonly sellerRepo: SellerRepository = new SellerRepository(),
-    private readonly roleAssignmentRepo: UserRoleAssignmentRepository = new UserRoleAssignmentRepository()
+    private readonly roleAssignmentRepo: UserRoleAssignmentRepository = new UserRoleAssignmentRepository(),
+    private readonly storage: S3PrivateObjectStorage = new S3PrivateObjectStorage()
   ) {}
 
   /**
@@ -98,6 +102,81 @@ export class SellerKycService {
   }
 
   /**
+   * Uploads a validated private object and records only its non-sensitive metadata.
+   * The database stores the S3 object key in fileUrl; it never stores a public URL.
+   */
+  public async uploadDocument(
+    actorUserId: string,
+    input: Omit<SubmitKycDocumentInput, 'fileUrl' | 'fileSize' | 'mimeType'> & { mimeType: string },
+    file: Uint8Array
+  ): Promise<SellerKycDocumentModel> {
+    const seller = await this.sellerRepo.findById(input.sellerId);
+    if (!seller) throw new NotFoundError(`Seller with id '${input.sellerId}' not found.`, { sellerId: input.sellerId });
+
+    const isOwner = seller.ownerUserId === actorUserId;
+    const hasTenantStaffRole = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SELLER_STAFF, input.sellerId);
+    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    if (!isOwner && !hasTenantStaffRole && !isSuperAdmin) {
+      throw new AuthorizationError('You do not have permission to submit KYC documents for this seller tenant.');
+    }
+
+    const contentSha256 = createHash('sha256').update(file).digest('hex');
+    const duplicate = await this.kycRepo.findByContentHash(input.sellerId, contentSha256);
+    if (duplicate) {
+      throw new ValidationError('This document has already been uploaded for this seller.', { documentId: duplicate.id });
+    }
+
+    const documentId = generateId(ID_PREFIXES.KYC_DOCUMENT);
+    const objectKey = `private/kyc/${input.sellerId}/${documentId}/${input.documentType.toLowerCase()}`;
+    await this.storage.putObject({
+      key: objectKey,
+      body: file,
+      contentType: input.mimeType,
+      metadata: { sellerId: input.sellerId, documentId, sha256: contentSha256 },
+    });
+
+    try {
+      const doc = await this.kycRepo.submitDocument({
+        id: documentId,
+        sellerId: input.sellerId,
+        documentType: input.documentType,
+        documentNumber: input.documentNumber,
+        fileUrl: objectKey,
+        fileSize: file.byteLength,
+        mimeType: input.mimeType,
+        contentSha256,
+        uploadedBy: actorUserId,
+      });
+
+      if (seller.status === 'DRAFT') {
+        await this.sellerRepo.update(seller.id, seller.version, { status: 'PENDING_VERIFICATION' });
+      }
+
+      await (prisma as any).outboxEvent.create({
+        data: {
+          eventType: 'SELLER_KYC_SUBMITTED',
+          aggregateType: 'SellerKycDocument',
+          aggregateId: doc.id,
+          payload: { sellerId: input.sellerId, documentId: doc.id, documentType: doc.documentType },
+        },
+      });
+      await (prisma as any).auditLog.create({
+        data: {
+          actorId: actorUserId,
+          action: 'SELLER_KYC_SUBMITTED',
+          resource: 'SellerKycDocument',
+          resourceId: doc.id,
+          metadata: { sellerId: input.sellerId, documentType: doc.documentType, fileSize: doc.fileSize, contentSha256 },
+        },
+      });
+      return doc;
+    } catch (error) {
+      await this.storage.deleteObject(objectKey).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  /**
    * Reviews an uploaded KYC document (Admin Only).
    */
   public async reviewDocument(
@@ -138,8 +217,11 @@ export class SellerKycService {
    * Generates a signed, short-lived secure view URL for a private KYC document.
    * Enforces strict authorization and writes access audits.
    */
-  public async getSecureDocumentViewUrl(actorUserId: string, documentId: string): Promise<{ viewUrl: string }> {
-    const doc = await this.kycRepo.findById(documentId);
+  public async getSecureDocumentViewUrl(actorUserId: string, documentId: string): Promise<{ viewUrl: string; expiresAt: Date }> {
+    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const isAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
+    let doc = await this.kycRepo.findById(documentId);
+
     if (!doc) {
       throw new NotFoundError(`Document with id '${documentId}' not found.`);
     }
@@ -149,19 +231,20 @@ export class SellerKycService {
       throw new NotFoundError(`Seller tenant for document not found.`);
     }
 
-    // Access authorization:
-    // Only Store Owner, Store Manager with permissions, or Admins can view KYC documents
+    // Re-read through the seller-scoped repository boundary for non-admin access.
     const isOwner = seller.ownerUserId === actorUserId;
-    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
-    const isAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
+    if (isOwner && !isSuperAdmin && !isAdmin) {
+      const scopedDoc = await this.kycRepo.findById(documentId, seller.id);
+      if (!scopedDoc) throw new NotFoundError(`Document with id '${documentId}' not found.`);
+      doc = scopedDoc;
+    }
 
+    // Access authorization: only the seller owner or platform administrators may view KYC documents.
     if (!isOwner && !isSuperAdmin && !isAdmin) {
       throw new AuthorizationError('Access Denied: You are not authorized to inspect this sensitive KYC document.');
     }
 
-    // Generate short-lived signed mock URL (mimics S3 GetObject signed URL with 15-minute TTL)
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    const signedViewUrl = `https://storage.alifworld.com/private/${doc.fileUrl}?token=sig_${doc.id}_${Date.now()}&expires=${expiresAt}`;
+    const signed = await this.storage.createReadUrl(doc.fileUrl, 15 * 60);
 
     // Audit document inspection (mandatory for regulatory compliance)
     await (prisma as any).auditLog.create({
@@ -173,10 +256,11 @@ export class SellerKycService {
         metadata: {
           sellerId: doc.sellerId,
           documentType: doc.documentType,
+          expiresAt: signed.expiresAt.toISOString(),
         },
       },
     });
 
-    return { viewUrl: signedViewUrl };
+    return { viewUrl: signed.url, expiresAt: signed.expiresAt };
   }
 }

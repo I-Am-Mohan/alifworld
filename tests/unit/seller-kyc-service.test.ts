@@ -197,8 +197,8 @@ describe('SellerKycService Unit Tests', () => {
 
     const result = await service.getSecureDocumentViewUrl('usr_seller_zubair_01', 'kyc_doc_001');
 
-    expect(result.viewUrl).toContain('https://storage.alifworld.com/private/');
-    expect(result.viewUrl).toContain('token=sig_kyc_doc_001_');
+    expect(result.viewUrl).toContain('X-Amz-Algorithm=AWS4-HMAC-SHA256');
+    expect(result.expiresAt).toBeInstanceOf(Date);
     expect(auditAction).toBe('SELLER_KYC_VIEW');
   });
 

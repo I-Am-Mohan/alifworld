@@ -21,6 +21,8 @@ export interface SubmitKycData {
   fileUrl: string;
   fileSize: number;
   mimeType: string;
+  contentSha256?: string | null;
+  uploadedBy?: string | null;
 }
 
 export interface ReviewKycData {
@@ -49,6 +51,19 @@ export class SellerKycDocumentRepository extends BaseRepository {
   /**
    * Submits a new or updated KYC document for a seller.
    */
+  public async findByContentHash(sellerId: string, contentSha256: string): Promise<SellerKycDocumentModel | null> {
+    return this.executeSafe(async () => {
+      const doc = await (this.db as any).sellerKycDocument.findFirst({
+        where: this.whereSellerScope(sellerId, { contentSha256 }),
+        orderBy: { createdAt: 'desc' },
+      });
+      return doc as SellerKycDocumentModel | null;
+    }, 'SellerKycDocumentRepository.findByContentHash');
+  }
+
+  /**
+   * Submits a document metadata record whose fileUrl is an internal private object key.
+   */
   public async submitDocument(data: SubmitKycData): Promise<SellerKycDocumentModel> {
     return this.executeSafe(async () => {
       const id = data.id || generateId(ID_PREFIXES.KYC_DOCUMENT);
@@ -62,6 +77,8 @@ export class SellerKycDocumentRepository extends BaseRepository {
           fileUrl: data.fileUrl.trim(),
           fileSize: data.fileSize,
           mimeType: data.mimeType,
+          contentSha256: data.contentSha256 || null,
+          uploadedBy: data.uploadedBy || null,
           status: KycDocumentStatus.PENDING,
           version: 1,
         },

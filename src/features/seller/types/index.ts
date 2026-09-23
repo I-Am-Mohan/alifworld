@@ -86,6 +86,8 @@ export interface SellerKycDocumentModel {
   fileUrl: string;
   fileSize: number;
   mimeType: string;
+  contentSha256?: string | null;
+  uploadedBy?: string | null;
   status: KycDocumentStatus | string;
   rejectionReason: string | null;
   verifiedAt: Date | null;

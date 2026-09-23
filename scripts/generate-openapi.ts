@@ -1471,6 +1471,50 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/seller/kyc': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'List Seller KYC Documents',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'sellerId', in: 'query', required: false, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Documents listed' }, '401': { description: 'Unauthorized' }, '403': { description: 'Forbidden' } },
+      },
+      post: {
+        tags: ['Seller Portal'],
+        summary: 'Upload Private Seller KYC Document',
+        description: 'Accepts multipart/form-data, validates file size, MIME type, magic signature, authenticated device identifier, and stores the object privately in S3-compatible storage.',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', required: ['sellerId', 'documentType', 'file'], properties: { sellerId: { type: 'string' }, documentType: { type: 'string', enum: ['TRADE_LICENSE', 'NID_FRONT', 'NID_BACK', 'BIN_CERTIFICATE', 'BANK_CHEQUE_LEAF', 'TIN_CERTIFICATE'] }, documentNumber: { type: 'string' }, file: { type: 'string', format: 'binary' } } } } } },
+        responses: { '201': { description: 'Document uploaded' }, '401': { description: 'Unauthorized' }, '403': { description: 'Forbidden or cross-tenant' }, '422': { description: 'Invalid file or metadata' }, '429': { description: 'Upload rate limit exceeded' } },
+      },
+    },
+    '/api/v1/seller/kyc/{documentId}/view': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'Create Short-Lived KYC View URL',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'documentId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Signed URL created' }, '401': { description: 'Unauthorized' }, '403': { description: 'Forbidden' }, '404': { description: 'Not found' } },
+      },
+    },
+    '/api/v1/admin/seller/kyc': {
+      get: {
+        tags: ['Seller Administration'],
+        summary: 'List Pending Seller KYC Documents',
+        security: [{ BearerAuth: [] }],
+        responses: { '200': { description: 'Review queue listed' }, '401': { description: 'Unauthorized' }, '403': { description: 'Requires sellers:verify' } },
+      },
+    },
+    '/api/v1/admin/seller/kyc/{documentId}/review': {
+      post: {
+        tags: ['Seller Administration'],
+        summary: 'Review Seller KYC Document',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'documentId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['version', 'status'], properties: { version: { type: 'integer', minimum: 1 }, status: { type: 'string', enum: ['VERIFIED', 'REJECTED'] }, rejectionReason: { type: 'string' } } } } } },
+        responses: { '200': { description: 'Document reviewed' }, '403': { description: 'Requires sellers:verify' }, '409': { description: 'Version conflict' }, '422': { description: 'Validation failed' } },
+      },
+    },
     '/api/v1/seller/settlements': {
       get: {
         tags: ['Payments & Settlements'],
