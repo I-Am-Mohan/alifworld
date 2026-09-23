@@ -144,7 +144,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setIdentifier(e.target.value)}
                 autoComplete="username"
                 required
-                placeholder="itsmohan025@gmail.com"
+                placeholder="Enter Email or Mobile"
                 className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
               />
             </div>
@@ -160,7 +160,7 @@ export default function AdminLoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
                   required
-                  placeholder="••••••••••••"
+                  placeholder="Password"
                   className="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-4 py-3 pr-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
                 />
                 <button
@@ -186,7 +186,6 @@ export default function AdminLoginPage() {
                 </>
               ) : (
                 <>
-                  <KeyRound className="w-4 h-4" />
                   <span>{t('admin.signIn')}</span>
                 </>
               )}

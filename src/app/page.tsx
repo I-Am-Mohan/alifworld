@@ -1380,13 +1380,6 @@ export default function CustomerStorePage() {
                 </li>
                 <li className="pt-2">
                   <span className="text-amber-500 font-bold block mb-1.5">{t('store.footer.becomeSeller')}</span>
-                  <button
-                    type="button"
-                    onClick={() => showToast(t('store.promo.sellerPortalToast'))}
-                    className="inline-block px-3.5 py-1.5 rounded-lg bg-[#262624] text-white text-xs font-semibold border border-neutral-700 hover:border-amber-500 transition-colors cursor-pointer"
-                  >
-                    {t('store.footer.becomeSeller')}
-                  </button>
                 </li>
               </ul>
             </div>

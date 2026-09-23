@@ -453,7 +453,7 @@ export const en = {
     emailOrPhone: 'Email or Mobile Number',
     password: 'Password',
     signIn: 'Sign in',
-    signingIn: 'Authenticating...',
+    signingIn: 'Loading...',
     loginFailed: 'Invalid administrative credentials.',
     identifierPasswordRequired: 'Please provide your administrative identifier and password.',
     unauthorized: 'Access denied. Your account does not have administrative privileges.',

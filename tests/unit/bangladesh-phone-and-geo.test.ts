@@ -410,7 +410,7 @@ describe('Milestone 038: PhoneAuthService with Bengali Numerals & Geo Integratio
     const user = {
       id: 'usr_phone_bd_01',
       phone: '+8801700112233',
-      name: 'Mohan Platform Admin',
+      name: 'Admin',
       status: 'ACTIVE',
       tokenVersion: 1,
       isPhoneVerified: true,

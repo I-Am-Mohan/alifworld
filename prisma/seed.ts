@@ -11,7 +11,7 @@
  * Password change REQUIRED on initial login for any seeded administrator.
  *
  * Seed admin accounts:
- *   - INITIAL_SUPERADMIN_EMAIL (default: itsmohan025@gmail.com)
+ *   - INITIAL_SUPERADMIN_EMAIL (default: admin@mail.com)
  *   - Platform ops contact: contact@alifworld.com.bd
  *
  * Command: bun run prisma/seed.ts (or bun run db:seed)
@@ -302,10 +302,10 @@ async function seed() {
   // Primary identity: INITIAL_SUPERADMIN_EMAIL
   // Platform ops contact: contact@alifworld.com.bd
   // ----------------------------------------------------------------------------
-  const adminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'itsmohan025@gmail.com';
-  const adminPhone = process.env.INITIAL_SUPERADMIN_PHONE || '+8801700000025';
-  const adminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin@AlifWorld2026';
-  const adminName = 'Mohan Biswas';
+  const adminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'admin@mail.com';
+  const adminPhone = process.env.INITIAL_SUPERADMIN_PHONE || '+8801700000000';
+  const adminPassword = process.env.INITIAL_SUPERADMIN_PASSWORD || 'Admin@1234';
+  const adminName = 'Admin';
 
   // NOTE: Password change REQUIRED on initial login — enforce via mustChangePassword flag in production.
   const passwordHash = hashPassword(adminPassword);
