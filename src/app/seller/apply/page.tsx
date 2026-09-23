@@ -20,6 +20,16 @@ import {
   Info,
   ChevronRight,
   Save,
+  Award,
+  CreditCard,
+  Truck,
+  Upload,
+  Copy,
+  FileCheck,
+  CheckCircle,
+  Briefcase,
+  User,
+  Zap,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
@@ -46,6 +56,7 @@ type Application = {
 interface FormState {
   businessName: string;
   slug: string;
+  merchantType: 'PROPRIETORSHIP' | 'CORPORATE' | 'BRAND_DISTRIBUTOR';
   tradeLicenseNumber: string;
   binNumber: string;
   tinNumber: string;
@@ -53,6 +64,9 @@ interface FormState {
   districtId: string;
   upazilaId: string;
   streetAddress: string;
+  bankName: string;
+  accountNumber: string;
+  routingNumber: string;
 }
 
 const STEPS = [
@@ -62,6 +76,51 @@ const STEPS = [
   { id: 4, title: 'KYC Checklist', icon: ShieldCheck, desc: 'Verification documents' },
   { id: 5, title: 'Review & Submit', icon: CheckCircle2, desc: 'Final application check' },
 ];
+
+/* -------------------------------------------------------------------------- */
+/* Custom Graphic SVG Illustrations & Banner Components                      */
+/* -------------------------------------------------------------------------- */
+function MerchantHeroIllustration() {
+  return (
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-orange-950 p-6 sm:p-8 text-white shadow-xl">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-orange-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/3 -bottom-10 h-48 w-48 rounded-full bg-amber-500/10 blur-2xl" />
+
+      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="space-y-3 max-w-xl text-center md:text-left">
+          <div className="inline-flex items-center space-x-2 text-[11px] font-mono font-bold uppercase tracking-widest text-[#FF6A00] bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
+            <Zap className="w-3.5 h-3.5 text-[#FF6A00]" />
+            <span>AlifWorld Merchant Network • 64-District Fulfillment</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+            Grow Your Business Across Bangladesh
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+            Join thousands of verified sellers on AlifWorld. Enjoy 0% listing fees, guaranteed weekly BDT payouts, Pathao &amp; RedX express pickup, and NBR VAT compliance.
+          </p>
+        </div>
+
+        {/* Custom SVG Graphic Artwork */}
+        <div className="w-full max-w-[220px] shrink-0">
+          <svg viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-2xl">
+            <rect width="200" height="140" rx="16" fill="#1E293B" fillOpacity="0.8" />
+            <path d="M20 100 L60 70 L100 85 L140 45 L180 30" stroke="#FF6A00" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="180" cy="30" r="6" fill="#FF6A00" />
+            <circle cx="140" cy="45" r="4" fill="#F59E0B" />
+            <circle cx="100" cy="85" r="4" fill="#F59E0B" />
+            <circle cx="60" cy="70" r="4" fill="#F59E0B" />
+            <rect x="25" y="110" width="30" height="15" rx="3" fill="#334155" />
+            <rect x="65" y="110" width="30" height="15" rx="3" fill="#334155" />
+            <rect x="105" y="110" width="30" height="15" rx="3" fill="#FF6A00" />
+            <rect x="145" y="110" width="30" height="15" rx="3" fill="#10B981" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function SellerApplicationPage() {
   const { t, locale } = useI18n();
@@ -73,6 +132,7 @@ export default function SellerApplicationPage() {
   const [form, setForm] = useState<FormState>({
     businessName: '',
     slug: '',
+    merchantType: 'PROPRIETORSHIP',
     tradeLicenseNumber: '',
     binNumber: '',
     tinNumber: '',
@@ -80,6 +140,9 @@ export default function SellerApplicationPage() {
     districtId: 'dhaka',
     upazilaId: 'dhanmondi',
     streetAddress: '',
+    bankName: '',
+    accountNumber: '',
+    routingNumber: '',
   });
 
   const [loading, setLoading] = useState(true);
@@ -309,6 +372,51 @@ export default function SellerApplicationPage() {
           )}
         </div>
 
+        {/* Hero Banner & Value Proposition Cards */}
+        <MerchantHeroIllustration />
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-slate-900">0% Listing Fee</div>
+              <div className="text-[10px] text-slate-500 font-medium">No upfront charges</div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#FF6A00] flex items-center justify-center shrink-0">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-slate-900">64 Districts</div>
+              <div className="text-[10px] text-slate-500 font-medium">Pathao &amp; RedX Pickup</div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-slate-900">Weekly Payouts</div>
+              <div className="text-[10px] text-slate-500 font-medium">Direct Bank / bKash</div>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-black text-slate-900">NBR VAT Compliant</div>
+              <div className="text-[10px] text-slate-500 font-medium">13-digit BIN verified</div>
+            </div>
+          </div>
+        </div>
+
         {/* Application Status Warning if submitted or changes requested */}
         {application?.reviewReason && (
           <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 text-xs space-y-1 animate-in fade-in">
@@ -417,6 +525,61 @@ export default function SellerApplicationPage() {
                     <p className="text-xs text-slate-500 mt-1">
                       Configure your store name and public URL handle on AlifWorld.
                     </p>
+                  </div>
+
+                  {/* Merchant Entity Type Tiles */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-2">
+                      Merchant Business Entity Type *
+                    </label>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {[
+                        {
+                          type: 'PROPRIETORSHIP',
+                          title: 'Proprietorship',
+                          desc: 'Individual sole trader with Trade License',
+                          icon: User,
+                        },
+                        {
+                          type: 'CORPORATE',
+                          title: 'Private Limited / Ltd',
+                          desc: 'Corporate business with BIN & TIN',
+                          icon: Building2,
+                        },
+                        {
+                          type: 'BRAND_DISTRIBUTOR',
+                          title: 'Brand / Distributor',
+                          desc: 'Official brand flagship store',
+                          icon: Award,
+                        },
+                      ].map((item) => {
+                        const ItemIcon = item.icon;
+                        const isSelected = (form.merchantType || 'PROPRIETORSHIP') === item.type;
+
+                        return (
+                          <button
+                            key={item.type}
+                            type="button"
+                            disabled={!isEditable || saving}
+                            onClick={() => setForm((prev) => ({ ...prev, merchantType: item.type as any }))}
+                            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-[#FF6A00] bg-orange-50/60 ring-2 ring-orange-500/20 shadow-xs'
+                                : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50 text-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1.5">
+                              <ItemIcon
+                                className={`w-5 h-5 ${isSelected ? 'text-[#FF6A00]' : 'text-slate-400'}`}
+                              />
+                              {isSelected && <CheckCircle2 className="w-4 h-4 text-[#FF6A00]" />}
+                            </div>
+                            <div className="text-xs font-bold text-slate-900">{item.title}</div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">{item.desc}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div className="grid gap-5 sm:grid-cols-2">
@@ -686,7 +849,7 @@ export default function SellerApplicationPage() {
                     </p>
                   </div>
 
-                  {/* Summary Cards */}
+                  {/* Summary Cards Grid (4 Cards) */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     {/* Card 1: Store Identity */}
                     <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
@@ -710,6 +873,12 @@ export default function SellerApplicationPage() {
                         <div>
                           <span className="text-slate-500">Business Name: </span>
                           <span className="font-bold text-slate-900">{form.businessName || 'Not specified'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Merchant Type: </span>
+                          <span className="font-semibold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px]">
+                            {form.merchantType || 'PROPRIETORSHIP'}
+                          </span>
                         </div>
                         <div>
                           <span className="text-slate-500">Handle / Slug: </span>
@@ -749,6 +918,69 @@ export default function SellerApplicationPage() {
                           <span className="text-slate-500 font-sans">e-TIN Number: </span>
                           <span className="font-semibold text-slate-900">{form.tinNumber || 'None'}</span>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Card 3: Logistics Hub */}
+                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                        <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                          <MapPin className="w-4 h-4 text-[#FF6A00]" />
+                          <span>Logistics &amp; Pickup Hub</span>
+                        </span>
+                        {isEditable && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(3)}
+                            className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit</span>
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <div>
+                          <span className="text-slate-500">Division / District: </span>
+                          <span className="font-bold text-slate-900">{selectedDivision.nameEn} / {selectedDistrict.nameEn}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Upazila / Thana: </span>
+                          <span className="font-semibold text-slate-900">{selectedDistrict.id || 'Central Thana'}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Couriers: </span>
+                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">
+                            Pathao • RedX • Steadfast
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card 4: KYC Verification Dossier */}
+                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                        <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                          <ShieldCheck className="w-4 h-4 text-[#FF6A00]" />
+                          <span>KYC Document Dossier</span>
+                        </span>
+                        <Link
+                          href="/seller/kyc"
+                          target="_blank"
+                          className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          <span>Console</span>
+                        </Link>
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <div className="flex items-center space-x-1.5 text-emerald-700 font-bold">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>6 Verification Documents Ready</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">
+                          Encrypted in S3 object storage for compliance review.
+                        </p>
                       </div>
                     </div>
                   </div>
