@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default function SellerCenterPage() {
   return (
-    <div className="min-h-screen bg-black bg-[#FAF9F6] flex flex-col justify-between">
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col justify-between">
       {/* Header */}
       <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <AlifLogo size="sm" href="/" />

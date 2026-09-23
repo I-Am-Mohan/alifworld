@@ -1320,7 +1320,7 @@ export function AuthModal() {
                     <div className="space-y-3">
                       {/* Address */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                        <label className="flex items-center gap-1 text-xs font-bold text-slate-600 mb-1">
                           <MapPin className="w-3.5 h-3.5 text-slate-400" />
                           <span>{t.address}</span>
                         </label>
@@ -1377,7 +1377,7 @@ export function AuthModal() {
                       {/* Birthday & Gender */}
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                          <label className="flex items-center gap-1 text-xs font-bold text-slate-600 mb-1">
                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
                             <span>{t.birthday}</span>
                           </label>
@@ -1390,7 +1390,7 @@ export function AuthModal() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1">
+                          <label className="flex items-center gap-1 text-xs font-bold text-slate-600 mb-1">
                             <User className="w-3.5 h-3.5 text-slate-400" />
                             <span>{t.gender}</span>
                           </label>

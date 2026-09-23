@@ -13,9 +13,9 @@ import { NotFoundError } from '@/shared/errors/app-error';
 import { ProductMediaModel, MediaType } from '../types';
 
 export class ProductMediaRepository {
-  public async findById(id: string): Promise<ProductMediaModel | null> {
+  public async findById(id: string, productId?: string): Promise<ProductMediaModel | null> {
     const media = await (prisma as any).productMedia.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(productId ? { productId } : {}) },
     });
     return media ? this.mapToModel(media) : null;
   }
