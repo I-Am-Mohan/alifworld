@@ -8313,6 +8313,33 @@
             "type": "integer",
             "minimum": 0
           },
+          "weightGrams": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "lengthMm": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "widthMm": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "heightMm": {
+            "type": "integer",
+            "minimum": 0,
+            "nullable": true
+          },
+          "shippingClass": {
+            "type": "string",
+            "nullable": true
+          },
+          "requiresShipping": {
+            "type": "boolean"
+          },
           "sku": {
             "type": "string",
             "nullable": true

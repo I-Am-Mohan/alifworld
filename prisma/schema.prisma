@@ -971,6 +971,11 @@ model Product {
   barcode              String?
   isPhysical           Boolean   @default(true) @map("is_physical")
   weightGrams          Int?      @map("weight_grams")
+  lengthMm             Int?      @map("length_mm")
+  widthMm              Int?      @map("width_mm")
+  heightMm             Int?      @map("height_mm")
+  shippingClass        String?   @map("shipping_class")
+  requiresShipping     Boolean   @default(true) @map("requires_shipping")
   warranty             String?
   tags                 String[]  @default([])
   taxRatePercent       Decimal?  @map("tax_rate_percent") @db.Decimal(5, 2) // Overrides category tax rate if specified

@@ -170,6 +170,11 @@ export class ProductRepository {
     barcode?: string | null;
     isPhysical?: boolean;
     weightGrams?: number | null;
+    lengthMm?: number | null;
+    widthMm?: number | null;
+    heightMm?: number | null;
+    shippingClass?: string | null;
+    requiresShipping?: boolean;
     warranty?: string | null;
     tags?: string[];
     taxRatePercent?: number | null;
@@ -196,6 +201,11 @@ export class ProductRepository {
         barcode: data.barcode,
         isPhysical: data.isPhysical ?? true,
         weightGrams: data.weightGrams,
+        lengthMm: data.lengthMm,
+        widthMm: data.widthMm,
+        heightMm: data.heightMm,
+        shippingClass: data.shippingClass,
+        requiresShipping: data.requiresShipping ?? true,
         warranty: data.warranty,
         tags: data.tags ?? [],
         taxRatePercent: data.taxRatePercent,
@@ -230,6 +240,11 @@ export class ProductRepository {
       barcode: string | null;
       isPhysical: boolean;
       weightGrams: number | null;
+      lengthMm: number | null;
+      widthMm: number | null;
+      heightMm: number | null;
+      shippingClass: string | null;
+      requiresShipping: boolean;
       warranty: string | null;
       tags: string[];
       taxRatePercent: number | null;
@@ -341,6 +356,11 @@ export class ProductRepository {
       barcode: raw.barcode,
       isPhysical: raw.isPhysical,
       weightGrams: raw.weightGrams,
+      lengthMm: raw.lengthMm,
+      widthMm: raw.widthMm,
+      heightMm: raw.heightMm,
+      shippingClass: raw.shippingClass,
+      requiresShipping: raw.requiresShipping,
       warranty: raw.warranty,
       tags: raw.tags ?? [],
       taxRatePercent: raw.taxRatePercent ? Number(raw.taxRatePercent) : null,

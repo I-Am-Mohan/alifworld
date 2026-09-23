@@ -220,6 +220,11 @@ export interface ProductModel {
   barcode?: string | null;
   isPhysical: boolean;
   weightGrams?: number | null;
+  lengthMm?: number | null;
+  widthMm?: number | null;
+  heightMm?: number | null;
+  shippingClass?: string | null;
+  requiresShipping: boolean;
   warranty?: string | null;
   tags: string[];
   taxRatePercent?: number | null; // Overrides category tax rate if present

@@ -114,6 +114,11 @@ export const CreateProductSchema = z.object({
   barcode: z.string().max(50).optional().nullable(),
   isPhysical: z.boolean().default(true),
   weightGrams: z.number().int().min(0).optional().nullable(),
+  lengthMm: z.number().int().min(0).optional().nullable(),
+  widthMm: z.number().int().min(0).optional().nullable(),
+  heightMm: z.number().int().min(0).optional().nullable(),
+  shippingClass: z.string().trim().max(50).optional().nullable(),
+  requiresShipping: z.boolean().default(true),
   warranty: z.string().max(100).optional().nullable(),
   tags: z.array(z.string().max(50)).default([]),
   taxRatePercent: z.number().min(0).max(100).optional().nullable(),
@@ -121,7 +126,7 @@ export const CreateProductSchema = z.object({
   media: z.array(CreateProductMediaSchema).optional(),
 });
 
-export type CreateProductInput = z.infer<typeof CreateProductSchema>;
+export type CreateProductInput = z.input<typeof CreateProductSchema>;
 
 export const UpdateProductSchema = CreateProductSchema.partial().extend({
   version: z.number().int().min(1, 'Version is required for optimistic concurrency control'),
