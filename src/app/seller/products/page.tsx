@@ -153,6 +153,12 @@ export default function SellerProductsPage() {
               + Create Product
             </Button>
             <Link
+              href="/seller/catalog/onboarding"
+              className="px-4 py-2 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-bold transition-all"
+            >
+              Catalog Guidance
+            </Link>
+            <Link
               href="/seller/inventory"
               className="px-4 py-2 rounded-lg bg-black text-white hover:bg-neutral-800 text-xs font-bold transition-all shadow-sm"
             >

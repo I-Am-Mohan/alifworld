@@ -2638,6 +2638,22 @@ export const openApiSpec = {
     '/api/v1/admin/catalog/products/{id}/review-history': {
       get: { tags: ['Catalog'], summary: 'Read immutable product status history', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product review history' } } },
     },
+    '/api/v1/catalog/categories/{id}/onboarding-template': {
+      get: { tags: ['Catalog'], summary: 'Get category-specific seller onboarding guidance', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'locale', in: 'query', required: false, schema: { type: 'string', enum: ['bn-BD', 'en-BD'] } }], responses: { '200': { description: 'Onboarding template or empty result' } } },
+    },
+    '/api/v1/seller/catalog/onboarding': {
+      get: { tags: ['Catalog'], summary: 'List onboarding progress for the authenticated seller', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Seller onboarding progress' }, '403': { description: 'Seller scope required' } } },
+    },
+    '/api/v1/seller/catalog/onboarding/{templateId}/progress': {
+      post: { tags: ['Catalog'], summary: 'Save onboarding checklist progress', security: [{ BearerAuth: [] }], parameters: [{ name: 'templateId', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/OnboardingProgressRequest' } } } }, responses: { '200': { description: 'Progress saved' }, '403': { description: 'Seller tenant violation' }, '422': { description: 'Invalid checklist item' } } },
+    },
+    '/api/v1/admin/catalog/onboarding-templates': {
+      get: { tags: ['Catalog'], summary: 'List seller catalog onboarding templates', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Onboarding templates' } } },
+      post: { tags: ['Catalog'], summary: 'Create seller catalog onboarding template', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/OnboardingTemplateWriteRequest' } } } }, responses: { '201': { description: 'Onboarding template created' }, '409': { description: 'Template conflict' } } },
+    },
+    '/api/v1/admin/catalog/onboarding-templates/{id}': {
+      patch: { tags: ['Catalog'], summary: 'Update seller catalog onboarding template', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/OnboardingTemplateUpdateRequest' } } } }, responses: { '200': { description: 'Onboarding template updated' }, '409': { description: 'Version conflict' } } },
+    },
     '/api/v1/admin/catalog/categories/{id}/translations': {
       get: { tags: ['Catalog'], summary: 'Read category translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'locale', in: 'query', required: false, schema: { type: 'string', enum: ['bn-BD', 'en-BD'] } }], responses: { '200': { description: 'Category translation' } } },
       put: { tags: ['Catalog'], summary: 'Upsert category translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CategoryTranslationWriteRequest' } } } }, responses: { '200': { description: 'Category translation saved' } } },
@@ -2816,6 +2832,15 @@ export const openApiSpec = {
       },
       ProductApprovalActionRequest: {
         type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 }, reason: { type: 'string', nullable: true }, reviewNotes: { type: 'string', nullable: true } },
+      },
+      OnboardingTemplateWriteRequest: {
+        type: 'object', required: ['templateKey', 'locale', 'name', 'requiredFields', 'recommendedFields', 'attributeGuidance', 'mediaGuidance', 'validationHints'], properties: { templateKey: { type: 'string' }, categoryId: { type: 'string', nullable: true }, locale: { type: 'string', enum: ['bn-BD', 'en-BD'] }, name: { type: 'string' }, requiredFields: { type: 'array', items: { type: 'string' } }, recommendedFields: { type: 'array', items: { type: 'string' } }, attributeGuidance: { type: 'array', items: { type: 'object' } }, mediaGuidance: { type: 'array', items: { type: 'string' } }, titleExample: { type: 'string', nullable: true }, descriptionExample: { type: 'string', nullable: true }, validationHints: { type: 'array', items: { type: 'string' } }, version: { type: 'integer', minimum: 1 }, isActive: { type: 'boolean' } },
+      },
+      OnboardingTemplateUpdateRequest: {
+        allOf: [{ $ref: '#/components/schemas/OnboardingTemplateWriteRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }],
+      },
+      OnboardingProgressRequest: {
+        type: 'object', required: ['completedItems'], properties: { completedItems: { type: 'array', items: { type: 'string' } }, dismissed: { type: 'boolean' } },
       },
       CategoryTranslationWriteRequest: {
         type: 'object', required: ['locale', 'name'], properties: { locale: { type: 'string', enum: ['bn-BD', 'en-BD'] }, name: { type: 'string' }, description: { type: 'string', nullable: true }, seoTitle: { type: 'string', nullable: true }, seoDescription: { type: 'string', nullable: true }, breadcrumbLabel: { type: 'string', nullable: true } },

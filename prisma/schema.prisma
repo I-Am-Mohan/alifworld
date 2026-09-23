@@ -417,6 +417,7 @@ model Seller {
   operationalDefaults SellerOperationalDefaults?
   notificationDefaults SellerNotificationDefault[]
   lifecycleEvents   SellerLifecycleEvent[]
+  onboardingProgress SellerCatalogOnboardingProgress[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -734,6 +735,7 @@ model Category {
   translations         CategoryTranslation[]
   attributeAssignments CategoryAttribute[]
   taxRules             TaxRule[]
+  onboardingTemplates   CatalogOnboardingTemplate[]
 
   @@index([parentId])
   @@index([isActive])
@@ -1080,7 +1082,56 @@ model ProductStatusHistory {
 }
 
 // ------------------------------------------------------------------------------
-// 19. Product Media & Gallery Assets
+// 20. Seller Catalog Onboarding Guidance
+// ------------------------------------------------------------------------------
+model CatalogOnboardingTemplate {
+  id             String   @id
+  templateKey    String   @unique @map("template_key")
+  categoryId     String?  @map("category_id")
+  locale         String
+  name           String
+  requiredFields Json     @map("required_fields")
+  recommendedFields Json   @map("recommended_fields")
+  attributeGuidance Json   @map("attribute_guidance")
+  mediaGuidance  Json     @map("media_guidance")
+  titleExample   String?  @map("title_example")
+  descriptionExample String? @map("description_example")
+  validationHints Json    @map("validation_hints")
+  version        Int      @default(1)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdBy      String?  @map("created_by")
+  updatedBy      String?  @map("updated_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  progress SellerCatalogOnboardingProgress[]
+
+  @@unique([categoryId, locale])
+  @@index([categoryId, locale, isActive])
+  @@map("catalog_onboarding_templates")
+}
+
+model SellerCatalogOnboardingProgress {
+  id              String   @id
+  sellerId        String   @map("seller_id")
+  templateId      String   @map("template_id")
+  completedItems  String[] @map("completed_items")
+  dismissed       Boolean  @default(false)
+  lastViewedVersion Int    @map("last_viewed_version")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  template CatalogOnboardingTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  seller   Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, templateId])
+  @@index([sellerId, updatedAt])
+  @@map("seller_catalog_onboarding_progress")
+}
+
+// ------------------------------------------------------------------------------
+// 21. Product Media & Gallery Assets
 // ------------------------------------------------------------------------------
 /// Visual assets (images, videos) associated with products and variants
 model ProductMedia {

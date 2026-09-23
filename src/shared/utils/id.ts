@@ -61,6 +61,8 @@ export const ID_PREFIXES = {
   VARIANT_OPTION: 'vop',
   PRODUCT_APPROVAL: 'par',
   PRODUCT_STATUS_HISTORY: 'psh',
+  ONBOARDING_TEMPLATE: 'obt',
+  ONBOARDING_PROGRESS: 'obp',
   MEDIA: 'med',
   SHIPMENT: 'shp',
   SHIPMENT_EVENT: 'she',

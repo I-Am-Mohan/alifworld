@@ -6,3 +6,4 @@ export * from './product-media-repository';
 export * from './attribute-repository';
 export * from './tax-rule-repository';
 export * from './product-approval-repository';
+export * from './onboarding-repository';
