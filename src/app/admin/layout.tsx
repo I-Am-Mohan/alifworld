@@ -818,7 +818,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                     <div>
                       <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
-                        Bangladesh Mobile Phone
+                        Mobile Phone
                       </label>
                       <input
                         type="tel"

@@ -1378,9 +1378,11 @@ export default function CustomerStorePage() {
                     {t('store.footer.stores')}
                   </button>
                 </li>
-                <li className="pt-2">
+                <a href="/seller/apply">
+                  <li className="pt-2">
                   <span className="text-amber-500 font-bold block mb-1.5">{t('store.footer.becomeSeller')}</span>
                 </li>
+                </a>
               </ul>
             </div>
 

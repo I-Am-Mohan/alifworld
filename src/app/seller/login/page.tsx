@@ -93,9 +93,6 @@ export default function SellerLoginPage() {
           <div className="flex items-center space-x-3">
             <AlifLogo size="sm" href="/" />
             <div className="h-5 w-px bg-slate-200" />
-            <span className="text-xs uppercase tracking-widest font-mono font-bold text-[#FF6A00]">
-              Seller Center
-            </span>
           </div>
 
           <div className="flex items-center space-x-3">
@@ -117,7 +114,7 @@ export default function SellerLoginPage() {
           {/* Brand Logo & Header */}
           <div className="text-center mb-6">
              <div className="flex justify-center mb-4">
-                          <AlifLogo size="lg" href="/admin/login" />
+                          <AlifLogo size="lg" href="/seller/login" />
                         </div>
             <h1 className="text-2xl font-black text-slate-950 tracking-tight">
               Sign in to Seller Center
@@ -142,14 +139,14 @@ export default function SellerLoginPage() {
                 htmlFor="seller-identifier"
                 className="block text-xs font-bold text-slate-700 mb-1.5"
               >
-                Email Address or Bangladesh Mobile Phone
+                Email Address or Mobile Phone
               </label>
               <input
                 id="seller-identifier"
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="merchant@example.com or +8801700000000"
+                placeholder="Email or phone"
                 required
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
               />
@@ -177,7 +174,7 @@ export default function SellerLoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Password"
                   required
                   className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all"
                 />
