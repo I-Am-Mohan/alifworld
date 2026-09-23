@@ -2614,6 +2614,9 @@ export const openApiSpec = {
     '/api/v1/admin/collections/{id}/products': {
       put: { tags: ['Catalog'], summary: 'Replace curated collection product memberships', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CollectionProductsRequest' } } } }, responses: { '200': { description: 'Memberships replaced' }, '422': { description: 'Invalid curated membership list' } } },
     },
+    '/api/v1/seller/catalog/identifiers/check': {
+      get: { tags: ['Catalog'], summary: 'Check SKU and barcode availability', security: [{ BearerAuth: [] }], parameters: [{ name: 'sku', in: 'query', required: false, schema: { type: 'string', pattern: '^[A-Z0-9_-]{3,50}$' } }, { name: 'barcode', in: 'query', required: false, schema: { type: 'string', pattern: '^[0-9]{8,14}$' } }], responses: { '200': { description: 'Identifier availability result' }, '422': { description: 'Invalid identifier format' } } },
+    },
     '/api/v1/seller/catalog/products': {
       get: { tags: ['Catalog'], summary: 'List products owned by the authenticated seller', security: [{ BearerAuth: [] }], parameters: [{ name: 'status', in: 'query', schema: { type: 'string' } }, { name: 'search', in: 'query', schema: { type: 'string' } }, { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100 } }], responses: { '200': { description: 'Seller-scoped product list' }, '403': { description: 'Seller tenant required' } } },
       post: { tags: ['Catalog'], summary: 'Create a seller-scoped product draft', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductDraftRequest' } } } }, responses: { '201': { description: 'Draft created' }, '422': { description: 'Invalid draft payload' } } },
@@ -2882,6 +2885,9 @@ export const openApiSpec = {
       },
       ProductApprovalActionRequest: {
         type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 }, reason: { type: 'string', nullable: true }, reviewNotes: { type: 'string', nullable: true } },
+      },
+      IdentifierAvailabilityResponse: {
+        type: 'object', properties: { available: { type: 'boolean' }, sku: { type: 'string', nullable: true }, barcode: { type: 'string', nullable: true }, conflicts: { type: 'object' } }, required: ['available', 'conflicts'],
       },
       ProductDraftRequest: {
         type: 'object', required: ['categoryId', 'title', 'slug', 'description', 'basePricePoisha'], properties: { categoryId: { type: 'string' }, brandId: { type: 'string', nullable: true }, title: { type: 'string' }, titleBn: { type: 'string', nullable: true }, slug: { type: 'string' }, description: { type: 'string' }, descriptionBn: { type: 'string', nullable: true }, basePricePoisha: { type: 'integer', minimum: 1 }, compareAtPricePoisha: { type: 'integer', minimum: 1, nullable: true }, currency: { type: 'string', enum: ['BDT'] }, productPoint: { type: 'integer', minimum: 0 }, sku: { type: 'string', nullable: true }, tags: { type: 'array', items: { type: 'string' } } },

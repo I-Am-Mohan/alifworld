@@ -19,6 +19,7 @@ import { prisma } from '@/shared/database/prisma';
 import { ProductModel, ProductStatus } from '../types';
 import { CreateProductInput, UpdateProductInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
+import { IdentifierPolicyService } from './identifier-policy-service';
 
 export class ProductService {
   constructor(
@@ -27,7 +28,8 @@ export class ProductService {
     private readonly mediaRepo: ProductMediaRepository = new ProductMediaRepository(),
     private readonly categoryRepo: CategoryRepository = new CategoryRepository(),
     private readonly sellerRepo: SellerRepository = new SellerRepository(),
-    private readonly roleAssignmentRepo: UserRoleAssignmentRepository = new UserRoleAssignmentRepository()
+    private readonly roleAssignmentRepo: UserRoleAssignmentRepository = new UserRoleAssignmentRepository(),
+    private readonly identifierPolicy: IdentifierPolicyService = new IdentifierPolicyService()
   ) {}
 
   /**
@@ -47,6 +49,8 @@ export class ProductService {
     if (existingSlug.product) {
       throw new ConflictError(`Product slug '${input.slug}' is already taken. Please choose another title or URL handle.`);
     }
+
+    await this.identifierPolicy.assertAvailable({ sku: input.sku || undefined, barcode: input.barcode || undefined });
 
     // Create root product record
     const product = await this.productRepo.create({
@@ -145,6 +149,10 @@ export class ProductService {
       if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED') throw new ValidationError('Product brand must be active and approved.');
     }
     if (input.currency && input.currency !== 'BDT') throw new ValidationError('Product currency must be BDT.');
+
+    if (input.sku !== undefined || input.barcode !== undefined) {
+      await this.identifierPolicy.assertAvailable({ sku: input.sku || undefined, barcode: input.barcode || undefined, excludeProductId: id });
+    }
 
     // Handle slug change: record slug history for 301 redirects
     if (input.slug && input.slug !== existing.slug) {

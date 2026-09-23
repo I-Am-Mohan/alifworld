@@ -5338,6 +5338,47 @@
         }
       }
     },
+    "/api/v1/seller/catalog/identifiers/check": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Check SKU and barcode availability",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sku",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_-]{3,50}$"
+            }
+          },
+          {
+            "name": "barcode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{8,14}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identifier availability result"
+          },
+          "422": {
+            "description": "Invalid identifier format"
+          }
+        }
+      }
+    },
     "/api/v1/seller/catalog/products": {
       "get": {
         "tags": [
@@ -7851,6 +7892,29 @@
             "nullable": true
           }
         }
+      },
+      "IdentifierAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true
+          },
+          "conflicts": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "available",
+          "conflicts"
+        ]
       },
       "ProductDraftRequest": {
         "type": "object",
