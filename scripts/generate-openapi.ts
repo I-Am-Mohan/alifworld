@@ -2618,6 +2618,10 @@ export const openApiSpec = {
       get: { tags: ['Catalog'], summary: 'List products owned by the authenticated seller', security: [{ BearerAuth: [] }], parameters: [{ name: 'status', in: 'query', schema: { type: 'string' } }, { name: 'search', in: 'query', schema: { type: 'string' } }, { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100 } }], responses: { '200': { description: 'Seller-scoped product list' }, '403': { description: 'Seller tenant required' } } },
       post: { tags: ['Catalog'], summary: 'Create a seller-scoped product draft', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductDraftRequest' } } } }, responses: { '201': { description: 'Draft created' }, '422': { description: 'Invalid draft payload' } } },
     },
+    '/api/v1/seller/catalog/products/{id}': {
+      get: { tags: ['Catalog'], summary: 'Get an owned product draft', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product draft' }, '404': { description: 'Product not found' } } },
+      patch: { tags: ['Catalog'], summary: 'Update an owned product draft', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductDraftUpdateRequest' } } } }, responses: { '200': { description: 'Draft updated' }, '409': { description: 'Version or lifecycle conflict' }, '422': { description: 'Invalid draft payload' } } },
+    },
     '/api/v1/seller/catalog/products/{id}/submit': {
       post: { tags: ['Catalog'], summary: 'Submit an owned product for administrative approval', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalSubmitRequest' } } } }, responses: { '200': { description: 'Product submitted' }, '409': { description: 'Invalid state or version conflict' }, '422': { description: 'Readiness validation failed' } } },
     },
@@ -2875,6 +2879,9 @@ export const openApiSpec = {
       },
       ProductDraftRequest: {
         type: 'object', required: ['categoryId', 'title', 'slug', 'description', 'basePricePoisha'], properties: { categoryId: { type: 'string' }, brandId: { type: 'string', nullable: true }, title: { type: 'string' }, titleBn: { type: 'string', nullable: true }, slug: { type: 'string' }, description: { type: 'string' }, descriptionBn: { type: 'string', nullable: true }, basePricePoisha: { type: 'integer', minimum: 1 }, compareAtPricePoisha: { type: 'integer', minimum: 1, nullable: true }, currency: { type: 'string', enum: ['BDT'] }, productPoint: { type: 'integer', minimum: 0 }, sku: { type: 'string', nullable: true }, tags: { type: 'array', items: { type: 'string' } } },
+      },
+      ProductDraftUpdateRequest: {
+        allOf: [{ $ref: '#/components/schemas/ProductDraftRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }],
       },
       ModerationResolveRequest: {
         type: 'object', required: ['status'], properties: { status: { type: 'string', enum: ['APPROVED', 'REJECTED', 'REQUEST_CHANGES', 'DISMISSED'] }, reason: { type: 'string', nullable: true } },

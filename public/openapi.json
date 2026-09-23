@@ -5421,6 +5421,79 @@
         }
       }
     },
+    "/api/v1/seller/catalog/products/{id}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Get an owned product draft",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product draft"
+          },
+          "404": {
+            "description": "Product not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Update an owned product draft",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductDraftUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Draft updated"
+          },
+          "409": {
+            "description": "Version or lifecycle conflict"
+          },
+          "422": {
+            "description": "Invalid draft payload"
+          }
+        }
+      }
+    },
     "/api/v1/seller/catalog/products/{id}/submit": {
       "post": {
         "tags": [
@@ -7773,6 +7846,25 @@
             }
           }
         }
+      },
+      "ProductDraftUpdateRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProductDraftRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "version"
+            ],
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        ]
       },
       "ModerationResolveRequest": {
         "type": "object",

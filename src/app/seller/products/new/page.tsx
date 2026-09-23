@@ -2,10 +2,11 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import ProductDraftEditor from './draft-editor';
 
 export const dynamic = 'force-dynamic';
 
-export default function NewProductPage() {
+function LegacyNewProductPage() {
   return (
     <div className="min-h-screen bg-black text-white p-8">
       {/* Header */}
@@ -287,3 +288,5 @@ export default function NewProductPage() {
     </div>
   );
 }
+
+export default ProductDraftEditor;

@@ -136,6 +136,16 @@ export class ProductService {
 
     await this.assertSellerTenantAccess(actorUserId, existing.sellerId);
 
+    if (input.categoryId) {
+      const category = await this.categoryRepo.findById(input.categoryId);
+      if (!category || !category.isActive) throw new ValidationError('Product must use an active category.');
+    }
+    if (input.brandId) {
+      const brand = await (prisma as any).brand.findFirst({ where: { id: input.brandId, deletedAt: null } });
+      if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED') throw new ValidationError('Product brand must be active and approved.');
+    }
+    if (input.currency && input.currency !== 'BDT') throw new ValidationError('Product currency must be BDT.');
+
     // Handle slug change: record slug history for 301 redirects
     if (input.slug && input.slug !== existing.slug) {
       const slugConflict = await this.productRepo.findBySlug(input.slug);

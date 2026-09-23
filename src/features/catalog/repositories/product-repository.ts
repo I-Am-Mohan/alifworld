@@ -222,6 +222,7 @@ export class ProductRepository {
       description: string;
       descriptionBn: string | null;
       status: ProductStatus;
+      currency: string;
       basePricePoisha: bigint | number;
       compareAtPricePoisha: bigint | number | null;
       productPoint: number;
