@@ -12,7 +12,8 @@ import { BaseRepository, parseOffsetPagination, formatPaginatedResult, Paginated
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { nextVersion } from '@/shared/database/lifecycle';
 import { NotFoundError, ConflictError } from '@/shared/errors/app-error';
-import { SellerModel, SellerProfile, SellerStatus, SellerFilterOptions } from '../types';
+import { getServerEnv } from '@/shared/config/environment';
+import { PublicSellerProfile, SellerModel, SellerProfile, SellerStatus, SellerFilterOptions } from '../types';
 
 export interface CreateSellerData {
   id?: string;
@@ -73,22 +74,29 @@ export class SellerRepository extends BaseRepository {
           verifiedAt: true,
           settings: {
             where: { deletedAt: null },
-            select: { logoUrl: true, bannerUrl: true, supportEmail: true, supportPhone: true, pickupAddress: true, vacationMode: true, vacationMessage: true },
+            select: { logoUrl: true, bannerUrl: true, logoObjectKey: true, bannerObjectKey: true, storeDescription: true, shippingPolicy: true, returnPolicy: true, cancellationPolicy: true, publicEmailEnabled: true, publicPhoneEnabled: true, publicPickupAddressEnabled: true, supportEmail: true, supportPhone: true, pickupAddress: true, vacationMode: true, vacationMessage: true },
           },
         },
       });
       if (!seller) return null;
+      const publicBase = getServerEnv().S3_PUBLIC_BASE_URL.replace(/\/$/, '');
+      const publicAssetUrl = (key?: string | null, fallback?: string | null) => key ? `${publicBase}/${key}` : fallback || null;
+      const publicPickupAddress = seller.settings?.publicPickupAddressEnabled ? seller.settings?.pickupAddress ?? null : null;
       return {
         id: seller.id,
         businessName: seller.businessName,
         slug: seller.slug,
         status: seller.status,
         verifiedAt: seller.verifiedAt,
-        logoUrl: seller.settings?.logoUrl ?? null,
-        bannerUrl: seller.settings?.bannerUrl ?? null,
-        supportEmail: seller.settings?.supportEmail ?? null,
-        supportPhone: seller.settings?.supportPhone ?? null,
-        pickupAddress: seller.settings?.pickupAddress ?? null,
+        logoUrl: publicAssetUrl(seller.settings?.logoObjectKey, seller.settings?.logoUrl),
+        bannerUrl: publicAssetUrl(seller.settings?.bannerObjectKey, seller.settings?.bannerUrl),
+        storeDescription: seller.settings?.storeDescription ?? null,
+        shippingPolicy: seller.settings?.shippingPolicy ?? null,
+        returnPolicy: seller.settings?.returnPolicy ?? null,
+        cancellationPolicy: seller.settings?.cancellationPolicy ?? null,
+        supportEmail: seller.settings?.publicEmailEnabled ? seller.settings?.supportEmail ?? null : null,
+        supportPhone: seller.settings?.publicPhoneEnabled ? seller.settings?.supportPhone ?? null : null,
+        pickupAddress: publicPickupAddress,
         vacationMode: seller.settings?.vacationMode ?? false,
         vacationMessage: seller.settings?.vacationMessage ?? null,
       };

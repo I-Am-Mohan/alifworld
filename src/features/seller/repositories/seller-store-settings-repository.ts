@@ -16,6 +16,15 @@ import { SellerStoreSettingsModel, AddressData, CourierProvider } from '../types
 export interface UpsertStoreSettingsData {
   logoUrl?: string | null;
   bannerUrl?: string | null;
+  logoObjectKey?: string | null;
+  bannerObjectKey?: string | null;
+  storeDescription?: string | null;
+  shippingPolicy?: string | null;
+  returnPolicy?: string | null;
+  cancellationPolicy?: string | null;
+  publicEmailEnabled?: boolean;
+  publicPhoneEnabled?: boolean;
+  publicPickupAddressEnabled?: boolean;
   supportEmail?: string | null;
   supportPhone?: string | null;
   pickupAddress?: AddressData | null;
@@ -71,6 +80,15 @@ export class SellerStoreSettingsRepository extends BaseRepository {
           sellerId,
           logoUrl: data.logoUrl || null,
           bannerUrl: data.bannerUrl || null,
+          logoObjectKey: data.logoObjectKey || null,
+          bannerObjectKey: data.bannerObjectKey || null,
+          storeDescription: data.storeDescription || null,
+          shippingPolicy: data.shippingPolicy || null,
+          returnPolicy: data.returnPolicy || null,
+          cancellationPolicy: data.cancellationPolicy || null,
+          publicEmailEnabled: data.publicEmailEnabled ?? false,
+          publicPhoneEnabled: data.publicPhoneEnabled ?? false,
+          publicPickupAddressEnabled: data.publicPickupAddressEnabled ?? false,
           supportEmail: data.supportEmail || null,
           supportPhone: data.supportPhone || null,
           pickupAddress: data.pickupAddress ? (data.pickupAddress as any) : null,

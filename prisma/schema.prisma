@@ -538,11 +538,20 @@ model SellerKycDocument {
 model SellerStoreSettings {
   id              String    @id @default(uuid())
   sellerId        String    @unique @map("seller_id")
-  logoUrl         String?   @map("logo_url")
-  bannerUrl       String?   @map("banner_url")
-  supportEmail    String?   @map("support_email")
-  supportPhone    String?   @map("support_phone")
-  pickupAddress   Json?     @map("pickup_address") // division, district, upazila, street
+  logoUrl                    String?   @map("logo_url")
+  bannerUrl                  String?   @map("banner_url")
+  logoObjectKey              String?   @map("logo_object_key")
+  bannerObjectKey            String?   @map("banner_object_key")
+  storeDescription           String?   @map("store_description")
+  shippingPolicy             String?   @map("shipping_policy")
+  returnPolicy               String?   @map("return_policy")
+  cancellationPolicy         String?   @map("cancellation_policy")
+  publicEmailEnabled         Boolean   @default(false) @map("public_email_enabled")
+  publicPhoneEnabled         Boolean   @default(false) @map("public_phone_enabled")
+  publicPickupAddressEnabled Boolean   @default(false) @map("public_pickup_address_enabled")
+  supportEmail               String?   @map("support_email")
+  supportPhone               String?   @map("support_phone")
+  pickupAddress              Json?     @map("pickup_address") // division, district, upazila, street
   returnAddress   Json?     @map("return_address")
   defaultCourier  String?   @map("default_courier") // PATHAO, STEADFAST, REDX, IN_HOUSE
   vacationMode    Boolean   @default(false) @map("vacation_mode")

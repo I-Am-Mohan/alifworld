@@ -28,6 +28,16 @@ export default function SellerSettingsPage() {
   const [postalCode, setPostalCode] = useState('');
   const [defaultCourier, setDefaultCourier] = useState('PATHAO');
   const [vacationMode, setVacationMode] = useState(false);
+  const [vacationMessage, setVacationMessage] = useState('');
+  const [storeDescription, setStoreDescription] = useState('');
+  const [shippingPolicy, setShippingPolicy] = useState('');
+  const [returnPolicy, setReturnPolicy] = useState('');
+  const [cancellationPolicy, setCancellationPolicy] = useState('');
+  const [publicEmailEnabled, setPublicEmailEnabled] = useState(false);
+  const [publicPhoneEnabled, setPublicPhoneEnabled] = useState(false);
+  const [publicPickupAddressEnabled, setPublicPickupAddressEnabled] = useState(false);
+  const [brandingFile, setBrandingFile] = useState<File | null>(null);
+  const [brandingType, setBrandingType] = useState<'LOGO' | 'BANNER'>('LOGO');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const loadSettings = useCallback(async () => {
@@ -44,6 +54,14 @@ export default function SellerSettingsPage() {
       setSupportEmail(settings?.supportEmail || '');
       setSupportPhone(settings?.supportPhone || '');
       setVacationMode(settings?.vacationMode || false);
+      setVacationMessage(settings?.vacationMessage || '');
+      setStoreDescription(settings?.storeDescription || '');
+      setShippingPolicy(settings?.shippingPolicy || '');
+      setReturnPolicy(settings?.returnPolicy || '');
+      setCancellationPolicy(settings?.cancellationPolicy || '');
+      setPublicEmailEnabled(settings?.publicEmailEnabled || false);
+      setPublicPhoneEnabled(settings?.publicPhoneEnabled || false);
+      setPublicPickupAddressEnabled(settings?.publicPickupAddressEnabled || false);
       setDefaultCourier(settings?.defaultCourier || 'PATHAO');
       const address = settings?.pickupAddress;
       if (address) {
@@ -69,7 +87,7 @@ export default function SellerSettingsPage() {
       const response = await fetch('/api/v1/seller/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sellerId, supportEmail: supportEmail || null, supportPhone: supportPhone || null, pickupAddress: { division, district, upazila: district, streetAddress, postalCode }, defaultCourier, vacationMode, version: sellerVersion }),
+        body: JSON.stringify({ sellerId, supportEmail: supportEmail || null, supportPhone: supportPhone || null, pickupAddress: { division, district, upazila, streetAddress, postalCode }, defaultCourier, vacationMode, vacationMessage: vacationMessage || null, storeDescription: storeDescription || null, shippingPolicy: shippingPolicy || null, returnPolicy: returnPolicy || null, cancellationPolicy: cancellationPolicy || null, publicEmailEnabled, publicPhoneEnabled, publicPickupAddressEnabled, version: sellerVersion }),
       });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to save seller settings.');
@@ -191,6 +209,21 @@ export default function SellerSettingsPage() {
                     </div>
                   </div>
                 </div>
+              </Card>
+
+              <Card className="space-y-5 bg-white p-6">
+                <h2 className="text-base font-bold text-slate-900">{t('sellerProfile.branding')}</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {([['LOGO', 'sellerProfile.logo'], ['BANNER', 'sellerProfile.banner']] as const).map(([type, label]) => (
+                    <label key={type} className="block text-xs font-semibold text-slate-700">{t(label)}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { setBrandingType(type); setBrandingFile(event.target.files?.[0] || null); }} className="mt-2 block w-full rounded-lg border border-slate-300 p-2 text-xs" />
+                    </label>
+                  ))}
+                </div>
+                <button type="button" disabled={!brandingFile || !sellerId} onClick={async () => { if (!brandingFile) return; const form = new FormData(); form.set('sellerId', sellerId); form.set('assetType', brandingType); form.set('version', String(sellerVersion)); form.set('file', brandingFile); const response = await fetch('/api/v1/seller/settings/branding', { method: 'POST', body: form }); const json = await response.json().catch(() => null); if (!response.ok || !json?.success) { setSaveError(json?.error?.message || t('sellerProfile.brandingFailed')); return; } setSellerVersion(json.data.version); setBrandingFile(null); setSaveSuccess(true); }} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{t('sellerProfile.uploadBranding')}</button>
+                <h2 className="pt-3 text-base font-bold text-slate-900">{t('sellerProfile.policies')}</h2>
+                {([['storeDescription', storeDescription, setStoreDescription, 'sellerProfile.description'], ['shippingPolicy', shippingPolicy, setShippingPolicy, 'sellerProfile.shippingPolicy'], ['returnPolicy', returnPolicy, setReturnPolicy, 'sellerProfile.returnPolicy'], ['cancellationPolicy', cancellationPolicy, setCancellationPolicy, 'sellerProfile.cancellationPolicy']] as const).map(([key, value, setter, label]) => <label key={key} className="block text-xs font-semibold text-slate-700">{t(label)}<textarea value={value} onChange={(event) => setter(event.target.value)} maxLength={key === 'storeDescription' ? 2000 : 4000} className="mt-2 min-h-20 w-full rounded-lg border border-slate-300 p-2.5 text-xs" /></label>)}
+                <div className="space-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-700"><h2 className="text-base font-bold text-slate-900">{t('sellerProfile.publicContacts')}</h2><label className="flex gap-2"><input type="checkbox" checked={publicEmailEnabled} onChange={(event) => setPublicEmailEnabled(event.target.checked)} />{t('sellerProfile.publicEmail')}</label><label className="flex gap-2"><input type="checkbox" checked={publicPhoneEnabled} onChange={(event) => setPublicPhoneEnabled(event.target.checked)} />{t('sellerProfile.publicPhone')}</label><label className="flex gap-2"><input type="checkbox" checked={publicPickupAddressEnabled} onChange={(event) => setPublicPickupAddressEnabled(event.target.checked)} />{t('sellerProfile.publicPickup')}</label></div>
               </Card>
 
               {/* Warehouse Depot & Pickup Location */}

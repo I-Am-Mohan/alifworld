@@ -104,6 +104,15 @@ export interface SellerStoreSettingsModel {
   sellerId: string;
   logoUrl: string | null;
   bannerUrl: string | null;
+  logoObjectKey?: string | null;
+  bannerObjectKey?: string | null;
+  storeDescription?: string | null;
+  shippingPolicy?: string | null;
+  returnPolicy?: string | null;
+  cancellationPolicy?: string | null;
+  publicEmailEnabled?: boolean;
+  publicPhoneEnabled?: boolean;
+  publicPickupAddressEnabled?: boolean;
   supportEmail: string | null;
   supportPhone: string | null;
   pickupAddress: AddressData | null;
@@ -132,6 +141,10 @@ export interface PublicSellerProfile {
   verifiedAt: Date | null;
   logoUrl: string | null;
   bannerUrl: string | null;
+  storeDescription?: string | null;
+  shippingPolicy?: string | null;
+  returnPolicy?: string | null;
+  cancellationPolicy?: string | null;
   supportEmail: string | null;
   supportPhone: string | null;
   pickupAddress: AddressData | null;

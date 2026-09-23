@@ -1496,6 +1496,15 @@ export const openApiSpec = {
         responses: { '200': { description: 'Store settings updated' }, '409': { description: 'Version conflict' }, '422': { description: 'Validation failed' } },
       },
     },
+    '/api/v1/seller/settings/branding': {
+      post: {
+        tags: ['Seller Portal'],
+        summary: 'Upload Seller Branding Asset',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'multipart/form-data': { schema: { type: 'object', required: ['sellerId', 'assetType', 'version', 'file'], properties: { sellerId: { type: 'string' }, assetType: { type: 'string', enum: ['LOGO', 'BANNER'] }, version: { type: 'integer', minimum: 1 }, file: { type: 'string', format: 'binary' } } } } } },
+        responses: { '200': { description: 'Branding asset uploaded' }, '403': { description: 'Forbidden' }, '409': { description: 'Version conflict' }, '422': { description: 'Invalid branding asset' } },
+      },
+    },
     '/api/v1/stores/{slug}': {
       get: {
         tags: ['Storefront'],
