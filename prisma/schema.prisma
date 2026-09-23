@@ -418,6 +418,8 @@ model Seller {
   notificationDefaults SellerNotificationDefault[]
   lifecycleEvents   SellerLifecycleEvent[]
   onboardingProgress SellerCatalogOnboardingProgress[]
+  importJobs          CatalogImportJob[]
+  exportJobs          CatalogExportJob[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -1130,8 +1132,65 @@ model SellerCatalogOnboardingProgress {
   @@map("seller_catalog_onboarding_progress")
 }
 
+model CatalogImportJob {
+  id              String   @id
+  sellerId        String   @map("seller_id")
+  sourceObjectKey String   @map("source_object_key")
+  format          String
+  status          String   @default("UPLOADED")
+  importMode      String   @default("DRY_RUN") @map("import_mode")
+  idempotencyKey  String?  @unique @map("idempotency_key")
+  totalRows       Int      @default(0) @map("total_rows")
+  validRows       Int      @default(0) @map("valid_rows")
+  errorRows       Int      @default(0) @map("error_rows")
+  committedRows   Int      @default(0) @map("committed_rows")
+  createdAt       DateTime @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  errors CatalogImportRowError[]
+
+  @@index([sellerId, createdAt])
+  @@index([status, createdAt])
+  @@map("catalog_import_jobs")
+}
+
+model CatalogImportRowError {
+  id        String   @id
+  jobId     String   @map("job_id")
+  rowNumber Int      @map("row_number")
+  field     String?
+  code      String
+  message   String
+  details   Json?
+
+  job CatalogImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, rowNumber])
+  @@map("catalog_import_row_errors")
+}
+
+model CatalogExportJob {
+  id             String   @id
+  sellerId       String   @map("seller_id")
+  format         String
+  status         String   @default("REQUESTED")
+  filters        Json?
+  outputObjectKey String? @map("output_object_key")
+  expiresAt      DateTime? @map("expires_at")
+  rowCount       Int      @default(0) @map("row_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  completedAt    DateTime?
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId, createdAt])
+  @@index([status, createdAt])
+  @@map("catalog_export_jobs")
+}
+
 // ------------------------------------------------------------------------------
-// 21. Product Media & Gallery Assets
+// 22. Product Media & Gallery Assets
 // ------------------------------------------------------------------------------
 /// Visual assets (images, videos) associated with products and variants
 model ProductMedia {

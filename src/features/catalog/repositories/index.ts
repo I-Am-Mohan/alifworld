@@ -7,3 +7,4 @@ export * from './attribute-repository';
 export * from './tax-rule-repository';
 export * from './product-approval-repository';
 export * from './onboarding-repository';
+export * from './bulk-repository';

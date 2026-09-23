@@ -2638,6 +2638,29 @@ export const openApiSpec = {
     '/api/v1/admin/catalog/products/{id}/review-history': {
       get: { tags: ['Catalog'], summary: 'Read immutable product status history', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product review history' } } },
     },
+    '/api/v1/seller/catalog/imports': {
+      get: { tags: ['Catalog'], summary: 'List seller catalog import jobs', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Import jobs' } } },
+      post: { tags: ['Catalog'], summary: 'Create and validate a seller catalog import', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogImportRequest' } } } }, responses: { '201': { description: 'Import job created' }, '409': { description: 'Idempotency conflict' }, '422': { description: 'File or row validation failed' } } },
+    },
+    '/api/v1/seller/catalog/imports/{id}': {
+      get: { tags: ['Catalog'], summary: 'Get a seller catalog import job', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Import job' } } },
+    },
+    '/api/v1/seller/catalog/imports/{id}/validate': {
+      post: { tags: ['Catalog'], summary: 'Revalidate a seller catalog import', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['content'], properties: { content: { type: 'string' } } } } } }, responses: { '200': { description: 'Validation result' } } },
+    },
+    '/api/v1/seller/catalog/imports/{id}/commit': {
+      post: { tags: ['Catalog'], summary: 'Commit validated catalog import rows as drafts', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['content'], properties: { content: { type: 'string' } } } } } }, responses: { '200': { description: 'Import committed' }, '409': { description: 'Import is not ready' }, '422': { description: 'Validation failed' } } },
+    },
+    '/api/v1/seller/catalog/imports/{id}/errors': {
+      get: { tags: ['Catalog'], summary: 'List row-level catalog import errors', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Import row errors' } } },
+    },
+    '/api/v1/seller/catalog/exports': {
+      get: { tags: ['Catalog'], summary: 'List seller catalog export jobs', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Export jobs' } } },
+      post: { tags: ['Catalog'], summary: 'Generate a signed seller catalog CSV export', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogExportRequest' } } } }, responses: { '202': { description: 'Export generated or queued' } } },
+    },
+    '/api/v1/seller/catalog/exports/{id}': {
+      get: { tags: ['Catalog'], summary: 'Get a signed catalog export download URL', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Signed download URL' }, '409': { description: 'Export not ready or expired' } } },
+    },
     '/api/v1/catalog/categories/{id}/onboarding-template': {
       get: { tags: ['Catalog'], summary: 'Get category-specific seller onboarding guidance', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'locale', in: 'query', required: false, schema: { type: 'string', enum: ['bn-BD', 'en-BD'] } }], responses: { '200': { description: 'Onboarding template or empty result' } } },
     },
@@ -2832,6 +2855,12 @@ export const openApiSpec = {
       },
       ProductApprovalActionRequest: {
         type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 }, reason: { type: 'string', nullable: true }, reviewNotes: { type: 'string', nullable: true } },
+      },
+      CatalogImportRequest: {
+        type: 'object', required: ['format', 'content'], properties: { format: { type: 'string', enum: ['CSV', 'JSON'] }, content: { type: 'string', maxLength: 5000000 }, mode: { type: 'string', enum: ['DRY_RUN', 'COMMIT'] }, idempotencyKey: { type: 'string', minLength: 8 } },
+      },
+      CatalogExportRequest: {
+        type: 'object', required: ['format'], properties: { format: { type: 'string', enum: ['CSV'] }, status: { type: 'string' } },
       },
       OnboardingTemplateWriteRequest: {
         type: 'object', required: ['templateKey', 'locale', 'name', 'requiredFields', 'recommendedFields', 'attributeGuidance', 'mediaGuidance', 'validationHints'], properties: { templateKey: { type: 'string' }, categoryId: { type: 'string', nullable: true }, locale: { type: 'string', enum: ['bn-BD', 'en-BD'] }, name: { type: 'string' }, requiredFields: { type: 'array', items: { type: 'string' } }, recommendedFields: { type: 'array', items: { type: 'string' } }, attributeGuidance: { type: 'array', items: { type: 'object' } }, mediaGuidance: { type: 'array', items: { type: 'string' } }, titleExample: { type: 'string', nullable: true }, descriptionExample: { type: 'string', nullable: true }, validationHints: { type: 'array', items: { type: 'string' } }, version: { type: 'integer', minimum: 1 }, isActive: { type: 'boolean' } },

@@ -6,3 +6,4 @@ export * from './attribute-service';
 export * from './taxonomy-seo-service';
 export * from './product-approval-service';
 export * from './onboarding-service';
+export * from './bulk-service';
