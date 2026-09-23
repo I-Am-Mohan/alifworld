@@ -15,22 +15,21 @@ export default function SellerCenterPage() {
           const json = await res.json();
           if (json.success && json.data) {
             const roles: string[] = json.data.roles || [];
-            const isSellerOrAdmin =
+            const isSellerMerchant =
               json.data.sellerId ||
               roles.includes('SELLER_OWNER') ||
-              roles.includes('SELLER_STAFF') ||
-              roles.includes('SUPER_ADMIN') ||
-              roles.includes('ADMIN');
+              roles.includes('SELLER_MANAGER') ||
+              roles.includes('SELLER_STAFF');
 
-            if (isSellerOrAdmin) {
+            if (isSellerMerchant) {
               router.replace('/seller/products');
               return;
             }
           }
         }
-        router.replace('/login?redirect=/seller/products');
+        router.replace('/seller/login');
       } catch {
-        router.replace('/login?redirect=/seller/products');
+        router.replace('/seller/login');
       } finally {
         setChecking(false);
       }
