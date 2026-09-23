@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ShieldAlert, X } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
 import { csrfFetch } from '@/shared/security/csrf-client';
@@ -41,6 +42,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<AuthMode>('login');
@@ -50,6 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const openAccountModal = () => {
+    if (user && (user.roles?.includes('SUPER_ADMIN') || user.roles?.includes('ADMIN'))) {
+      router.push('/admin');
+      return;
+    }
     setIsAccountOpen(true);
   };
 

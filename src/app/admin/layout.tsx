@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -19,6 +19,7 @@ import {
   MapPin,
   Tag,
   Smartphone,
+  Laptop,
   Bell,
   HelpCircle,
   Globe,
@@ -84,6 +85,48 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
+  // Admin active sessions states
+  const [adminSessions, setAdminSessions] = useState<Array<{
+    id: string;
+    clientType: string;
+    deviceSummary: string;
+    ipAddress: string | null;
+    userAgent: string | null;
+    isCurrent: boolean;
+    createdAt: string;
+    lastActiveAt: string;
+  }>>([]);
+  const [loadingAdminSessions, setLoadingAdminSessions] = useState(false);
+
+  const fetchAdminSessions = useCallback(async () => {
+    try {
+      setLoadingAdminSessions(true);
+      const res = await fetch('/api/v1/auth/sessions');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data?.sessions)) {
+          setAdminSessions(data.data.sessions);
+        }
+      }
+    } catch {
+      // Fallback
+    } finally {
+      setLoadingAdminSessions(false);
+    }
+  }, []);
+
+  const handleRevokeOtherAdminSessions = async () => {
+    try {
+      const res = await csrfFetch('/api/v1/auth/sessions/revoke-others', { method: 'POST' });
+      if (res.ok) {
+        setAdminSessions((prev) => prev.filter((s) => s.isCurrent));
+        setProfileSuccess('Logged out from all other active devices.');
+      }
+    } catch {
+      setProfileError('Failed to revoke sessions.');
+    }
+  };
+
   const openProfileModal = () => {
     setProfileDropdownOpen(false);
     setProfileTab('profile');
@@ -93,6 +136,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setEditPhone(user?.phone || '');
     setProfileError(null);
     setProfileSuccess(null);
+    fetchAdminSessions();
+    setProfileModalOpen(true);
+  };
+
+  const openPasswordModal = () => {
+    setProfileDropdownOpen(false);
+    setProfileTab('password');
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -401,10 +451,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <button
                     type="button"
                     onClick={openProfileModal}
-                    className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-900 rounded-xl flex items-center space-x-2 transition-colors"
+                    className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-900 rounded-xl flex items-center space-x-2 transition-colors cursor-pointer"
                   >
                     <User className="w-4 h-4 text-amber-600" />
                     <span>Profile Management</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={openPasswordModal}
+                    className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-900 rounded-xl flex items-center space-x-2 transition-colors cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4 text-amber-600" />
+                    <span>Change Password</span>
                   </button>
 
                   <Link
@@ -517,7 +576,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
 
-      {/* Profile Management Interactive Modal */}
+      {/* Profile / Change Password Interactive Modal */}
       {profileModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 sm:p-7 space-y-5 max-h-[90vh] overflow-y-auto">
@@ -525,60 +584,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-sm shadow-xs">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'M'}
+                  {profileTab === 'password' ? (
+                    <KeyRound className="w-5 h-5 text-amber-700" />
+                  ) : user?.name ? (
+                    user.name.charAt(0).toUpperCase()
+                  ) : (
+                    'A'
+                  )}
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Admin Profile Management</h3>
-                  <p className="text-xs text-slate-500">IAM Operator Identity &amp; Privileges</p>
+                  <h3 className="text-base font-black text-slate-900">
+                    {profileTab === 'password' ? 'Admin Change Password' : 'Admin Profile Management'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {profileTab === 'password'
+                      ? 'Update password and security credentials'
+                      : 'IAM Operator Identity & Privileges'}
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setProfileModalOpen(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex rounded-xl bg-slate-100 p-1 gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileTab('profile');
-                  setProfileError(null);
-                  setProfileSuccess(null);
-                }}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
-                  profileTab === 'profile'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <User className="w-3.5 h-3.5 text-amber-600" />
-                <span>Profile Details</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setProfileTab('password');
-                  setPasswordError(null);
-                  setPasswordSuccess(null);
-                }}
-                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 ${
-                  profileTab === 'password'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-                <span>Change Password</span>
-              </button>
-            </div>
-
-            {/* Tab 1: Profile Details */}
+            {/* View 1: Profile Details */}
             {profileTab === 'profile' && (
               <div className="space-y-4 text-xs">
                 {profileSuccess && (
@@ -643,6 +678,79 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           </span>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Active Sessions & Devices */}
+                    <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                            Active Sessions &amp; Devices
+                          </span>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Manage devices currently signed into your AlifWorld account.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={fetchAdminSessions}
+                          disabled={loadingAdminSessions}
+                          className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                          title="Refresh sessions"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${loadingAdminSessions ? 'animate-spin text-amber-600' : ''}`} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 max-h-36 overflow-y-auto pr-0.5">
+                        {adminSessions.length === 0 ? (
+                          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <Laptop className="w-3.5 h-3.5 text-amber-600" />
+                              <span className="font-semibold">Current Device Session</span>
+                            </div>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Active now
+                            </span>
+                          </div>
+                        ) : (
+                          adminSessions.map((s) => (
+                            <div key={s.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                              <div className="flex items-center space-x-2.5">
+                                {s.clientType === 'MOBILE_FLUTTER' ? (
+                                  <Smartphone className="w-4 h-4 text-amber-600 shrink-0" />
+                                ) : (
+                                  <Laptop className="w-4 h-4 text-amber-600 shrink-0" />
+                                )}
+                                <div>
+                                  <div className="font-bold text-slate-900 flex items-center space-x-1.5">
+                                    <span>{s.deviceSummary || 'Web Session'}</span>
+                                    {s.isCurrent && (
+                                      <span className="px-1.5 py-0.2 text-[9px] font-bold bg-emerald-100 text-emerald-800 rounded-full">
+                                        This Device
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-slate-500 font-mono">
+                                    {s.ipAddress || '::1'} • {s.isCurrent ? 'Active now' : new Date(s.lastActiveAt).toLocaleString('en-BD')}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {adminSessions.filter((s) => !s.isCurrent).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleRevokeOtherAdminSessions}
+                          className="w-full py-1.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors flex items-center justify-center space-x-1.5 border border-rose-200 cursor-pointer"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Log out from all other devices</span>
+                        </button>
+                      )}
                     </div>
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">

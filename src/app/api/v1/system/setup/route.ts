@@ -134,46 +134,49 @@ export async function POST(req: NextRequest) {
 
     const updatedKeys: string[] = [];
 
-    await prisma.$transaction(async (tx) => {
-      for (const [key, rawValue] of Object.entries(body)) {
-        if (typeof key !== 'string' || key.length === 0) continue;
-        const value = typeof rawValue === 'object' && rawValue !== null
-          ? JSON.stringify(rawValue)
-          : String(rawValue);
+    await prisma.$transaction(
+      async (tx) => {
+        for (const [key, rawValue] of Object.entries(body)) {
+          if (typeof key !== 'string' || key.length === 0) continue;
+          const value = typeof rawValue === 'object' && rawValue !== null
+            ? JSON.stringify(rawValue)
+            : String(rawValue);
 
-        await tx.systemConfig.upsert({
-          where: { key },
-          update: {
-            value,
-            updatedBy: actor.userId,
-          },
-          create: {
-            id: generateId(ID_PREFIXES.CONFIG),
-            key,
-            value,
-            description: `Configured via Admin Setup by ${actor.userId}`,
-            isPublic: false,
+          await tx.systemConfig.upsert({
+            where: { key },
+            update: {
+              value,
+              updatedBy: actor.userId,
+            },
+            create: {
+              id: generateId(ID_PREFIXES.CONFIG),
+              key,
+              value,
+              description: `Configured via Admin Setup by ${actor.userId}`,
+              isPublic: false,
+            },
+          });
+          updatedKeys.push(key);
+        }
+
+        await tx.auditLog.create({
+          data: {
+            id: generateId(ID_PREFIXES.AUDIT),
+            actorId: actor.userId,
+            actorRole: actor.roles[0] || 'SUPER_ADMIN',
+            action: 'PLATFORM_SETUP_UPDATED',
+            resource: 'SystemConfig',
+            resourceId: 'SETUP_CONFIGURATION',
+            metadata: {
+              updatedCount: updatedKeys.length,
+              updatedKeys,
+              timestamp: new Date().toISOString(),
+            },
           },
         });
-        updatedKeys.push(key);
-      }
-
-      await tx.auditLog.create({
-        data: {
-          id: generateId(ID_PREFIXES.AUDIT),
-          actorId: actor.userId,
-          actorRole: actor.roles[0] || 'SUPER_ADMIN',
-          action: 'PLATFORM_SETUP_UPDATED',
-          resource: 'SystemConfig',
-          resourceId: 'SETUP_CONFIGURATION',
-          metadata: {
-            updatedCount: updatedKeys.length,
-            updatedKeys,
-            timestamp: new Date().toISOString(),
-          },
-        },
-      });
-    });
+      },
+      { timeout: 30000, maxWait: 10000 }
+    );
 
     return NextResponse.json({
       success: true,
