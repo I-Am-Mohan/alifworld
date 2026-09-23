@@ -2897,6 +2897,41 @@
         }
       }
     },
+    "/api/v1/admin/seller-applications/{id}": {
+      "get": {
+        "tags": [
+          "Seller Administration"
+        ],
+        "summary": "Get Seller Application Review Details",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^sapp_[A-Za-z0-9]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Application details and review history retrieved"
+          },
+          "403": {
+            "description": "Requires sellers:verify"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/admin/seller-applications/{id}/review": {
       "post": {
         "tags": [
@@ -2915,6 +2950,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
             }
           }
         ],
@@ -2943,7 +2988,8 @@
                     ]
                   },
                   "reason": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 5
                   }
                 }
               }

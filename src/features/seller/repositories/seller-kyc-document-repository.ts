@@ -10,7 +10,7 @@
 import { BaseRepository, assertSellerScope } from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { nextVersion } from '@/shared/database/lifecycle';
-import { NotFoundError } from '@/shared/errors/app-error';
+import { ConflictError, NotFoundError } from '@/shared/errors/app-error';
 import { SellerKycDocumentModel, KycDocumentType, KycDocumentStatus } from '../types';
 
 export interface SubmitKycData {
@@ -101,21 +101,25 @@ export class SellerKycDocumentRepository extends BaseRepository {
       if (!existing) {
         throw new NotFoundError(`KYC Document with id '${id}' not found`, { id });
       }
-
+      if (existing.status !== KycDocumentStatus.PENDING) {
+        throw new ConflictError('Only pending KYC documents can be reviewed.', { status: existing.status });
+      }
       this.assertVersion(existing.version, expectedVersion, id);
 
-      const updated = await (this.db as any).sellerKycDocument.update({
-        where: { id },
+      const result = await (this.db as any).sellerKycDocument.updateMany({
+        where: { id, deletedAt: null, status: KycDocumentStatus.PENDING, version: expectedVersion },
         data: {
           status: review.status,
           rejectionReason: review.rejectionReason || null,
           verifiedAt: review.status === KycDocumentStatus.VERIFIED ? new Date() : null,
-          verifiedBy: review.verifiedBy,
-          version: nextVersion(existing.version),
+          verifiedBy: review.status === KycDocumentStatus.VERIFIED ? review.verifiedBy : null,
+          version: nextVersion(expectedVersion),
         },
       });
-
-      return updated as SellerKycDocumentModel;
+      if (result.count !== 1) throw new ConflictError('KYC document was reviewed by another request.');
+      const updated = await this.findById(id);
+      if (!updated) throw new NotFoundError(`KYC Document with id '${id}' not found`, { id });
+      return updated;
     }, 'SellerKycDocumentRepository.reviewDocument');
   }
 

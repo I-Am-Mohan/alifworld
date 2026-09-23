@@ -462,8 +462,9 @@ model SellerApplicationReview {
   reviewerId    String   @map("reviewer_id")
   fromStatus    String   @map("from_status")
   toStatus      String   @map("to_status")
-  reason        String?
-  createdAt     DateTime @default(now()) @map("created_at")
+  reason           String?
+  idempotencyKey   String?  @unique @map("idempotency_key")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   application SellerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   reviewer    User              @relation("SellerApplicationReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)

@@ -1737,13 +1737,22 @@ export const openApiSpec = {
         responses: { '200': { description: 'Applications listed' }, '401': { description: 'Unauthorized' }, '403': { description: 'Requires sellers:verify' } },
       },
     },
+    '/api/v1/admin/seller-applications/{id}': {
+      get: {
+        tags: ['Seller Administration'],
+        summary: 'Get Seller Application Review Details',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: '^sapp_[A-Za-z0-9]+$' } }],
+        responses: { '200': { description: 'Application details and review history retrieved' }, '403': { description: 'Requires sellers:verify' }, '404': { description: 'Not found' } },
+      },
+    },
     '/api/v1/admin/seller-applications/{id}/review': {
       post: {
         tags: ['Seller Administration'],
         summary: 'Review Seller Application',
         security: [{ BearerAuth: [] }],
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['version', 'decision'], properties: { version: { type: 'integer', minimum: 1 }, decision: { type: 'string', enum: ['UNDER_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED'] }, reason: { type: 'string' } } } } } },
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'Idempotency-Key', in: 'header', required: false, schema: { type: 'string', minLength: 8, maxLength: 128 } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['version', 'decision'], properties: { version: { type: 'integer', minimum: 1 }, decision: { type: 'string', enum: ['UNDER_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED'] }, reason: { type: 'string', minLength: 5 } } } } } },
         responses: { '200': { description: 'Application reviewed' }, '403': { description: 'Requires sellers:verify' }, '409': { description: 'Version or state conflict' }, '422': { description: 'Validation failed' } },
       },
     },

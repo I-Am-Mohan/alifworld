@@ -154,7 +154,7 @@ describe('SellerKycService Unit Tests', () => {
 
     expect(verified.status).toBe(KycDocumentStatus.VERIFIED);
     expect(verified.verifiedBy).toBe('usr_admin_01');
-    expect(auditAction).toBe('SELLER_KYC_VERIFY');
+    expect(auditAction).toBe('SELLER_KYC_VERIFIED');
   });
 
   it('blocks non-admin users from reviewing KYC documents', async () => {
@@ -199,7 +199,7 @@ describe('SellerKycService Unit Tests', () => {
 
     expect(result.viewUrl).toContain('X-Amz-Algorithm=AWS4-HMAC-SHA256');
     expect(result.expiresAt).toBeInstanceOf(Date);
-    expect(auditAction).toBe('SELLER_KYC_VIEW');
+    expect(auditAction).toBe('SELLER_KYC_VIEWED');
   });
 
   it('blocks unauthorized users from obtaining signed KYC download links', async () => {

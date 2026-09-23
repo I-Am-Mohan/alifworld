@@ -4,6 +4,7 @@ import { defaultPolicyEngine } from '@/shared/authz';
 import { errorResponse } from '@/shared/api/error-response';
 import { SellerApplicationIdSchema, SellerApplicationReviewSchema } from '@/features/seller/application';
 import { SellerApplicationService } from '@/features/seller/services/seller-application-service';
+import { ValidationError } from '@/shared/errors/app-error';
 
 export const dynamic = 'force-dynamic';
 const service = new SellerApplicationService();
@@ -21,7 +22,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ success: false, error: { code: 'VALIDATION_FAILED', message: 'Invalid seller application review.', details: parsed.error.flatten() } }, { status: 422 });
     }
     await defaultPolicyEngine.assert(actor, 'seller_application:review', { type: 'SELLER', id });
-    const application = await service.review(id, actor.userId, parsed.data);
+    const idempotencyKey = req.headers.get('idempotency-key')?.trim();
+    if (idempotencyKey && idempotencyKey.length > 128) throw new ValidationError('Idempotency-Key must be 128 characters or fewer.');
+    const application = await service.review(id, actor.userId, parsed.data, idempotencyKey || undefined);
     return NextResponse.json({ success: true, data: application }, { status: 200 });
   } catch (error) {
     return errorResponse(req, error, 'Failed to review seller application');

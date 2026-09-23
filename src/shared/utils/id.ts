@@ -20,6 +20,7 @@ export const ID_PREFIXES = {
   USER: 'usr',
   SELLER: 'sel',
   SELLER_APPLICATION: 'sapp',
+  SELLER_APPLICATION_REVIEW: 'srev',
   CATEGORY: 'cat',
   PRODUCT: 'prd',
   VARIANT: 'var',

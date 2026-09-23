@@ -2,7 +2,9 @@ import { prisma } from '@/shared/database/prisma';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { ConflictError, NotFoundError, ValidationError } from '@/shared/errors/app-error';
 import { SellerApplicationRepository, SellerApplicationRecord } from '../repositories/seller-application-repository';
+import { AUDIT_ACTIONS } from '@/shared/audit/audit.interface';
 import type { SellerApplicationDraftInput, SellerApplicationReviewInput, SellerApplicationStatus, SellerApplicationUpdateInput } from '../application';
+import { canTransitionSellerApplication } from '../application';
 
 const REVIEWABLE_STATUSES = ['SUBMITTED', 'UNDER_REVIEW'] as const;
 
@@ -52,15 +54,29 @@ export class SellerApplicationService {
     });
   }
 
+  async getForAdmin(applicationId: string): Promise<SellerApplicationRecord> {
+    const application = await this.repository.findById(applicationId);
+    if (!application) throw new NotFoundError('Seller application not found.', { applicationId });
+    return application;
+  }
+
   async listForAdmin(options: { status?: string; search?: string; page?: number; limit?: number } = {}) {
     return this.repository.listForAdmin(options);
   }
 
-  async review(applicationId: string, reviewerId: string, input: SellerApplicationReviewInput): Promise<SellerApplicationRecord> {
+  async review(applicationId: string, reviewerId: string, input: SellerApplicationReviewInput, idempotencyKey?: string): Promise<SellerApplicationRecord> {
     const application = await this.repository.findById(applicationId);
     if (!application) throw new NotFoundError('Seller application not found.', { applicationId });
+    if (idempotencyKey) {
+      const prior = await (prisma as any).sellerApplicationReview.findUnique({ where: { idempotencyKey }, include: { application: { include: { reviews: { orderBy: { createdAt: 'desc' } } } } } });
+      if (prior?.applicationId === applicationId && prior.reviewerId === reviewerId) return prior.application as SellerApplicationRecord;
+    }
     if (!REVIEWABLE_STATUSES.includes(application.status as (typeof REVIEWABLE_STATUSES)[number])) {
       throw new ConflictError('This seller application is not available for review.', { status: application.status });
+    }
+    const nextStatus = input.decision as SellerApplicationStatus;
+    if (!canTransitionSellerApplication(application.status as SellerApplicationStatus, nextStatus)) {
+      throw new ConflictError('The requested seller application transition is not allowed.', { fromStatus: application.status, toStatus: nextStatus });
     }
     if (application.version !== input.version) {
       throw new ConflictError('Seller application was modified by another reviewer.', { expectedVersion: input.version, actualVersion: application.version });
@@ -108,9 +124,12 @@ export class SellerApplicationService {
       });
       if (updated.count !== 1) throw new ConflictError('Seller application changed before review.');
 
-      await (tx as any).sellerApplicationReview.create({ data: { id: generateId(ID_PREFIXES.SELLER_APPLICATION), applicationId, reviewerId, fromStatus: application.status, toStatus: input.decision, reason: input.reason?.trim() || null } });
-      await (tx as any).outboxEvent.create({ data: { eventType: `SELLER_APPLICATION_${input.decision}`, aggregateType: 'SellerApplication', aggregateId: applicationId, payload: { applicationId, sellerId, reviewerId, decision: input.decision } } });
-      await (tx as any).auditLog.create({ data: { actorId: reviewerId, action: `SELLER_APPLICATION_${input.decision}`, resource: 'SellerApplication', resourceId: applicationId, metadata: { sellerId, fromStatus: application.status, toStatus: input.decision, reason: input.reason || null } } });
+      await (tx as any).sellerApplicationReview.create({ data: { id: generateId(ID_PREFIXES.SELLER_APPLICATION_REVIEW), applicationId, reviewerId, fromStatus: application.status, toStatus: input.decision, reason: input.reason?.trim() || null, idempotencyKey: idempotencyKey || null } });
+      await (tx as any).outboxEvent.create({ data: { eventType: `SELLER_APPLICATION_${input.decision}`, aggregateType: 'SellerApplication', aggregateId: applicationId, payload: { applicationId, sellerId, reviewerId, decision: input.decision, idempotencyKey: idempotencyKey || null } } });
+      if (sellerId && input.decision === 'APPROVED') {
+        await (tx as any).outboxEvent.create({ data: { eventType: 'SELLER_REGISTERED', aggregateType: 'Seller', aggregateId: sellerId, payload: { sellerId, applicationId, ownerUserId: application.applicantUserId } } });
+      }
+      await (tx as any).auditLog.create({ data: { actorId: reviewerId, action: (AUDIT_ACTIONS as any)[`SELLER_APPLICATION_${input.decision}`] || `SELLER_APPLICATION_${input.decision}`, resource: 'SellerApplication', resourceId: applicationId, metadata: { sellerId, fromStatus: application.status, toStatus: input.decision, reason: input.reason || null, idempotencyKey: idempotencyKey || null } } });
       return (tx as any).sellerApplication.findUnique({ where: { id: applicationId }, include: { reviews: { orderBy: { createdAt: 'desc' } } } });
     });
   }

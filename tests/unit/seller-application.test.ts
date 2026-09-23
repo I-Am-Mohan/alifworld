@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { SellerApplicationDraftSchema, SellerApplicationReviewSchema } from '@/features/seller/application';
+import { SellerApplicationDraftSchema, SellerApplicationIdSchema, SellerApplicationReviewSchema } from '@/features/seller/application';
 import { SellerPolicy } from '@/shared/authz/policies/seller.policy';
 
 describe('seller application workflow', () => {
@@ -10,7 +10,7 @@ describe('seller application workflow', () => {
   });
 
   it('requires reasons for rejection and requested changes', () => {
-    expect(SellerApplicationReviewSchema.safeParse({ version: 1, decision: 'APPROVED' }).success).toBe(true);
+    expect(SellerApplicationReviewSchema.safeParse({ version: 1, decision: 'APPROVED', reason: 'All submitted business information was verified.' }).success).toBe(true);
     expect(SellerApplicationReviewSchema.safeParse({ version: 1, decision: 'REJECTED' }).success).toBe(false);
     expect(SellerApplicationReviewSchema.safeParse({ version: 1, decision: 'CHANGES_REQUESTED', reason: 'Please add your registered address.' }).success).toBe(true);
   });
@@ -34,5 +34,10 @@ describe('seller application workflow', () => {
       { type: 'SELLER', id: 'sapp_1' }
     );
     expect(decision.granted).toBe(true);
+  });
+
+  it('requires the explicit application identifier format', () => {
+    expect(() => SellerApplicationIdSchema.parse('sapp_01review')).not.toThrow();
+    expect(() => SellerApplicationIdSchema.parse('application-1')).toThrow();
   });
 });

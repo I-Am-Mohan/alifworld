@@ -19,6 +19,7 @@ import { SubmitKycDocumentInput, VerifyKycDocumentInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { S3PrivateObjectStorage } from '@/shared/storage/s3-object-storage';
+import { AUDIT_ACTIONS } from '@/shared/audit/audit.interface';
 
 export class SellerKycService {
   constructor(
@@ -87,7 +88,7 @@ export class SellerKycService {
     await (prisma as any).auditLog.create({
       data: {
         actorId: actorUserId,
-        action: 'SELLER_KYC_SUBMIT',
+        action: AUDIT_ACTIONS.SELLER_KYC_SUBMITTED,
         resource: 'SellerKycDocument',
         resourceId: doc.id,
         metadata: {
@@ -197,10 +198,19 @@ export class SellerKycService {
       verifiedBy: adminUserId,
     });
 
+    const auditAction = input.status === KycDocumentStatus.VERIFIED ? AUDIT_ACTIONS.SELLER_KYC_VERIFIED : AUDIT_ACTIONS.SELLER_KYC_REJECTED;
+    await (prisma as any).outboxEvent.create({
+      data: {
+        eventType: auditAction,
+        aggregateType: 'SellerKycDocument',
+        aggregateId: input.documentId,
+        payload: { documentId: input.documentId, status: input.status, reviewerId: adminUserId },
+      },
+    });
     await (prisma as any).auditLog.create({
       data: {
         actorId: adminUserId,
-        action: input.status === KycDocumentStatus.VERIFIED ? 'SELLER_KYC_VERIFY' : 'SELLER_KYC_REJECT',
+        action: auditAction,
         resource: 'SellerKycDocument',
         resourceId: input.documentId,
         metadata: {
@@ -250,7 +260,7 @@ export class SellerKycService {
     await (prisma as any).auditLog.create({
       data: {
         actorId: actorUserId,
-        action: 'SELLER_KYC_VIEW',
+        action: AUDIT_ACTIONS.SELLER_KYC_VIEWED,
         resource: 'SellerKycDocument',
         resourceId: doc.id,
         metadata: {
