@@ -5,7 +5,8 @@ import { en } from '@/i18n/translations/en';
 import { formatLocalizedText } from '@/shared/utils/localization';
 import { getTransactionalTemplate, renderNotificationTemplate, shouldDeliverNotification } from '@/features/notifications/notification-contract';
 import { notificationIdempotencyKey } from '@/features/notifications/notification-service';
-import { validationDetails } from '@/shared/api/error-response';
+import { validationDetails, localizedErrorMessage } from '@/shared/api/error-response';
+import { UnauthorizedError } from '@/shared/errors/app-error';
 
 const preferences = [
   { event: 'MARKETING' as const, channel: 'EMAIL' as const, enabled: true },
@@ -18,6 +19,12 @@ describe('Milestone 058 localized errors and notifications', () => {
     expect(bn.errors.VALIDATION_FAILED).toBeTruthy();
     expect(formatLocalizedText(en.transactional.emailVerificationBody, { code: '123456' })).toContain('123456');
     expect(formatLocalizedText(bn.transactional.emailVerificationBody, { code: '123456' })).toContain('123456');
+  });
+
+  it('preserves specific error fallback messages over generic error code keys when messageKey is omitted', () => {
+    const error = new UnauthorizedError('Invalid email/phone or password');
+    const msg = localizedErrorMessage(error.errorCode, error.message, 'en-BD', {}, error.messageKey);
+    expect(msg).toBe('Invalid email/phone or password');
   });
 
   it('normalizes Zod issues into stable API detail records', () => {

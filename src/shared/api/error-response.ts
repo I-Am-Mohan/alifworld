@@ -12,13 +12,31 @@ export function localizedErrorMessage(
   params: Record<string, string | number | bigint> = {},
   messageKey?: string
 ): string {
-  const key = messageKey || `errors.${code}`;
-  const translated = formatServerMessage(
-    key,
-    Object.fromEntries(Object.entries(params).map(([name, value]) => [name, typeof value === 'bigint' ? value.toString() : value])),
+  if (messageKey) {
+    const translated = formatServerMessage(
+      messageKey,
+      Object.fromEntries(
+        Object.entries(params).map(([name, value]) => [name, typeof value === 'bigint' ? value.toString() : value])
+      ),
+      locale
+    );
+    if (translated !== messageKey) return translated;
+  }
+
+  if (fallback && fallback.trim()) {
+    return formatLocalizedText(fallback, params);
+  }
+
+  const defaultKey = `errors.${code}`;
+  const defaultTranslated = formatServerMessage(
+    defaultKey,
+    Object.fromEntries(
+      Object.entries(params).map(([name, value]) => [name, typeof value === 'bigint' ? value.toString() : value])
+    ),
     locale
   );
-  return translated === key ? formatLocalizedText(fallback, params) : translated;
+
+  return defaultTranslated === defaultKey ? code : defaultTranslated;
 }
 
 export function validationDetails(error: z.ZodError): Array<{ path: string; code: string; message: string }> {
