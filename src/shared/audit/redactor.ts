@@ -30,6 +30,14 @@ const SENSITIVE_KEY_PATTERNS = [
   /card_?number/i,
   /private_?key/i,
   /api_?key/i,
+  /account_?number/i,
+  /routing_?number/i,
+  /account_?reference/i,
+  /account_?title/i,
+  /ciphertext/i,
+  /encrypted/i,
+  /private_?object/i,
+  /file_?url/i,
 ];
 
 /**
