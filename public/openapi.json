@@ -5338,6 +5338,297 @@
         }
       }
     },
+    "/api/v1/seller/catalog/products/{id}/submit": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Submit an owned product for administrative approval",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductApprovalSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product submitted"
+          },
+          "409": {
+            "description": "Invalid state or version conflict"
+          },
+          "422": {
+            "description": "Readiness validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/seller/catalog/products/{id}/validation": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Validate product approval readiness",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Readiness report"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products/pending": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List products pending approval",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Approval queue"
+          },
+          "403": {
+            "description": "Requires catalog approval permission"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products/{id}/approve": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Approve a pending product",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductApprovalActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product approved"
+          },
+          "409": {
+            "description": "State or version conflict"
+          },
+          "422": {
+            "description": "Readiness validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products/{id}/reject": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Reject a pending product",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductApprovalActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product rejected"
+          },
+          "409": {
+            "description": "State or version conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products/{id}/publish": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Publish an approved product",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductApprovalActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product published"
+          },
+          "403": {
+            "description": "Seller publication is forbidden"
+          },
+          "409": {
+            "description": "State or version conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products/{id}/archive": {
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Archive an approved or published product",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductApprovalActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product archived"
+          },
+          "409": {
+            "description": "State or version conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products/{id}/review-history": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Read immutable product status history",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product review history"
+          }
+        }
+      }
+    },
     "/api/v1/admin/catalog/categories/{id}/translations": {
       "get": {
         "tags": [
@@ -6600,6 +6891,43 @@
                 }
               }
             }
+          }
+        }
+      },
+      "ProductApprovalSubmitRequest": {
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 200
+          }
+        }
+      },
+      "ProductApprovalActionRequest": {
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "reviewNotes": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

@@ -78,6 +78,9 @@ export class CatalogPolicy implements IPolicy {
 
       case 'publish':
       case 'catalog:publish':
+        if (isSeller) {
+          return { granted: false, code: 'FORBIDDEN', reason: 'Seller users may submit products for approval but cannot publish directly.', policyName: this.name };
+        }
         if (isPlatformAdmin || actor.permissions.includes('catalog:publish')) {
           return { granted: true, code: 'GRANTED', reason: 'Authorized to publish product to live storefront.', policyName: this.name };
         }
@@ -87,6 +90,23 @@ export class CatalogPolicy implements IPolicy {
           reason: 'Lacks catalog:publish permission.',
           policyName: this.name,
         };
+
+      case 'submit':
+      case 'catalog:submit':
+        if (isSeller && actor.sellerId === targetSellerId) {
+          return { granted: true, code: 'GRANTED', reason: 'Seller may submit an owned product for administrative approval.', policyName: this.name };
+        }
+        if (isPlatformAdmin || actor.permissions.includes('catalog:write')) {
+          return { granted: true, code: 'GRANTED', reason: 'Authorized to submit a catalog product for review.', policyName: this.name };
+        }
+        return { granted: false, code: 'FORBIDDEN', reason: 'Lacks catalog submission permission.', policyName: this.name };
+
+      case 'approve':
+      case 'catalog:approve':
+        if (isPlatformAdmin || actor.permissions.includes('catalog:approve')) {
+          return { granted: true, code: 'GRANTED', reason: 'Authorized to review and approve catalog products.', policyName: this.name };
+        }
+        return { granted: false, code: 'FORBIDDEN', reason: 'Lacks catalog:approve permission.', policyName: this.name };
 
       case 'archive':
       case 'catalog:archive':

@@ -985,6 +985,8 @@ model Product {
   translations    ProductTranslation[]
   attributeValues ProductAttributeValue[]
   optionSets      ProductOptionSet[]
+  approvalRequests ProductApprovalRequest[]
+  statusHistory   ProductStatusHistory[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -1038,7 +1040,47 @@ model ProductVariant {
 }
 
 // ------------------------------------------------------------------------------
-// 18. Product Media & Gallery Assets
+// 18. Product Approval Workflow
+// ------------------------------------------------------------------------------
+model ProductApprovalRequest {
+  id             String   @id
+  productId      String   @map("product_id")
+  submittedVersion Int    @map("submitted_version")
+  submittedBy    String   @map("submitted_by")
+  status         String   @default("PENDING")
+  decisionBy     String?  @map("decision_by")
+  reason         String?
+  reviewNotes    String?  @map("review_notes")
+  idempotencyKey String?  @unique @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+  decidedAt      DateTime? @map("decided_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, status, createdAt])
+  @@index([status, createdAt])
+  @@map("product_approval_requests")
+}
+
+model ProductStatusHistory {
+  id          String   @id
+  productId   String   @map("product_id")
+  fromStatus  String?  @map("from_status")
+  toStatus    String   @map("to_status")
+  reason      String?
+  actorId     String   @map("actor_id")
+  requestId   String?  @map("request_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt])
+  @@index([toStatus, createdAt])
+  @@map("product_status_history")
+}
+
+// ------------------------------------------------------------------------------
+// 19. Product Media & Gallery Assets
 // ------------------------------------------------------------------------------
 /// Visual assets (images, videos) associated with products and variants
 model ProductMedia {

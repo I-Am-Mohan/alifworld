@@ -59,6 +59,8 @@ export const ID_PREFIXES = {
   PRODUCT_ATTRIBUTE: 'pat',
   OPTION_SET: 'ops',
   VARIANT_OPTION: 'vop',
+  PRODUCT_APPROVAL: 'par',
+  PRODUCT_STATUS_HISTORY: 'psh',
   MEDIA: 'med',
   SHIPMENT: 'shp',
   SHIPMENT_EVENT: 'she',

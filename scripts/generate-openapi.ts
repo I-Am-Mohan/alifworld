@@ -2614,6 +2614,30 @@ export const openApiSpec = {
     '/api/v1/admin/collections/{id}/products': {
       put: { tags: ['Catalog'], summary: 'Replace curated collection product memberships', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CollectionProductsRequest' } } } }, responses: { '200': { description: 'Memberships replaced' }, '422': { description: 'Invalid curated membership list' } } },
     },
+    '/api/v1/seller/catalog/products/{id}/submit': {
+      post: { tags: ['Catalog'], summary: 'Submit an owned product for administrative approval', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalSubmitRequest' } } } }, responses: { '200': { description: 'Product submitted' }, '409': { description: 'Invalid state or version conflict' }, '422': { description: 'Readiness validation failed' } } },
+    },
+    '/api/v1/seller/catalog/products/{id}/validation': {
+      get: { tags: ['Catalog'], summary: 'Validate product approval readiness', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Readiness report' } } },
+    },
+    '/api/v1/admin/catalog/products/pending': {
+      get: { tags: ['Catalog'], summary: 'List products pending approval', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Approval queue' }, '403': { description: 'Requires catalog approval permission' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/approve': {
+      post: { tags: ['Catalog'], summary: 'Approve a pending product', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalActionRequest' } } } }, responses: { '200': { description: 'Product approved' }, '409': { description: 'State or version conflict' }, '422': { description: 'Readiness validation failed' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/reject': {
+      post: { tags: ['Catalog'], summary: 'Reject a pending product', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalActionRequest' } } } }, responses: { '200': { description: 'Product rejected' }, '409': { description: 'State or version conflict' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/publish': {
+      post: { tags: ['Catalog'], summary: 'Publish an approved product', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalActionRequest' } } } }, responses: { '200': { description: 'Product published' }, '403': { description: 'Seller publication is forbidden' }, '409': { description: 'State or version conflict' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/archive': {
+      post: { tags: ['Catalog'], summary: 'Archive an approved or published product', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductApprovalActionRequest' } } } }, responses: { '200': { description: 'Product archived' }, '409': { description: 'State or version conflict' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/review-history': {
+      get: { tags: ['Catalog'], summary: 'Read immutable product status history', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product review history' } } },
+    },
     '/api/v1/admin/catalog/categories/{id}/translations': {
       get: { tags: ['Catalog'], summary: 'Read category translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'locale', in: 'query', required: false, schema: { type: 'string', enum: ['bn-BD', 'en-BD'] } }], responses: { '200': { description: 'Category translation' } } },
       put: { tags: ['Catalog'], summary: 'Upsert category translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CategoryTranslationWriteRequest' } } } }, responses: { '200': { description: 'Category translation saved' } } },
@@ -2786,6 +2810,12 @@ export const openApiSpec = {
       },
       VariantOptionsRequest: {
         type: 'object', required: ['version', 'options'], properties: { version: { type: 'integer', minimum: 1 }, options: { type: 'array', maxItems: 20, items: { type: 'object', required: ['attributeId'], properties: { attributeId: { type: 'string' }, valueId: { type: 'string' }, textValue: { type: 'string' }, displayOrder: { type: 'integer', minimum: 0 } } } } },
+      },
+      ProductApprovalSubmitRequest: {
+        type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 }, idempotencyKey: { type: 'string', minLength: 8, maxLength: 200 } },
+      },
+      ProductApprovalActionRequest: {
+        type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 }, reason: { type: 'string', nullable: true }, reviewNotes: { type: 'string', nullable: true } },
       },
       CategoryTranslationWriteRequest: {
         type: 'object', required: ['locale', 'name'], properties: { locale: { type: 'string', enum: ['bn-BD', 'en-BD'] }, name: { type: 'string' }, description: { type: 'string', nullable: true }, seoTitle: { type: 'string', nullable: true }, seoDescription: { type: 'string', nullable: true }, breadcrumbLabel: { type: 'string', nullable: true } },

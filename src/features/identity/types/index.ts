@@ -83,6 +83,8 @@ export const CANONICAL_PERMISSIONS = {
   // Catalog Taxonomy & Products
   CATALOG_READ: 'catalog:read',
   CATALOG_WRITE: 'catalog:write',
+  CATALOG_SUBMIT: 'catalog:submit',
+  CATALOG_APPROVE: 'catalog:approve',
   CATALOG_PUBLISH: 'catalog:publish',
   CATALOG_ARCHIVE: 'catalog:archive',
 
