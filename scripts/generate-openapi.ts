@@ -2587,6 +2587,16 @@ export const openApiSpec = {
         responses: { '200': { description: 'Address deleted' }, '404': { description: 'Address not found' } },
       },
     },
+    '/api/v1/categories': {
+      get: { tags: ['Catalog'], summary: 'Get Public Category Hierarchy', responses: { '200': { description: 'Active category tree retrieved' } } },
+    },
+    '/api/v1/admin/categories': {
+      get: { tags: ['Catalog'], summary: 'Get Category Administration Tree', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Category tree retrieved' }, '403': { description: 'Requires catalog write permission' } } },
+      post: { tags: ['Catalog'], summary: 'Create Category', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CategoryWriteRequest' } } } }, responses: { '201': { description: 'Category created' }, '409': { description: 'Slug conflict' }, '422': { description: 'Validation failed' } } },
+    },
+    '/api/v1/admin/categories/{id}': {
+      patch: { tags: ['Catalog'], summary: 'Update Category Hierarchy Node', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { allOf: [{ $ref: '#/components/schemas/CategoryWriteRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }] } } } }, responses: { '200': { description: 'Category updated' }, '409': { description: 'Version or hierarchy conflict' }, '422': { description: 'Validation failed' } } },
+    },
     '/api/v1/content/{slug}': {
       get: {
         tags: ['Catalog'],
@@ -2690,6 +2700,23 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+      CategoryWriteRequest: {
+        type: 'object',
+        required: ['name', 'slug'],
+        properties: {
+          name: { type: 'string', minLength: 2, maxLength: 100 },
+          nameBn: { type: 'string', nullable: true },
+          slug: { type: 'string', pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' },
+          description: { type: 'string', nullable: true },
+          parentId: { type: 'string', nullable: true },
+          imageUrl: { type: 'string', format: 'uri', nullable: true },
+          icon: { type: 'string', nullable: true },
+          displayOrder: { type: 'integer', minimum: 0 },
+          isActive: { type: 'boolean' },
+          taxRatePercent: { type: 'number', minimum: 0, maximum: 100 },
+          version: { type: 'integer', minimum: 1 },
         },
       },
       CustomerAddressRequest: {

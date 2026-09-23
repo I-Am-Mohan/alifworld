@@ -84,13 +84,11 @@ export class CategoryService {
     }
 
     if (input.parentId) {
-      if (input.parentId === id) {
-        throw new ValidationError('A category cannot be its own parent.');
-      }
       const parent = await this.categoryRepo.findById(input.parentId);
       if (!parent) {
         throw new NotFoundError(`Parent category with id '${input.parentId}' not found.`);
       }
+      await this.assertNoDescendantCycle(input.parentId, id);
     }
 
     const updated = await this.categoryRepo.update(id, expectedVersion, input);
@@ -112,12 +110,32 @@ export class CategoryService {
   }
 
   public async getHierarchy(): Promise<CategoryModel[]> {
-    // Returns top-level categories with populated children
-    return this.categoryRepo.findAll({ parentId: null, isActive: true });
+    const categories = await this.categoryRepo.findAll({ isActive: true });
+    const byParent = new Map<string | null, CategoryModel[]>();
+    for (const category of categories) {
+      const key = category.parentId || null;
+      const bucket = byParent.get(key) || [];
+      bucket.push({ ...category, children: [] });
+      byParent.set(key, bucket);
+    }
+    const attach = (nodes: CategoryModel[]): CategoryModel[] => nodes.map((node) => ({ ...node, children: attach(byParent.get(node.id) || []) }));
+    return attach(byParent.get(null) || []);
   }
 
   public async getBySlug(slug: string): Promise<CategoryModel | null> {
     return this.categoryRepo.findBySlug(slug);
+  }
+
+  private async assertNoDescendantCycle(parentId: string, categoryId: string): Promise<void> {
+    let currentId: string | null = parentId;
+    const visited = new Set<string>();
+    while (currentId) {
+      if (currentId === categoryId) throw new ValidationError('A category cannot be moved below one of its descendants.');
+      if (visited.has(currentId)) throw new ValidationError('Category hierarchy contains a cycle.');
+      visited.add(currentId);
+      const current = await this.categoryRepo.findById(currentId);
+      currentId = current?.parentId || null;
+    }
   }
 
   private async assertAdminAccess(userId: string): Promise<void> {
