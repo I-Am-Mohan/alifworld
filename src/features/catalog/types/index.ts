@@ -54,6 +54,10 @@ export interface BrandModel {
   logoUrl?: string | null;
   website?: string | null;
   isVerified: boolean;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+  rejectionReason?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: Date | null;
   isActive: boolean;
   version: number;
   deletedAt?: Date | null;

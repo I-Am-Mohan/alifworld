@@ -87,7 +87,26 @@ export class BrandService {
     return updated;
   }
 
+  public async approveBrand(adminUserId: string, id: string, expectedVersion: number): Promise<BrandModel> {
+    await this.assertAdminAccess(adminUserId);
+    const updated = await this.brandRepo.update(id, expectedVersion, { isVerified: true, approvalStatus: 'APPROVED', rejectionReason: null, reviewedBy: adminUserId, reviewedAt: new Date(), isActive: true });
+    await (prisma as any).auditLog.create({ data: { actorId: adminUserId, action: 'BRAND_APPROVED', resource: 'Brand', resourceId: id, metadata: { status: 'APPROVED' } } });
+    return updated;
+  }
+
+  public async rejectBrand(adminUserId: string, id: string, expectedVersion: number, reason: string): Promise<BrandModel> {
+    await this.assertAdminAccess(adminUserId);
+    if (!reason || reason.trim().length < 5) throw new ConflictError('A descriptive rejection reason is required.');
+    const updated = await this.brandRepo.update(id, expectedVersion, { isVerified: false, approvalStatus: 'REJECTED', rejectionReason: reason.trim(), reviewedBy: adminUserId, reviewedAt: new Date() });
+    await (prisma as any).auditLog.create({ data: { actorId: adminUserId, action: 'BRAND_REJECTED', resource: 'Brand', resourceId: id, metadata: { status: 'REJECTED', reason: reason.trim() } } });
+    return updated;
+  }
+
   public async getAll(): Promise<BrandModel[]> {
+    return this.brandRepo.findAll({ isActive: true, isVerified: true });
+  }
+
+  public async getAdminAll(): Promise<BrandModel[]> {
     return this.brandRepo.findAll({ isActive: true });
   }
 

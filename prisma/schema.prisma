@@ -709,7 +709,11 @@ model Brand {
   slug       String    @unique
   logoUrl    String?   @map("logo_url")
   website    String?
-  isVerified Boolean   @default(true) @map("is_verified")
+  isVerified Boolean   @default(false) @map("is_verified")
+  approvalStatus String  @default("PENDING") @map("approval_status")
+  rejectionReason String? @map("rejection_reason")
+  reviewedBy String? @map("reviewed_by")
+  reviewedAt DateTime? @map("reviewed_at")
   isActive   Boolean   @default(true) @map("is_active")
   version    Int       @default(1)
   deletedAt  DateTime? @map("deleted_at")

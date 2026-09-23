@@ -40,7 +40,7 @@ export const CreateBrandSchema = z.object({
   slug: z.string().min(2).max(100).regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
   logoUrl: z.string().url('Invalid logo URL').optional().nullable(),
   website: z.string().url('Invalid website URL').optional().nullable(),
-  isVerified: z.boolean().default(true),
+  isVerified: z.boolean().default(false),
   isActive: z.boolean().default(true),
 });
 

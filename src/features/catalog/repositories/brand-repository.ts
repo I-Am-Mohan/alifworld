@@ -28,13 +28,19 @@ export class BrandRepository {
     return brand ? this.mapToModel(brand) : null;
   }
 
-  public async findAll(options?: { isActive?: boolean; isVerified?: boolean }): Promise<BrandModel[]> {
+  public async findAll(options?: { isActive?: boolean; isVerified?: boolean; approvalStatus?: string }): Promise<BrandModel[]> {
     const where: any = { deletedAt: null };
     if (options?.isActive !== undefined) {
       where.isActive = options.isActive;
     }
     if (options?.isVerified !== undefined) {
       where.isVerified = options.isVerified;
+    }
+    if (options?.isVerified === true) {
+      where.approvalStatus = 'APPROVED';
+    }
+    if (options?.approvalStatus) {
+      where.approvalStatus = options.approvalStatus;
     }
 
     const brands = await (prisma as any).brand.findMany({
@@ -62,7 +68,8 @@ export class BrandRepository {
         slug: data.slug,
         logoUrl: data.logoUrl,
         website: data.website,
-        isVerified: data.isVerified ?? true,
+        isVerified: data.isVerified ?? false,
+        approvalStatus: data.isVerified ? 'APPROVED' : 'PENDING',
         isActive: data.isActive ?? true,
         version: 1,
       },
@@ -80,6 +87,10 @@ export class BrandRepository {
       logoUrl?: string | null;
       website?: string | null;
       isVerified: boolean;
+      approvalStatus?: string;
+      rejectionReason?: string | null;
+      reviewedBy?: string | null;
+      reviewedAt?: Date | null;
       isActive: boolean;
     }>
   ): Promise<BrandModel> {
@@ -141,6 +152,10 @@ export class BrandRepository {
       logoUrl: raw.logoUrl,
       website: raw.website,
       isVerified: raw.isVerified,
+      approvalStatus: raw.approvalStatus,
+      rejectionReason: raw.rejectionReason,
+      reviewedBy: raw.reviewedBy,
+      reviewedAt: raw.reviewedAt,
       isActive: raw.isActive,
       version: raw.version,
       deletedAt: raw.deletedAt,
