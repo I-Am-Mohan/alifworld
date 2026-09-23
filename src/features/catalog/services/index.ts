@@ -7,3 +7,4 @@ export * from './taxonomy-seo-service';
 export * from './product-approval-service';
 export * from './onboarding-service';
 export * from './bulk-service';
+export * from './moderation-service';

@@ -990,7 +990,9 @@ model Product {
   attributeValues ProductAttributeValue[]
   optionSets      ProductOptionSet[]
   approvalRequests ProductApprovalRequest[]
-  statusHistory   ProductStatusHistory[]
+  statusHistory    ProductStatusHistory[]
+  moderationReviews CatalogModerationReview[]
+  duplicateFingerprint ProductDuplicateFingerprint?
 
   @@index([sellerId])
   @@index([categoryId])
@@ -1190,7 +1192,50 @@ model CatalogExportJob {
 }
 
 // ------------------------------------------------------------------------------
-// 22. Product Media & Gallery Assets
+// 23. Catalog Moderation and Duplicate Detection
+// ------------------------------------------------------------------------------
+model CatalogModerationReview {
+  id              String   @id
+  productId       String   @map("product_id")
+  productVersion  Int      @map("product_version")
+  moderationStatus String  @default("PENDING") @map("moderation_status")
+  duplicateStatus String   @default("NOT_CHECKED") @map("duplicate_status")
+  reason          String?
+  severity        String   @default("LOW")
+  matchedProductIds Json?  @map("matched_product_ids")
+  source          String   @default("AUTOMATED")
+  decisionBy      String?  @map("decision_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  resolvedAt      DateTime? @map("resolved_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([moderationStatus, severity, createdAt])
+  @@index([productId, createdAt])
+  @@map("catalog_moderation_reviews")
+}
+
+model ProductDuplicateFingerprint {
+  id                    String   @id
+  productId             String   @unique @map("product_id")
+  normalizedTitleHash   String   @map("normalized_title_hash")
+  brandCategoryKey      String   @map("brand_category_key")
+  skuFingerprint        String?  @map("sku_fingerprint")
+  barcodeFingerprint    String?  @map("barcode_fingerprint")
+  variantSignature      String?  @map("variant_signature")
+  algorithmVersion      String   @map("algorithm_version")
+  calculatedAt          DateTime @default(now()) @map("calculated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([normalizedTitleHash, brandCategoryKey])
+  @@index([skuFingerprint])
+  @@index([barcodeFingerprint])
+  @@map("product_duplicate_fingerprints")
+}
+
+// ------------------------------------------------------------------------------
+// 24. Product Media & Gallery Assets
 // ------------------------------------------------------------------------------
 /// Visual assets (images, videos) associated with products and variants
 model ProductMedia {

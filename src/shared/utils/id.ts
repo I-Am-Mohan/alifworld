@@ -66,6 +66,8 @@ export const ID_PREFIXES = {
   CATALOG_IMPORT: 'cim',
   CATALOG_IMPORT_ERROR: 'cie',
   CATALOG_EXPORT: 'cex',
+  MODERATION_REVIEW: 'mrv',
+  DUPLICATE_FINGERPRINT: 'dfp',
   MEDIA: 'med',
   SHIPMENT: 'shp',
   SHIPMENT_EVENT: 'she',

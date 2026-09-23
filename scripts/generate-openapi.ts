@@ -2638,6 +2638,16 @@ export const openApiSpec = {
     '/api/v1/admin/catalog/products/{id}/review-history': {
       get: { tags: ['Catalog'], summary: 'Read immutable product status history', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product review history' } } },
     },
+    '/api/v1/admin/catalog/moderation': {
+      get: { tags: ['Catalog'], summary: 'List catalog moderation reviews and duplicate candidates', security: [{ BearerAuth: [] }], parameters: [{ name: 'status', in: 'query', schema: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED', 'REQUEST_CHANGES', 'DISMISSED'] } }, { name: 'severity', in: 'query', schema: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] } }], responses: { '200': { description: 'Moderation queue' }, '403': { description: 'Requires catalog administration permission' } } },
+    },
+    '/api/v1/admin/catalog/moderation/{id}': {
+      get: { tags: ['Catalog'], summary: 'Get a catalog moderation review', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Moderation review' }, '404': { description: 'Review not found' } } },
+      post: { tags: ['Catalog'], summary: 'Resolve a catalog moderation review', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ModerationResolveRequest' } } } }, responses: { '200': { description: 'Moderation review resolved' }, '403': { description: 'Requires catalog administration permission' } } },
+    },
+    '/api/v1/admin/catalog/products/{id}/recheck-duplicates': {
+      post: { tags: ['Catalog'], summary: 'Recalculate deterministic duplicate fingerprints for a product', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: false, content: { 'application/json': { schema: { $ref: '#/components/schemas/DuplicateRecheckRequest' } } } }, responses: { '200': { description: 'Duplicate analysis completed' }, '403': { description: 'Requires catalog administration permission' } } },
+    },
     '/api/v1/seller/catalog/imports': {
       get: { tags: ['Catalog'], summary: 'List seller catalog import jobs', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Import jobs' } } },
       post: { tags: ['Catalog'], summary: 'Create and validate a seller catalog import', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogImportRequest' } } } }, responses: { '201': { description: 'Import job created' }, '409': { description: 'Idempotency conflict' }, '422': { description: 'File or row validation failed' } } },
@@ -2855,6 +2865,12 @@ export const openApiSpec = {
       },
       ProductApprovalActionRequest: {
         type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 }, reason: { type: 'string', nullable: true }, reviewNotes: { type: 'string', nullable: true } },
+      },
+      ModerationResolveRequest: {
+        type: 'object', required: ['status'], properties: { status: { type: 'string', enum: ['APPROVED', 'REJECTED', 'REQUEST_CHANGES', 'DISMISSED'] }, reason: { type: 'string', nullable: true } },
+      },
+      DuplicateRecheckRequest: {
+        type: 'object', properties: { reason: { type: 'string', nullable: true } },
       },
       CatalogImportRequest: {
         type: 'object', required: ['format', 'content'], properties: { format: { type: 'string', enum: ['CSV', 'JSON'] }, content: { type: 'string', maxLength: 5000000 }, mode: { type: 'string', enum: ['DRY_RUN', 'COMMIT'] }, idempotencyKey: { type: 'string', minLength: 8 } },
