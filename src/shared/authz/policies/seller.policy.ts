@@ -28,7 +28,29 @@ export class SellerPolicy implements IPolicy {
       };
     }
 
-    // 2. Platform Administrative Actions
+    // 2. Seller application administration and applicant ownership.
+    if (action === 'seller_application:read' || action === 'seller_application:create' || action === 'seller_application:update' || action === 'seller_application:submit') {
+      if (resource.ownerId && resource.ownerId === actor.userId) {
+        return { granted: true, code: 'GRANTED', reason: 'Applicant owns the seller application.', policyName: this.name };
+      }
+      if (resource.sellerId && actor.sellerId === resource.sellerId) {
+        return { granted: true, code: 'GRANTED', reason: 'Actor belongs to the seller application tenant.', policyName: this.name };
+      }
+      return { granted: false, code: 'OWNERSHIP_VIOLATION', reason: 'Seller application access is limited to its applicant or seller tenant.', policyName: this.name };
+    }
+
+    if (action === 'seller_application:review' || action === 'seller_application:approve' || action === 'seller_application:reject' || action === 'seller_application:request_changes') {
+      const isSellerRole = actor.roles.includes(SystemRoleCode.SELLER_OWNER) || actor.roles.includes(SystemRoleCode.SELLER_STAFF) || actor.roles.includes('SELLER_MANAGER');
+      if (isSellerRole) {
+        return { granted: false, code: 'PRIVILEGE_ESCALATION', reason: 'Seller users cannot review or approve seller applications.', policyName: this.name };
+      }
+      if (actor.permissions.includes('sellers:verify')) {
+        return { granted: true, code: 'GRANTED', reason: 'Authorized platform reviewer.', policyName: this.name };
+      }
+      return { granted: false, code: 'MISSING_PERMISSION', reason: 'The actor lacks sellers:verify permission.', policyName: this.name };
+    }
+
+    // 3. Platform Administrative Actions
     if (action === 'verify' || action === 'sellers:verify') {
       if (actor.permissions.includes('sellers:verify')) {
         return { granted: true, code: 'GRANTED', reason: 'Authorized to verify merchant KYC dossiers.', policyName: this.name };

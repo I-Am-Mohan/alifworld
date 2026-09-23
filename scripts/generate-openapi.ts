@@ -1641,6 +1641,68 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/seller/application': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'Get Current Seller Application',
+        description: 'Returns the authenticated applicant\'s current seller application without accepting a client-supplied owner identifier.',
+        security: [{ BearerAuth: [] }],
+        responses: { '200': { description: 'Application retrieved' }, '401': { description: 'Unauthorized' } },
+      },
+      post: {
+        tags: ['Seller Portal'],
+        summary: 'Create Seller Application Draft',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/SellerApplicationDraft' } } } },
+        responses: { '201': { description: 'Draft created' }, '401': { description: 'Unauthorized' }, '409': { description: 'Active application already exists' }, '422': { description: 'Validation failed' } },
+      },
+    },
+    '/api/v1/seller/application/{id}': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'Get Owned Seller Application',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Application retrieved' }, '404': { description: 'Not found' }, '403': { description: 'Forbidden' } },
+      },
+      patch: {
+        tags: ['Seller Portal'],
+        summary: 'Update Owned Seller Application Draft',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { allOf: [{ $ref: '#/components/schemas/SellerApplicationDraft' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }] } } } },
+        responses: { '200': { description: 'Draft updated' }, '409': { description: 'Version or state conflict' }, '422': { description: 'Validation failed' } },
+      },
+    },
+    '/api/v1/seller/application/{id}/submit': {
+      post: {
+        tags: ['Seller Portal'],
+        summary: 'Submit Seller Application',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } } } } },
+        responses: { '200': { description: 'Application submitted' }, '409': { description: 'Version or state conflict' }, '422': { description: 'Validation failed' } },
+      },
+    },
+    '/api/v1/admin/seller-applications': {
+      get: {
+        tags: ['Seller Administration'],
+        summary: 'List Seller Applications',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'status', in: 'query', schema: { type: 'string' } }, { name: 'search', in: 'query', schema: { type: 'string' } }, { name: 'page', in: 'query', schema: { type: 'integer' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }],
+        responses: { '200': { description: 'Applications listed' }, '401': { description: 'Unauthorized' }, '403': { description: 'Requires sellers:verify' } },
+      },
+    },
+    '/api/v1/admin/seller-applications/{id}/review': {
+      post: {
+        tags: ['Seller Administration'],
+        summary: 'Review Seller Application',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['version', 'decision'], properties: { version: { type: 'integer', minimum: 1 }, decision: { type: 'string', enum: ['UNDER_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED'] }, reason: { type: 'string' } } } } } },
+        responses: { '200': { description: 'Application reviewed' }, '403': { description: 'Requires sellers:verify' }, '409': { description: 'Version or state conflict' }, '422': { description: 'Validation failed' } },
+      },
+    },
     '/api/v1/support/tickets': {
       get: {
         tags: ['Customer Support'],
@@ -2444,6 +2506,17 @@ export const openApiSpec = {
           data: { type: 'object' },
         },
         required: ['success', 'data'],
+      },
+      SellerApplicationDraft: {
+        type: 'object',
+        required: ['businessName', 'slug'],
+        properties: {
+          businessName: { type: 'string', minLength: 3, maxLength: 120 },
+          slug: { type: 'string', pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' },
+          tradeLicenseNumber: { type: 'string', nullable: true },
+          binNumber: { type: 'string', pattern: '^\\d{9,13}$', nullable: true },
+          tinNumber: { type: 'string', pattern: '^\\d{10,12}$', nullable: true },
+        },
       },
       CmsContentWriteRequest: {
         type: 'object',

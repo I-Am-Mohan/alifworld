@@ -19,6 +19,7 @@ import { randomBytes } from 'crypto';
 export const ID_PREFIXES = {
   USER: 'usr',
   SELLER: 'sel',
+  SELLER_APPLICATION: 'sapp',
   CATEGORY: 'cat',
   PRODUCT: 'prd',
   VARIANT: 'var',

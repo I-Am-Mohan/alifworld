@@ -135,6 +135,8 @@ model User {
   addresses               UserAddress[]
   notificationPreferences UserNotificationPreference[]
   notificationDeliveries  UserNotificationDelivery[]
+  sellerApplications     SellerApplication[]       @relation("SellerApplicationApplicant")
+  applicationReviews     SellerApplicationReview[] @relation("SellerApplicationReviewer")
 
   @@index([status])
   @@index([deletedAt])
@@ -409,6 +411,7 @@ model Seller {
   payouts           SellerPayout[]
   wallets           Wallet[]
   sellerRanks       UserRank[]
+  applications      SellerApplication[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -418,7 +421,60 @@ model Seller {
 }
 
 // ------------------------------------------------------------------------------
-// 11. Seller Staff Delegation
+// 11. Seller Applications
+// ------------------------------------------------------------------------------
+/// Seller onboarding application and its immutable review decisions.
+model SellerApplication {
+  id                 String    @id @default(uuid())
+  applicantUserId    String    @map("applicant_user_id")
+  sellerId           String?   @map("seller_id")
+  status             String    @default("DRAFT")
+  businessName       String    @map("business_name")
+  slug               String
+  tradeLicenseNumber String?   @map("trade_license_number")
+  binNumber          String?   @map("bin_number")
+  tinNumber          String?   @map("tin_number")
+  submittedAt        DateTime? @map("submitted_at")
+  reviewedAt         DateTime? @map("reviewed_at")
+  reviewedBy         String?   @map("reviewed_by")
+  reviewReason       String?   @map("review_reason")
+  version            Int       @default(1)
+  deletedAt          DateTime? @map("deleted_at")
+  deletedBy          String?   @map("deleted_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  applicant User                     @relation("SellerApplicationApplicant", fields: [applicantUserId], references: [id], onDelete: Restrict)
+  seller    Seller?                  @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  reviews   SellerApplicationReview[]
+
+  @@index([applicantUserId, status])
+  @@index([sellerId, status])
+  @@index([status, submittedAt])
+  @@index([deletedAt])
+  @@map("seller_applications")
+}
+
+/// Immutable application state transition record for review traceability.
+model SellerApplicationReview {
+  id            String   @id @default(uuid())
+  applicationId String   @map("application_id")
+  reviewerId    String   @map("reviewer_id")
+  fromStatus    String   @map("from_status")
+  toStatus      String   @map("to_status")
+  reason        String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  application SellerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  reviewer    User              @relation("SellerApplicationReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId, createdAt])
+  @@index([reviewerId, createdAt])
+  @@map("seller_application_reviews")
+}
+
+// ------------------------------------------------------------------------------
+// 12. Seller Staff Delegation
 // ------------------------------------------------------------------------------
 /// Delegated staff members operating within an isolated seller tenant boundary
 model SellerStaff {
