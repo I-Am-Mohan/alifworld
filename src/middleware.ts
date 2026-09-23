@@ -118,6 +118,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
   // 4. Continue Request Execution Downstream (Rewrite localized paths or pass through)
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-request-id', requestId);
+  requestHeaders.set('x-pathname', pathname);
   requestHeaders.set('x-locale', resolvedLocale.locale);
   requestHeaders.set('x-locale-short', resolvedLocale.shortCode);
   requestHeaders.set('x-locale-source', resolvedLocale.source);
