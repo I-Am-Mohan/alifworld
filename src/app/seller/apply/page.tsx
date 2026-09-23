@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Loader2, Store } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 type Application = {
   id: string;
@@ -61,8 +62,8 @@ export default function SellerApplicationPage() {
     try {
       const payload = { ...form, tradeLicenseNumber: form.tradeLicenseNumber || null, binNumber: form.binNumber || null, tinNumber: form.tinNumber || null };
       const response = application
-        ? await fetch(`/api/v1/seller/application/${application.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, version: application.version }) })
-        : await fetch('/api/v1/seller/application', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        ? await csrfFetch(`/api/v1/seller/application/${application.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, version: application.version }) })
+        : await csrfFetch('/api/v1/seller/application', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('sellerApplication.saveFailed'));
       setApplication(json.data);
@@ -82,7 +83,7 @@ export default function SellerApplicationPage() {
     if (!saved) return;
     setSaving(true);
     try {
-      const response = await fetch(`/api/v1/seller/application/${saved.id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version: saved.version }) });
+      const response = await csrfFetch(`/api/v1/seller/application/${saved.id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version: saved.version }) });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('sellerApplication.submitFailed'));
       setApplication(json.data);

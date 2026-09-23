@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +85,7 @@ export default function SellerSettingsPage() {
     e.preventDefault();
     try {
       setSaveError(null);
-      const response = await fetch('/api/v1/seller/settings', {
+      const response = await csrfFetch('/api/v1/seller/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sellerId, supportEmail: supportEmail || null, supportPhone: supportPhone || null, pickupAddress: { division, district, upazila, streetAddress, postalCode }, defaultCourier, vacationMode, vacationMessage: vacationMessage || null, storeDescription: storeDescription || null, shippingPolicy: shippingPolicy || null, returnPolicy: returnPolicy || null, cancellationPolicy: cancellationPolicy || null, publicEmailEnabled, publicPhoneEnabled, publicPickupAddressEnabled, version: sellerVersion }),
@@ -220,7 +221,7 @@ export default function SellerSettingsPage() {
                     </label>
                   ))}
                 </div>
-                <button type="button" disabled={!brandingFile || !sellerId} onClick={async () => { if (!brandingFile) return; const form = new FormData(); form.set('sellerId', sellerId); form.set('assetType', brandingType); form.set('version', String(sellerVersion)); form.set('file', brandingFile); const response = await fetch('/api/v1/seller/settings/branding', { method: 'POST', body: form }); const json = await response.json().catch(() => null); if (!response.ok || !json?.success) { setSaveError(json?.error?.message || t('sellerProfile.brandingFailed')); return; } setSellerVersion(json.data.version); setBrandingFile(null); setSaveSuccess(true); }} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{t('sellerProfile.uploadBranding')}</button>
+                <button type="button" disabled={!brandingFile || !sellerId} onClick={async () => { if (!brandingFile) return; const form = new FormData(); form.set('sellerId', sellerId); form.set('assetType', brandingType); form.set('version', String(sellerVersion)); form.set('file', brandingFile); const response = await csrfFetch('/api/v1/seller/settings/branding', { method: 'POST', body: form }); const json = await response.json().catch(() => null); if (!response.ok || !json?.success) { setSaveError(json?.error?.message || t('sellerProfile.brandingFailed')); return; } setSellerVersion(json.data.version); setBrandingFile(null); setSaveSuccess(true); }} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{t('sellerProfile.uploadBranding')}</button>
                 <h2 className="pt-3 text-base font-bold text-slate-900">{t('sellerProfile.policies')}</h2>
                 {([['storeDescription', storeDescription, setStoreDescription, 'sellerProfile.description'], ['shippingPolicy', shippingPolicy, setShippingPolicy, 'sellerProfile.shippingPolicy'], ['returnPolicy', returnPolicy, setReturnPolicy, 'sellerProfile.returnPolicy'], ['cancellationPolicy', cancellationPolicy, setCancellationPolicy, 'sellerProfile.cancellationPolicy']] as const).map(([key, value, setter, label]) => <label key={key} className="block text-xs font-semibold text-slate-700">{t(label)}<textarea value={value} onChange={(event) => setter(event.target.value)} maxLength={key === 'storeDescription' ? 2000 : 4000} className="mt-2 min-h-20 w-full rounded-lg border border-slate-300 p-2.5 text-xs" /></label>)}
                 <div className="space-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-700"><h2 className="text-base font-bold text-slate-900">{t('sellerProfile.publicContacts')}</h2><label className="flex gap-2"><input type="checkbox" checked={publicEmailEnabled} onChange={(event) => setPublicEmailEnabled(event.target.checked)} />{t('sellerProfile.publicEmail')}</label><label className="flex gap-2"><input type="checkbox" checked={publicPhoneEnabled} onChange={(event) => setPublicPhoneEnabled(event.target.checked)} />{t('sellerProfile.publicPhone')}</label><label className="flex gap-2"><input type="checkbox" checked={publicPickupAddressEnabled} onChange={(event) => setPublicPickupAddressEnabled(event.target.checked)} />{t('sellerProfile.publicPickup')}</label></div>

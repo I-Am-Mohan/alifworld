@@ -31,6 +31,7 @@ import {
 import { useI18n } from '@/i18n/context';
 import { CurrencyConfig, DEFAULT_CURRENCIES, parseCurrencies, formatCurrencyAmount } from '@/shared/types/currency';
 import { LanguageDefinition } from '@/i18n/types';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'features';
 
@@ -207,7 +208,7 @@ export default function AdminSetupPage() {
   const handleSaveAll = async () => {
     try {
       setSaving(true);
-      const res = await fetch('/api/v1/system/setup', {
+      const res = await csrfFetch('/api/v1/system/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
@@ -231,7 +232,7 @@ export default function AdminSetupPage() {
   // ---------------------------------------------------------------------------
   const handleSetDefaultLanguage = async (code: string) => {
     try {
-      const res = await fetch('/api/v1/system/languages/default', {
+      const res = await csrfFetch('/api/v1/system/languages/default', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ defaultLocale: code }),
@@ -262,7 +263,7 @@ export default function AdminSetupPage() {
     }
 
     try {
-      const res = await fetch('/api/v1/system/languages', {
+      const res = await csrfFetch('/api/v1/system/languages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -294,7 +295,7 @@ export default function AdminSetupPage() {
 
   const handleToggleLanguageStatus = async (code: string, currentStatus: boolean) => {
     try {
-      const res = await fetch(`/api/v1/system/languages/${code}`, {
+      const res = await csrfFetch(`/api/v1/system/languages/${code}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !currentStatus }),
@@ -322,7 +323,7 @@ export default function AdminSetupPage() {
       return;
     }
     try {
-      const res = await fetch(`/api/v1/system/languages/${code}`, {
+      const res = await csrfFetch(`/api/v1/system/languages/${code}`, {
         method: 'DELETE',
       });
       const json = await res.json();

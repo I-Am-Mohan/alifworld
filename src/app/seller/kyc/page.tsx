@@ -4,6 +4,7 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 type DocumentRecord = { id: string; documentType: string; documentNumber: string | null; fileSize: number; mimeType: string; status: string; rejectionReason: string | null; verifiedAt: string | null; version: number };
 const documentTypes = ['TRADE_LICENSE', 'NID_FRONT', 'NID_BACK', 'BIN_CERTIFICATE', 'BANK_CHEQUE_LEAF', 'TIN_CERTIFICATE'];
@@ -52,7 +53,7 @@ export default function SellerKycPage() {
       form.set('documentType', documentType);
       form.set('documentNumber', documentNumber);
       form.set('file', file);
-      const response = await fetch('/api/v1/seller/kyc', { method: 'POST', headers: { 'X-Device-ID': 'seller-web' }, body: form });
+      const response = await csrfFetch('/api/v1/seller/kyc', { method: 'POST', headers: { 'X-Device-ID': 'seller-web' }, body: form });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('sellerKyc.uploadFailed'));
       setMessage(t('sellerKyc.uploaded'));

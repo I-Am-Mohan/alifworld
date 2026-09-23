@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Building2, Loader2, RefreshCw } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 type Application = { id: string; status: string; businessName: string; slug: string; applicantUserId: string; version: number; reviewReason: string | null; submittedAt: string | null };
 type KycDocument = { id: string; sellerId: string; documentType: string; documentNumber: string | null; fileSize: number; mimeType: string; status: string; version: number; rejectionReason: string | null; seller?: { id: string; businessName: string; slug: string } };
@@ -24,7 +25,7 @@ export default function AdminSellersPage() {
 
   const updateLifecycle = async () => {
     try {
-      const response = await fetch(`/api/v1/admin/sellers/${lifecycleSellerId}/lifecycle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: lifecycleAction, version: Number(lifecycleVersion), reason: lifecycleReason }) });
+      const response = await csrfFetch(`/api/v1/admin/sellers/${lifecycleSellerId}/lifecycle`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: lifecycleAction, version: Number(lifecycleVersion), reason: lifecycleReason }) });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('admin.sellerLifecycleFailed'));
       setError(null);
@@ -71,7 +72,7 @@ export default function AdminSellersPage() {
     }
     try {
       setBusyId(application.id);
-      const response = await fetch(`/api/v1/admin/seller-applications/${application.id}/review`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version: application.version, decision, reason: decisionReason }) });
+      const response = await csrfFetch(`/api/v1/admin/seller-applications/${application.id}/review`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ version: application.version, decision, reason: decisionReason }) });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('admin.sellerApplicationReviewFailed'));
       await loadApplications();
@@ -90,7 +91,7 @@ export default function AdminSellersPage() {
     }
     try {
       setBusyId(document.id);
-      const response = await fetch(`/api/v1/admin/seller/kyc/${document.id}/review`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': `kyc-${document.id}-${document.version}-${status}` }, body: JSON.stringify({ version: document.version, status, rejectionReason: decisionReason }) });
+      const response = await csrfFetch(`/api/v1/admin/seller/kyc/${document.id}/review`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': `kyc-${document.id}-${document.version}-${status}` }, body: JSON.stringify({ version: document.version, status, rejectionReason: decisionReason }) });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || t('admin.kycReviewFailed'));
       setError(null);

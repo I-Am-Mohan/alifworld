@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Layers, Loader2, Plus, RefreshCw } from 'lucide-react';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 type Category = { id: string; name: string; slug: string; parentId?: string | null; children?: Category[]; isActive: boolean; version: number };
 
@@ -23,7 +24,7 @@ export default function AdminCategoriesPage() {
   useEffect(() => { void load(); }, [load]);
 
   const create = async () => {
-    try { const response = await fetch('/api/v1/admin/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug, parentId: parentId || null, isActive: true, displayOrder: 0, taxRatePercent: 0 }) }); const json = await response.json().catch(() => null); if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to create category.'); setName(''); setSlug(''); setParentId(''); await load(); } catch (err: any) { setError(err.message || 'Unable to create category.'); }
+    try { const response = await csrfFetch('/api/v1/admin/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug, parentId: parentId || null, isActive: true, displayOrder: 0, taxRatePercent: 0 }) }); const json = await response.json().catch(() => null); if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to create category.'); setName(''); setSlug(''); setParentId(''); await load(); } catch (err: any) { setError(err.message || 'Unable to create category.'); }
   };
 
   const flat = (nodes: Category[]): Category[] => nodes.flatMap((node) => [node, ...(node.children ? flat(node.children) : [])]);

@@ -42,6 +42,7 @@ import {
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { useI18n } from '@/i18n/context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 interface AdminUser {
   id: string;
@@ -257,7 +258,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/v1/auth/logout', { method: 'POST' });
+      await csrfFetch('/api/v1/auth/logout', { method: 'POST' });
     } catch {}
     setUser(null);
     setProfileDropdownOpen(false);

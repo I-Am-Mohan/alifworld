@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { csrfFetch } from '@/shared/security/csrf-client';
 
 export default function SellerStaffPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -40,7 +41,7 @@ export default function SellerStaffPage() {
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/v1/seller/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: inviteEmail, name: inviteName, phone: invitePhone || undefined, roleCode: inviteRole, permissions: [] }) });
+      const response = await csrfFetch('/api/v1/seller/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: inviteEmail, name: inviteName, phone: invitePhone || undefined, roleCode: inviteRole, permissions: [] }) });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to invite staff.');
       setShowInviteModal(false); setInviteName(''); setInviteEmail(''); setInvitePhone(''); setInviteSuccess('Invitation successfully created.'); await loadStaff();
