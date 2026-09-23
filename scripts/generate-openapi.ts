@@ -1619,6 +1619,15 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/seller/staff/activity': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'List Seller Staff Activity',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'sellerId', in: 'query', required: false, schema: { type: 'string' } }, { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1 } }, { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100 } }],
+        responses: { '200': { description: 'Staff activity listed' }, '403': { description: 'Cross-tenant access denied' } },
+      },
+    },
     '/api/v1/seller/staff': {
       get: {
         tags: ['Seller Portal'],

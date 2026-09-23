@@ -120,6 +120,17 @@ export class SellerStaffRepository extends BaseRepository {
     }, 'SellerStaffRepository.removeStaff');
   }
 
+  public async listActivity(sellerId: string, page = 1, limit = 50) {
+    const skip = Math.max(0, (page - 1) * Math.min(limit, 100));
+    const take = Math.min(Math.max(limit, 1), 100);
+    const where = { resource: 'SellerStaff', metadata: { path: ['sellerId'], equals: sellerId } };
+    const [items, total] = await Promise.all([
+      (this.db as any).auditLog.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, select: { id: true, actorId: true, action: true, resourceId: true, metadata: true, createdAt: true } }),
+      (this.db as any).auditLog.count({ where }),
+    ]);
+    return { items, pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) || 1 } };
+  }
+
   /**
    * Lists all active staff members for a specific seller tenant.
    */

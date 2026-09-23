@@ -40,6 +40,12 @@ export class SellerStaffService {
     return this.staffRepo.listBySeller(sellerId);
   }
 
+  public async listActivity(sellerId: string, page = 1, limit = 50) {
+    const seller = await this.sellerRepo.findById(sellerId);
+    if (!seller) throw new NotFoundError(`Seller store with id '${sellerId}' not found.`);
+    return this.staffRepo.listActivity(sellerId, page, limit);
+  }
+
   /**
    * Adds or invites a staff member to a seller store with scoped permissions.
    */

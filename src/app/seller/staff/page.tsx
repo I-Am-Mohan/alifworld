@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -15,61 +15,36 @@ export default function SellerStaffPage() {
   const [invitePhone, setInvitePhone] = useState('');
   const [inviteRole, setInviteRole] = useState('SELLER_STAFF');
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [activity, setActivity] = useState<any[]>([]);
 
-  const [staffMembers, setStaffMembers] = useState([
-    {
-      id: 'stf_01_owner',
-      userId: 'usr_seller_zubair_01',
-      name: 'Rahim Chowdhury',
-      email: 'rahim.chowdhury@dhakatech.com',
-      phone: '+8801712345678',
-      role: 'SELLER_OWNER',
-      title: 'Store Owner & Managing Director',
-      isOwner: true,
-      status: 'ACTIVE',
-      permissions: ['ALL_PERMISSIONS', 'FINANCIAL_WITHDRAWAL', 'KYC_MANAGEMENT', 'STAFF_INVITE'],
-      joinedAt: '2026-09-01',
-    },
-    {
-      id: 'stf_02_rahim',
-      userId: 'usr_seller_staff_01',
-      name: 'Tanvir Hossain',
-      email: 'tanvir.operations@dhakatech.com',
-      phone: '+8801700000002',
-      role: 'SELLER_STAFF',
-      title: 'Fulfillment & Warehouse Depot Lead',
-      isOwner: false,
-      status: 'ACTIVE',
-      permissions: ['ORDERS_READ', 'ORDERS_UPDATE', 'PRODUCTS_CREATE', 'PRODUCTS_UPDATE', 'COURIER_DISPATCH'],
-      joinedAt: '2026-09-15',
-    },
-  ]);
+  const loadStaff = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/v1/seller/staff');
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to load staff.');
+      setStaffMembers((json.data || []).map((record: any) => ({ ...record, name: record.user?.name || record.userId, email: record.user?.email || '—', phone: record.user?.phone || '—', role: record.roleCode, title: record.roleCode, isOwner: record.roleCode === 'SELLER_OWNER', status: record.deletedAt ? 'REMOVED' : 'ACTIVE', permissions: record.permissions || [], joinedAt: record.createdAt }))); 
+      const activityResponse = await fetch('/api/v1/seller/staff/activity');
+      const activityJson = await activityResponse.json().catch(() => null);
+      if (activityResponse.ok && activityJson?.success) setActivity(activityJson.data.items || []);
+    } catch (err: any) {
+      setError(err.message || 'Unable to load staff.');
+    } finally { setLoading(false); }
+  }, []);
 
-  const handleInvite = (e: React.FormEvent) => {
+  useEffect(() => { void loadStaff(); }, [loadStaff]);
+
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail || !inviteName) return;
-
-    const newStaff = {
-      id: `stf_${Date.now()}`,
-      userId: `usr_invited_${Date.now().toString().slice(-4)}`,
-      name: inviteName,
-      email: inviteEmail,
-      phone: invitePhone || '+8801700000000',
-      role: inviteRole,
-      title: inviteRole === 'SELLER_MANAGER' ? 'Store Operations Manager' : 'Store Assistant',
-      isOwner: false,
-      status: 'INVITED',
-      permissions: ['ORDERS_READ', 'PRODUCTS_CREATE'],
-      joinedAt: new Date().toISOString().split('T')[0],
-    };
-
-    setStaffMembers([...staffMembers, newStaff]);
-    setShowInviteModal(false);
-    setInviteName('');
-    setInviteEmail('');
-    setInvitePhone('');
-    setInviteSuccess(`Invitation successfully sent to ${inviteEmail}.`);
-    setTimeout(() => setInviteSuccess(null), 4000);
+    try {
+      const response = await fetch('/api/v1/seller/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: inviteEmail, name: inviteName, phone: invitePhone || undefined, roleCode: inviteRole, permissions: [] }) });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to invite staff.');
+      setShowInviteModal(false); setInviteName(''); setInviteEmail(''); setInvitePhone(''); setInviteSuccess('Invitation successfully created.'); await loadStaff();
+    } catch (err: any) { setError(err.message || 'Unable to invite staff.'); }
   };
 
   return (
@@ -115,6 +90,8 @@ export default function SellerStaffPage() {
             <span>{inviteSuccess}</span>
           </div>
         )}
+        {error && <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">{error}</div>}
+        {loading && <div className="p-4 rounded-xl border border-slate-200 bg-white text-xs text-slate-500">Loading staff and activity…</div>}
 
         {/* Info Banner */}
         <div className="p-4 rounded-xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -166,7 +143,7 @@ export default function SellerStaffPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1 max-w-xs">
-                        {member.permissions.slice(0, 3).map((perm) => (
+                        {member.permissions.slice(0, 3).map((perm: string) => (
                           <span
                             key={perm}
                             className="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200"
@@ -197,6 +174,11 @@ export default function SellerStaffPage() {
               </TableBody>
             </Table>
           </div>
+        </Card>
+
+        <Card className="border-slate-200 bg-white shadow-sm">
+          <CardHeader><CardTitle className="text-sm font-bold text-slate-900">Recent staff activity</CardTitle></CardHeader>
+          <div className="divide-y divide-slate-100">{activity.length === 0 ? <p className="p-5 text-xs text-slate-500">No staff activity recorded.</p> : activity.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 px-5 py-3 text-xs"><span className="font-semibold text-slate-700">{entry.action}</span><span className="text-slate-500">{new Date(entry.createdAt).toLocaleString()}</span></div>)}</div>
         </Card>
       </main>
 
