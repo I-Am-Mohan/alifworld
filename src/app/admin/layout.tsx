@@ -270,8 +270,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <>{children}</>;
   }
 
-  // Loading state
-  if (loading) {
+  // Loading state or unauthenticated redirecting state
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center gap-3">
         <div className="w-9 h-9 border-4 border-[#F59E0B] border-t-transparent rounded-full animate-spin" />
@@ -371,7 +371,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="hidden md:block text-left pr-1">
                 <span className="block text-xs font-bold text-slate-900 leading-none">
-                  {user?.name || 'Mohan'}
+                  {user?.name || 'User'}
                 </span>
                 <span className="text-[10px] text-amber-700 font-mono font-bold leading-none">
                   {user?.roles[0] || 'SUPER_ADMIN'}
@@ -601,7 +601,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         Full Name
                       </span>
                       <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-semibold text-slate-900">
-                        {user?.name || 'Platform Super Administrator (Mohan)'}
+                        {user?.name || 'Super Administrator'}
                       </div>
                     </div>
 
@@ -615,7 +615,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </span>
                       </div>
                       <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900">
-                        {user?.email || 'itsmohan025@gmail.com'}
+                        {user?.email || 'Enter your email'}
                       </div>
                     </div>
 
