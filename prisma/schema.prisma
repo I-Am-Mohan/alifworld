@@ -413,6 +413,8 @@ model Seller {
   sellerRanks       UserRank[]
   applications      SellerApplication[]
   payoutProfiles    SellerPayoutProfile[]
+  operationalDefaults SellerOperationalDefaults?
+  notificationDefaults SellerNotificationDefault[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -511,7 +513,48 @@ model SellerPayoutProfile {
 }
 
 // ------------------------------------------------------------------------------
-// 15. Seller Staff Delegation
+// 15. Seller Operational Defaults
+// ------------------------------------------------------------------------------
+model SellerOperationalDefaults {
+  id                  String    @id
+  sellerId            String    @unique @map("seller_id")
+  taxJurisdiction     String    @default("BD") @map("tax_jurisdiction")
+  taxRuleVersion      String?   @map("tax_rule_version")
+  taxEffectiveFrom    DateTime? @map("tax_effective_from")
+  shippingMode        String    @default("PLATFORM") @map("shipping_mode")
+  defaultHandlingDays Int       @default(2) @map("default_handling_days")
+  orderCutoffTime     String?   @map("order_cutoff_time")
+  autoAcceptOrders    Boolean   @default(false) @map("auto_accept_orders")
+  defaultOrderStatus  String    @default("PENDING") @map("default_order_status")
+  version             Int       @default(1)
+  createdBy           String    @map("created_by")
+  updatedBy           String    @map("updated_by")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  @@index([taxJurisdiction, taxEffectiveFrom])
+  @@map("seller_operational_defaults")
+}
+
+model SellerNotificationDefault {
+  id        String   @id
+  sellerId  String   @map("seller_id")
+  channel   String
+  eventType String   @map("event_type")
+  enabled   Boolean  @default(true)
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  @@unique([sellerId, channel, eventType])
+  @@index([sellerId, eventType])
+  @@map("seller_notification_defaults")
+}
+
+// ------------------------------------------------------------------------------
+// 16. Seller Staff Delegation
 // ------------------------------------------------------------------------------
 model SellerStaff {
   id          String    @id @default(uuid())

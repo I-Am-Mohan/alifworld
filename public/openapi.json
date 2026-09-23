@@ -2620,6 +2620,203 @@
         }
       }
     },
+    "/api/v1/seller/operational-defaults": {
+      "get": {
+        "tags": [
+          "Seller Portal"
+        ],
+        "summary": "Get Seller Operational Defaults",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operational defaults retrieved"
+          },
+          "403": {
+            "description": "Tenant violation"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Seller Portal"
+        ],
+        "summary": "Update Seller Operational Defaults",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sellerId",
+                  "defaultHandlingDays",
+                  "autoAcceptOrders",
+                  "defaultOrderStatus",
+                  "version"
+                ],
+                "properties": {
+                  "sellerId": {
+                    "type": "string"
+                  },
+                  "taxJurisdiction": {
+                    "type": "string"
+                  },
+                  "taxRuleVersion": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "taxEffectiveFrom": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  },
+                  "shippingMode": {
+                    "type": "string",
+                    "enum": [
+                      "PLATFORM",
+                      "SELLER_DEFAULT",
+                      "DISABLED"
+                    ]
+                  },
+                  "defaultHandlingDays": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 30
+                  },
+                  "orderCutoffTime": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                    "nullable": true
+                  },
+                  "autoAcceptOrders": {
+                    "type": "boolean"
+                  },
+                  "defaultOrderStatus": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Defaults updated"
+          },
+          "409": {
+            "description": "Version conflict"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/seller/notification-defaults": {
+      "get": {
+        "tags": [
+          "Seller Portal"
+        ],
+        "summary": "Get Seller Notification Defaults",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification defaults retrieved"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Seller Portal"
+        ],
+        "summary": "Update Seller Notification Defaults",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sellerId",
+                  "preferences"
+                ],
+                "properties": {
+                  "sellerId": {
+                    "type": "string"
+                  },
+                  "preferences": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "channel",
+                        "eventType",
+                        "enabled"
+                      ],
+                      "properties": {
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "EMAIL",
+                            "SMS",
+                            "PUSH",
+                            "IN_APP"
+                          ]
+                        },
+                        "eventType": {
+                          "type": "string",
+                          "enum": [
+                            "SECURITY",
+                            "TRANSACTIONAL",
+                            "MARKETING"
+                          ]
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notification defaults updated"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
     "/api/v1/seller/settlements": {
       "get": {
         "tags": [

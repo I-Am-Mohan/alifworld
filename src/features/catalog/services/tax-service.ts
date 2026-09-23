@@ -67,8 +67,13 @@ export class TaxService {
       return Number(params.categoryTaxRatePercent);
     }
 
-    // 3. Fallback to standard 15% NBR VAT
-    return 15.0;
+    // 3. Fallback to the effective jurisdiction rule. Rule selection is date-aware;
+    // this milestone does not activate new rates or invent seller-specific tax rates.
+    const effectiveDate = params.date || new Date();
+    const effectiveRule = this.defaultJurisdictionRules.find((rule) =>
+      rule.effectiveFrom <= effectiveDate && (!rule.effectiveTo || effectiveDate <= rule.effectiveTo)
+    );
+    return effectiveRule?.standardRatePercent ?? 15.0;
   }
 
   /**
