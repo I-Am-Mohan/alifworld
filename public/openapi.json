@@ -5338,6 +5338,180 @@
         }
       }
     },
+    "/api/v1/seller/catalog/products/{id}/media": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List owned product media",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product media list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Upload a product image or video to private S3-compatible storage",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "mediaType": {
+                    "type": "string",
+                    "enum": [
+                      "IMAGE",
+                      "VIDEO"
+                    ]
+                  },
+                  "isPrimary": {
+                    "type": "boolean"
+                  },
+                  "displayOrder": {
+                    "type": "integer"
+                  },
+                  "altText": {
+                    "type": "string"
+                  },
+                  "altTextBn": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Media uploaded"
+          },
+          "403": {
+            "description": "Seller tenant violation"
+          },
+          "422": {
+            "description": "Invalid media type or size"
+          }
+        }
+      }
+    },
+    "/api/v1/seller/catalog/products/{id}/media/{mediaId}": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Create a short-lived signed product media URL",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signed media URL"
+          },
+          "404": {
+            "description": "Media not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Soft-delete owned product media",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media deleted"
+          },
+          "403": {
+            "description": "Seller tenant violation"
+          }
+        }
+      }
+    },
     "/api/v1/seller/catalog/identifiers/check": {
       "get": {
         "tags": [

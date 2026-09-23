@@ -86,6 +86,15 @@ export const CreateProductMediaSchema = z.object({
   height: z.number().int().min(1).optional().nullable(),
 });
 
+export const ProductMediaUploadSchema = z.object({
+  productId: z.string().min(4),
+  mediaType: z.enum(['IMAGE', 'VIDEO']),
+  isPrimary: z.boolean().default(false),
+  displayOrder: z.number().int().min(0).default(0),
+  altText: z.string().max(255).optional().nullable(),
+  altTextBn: z.string().max(255).optional().nullable(),
+});
+
 export type CreateProductMediaInput = z.infer<typeof CreateProductMediaSchema>;
 
 export const CreateProductSchema = z.object({

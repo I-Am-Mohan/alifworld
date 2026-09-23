@@ -7,6 +7,8 @@ export interface PrivateObjectStorage {
   createReadUrl(key: string, expiresInSeconds?: number): Promise<{ url: string; expiresAt: Date }>;
 }
 
+export interface ProductMediaStorage extends PrivateObjectStorage {}
+
 export class S3PrivateObjectStorage implements PrivateObjectStorage {
   private readonly client: S3Client;
   private readonly bucket: string;

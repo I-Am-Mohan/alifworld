@@ -10,3 +10,4 @@ export * from './bulk-service';
 export * from './moderation-service';
 export * from './variant-combination-service';
 export * from './identifier-policy-service';
+export * from './product-media-service';
