@@ -27,9 +27,12 @@ export async function GET(req: NextRequest) {
     });
 
     // Enforce tenant scoping: Merchant can only access their own sellerId unless Super Admin
+    if (!actor.roles.includes('SUPER_ADMIN') && requestedSellerId && requestedSellerId !== actor.sellerId) {
+      throw new AuthorizationError('Tenant isolation violation: Requested seller does not match the active seller tenant.');
+    }
     const targetSellerId = actor.roles.includes('SUPER_ADMIN')
       ? requestedSellerId || actor.sellerId
-      : actor.sellerId;
+      : requestedSellerId || actor.sellerId;
 
     if (!targetSellerId) {
       throw new AuthorizationError('No seller tenant associated with this session.');

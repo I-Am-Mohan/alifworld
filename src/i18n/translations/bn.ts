@@ -21,6 +21,23 @@ export const bn = {
     passwordResetSubject: 'আপনার আলিফওয়ার্ল্ড পাসওয়ার্ড রিসেট করুন',
     orderConfirmationSubject: 'আপনার আলিফওয়ার্ল্ড অর্ডার {orderNumber} নিশ্চিত হয়েছে',
   },
+  publicStore: {
+    verifiedSeller: 'যাচাইকৃত বিক্রেতা',
+    storeInformation: 'স্টোরের তথ্য',
+    explore: '{name}-এর পণ্য AlifWorld-এ দেখুন।',
+    contactStore: 'স্টোরে যোগাযোগ করুন',
+    browseProducts: 'পণ্য দেখুন',
+    vacationDefault: 'এই স্টোরটি সাময়িকভাবে চেকআউটের জন্য বন্ধ আছে।',
+    notFoundTitle: 'স্টোর পাওয়া যায়নি',
+    notFoundDescription: 'অনুরোধ করা AlifWorld বিক্রেতা স্টোর পাওয়া যায়নি।',
+    metaDescription: '{name}-এর AlifWorld স্টোর দেখুন।',
+  },
+  sellerProfile: {
+    title: 'স্টোর প্রোফাইল ও লজিস্টিক সেটিংস',
+    saveSuccess: 'স্টোর লজিস্টিক সেটিংস সফলভাবে আপডেট হয়েছে।',
+    loadFailed: 'বিক্রেতা প্রোফাইল লোড করা যায়নি।',
+    saveFailed: 'বিক্রেতা সেটিংস সংরক্ষণ করা যায়নি।',
+  },
   sellerKyc: {
     title: 'KYC ও আইনগত কমপ্লায়েন্স',
     dashboard: 'বিক্রেতা ড্যাশবোর্ড',

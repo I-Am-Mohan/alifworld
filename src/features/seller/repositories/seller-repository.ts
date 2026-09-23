@@ -61,6 +61,40 @@ export class SellerRepository extends BaseRepository {
     }, 'SellerRepository.findBySlug');
   }
 
+  public async findVerifiedPublicBySlug(slug: string): Promise<import('../types').PublicSellerProfile | null> {
+    return this.executeSafe(async () => {
+      const seller = await (this.db as any).seller.findFirst({
+        where: this.whereNotDeleted({ slug: slug.trim().toLowerCase(), status: SellerStatus.VERIFIED }),
+        select: {
+          id: true,
+          businessName: true,
+          slug: true,
+          status: true,
+          verifiedAt: true,
+          settings: {
+            where: { deletedAt: null },
+            select: { logoUrl: true, bannerUrl: true, supportEmail: true, supportPhone: true, pickupAddress: true, vacationMode: true, vacationMessage: true },
+          },
+        },
+      });
+      if (!seller) return null;
+      return {
+        id: seller.id,
+        businessName: seller.businessName,
+        slug: seller.slug,
+        status: seller.status,
+        verifiedAt: seller.verifiedAt,
+        logoUrl: seller.settings?.logoUrl ?? null,
+        bannerUrl: seller.settings?.bannerUrl ?? null,
+        supportEmail: seller.settings?.supportEmail ?? null,
+        supportPhone: seller.settings?.supportPhone ?? null,
+        pickupAddress: seller.settings?.pickupAddress ?? null,
+        vacationMode: seller.settings?.vacationMode ?? false,
+        vacationMessage: seller.settings?.vacationMessage ?? null,
+      };
+    }, 'SellerRepository.findVerifiedPublicBySlug');
+  }
+
   /**
    * Finds an active seller by its owner's user ID.
    */

@@ -1471,6 +1471,39 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/seller/profile': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'Get Authenticated Seller Profile',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'sellerId', in: 'query', required: false, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Seller profile retrieved' }, '401': { description: 'Unauthorized' }, '403': { description: 'Forbidden' }, '404': { description: 'Not found' } },
+      },
+    },
+    '/api/v1/seller/settings': {
+      get: {
+        tags: ['Seller Portal'],
+        summary: 'Get Seller Store Settings',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'sellerId', in: 'query', required: false, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Store settings retrieved' }, '403': { description: 'Tenant violation' } },
+      },
+      put: {
+        tags: ['Seller Portal'],
+        summary: 'Update Seller Store Settings',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/SellerStoreSettingsRequest' } } } },
+        responses: { '200': { description: 'Store settings updated' }, '409': { description: 'Version conflict' }, '422': { description: 'Validation failed' } },
+      },
+    },
+    '/api/v1/stores/{slug}': {
+      get: {
+        tags: ['Storefront'],
+        summary: 'Get Verified Public Seller Store',
+        parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Verified public seller profile retrieved' }, '404': { description: 'Store not found or not public' } },
+      },
+    },
     '/api/v1/seller/kyc': {
       get: {
         tags: ['Seller Portal'],
@@ -2559,6 +2592,23 @@ export const openApiSpec = {
           data: { type: 'object' },
         },
         required: ['success', 'data'],
+      },
+      SellerStoreSettingsRequest: {
+        type: 'object',
+        required: ['sellerId', 'version'],
+        properties: {
+          sellerId: { type: 'string' },
+          logoUrl: { type: 'string', format: 'uri', nullable: true },
+          bannerUrl: { type: 'string', format: 'uri', nullable: true },
+          supportEmail: { type: 'string', format: 'email', nullable: true },
+          supportPhone: { type: 'string', nullable: true },
+          pickupAddress: { type: 'object', nullable: true },
+          returnAddress: { type: 'object', nullable: true },
+          defaultCourier: { type: 'string', enum: ['PATHAO', 'STEADFAST', 'REDX', 'IN_HOUSE'], nullable: true },
+          vacationMode: { type: 'boolean' },
+          vacationMessage: { type: 'string', nullable: true },
+          version: { type: 'integer', minimum: 1 },
+        },
       },
       SellerApplicationDraft: {
         type: 'object',

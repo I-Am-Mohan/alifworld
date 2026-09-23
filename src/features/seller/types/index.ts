@@ -124,6 +124,21 @@ export interface SellerProfile extends SellerModel {
   staffCount?: number;
 }
 
+export interface PublicSellerProfile {
+  id: string;
+  businessName: string;
+  slug: string;
+  status: SellerStatus | string;
+  verifiedAt: Date | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  supportEmail: string | null;
+  supportPhone: string | null;
+  pickupAddress: AddressData | null;
+  vacationMode: boolean;
+  vacationMessage: string | null;
+}
+
 export interface SellerTenantContext {
   readonly sellerId: string;
   readonly isVerified: boolean;

@@ -1,30 +1,84 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useI18n } from '@/i18n/context';
 
 export const dynamic = 'force-dynamic';
 
 export default function SellerSettingsPage() {
-  const [supportEmail, setSupportEmail] = useState('support@dhakatech.com');
+  const { t } = useI18n();
+  const [sellerId, setSellerId] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [sellerVersion, setSellerVersion] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [supportEmail, setSupportEmail] = useState('');
   const [supportPhone, setSupportPhone] = useState('+8801711223344');
   const [streetAddress, setStreetAddress] = useState('House 12, Road 4, Dhanmondi R/A');
   const [division, setDivision] = useState('DHAKA');
-  const [district, setDistrict] = useState('Dhaka');
-  const [postalCode, setPostalCode] = useState('1205');
+  const [district, setDistrict] = useState('');
+  const [upazila, setUpazila] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [defaultCourier, setDefaultCourier] = useState('PATHAO');
   const [vacationMode, setVacationMode] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const profileResponse = await fetch('/api/v1/seller/profile');
+      const profileJson = await profileResponse.json().catch(() => null);
+      if (!profileResponse.ok || !profileJson?.success) throw new Error(profileJson?.error?.message || 'Unable to load seller profile.');
+      setSellerId(profileJson.data.id);
+      setBusinessName(profileJson.data.businessName || '');
+      setSlug(profileJson.data.slug || '');
+      setSellerVersion(profileJson.data.settings?.version || 1);
+      const settings = profileJson.data.settings;
+      setSupportEmail(settings?.supportEmail || '');
+      setSupportPhone(settings?.supportPhone || '');
+      setVacationMode(settings?.vacationMode || false);
+      setDefaultCourier(settings?.defaultCourier || 'PATHAO');
+      const address = settings?.pickupAddress;
+      if (address) {
+        setStreetAddress(address.streetAddress || '');
+        setDivision(address.division || 'DHAKA');
+        setDistrict(address.district || '');
+        setUpazila(address.upazila || '');
+        setPostalCode(address.postalCode || '');
+      }
+    } catch (error: any) {
+      setSaveError(error.message || 'Unable to load seller profile.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void loadSettings(); }, [loadSettings]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3500);
+    try {
+      setSaveError(null);
+      const response = await fetch('/api/v1/seller/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerId, supportEmail: supportEmail || null, supportPhone: supportPhone || null, pickupAddress: { division, district, upazila: district, streetAddress, postalCode }, defaultCourier, vacationMode, version: sellerVersion }),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to save seller settings.');
+      setSellerVersion(json.data.version);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3500);
+    } catch (error: any) {
+      setSaveError(error.message || 'Unable to save seller settings.');
+    }
   };
 
   return (
@@ -64,6 +118,8 @@ export default function SellerSettingsPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+        {loading && <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500">{t('common.loading')}</div>}
+        {saveError && <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-700">{saveError}</div>}
         {saveSuccess && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2">
             <span>✓</span>
@@ -91,7 +147,7 @@ export default function SellerSettingsPage() {
                       <input
                         type="text"
                         disabled
-                        value="Dhaka Tech Electronics"
+                        value={businessName}
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-500 cursor-not-allowed"
                       />
                     </div>
@@ -102,7 +158,7 @@ export default function SellerSettingsPage() {
                       <input
                         type="text"
                         disabled
-                        value="dhaka-tech"
+                        value={slug}
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs text-[#0284C7] font-semibold cursor-not-allowed"
                       />
                     </div>
@@ -158,7 +214,7 @@ export default function SellerSettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
                         Division *
@@ -188,6 +244,19 @@ export default function SellerSettingsPage() {
                         required
                         value={district}
                         onChange={(e) => setDistrict(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Upazila / Thana *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={upazila}
+                        onChange={(e) => setUpazila(e.target.value)}
                         className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
                       />
                     </div>

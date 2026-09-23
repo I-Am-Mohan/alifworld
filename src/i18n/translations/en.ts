@@ -21,6 +21,23 @@ export const en = {
     passwordResetSubject: 'Reset your AlifWorld password',
     orderConfirmationSubject: 'Your AlifWorld order {orderNumber} is confirmed',
   },
+  publicStore: {
+    verifiedSeller: 'Verified seller',
+    storeInformation: 'Store information',
+    explore: 'Explore products from {name} on AlifWorld.',
+    contactStore: 'Contact store',
+    browseProducts: 'Browse products',
+    vacationDefault: 'This store is temporarily unavailable for checkout.',
+    notFoundTitle: 'Store not found',
+    notFoundDescription: 'The requested AlifWorld seller store was not found.',
+    metaDescription: 'Visit {name} on AlifWorld.',
+  },
+  sellerProfile: {
+    title: 'Store profile and logistics settings',
+    saveSuccess: 'Store logistics settings successfully updated.',
+    loadFailed: 'Unable to load seller profile.',
+    saveFailed: 'Unable to save seller settings.',
+  },
   sellerKyc: {
     title: 'KYC and legal compliance',
     dashboard: 'Seller dashboard',

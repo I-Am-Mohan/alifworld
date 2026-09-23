@@ -16,7 +16,7 @@ import { UserRoleAssignmentRepository } from '@/features/identity/repositories/u
 import { RoleRepository } from '@/features/identity/repositories/role-repository';
 import { ConflictError, NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
-import { SellerModel, SellerStatus, KycDocumentType, KycDocumentStatus } from '../types';
+import { PublicSellerProfile, SellerModel, SellerStatus, KycDocumentType, KycDocumentStatus } from '../types';
 import { CreateSellerInput, UpdateSellerInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
 
@@ -122,6 +122,10 @@ export class SellerService {
   /**
    * Updates seller profile details with OCC version check.
    */
+  public async getPublicProfileBySlug(slug: string): Promise<PublicSellerProfile | null> {
+    return this.sellerRepo.findVerifiedPublicBySlug(slug);
+  }
+
   public async updateSeller(
     sellerId: string,
     expectedVersion: number,
