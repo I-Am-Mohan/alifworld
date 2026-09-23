@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import SellerCatalogClient from './catalog-client';
 
 interface SellerProduct {
   id: string;
@@ -25,7 +26,7 @@ interface SellerProduct {
   updatedAt: string;
 }
 
-export default function SellerProductsPage() {
+function LegacySellerProductsPage() {
   const [activeTab, setActiveTab] = useState<'ALL' | 'PUBLISHED' | 'DRAFT' | 'ARCHIVED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -419,3 +420,5 @@ export default function SellerProductsPage() {
     </div>
   );
 }
+
+export default SellerCatalogClient;

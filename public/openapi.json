@@ -5338,6 +5338,89 @@
         }
       }
     },
+    "/api/v1/seller/catalog/products": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List products owned by the authenticated seller",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seller-scoped product list"
+          },
+          "403": {
+            "description": "Seller tenant required"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "Create a seller-scoped product draft",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Draft created"
+          },
+          "422": {
+            "description": "Invalid draft payload"
+          }
+        }
+      }
+    },
     "/api/v1/seller/catalog/products/{id}/submit": {
       "post": {
         "tags": [
@@ -5406,6 +5489,74 @@
         "responses": {
           "200": {
             "description": "Readiness report"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/catalog/products": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "summary": "List catalog products for Admin operations",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "brandId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated catalog products"
+          },
+          "403": {
+            "description": "Requires catalog read permission"
           }
         }
       }
@@ -7555,6 +7706,71 @@
           "reviewNotes": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "ProductDraftRequest": {
+        "type": "object",
+        "required": [
+          "categoryId",
+          "title",
+          "slug",
+          "description",
+          "basePricePoisha"
+        ],
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "brandId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "titleBn": {
+            "type": "string",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "descriptionBn": {
+            "type": "string",
+            "nullable": true
+          },
+          "basePricePoisha": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "compareAtPricePoisha": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "BDT"
+            ]
+          },
+          "productPoint": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sku": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
