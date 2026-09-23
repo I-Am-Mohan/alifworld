@@ -27,6 +27,7 @@
     "db:sync": "bun run scripts/run-with-env.ts .env.production prisma db push --schema prisma/schema.prisma",
     "db:sync:local": "bun run scripts/run-with-env.ts .env.local prisma db push --schema prisma/schema.prisma",
     "db:seed": "bun run scripts/run-with-env.ts .env.local bun run prisma/seed.ts",
+    "seed:geo": "bun run scripts/run-with-env.ts .env.local bun run scripts/seed-bangladesh-geo.ts",
     "seed:admin": "bun run scripts/run-with-env.ts .env.local bun run scripts/seed-admin.ts",
     "db:studio": "bun run scripts/run-with-env.ts .env.local prisma studio",
     "worker": "bun run src/workers/index.ts",

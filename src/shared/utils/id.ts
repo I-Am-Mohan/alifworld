@@ -77,6 +77,10 @@ export const ID_PREFIXES = {
   BRAND_TRANSLATION: 'btr',
   CMS_CONTENT: 'cms',
   CMS_CONTENT_TRANSLATION: 'cmt',
+  ADDRESS: 'adr',
+  GEO_DIVISION: 'gdi',
+  GEO_DISTRICT: 'gds',
+  GEO_UPAZILA: 'gup',
 } as const;
 
 export type IdPrefix = (typeof ID_PREFIXES)[keyof typeof ID_PREFIXES];

@@ -2346,6 +2346,53 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/geo/divisions': {
+      get: {
+        tags: ['Internationalization & Localization'],
+        summary: 'List Bangladesh divisions',
+        responses: { '200': { description: 'Eight bilingual Bangladesh divisions' } },
+      },
+    },
+    '/api/v1/geo/districts': {
+      get: {
+        tags: ['Internationalization & Localization'],
+        summary: 'List Bangladesh districts',
+        parameters: [{ name: 'division', in: 'query', required: false, schema: { type: 'string', example: 'DHAKA' } }],
+        responses: { '200': { description: 'Bilingual districts filtered by division' }, '400': { description: 'Invalid division' } },
+      },
+    },
+    '/api/v1/geo/upazilas': {
+      get: {
+        tags: ['Internationalization & Localization'],
+        summary: 'List Bangladesh upazilas or thanas',
+        parameters: [{ name: 'district', in: 'query', required: false, schema: { type: 'string', example: 'dhaka' } }],
+        responses: { '200': { description: 'Upazilas/thanas filtered by district' }, '400': { description: 'Invalid district' } },
+      },
+    },
+    '/api/v1/customer/addresses': {
+      get: {
+        tags: ['Customer & Ownership'],
+        summary: 'List the authenticated customer addresses',
+        security: [{ BearerAuth: [] }],
+        responses: { '200': { description: 'Customer addresses' }, '401': { description: 'Authentication required' } },
+      },
+      post: {
+        tags: ['Customer & Ownership'],
+        summary: 'Create a normalized Bangladesh customer address',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CustomerAddressRequest' } } } },
+        responses: { '201': { description: 'Address created' }, '422': { description: 'Invalid phone or geography' } },
+      },
+    },
+    '/api/v1/customer/addresses/{id}': {
+      delete: {
+        tags: ['Customer & Ownership'],
+        summary: 'Soft-delete an authenticated customer address',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', example: 'adr_...' } }],
+        responses: { '200': { description: 'Address deleted' }, '404': { description: 'Address not found' } },
+      },
+    },
     '/api/v1/content/{slug}': {
       get: {
         tags: ['Catalog'],
@@ -2421,6 +2468,21 @@ export const openApiSpec = {
               },
             },
           },
+        },
+      },
+      CustomerAddressRequest: {
+        type: 'object',
+        required: ['label', 'recipientName', 'recipientPhone', 'divisionCode', 'districtId', 'addressLine'],
+        properties: {
+          label: { type: 'string', example: 'Home' },
+          recipientName: { type: 'string' },
+          recipientPhone: { type: 'string', example: '+8801712345678' },
+          divisionCode: { type: 'string', example: 'DHAKA' },
+          districtId: { type: 'string', example: 'dhaka' },
+          upazilaId: { type: 'string', nullable: true, example: 'gulshan' },
+          addressLine: { type: 'string' },
+          postalCode: { type: 'string', pattern: '^\\d{4}$' },
+          isDefault: { type: 'boolean', default: false },
         },
       },
       ApiErrorEnvelope: {

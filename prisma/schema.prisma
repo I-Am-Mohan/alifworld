@@ -131,6 +131,7 @@ model User {
   sessions        UserSession[]
   otpTokens       OtpToken[]
   oauthAccounts   OAuthAccount[]
+  addresses       UserAddress[]
 
   @@index([status])
   @@index([deletedAt])
@@ -139,7 +140,100 @@ model User {
 }
 
 // ------------------------------------------------------------------------------
-// 6. Role Definition
+// 6. Bangladesh Geography and Customer Addresses
+// ------------------------------------------------------------------------------
+/// Canonical Bangladesh first-level administrative division.
+model GeoDivision {
+  id           String   @id
+  code         String   @unique
+  nameEn       String   @map("name_en")
+  nameBn       String   @map("name_bn")
+  headquarters String
+  isActive     Boolean  @default(true) @map("is_active")
+  version      Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  districts GeoDistrict[]
+  addresses UserAddress[]
+
+  @@index([isActive])
+  @@map("geo_divisions")
+}
+
+/// Canonical Bangladesh district belonging to a division.
+model GeoDistrict {
+  id               String   @id
+  divisionCode     String   @map("division_code")
+  nameEn           String   @map("name_en")
+  nameBn           String   @map("name_bn")
+  postalCodePrefix String   @map("postal_code_prefix")
+  isActive         Boolean  @default(true) @map("is_active")
+  version          Int      @default(1)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  division  GeoDivision   @relation(fields: [divisionCode], references: [code], onDelete: Restrict)
+  upazilas  GeoUpazila[]
+  addresses UserAddress[]
+
+  @@index([divisionCode])
+  @@index([isActive])
+  @@map("geo_districts")
+}
+
+/// Extensible third-level Bangladesh administrative or metropolitan thana area.
+model GeoUpazila {
+  id         String   @id
+  districtId String   @map("district_id")
+  nameEn     String   @map("name_en")
+  nameBn     String   @map("name_bn")
+  postalCode String?  @map("postal_code")
+  level      String   @default("UPAZILA") // UPAZILA or THANA
+  isActive   Boolean  @default(true) @map("is_active")
+  version    Int      @default(1)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  district  GeoDistrict   @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  addresses UserAddress[]
+
+  @@index([districtId])
+  @@index([isActive])
+  @@map("geo_upazilas")
+}
+
+/// Customer-owned normalized delivery address. Historical orders retain their own snapshots.
+model UserAddress {
+  id             String    @id
+  userId         String    @map("user_id")
+  label          String
+  recipientName  String    @map("recipient_name")
+  recipientPhone String    @map("recipient_phone")
+  divisionCode   String    @map("division_code")
+  districtId     String    @map("district_id")
+  upazilaId      String?   @map("upazila_id")
+  addressLine    String    @map("address_line")
+  postalCode     String?   @map("postal_code")
+  isDefault      Boolean   @default(false) @map("is_default")
+  version        Int       @default(1)
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  division GeoDivision @relation(fields: [divisionCode], references: [code], onDelete: Restrict)
+  district GeoDistrict @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  upazila  GeoUpazila? @relation(fields: [upazilaId], references: [id], onDelete: Restrict)
+
+  @@index([userId, deletedAt])
+  @@index([divisionCode, districtId])
+  @@map("user_addresses")
+}
+
+// ------------------------------------------------------------------------------
+// 7. Role Definition
 // ------------------------------------------------------------------------------
 /// RBAC roles determining functional capabilities and access tiers across the platform
 model Role {
