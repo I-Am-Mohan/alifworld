@@ -67,7 +67,8 @@ export const serverEnvSchema = clientEnvSchema.extend({
   SESSION_SECRET: z
     .string()
     .min(32, 'SESSION_SECRET must be at least 32 characters')
-    .default('change_me_to_another_secure_random_string_32_chars'),
+    .default('change_me_to_another_secret_32_chars'),
+  PAYOUT_PROFILE_ENCRYPTION_KEY: z.string().min(32, 'PAYOUT_PROFILE_ENCRYPTION_KEY must be at least 32 characters').default('local_payout_profile_key_change_in_production_32'),
   COOKIE_DOMAIN: z.string().default('localhost'),
   COOKIE_SECURE: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())

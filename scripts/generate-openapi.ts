@@ -1557,6 +1557,23 @@ export const openApiSpec = {
         responses: { '200': { description: 'Document reviewed' }, '403': { description: 'Requires sellers:verify' }, '409': { description: 'Version conflict' }, '422': { description: 'Validation failed' } },
       },
     },
+    '/api/v1/seller/payout-profile': {
+      get: {
+        tags: ['Payments & Settlements'],
+        summary: 'Get Masked Seller Payout Profile',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'sellerId', in: 'query', required: false, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Masked payout profile retrieved' }, '403': { description: 'Tenant violation' } },
+      },
+      put: {
+        tags: ['Payments & Settlements'],
+        summary: 'Replace Seller Payout Profile',
+        description: 'Stores encrypted payout references and returns only masked metadata. This does not execute a payout.',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['sellerId', 'providerName', 'accountNumber', 'accountTitle', 'version'], properties: { sellerId: { type: 'string' }, providerName: { type: 'string' }, accountNumber: { type: 'string' }, routingNumber: { type: 'string' }, accountTitle: { type: 'string' }, version: { type: 'integer', minimum: 1 } } } } } },
+        responses: { '200': { description: 'Masked payout profile saved' }, '403': { description: 'Forbidden' }, '409': { description: 'Version or duplicate conflict' }, '422': { description: 'Validation failed' } },
+      },
+    },
     '/api/v1/seller/settlements': {
       get: {
         tags: ['Payments & Settlements'],

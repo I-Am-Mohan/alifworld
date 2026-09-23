@@ -36,6 +36,7 @@ export const ID_PREFIXES = {
   COMMISSION: 'com',
   SETTLEMENT: 'stl',
   PAYOUT: 'pot',
+  PAYOUT_PROFILE: 'ppr',
   WEBHOOK_LOG: 'pwl',
   WALLET: 'wal',
   LEDGER: 'led',

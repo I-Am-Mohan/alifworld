@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
 import { useI18n } from '@/i18n/context';
@@ -73,6 +73,11 @@ export default function SellerFinancesPage() {
   const { locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'settlements' | 'payouts' | 'commissions' | 'bank_account'>('settlements');
   const [requestPayoutSuccess, setRequestPayoutSuccess] = useState(false);
+  const [payoutProfile, setPayoutProfile] = useState<{ providerName: string; displayAccount: string; status: string; version: number } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/seller/payout-profile').then((response) => response.json()).then((json) => { if (json.success) setPayoutProfile(json.data); }).catch(() => undefined);
+  }, []);
 
   // Mock initial financial state based on Section 9 seed records
   const [settlements] = useState<SettlementItem[]>([
@@ -169,8 +174,7 @@ export default function SellerFinancesPage() {
   const pendingSettlementPoisha = BigInt(0);
 
   const handleRequestPayout = () => {
-    setRequestPayoutSuccess(true);
-    setTimeout(() => setRequestPayoutSuccess(false), 4000);
+    setRequestPayoutSuccess(false);
   };
 
   return (
@@ -233,11 +237,13 @@ export default function SellerFinancesPage() {
 
           <div className="flex items-center space-x-3">
             <button
-              onClick={handleRequestPayout}
-              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-xs shadow-lg transition-all"
+              type="button"
+              disabled
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-700 text-slate-400 font-bold text-xs cursor-not-allowed"
+              title="Payout execution is disabled pending approved settlement and provider integration."
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Disburse Weekly Payout</span>
+              <span>Disburse Weekly Payout (Unavailable)</span>
             </button>
           </div>
         </div>
@@ -250,6 +256,12 @@ export default function SellerFinancesPage() {
             </div>
           </div>
         )}
+
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+          <h2 className="text-sm font-bold text-white">Payout profile</h2>
+          {payoutProfile ? <p className="mt-2 text-xs text-slate-300">{payoutProfile.providerName} · {payoutProfile.displayAccount} · {payoutProfile.status}</p> : <p className="mt-2 text-xs text-slate-500">No payout profile is configured.</p>}
+          <Link href="/seller/settings" className="mt-3 inline-flex text-xs font-bold text-amber-400 hover:underline">Manage payout profile in seller settings</Link>
+        </div>
 
         {/* Financial KPI Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

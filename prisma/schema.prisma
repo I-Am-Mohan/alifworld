@@ -412,6 +412,7 @@ model Seller {
   wallets           Wallet[]
   sellerRanks       UserRank[]
   applications      SellerApplication[]
+  payoutProfiles    SellerPayoutProfile[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -475,9 +476,43 @@ model SellerApplicationReview {
 }
 
 // ------------------------------------------------------------------------------
-// 12. Seller Staff Delegation
+// 14. Seller Payout Profiles
 // ------------------------------------------------------------------------------
-/// Delegated staff members operating within an isolated seller tenant boundary
+/// Encrypted seller payout destination metadata. Raw banking values are never persisted.
+model SellerPayoutProfile {
+  id                       String   @id
+  sellerId                 String   @map("seller_id")
+  method                   String   @default("BANK_ACCOUNT")
+  providerName             String   @map("provider_name")
+  encryptedAccountReference String  @map("encrypted_account_reference")
+  encryptedRoutingReference String? @map("encrypted_routing_reference")
+  encryptedAccountTitle     String? @map("encrypted_account_title")
+  accountFingerprint        String   @map("account_fingerprint")
+  accountLast4              String   @map("account_last4")
+  routingLast4              String?  @map("routing_last4")
+  status                    String   @default("PENDING_VERIFICATION")
+  isPrimary                 Boolean  @default(true) @map("is_primary")
+  version                   Int      @default(1)
+  createdBy                String   @map("created_by")
+  updatedBy                String   @map("updated_by")
+  verifiedAt               DateTime? @map("verified_at")
+  verifiedBy               String?  @map("verified_by")
+  deletedAt                DateTime? @map("deleted_at")
+  deletedBy                String? @map("deleted_by")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId, status])
+  @@index([accountFingerprint])
+  @@index([deletedAt])
+  @@map("seller_payout_profiles")
+}
+
+// ------------------------------------------------------------------------------
+// 15. Seller Staff Delegation
+// ------------------------------------------------------------------------------
 model SellerStaff {
   id          String    @id @default(uuid())
   sellerId    String    @map("seller_id")
