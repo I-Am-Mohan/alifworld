@@ -13,9 +13,9 @@ import { ConflictError, NotFoundError } from '@/shared/errors/app-error';
 import { ProductVariantModel } from '../types';
 
 export class ProductVariantRepository {
-  public async findById(id: string): Promise<ProductVariantModel | null> {
+  public async findById(id: string, productId?: string, sellerId?: string): Promise<ProductVariantModel | null> {
     const variant = await (prisma as any).productVariant.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(productId ? { productId } : {}), ...(sellerId ? { product: { sellerId } } : {}) },
       include: { options: { orderBy: { displayOrder: 'asc' } } },
     });
     return variant ? this.mapToModel(variant) : null;
@@ -28,9 +28,9 @@ export class ProductVariantRepository {
     return variant ? this.mapToModel(variant) : null;
   }
 
-  public async findByProductId(productId: string): Promise<ProductVariantModel[]> {
+  public async findByProductId(productId: string, sellerId?: string): Promise<ProductVariantModel[]> {
     const variants = await (prisma as any).productVariant.findMany({
-      where: { productId, deletedAt: null },
+      where: { productId, deletedAt: null, ...(sellerId ? { product: { sellerId } } : {}) },
       include: { options: { orderBy: { displayOrder: 'asc' } } },
       orderBy: { displayOrder: 'asc' },
     });
@@ -105,9 +105,9 @@ export class ProductVariantRepository {
       isActive: boolean;
       displayOrder: number;
     }>
-  ): Promise<ProductVariantModel> {
+  , productId?: string, sellerId?: string): Promise<ProductVariantModel> {
     const existing = await (prisma as any).productVariant.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(productId ? { productId } : {}), ...(sellerId ? { product: { sellerId } } : {}) },
     });
 
     if (!existing) {
@@ -140,9 +140,9 @@ export class ProductVariantRepository {
     return this.mapToModel(updated);
   }
 
-  public async softDelete(id: string, expectedVersion: number, deletedBy?: string): Promise<void> {
+  public async softDelete(id: string, expectedVersion: number, deletedBy?: string, productId?: string, sellerId?: string): Promise<void> {
     const existing = await (prisma as any).productVariant.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(productId ? { productId } : {}), ...(sellerId ? { product: { sellerId } } : {}) },
     });
 
     if (!existing) {

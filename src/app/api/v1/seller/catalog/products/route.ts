@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticateRequest } from '@/shared/authz';
 import { ProductService } from '@/features/catalog/services/product-service';
 import { CreateProductSchema } from '@/features/catalog/validators';
@@ -12,9 +13,10 @@ export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.sellerId) return NextResponse.json({ success: false, error: { code: 'SELLER_SCOPE_REQUIRED', message: 'Seller scope is required.' } }, { status: 422 });
-    const params = req.nextUrl.searchParams;
-    const result = await service.listProducts({ sellerId: actor.sellerId, status: (params.get('status') as any) || undefined, search: params.get('search') || undefined, page: Number(params.get('page') || 1), limit: Number(params.get('limit') || 20) });
-    return NextResponse.json({ success: true, data: result.items, meta: { page: Number(params.get('page') || 1), limit: Number(params.get('limit') || 20), total: result.total } });
+    const parsedQuery = z.object({ status: z.enum(['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PUBLISHED', 'ARCHIVED']).optional(), search: z.string().trim().max(100).optional(), page: z.coerce.number().int().min(1).default(1), limit: z.coerce.number().int().min(1).max(100).default(20) }).safeParse(Object.fromEntries(req.nextUrl.searchParams.entries()));
+    if (!parsedQuery.success) throw new ValidationError('Invalid product list query.', parsedQuery.error.flatten());
+    const result = await service.listProducts({ sellerId: actor.sellerId, ...parsedQuery.data });
+    return NextResponse.json({ success: true, data: result.items, meta: { ...parsedQuery.data, total: result.total } });
   } catch (error) { return errorResponse(req, error, 'Failed to load seller catalog products'); }
 }
 

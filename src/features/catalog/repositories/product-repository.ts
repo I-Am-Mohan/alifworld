@@ -14,9 +14,9 @@ import { ConflictError, NotFoundError } from '@/shared/errors/app-error';
 import { ProductModel, ProductStatus } from '../types';
 
 export class ProductRepository {
-  public async findById(id: string): Promise<ProductModel | null> {
+  public async findById(id: string, sellerId?: string): Promise<ProductModel | null> {
     const product = await (prisma as any).product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(sellerId ? { sellerId } : {}) },
       include: {
         category: true,
         brand: true,
@@ -38,9 +38,9 @@ export class ProductRepository {
    * Looks up product by public slug.
    * If not found directly, inspects ProductSlugHistory to enable SEO redirects.
    */
-  public async findBySlug(slug: string): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
+  public async findBySlug(slug: string, sellerId?: string): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
     const directProduct = await (prisma as any).product.findFirst({
-      where: { slug, deletedAt: null },
+      where: { slug, deletedAt: null, ...(sellerId ? { sellerId } : {}) },
       include: {
         category: true,
         brand: true,
@@ -80,7 +80,7 @@ export class ProductRepository {
       },
     });
 
-    if (slugHistory && slugHistory.product && !slugHistory.product.deletedAt) {
+    if (slugHistory && slugHistory.product && !slugHistory.product.deletedAt && (!sellerId || slugHistory.product.sellerId === sellerId)) {
       return {
         product: this.mapToModel(slugHistory.product),
         redirectedFrom: slug,
@@ -311,9 +311,9 @@ export class ProductRepository {
     });
   }
 
-  public async softDelete(id: string, expectedVersion: number, deletedBy?: string): Promise<void> {
+  public async softDelete(id: string, expectedVersion: number, deletedBy?: string, sellerId?: string): Promise<void> {
     const existing = await (prisma as any).product.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...(sellerId ? { sellerId } : {}) },
     });
 
     if (!existing) {

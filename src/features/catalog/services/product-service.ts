@@ -49,6 +49,13 @@ export class ProductService {
     if (!category || !category.isActive) {
       throw new ValidationError(`Category with id '${input.categoryId}' is invalid or inactive.`);
     }
+    if (input.brandId) {
+      const brand = await (prisma as any).brand.findFirst({ where: { id: input.brandId, deletedAt: null } });
+      if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED') throw new ValidationError('Product brand must be active and approved.');
+    }
+    if (input.compareAtPricePoisha !== undefined && input.compareAtPricePoisha !== null && input.compareAtPricePoisha < input.basePricePoisha) {
+      throw new ValidationError('Compare-at price must be greater than or equal to the base price.');
+    }
 
     // Check slug uniqueness
     const existingSlug = await this.productRepo.findBySlug(input.slug);
@@ -151,6 +158,14 @@ export class ProductService {
     }
 
     await this.assertSellerTenantAccess(actorUserId, existing.sellerId);
+
+    if (input.variants !== undefined || input.media !== undefined) {
+      throw new ValidationError('Product variants and media must be managed through their dedicated APIs.');
+    }
+    if (input.compareAtPricePoisha !== undefined && input.compareAtPricePoisha !== null) {
+      const basePrice = input.basePricePoisha ?? existing.basePricePoisha;
+      if (input.compareAtPricePoisha < basePrice) throw new ValidationError('Compare-at price must be greater than or equal to the base price.');
+    }
 
     if (input.categoryId) {
       const category = await this.categoryRepo.findById(input.categoryId);
@@ -346,12 +361,25 @@ export class ProductService {
     return updated;
   }
 
-  public async getProductById(id: string): Promise<ProductModel | null> {
-    return this.productRepo.findById(id);
+  public async getProductById(id: string, sellerId?: string): Promise<ProductModel | null> {
+    return this.productRepo.findById(id, sellerId);
   }
 
-  public async getProductBySlug(slug: string): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
-    return this.productRepo.findBySlug(slug);
+  public async getProductBySlug(slug: string, sellerId?: string): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
+    return this.productRepo.findBySlug(slug, sellerId);
+  }
+
+  public async deleteProduct(actorUserId: string, id: string, expectedVersion: number, sellerId?: string): Promise<{ deleted: true; productId: string }> {
+    const product = await this.productRepo.findById(id, sellerId);
+    if (!product) throw new NotFoundError(`Product with id '${id}' not found.`);
+    await this.assertSellerTenantAccess(actorUserId, product.sellerId);
+    if (product.status === ProductStatus.PUBLISHED || product.status === ProductStatus.PENDING_APPROVAL || product.status === ProductStatus.APPROVED) {
+      throw new ConflictError('Only draft, rejected, or archived products can be deleted.');
+    }
+    await this.productRepo.softDelete(id, expectedVersion, actorUserId, sellerId);
+    await (prisma as any).outboxEvent.create({ data: { eventType: 'PRODUCT_DELETED', aggregateType: 'Product', aggregateId: id, payload: { productId: id, sellerId: product.sellerId, version: expectedVersion + 1 } } });
+    await (prisma as any).auditLog.create({ data: { actorId: actorUserId, action: 'PRODUCT_DELETE', resource: 'Product', resourceId: id, metadata: { sellerId: product.sellerId, version: expectedVersion + 1 } } });
+    return { deleted: true, productId: id };
   }
 
   public async listProducts(options: {

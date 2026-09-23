@@ -11,5 +11,6 @@ export * from './moderation-service';
 export * from './variant-combination-service';
 export * from './identifier-policy-service';
 export * from './product-media-service';
+export * from './product-variant-service';
 export * from './product-version-history-service';
 export * from './product-content-service';
