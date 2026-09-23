@@ -657,7 +657,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                     <div>
                       <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                        Bangladesh Mobile Phone
+                        Mobile Phone
                       </span>
                       <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-slate-900">
                         {user?.phone || '+8801700000025'}
