@@ -7,13 +7,26 @@ export const CatalogLocaleSchema = z
 
 export type CatalogLocale = z.infer<typeof CatalogLocaleSchema>;
 
+const RichContentBlockSchema = z.object({
+  type: z.enum(['paragraph', 'heading', 'bullet_list', 'ordered_list', 'quote', 'image', 'video', 'specification_table']),
+  text: z.string().max(5000).optional(),
+  level: z.number().int().min(1).max(6).optional(),
+  items: z.array(z.string().max(1000)).max(100).optional(),
+  url: z.string().url().optional(),
+  alt: z.string().max(255).optional(),
+  rows: z.array(z.object({ label: z.string().max(150), value: z.string().max(1000) })).max(100).optional(),
+});
+
 export const LocalizedProductTranslationSchema = z.object({
   locale: CatalogLocaleSchema,
   title: z.string().min(3).max(200),
-  description: z.string().min(10),
+  description: z.string().min(10).max(10000),
   warranty: z.string().max(255).optional().nullable(),
+  specifications: z.record(z.string().max(1000)).optional().default({}),
+  richContent: z.array(RichContentBlockSchema).max(100).optional().default([]),
   version: z.number().int().min(1).optional(),
 });
+export type LocalizedProductTranslationInput = z.infer<typeof LocalizedProductTranslationSchema>;
 
 export const LocalizedCategoryTranslationSchema = z.object({
   locale: CatalogLocaleSchema,

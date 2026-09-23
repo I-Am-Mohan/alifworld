@@ -27,11 +27,11 @@ export class LocalizedCatalogRepository {
     return this.selectBest(rows, locale);
   }
 
-  async upsertProductTranslation(productId: string, input: { locale: string; title: string; description: string; warranty?: string | null; version?: number }) {
+  async upsertProductTranslation(productId: string, input: { locale: string; title: string; description: string; warranty?: string | null; specifications?: Record<string, string>; richContent?: unknown[]; version?: number }) {
     return (prisma as any).productTranslation.upsert({
       where: { productId_locale: { productId, locale: input.locale } },
-      create: { id: generatePrefixedId(ENTITY_PREFIXES.PRODUCT_TRANSLATION), productId, ...input, version: 1 },
-      update: { title: input.title, description: input.description, warranty: input.warranty, version: { increment: 1 } },
+      create: { id: generatePrefixedId(ENTITY_PREFIXES.PRODUCT_TRANSLATION), productId, locale: input.locale, title: input.title, description: input.description, warranty: input.warranty ?? null, specifications: input.specifications ?? {}, richContent: input.richContent ?? [], version: 1 },
+      update: { title: input.title, description: input.description, warranty: input.warranty ?? null, specifications: input.specifications ?? {}, richContent: input.richContent ?? [], version: { increment: 1 } },
     });
   }
 

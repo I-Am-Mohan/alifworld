@@ -1285,13 +1285,15 @@ model ProductSlugHistory {
 // ------------------------------------------------------------------------------
 /// Normalized product translations keyed by canonical locale.
 model ProductTranslation {
-  id          String   @id @default(uuid())
-  productId   String   @map("product_id")
-  locale      String
-  title       String
-  description String   @db.Text
-  warranty    String?
-  version     Int      @default(1)
+  id             String   @id @default(uuid())
+  productId      String   @map("product_id")
+  locale         String
+  title          String
+  description    String   @db.Text
+  warranty       String?
+  specifications Json?
+  richContent    Json?    @map("rich_content")
+  version        Int      @default(1)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
