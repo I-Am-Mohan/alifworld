@@ -30,16 +30,39 @@ import {
   Briefcase,
   User,
   Zap,
+  Search,
+  ShoppingCart,
+  Phone,
+  Mail,
+  ChevronDown,
+  Clipboard,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { useI18n } from '@/i18n/context';
+import { useAuthModal } from '@/components/auth/auth-context';
 import { csrfFetch } from '@/shared/security/csrf-client';
 import {
   BANGLADESH_DIVISIONS,
   BANGLADESH_DISTRICTS,
   BANGLADESH_UPAZILAS,
 } from '@/shared/geo/bangladesh-geo';
+
+function FacebookIcon({ className = 'w-3 h-3' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+}
+
+function XIcon({ className = 'w-3 h-3' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 type Application = {
   id: string;
@@ -82,40 +105,44 @@ const STEPS = [
 /* -------------------------------------------------------------------------- */
 function MerchantHeroIllustration() {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-orange-950 p-6 sm:p-8 text-white shadow-xl">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-orange-500/15 blur-3xl" />
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-orange-950 p-6 sm:p-8 text-white shadow-2xl border border-slate-800">
+      <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
       <div className="pointer-events-none absolute left-1/3 -bottom-10 h-48 w-48 rounded-full bg-amber-500/10 blur-2xl" />
 
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-3 max-w-xl text-center md:text-left">
-          <div className="inline-flex items-center space-x-2 text-[11px] font-mono font-bold uppercase tracking-widest text-[#FF6A00] bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
+      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="space-y-4 max-w-lg text-center md:text-left">
+          <div className="inline-flex items-center space-x-2 text-[11px] font-mono font-bold uppercase tracking-widest text-[#FF6A00] bg-orange-500/15 px-3.5 py-1 rounded-full border border-orange-500/30 shadow-xs">
             <Zap className="w-3.5 h-3.5 text-[#FF6A00]" />
-            <span>AlifWorld Merchant Network • 64-District Fulfillment</span>
+            <span>AlifWorld Merchant Network • 64 Districts</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-            Grow Your Business Across Bangladesh
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight">
+            Scale Your Business Across Bangladesh
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-            Join thousands of verified sellers on AlifWorld. Enjoy 0% listing fees, guaranteed weekly BDT payouts, Pathao &amp; RedX express pickup, and NBR VAT compliance.
+            Join Bangladesh's premier merchant hub. Enjoy 0% listing fees, guaranteed weekly BDT settlements, Pathao &amp; RedX express logistics, and automated NBR VAT compliance.
           </p>
+
+          <div className="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-semibold text-slate-200">
+            <div className="flex items-center space-x-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Verified Store Handle</span>
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>NBR 13-digit BIN Verified</span>
+            </div>
+          </div>
         </div>
 
-        {/* Custom SVG Graphic Artwork */}
-        <div className="w-full max-w-[220px] shrink-0">
-          <svg viewBox="0 0 200 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-2xl">
-            <rect width="200" height="140" rx="16" fill="#1E293B" fillOpacity="0.8" />
-            <path d="M20 100 L60 70 L100 85 L140 45 L180 30" stroke="#FF6A00" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="180" cy="30" r="6" fill="#FF6A00" />
-            <circle cx="140" cy="45" r="4" fill="#F59E0B" />
-            <circle cx="100" cy="85" r="4" fill="#F59E0B" />
-            <circle cx="60" cy="70" r="4" fill="#F59E0B" />
-            <rect x="25" y="110" width="30" height="15" rx="3" fill="#334155" />
-            <rect x="65" y="110" width="30" height="15" rx="3" fill="#334155" />
-            <rect x="105" y="110" width="30" height="15" rx="3" fill="#FF6A00" />
-            <rect x="145" y="110" width="30" height="15" rx="3" fill="#10B981" />
-          </svg>
+        {/* Real Hero Graphic Image Banner Card */}
+        <div className="w-full max-w-sm shrink-0 rounded-2xl overflow-hidden border border-white/10 shadow-2xl group hover:scale-[1.02] transition-transform duration-300">
+          <img
+            src="/seller-hero-banner.jpg"
+            alt="AlifWorld Merchant Platform"
+            className="w-full h-auto object-cover rounded-2xl"
+          />
         </div>
       </div>
     </div>
@@ -123,7 +150,13 @@ function MerchantHeroIllustration() {
 }
 
 export default function SellerApplicationPage() {
+  const { openAuthModal, openAccountModal, user } = useAuthModal();
   const { t, locale } = useI18n();
+
+  const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState('Dhaka, Bangladesh');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cartCount, setCartCount] = useState(0);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -313,26 +346,134 @@ export default function SellerApplicationPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between selection:bg-orange-500/20">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <AlifLogo size="sm" href="/" />
-            <div className="h-5 w-px bg-slate-200" />
-            <span className="text-xs uppercase tracking-widest font-mono font-bold text-[#FF6A00]">
-              Merchant Onboarding
-            </span>
+      {/* STOREFRONT HEADER */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-4">
+          {/* Logo & Location */}
+          <div className="flex items-center space-x-4 sm:space-x-6 shrink-0">
+            <AlifLogo size="md" href="/" />
+
+            {/* Deliver To Selector */}
+            <div className="relative hidden lg:block">
+              <button
+                type="button"
+                onClick={() => setIsLocationMenuOpen(!isLocationMenuOpen)}
+                className="flex items-center space-x-2 text-left hover:bg-slate-50 py-1.5 px-3 rounded-xl transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-full bg-amber-50 text-[#F59E0B] flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div className="leading-tight">
+                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    {t('nav.deliverTo') || 'Deliver to'}
+                  </span>
+                  <span className="text-xs font-black text-slate-800 flex items-center gap-1">
+                    {selectedLocation}
+                    <ChevronDown className="w-3 h-3 text-slate-500" />
+                  </span>
+                </div>
+              </button>
+
+              {isLocationMenuOpen && (
+                <div className="absolute left-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50">
+                  <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                    Select Division / Location
+                  </div>
+                  {['Dhaka, Bangladesh', 'Chattogram, Bangladesh', 'Sylhet, Bangladesh', 'Rajshahi, Bangladesh', 'Khulna, Bangladesh'].map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      onClick={() => {
+                        setSelectedLocation(loc);
+                        setIsLocationMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-amber-50 hover:text-[#D97706] transition-colors cursor-pointer ${
+                        selectedLocation === loc ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700'
+                      }`}
+                    >
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <LanguageSwitcher />
-            <Link
-              href="/"
-              className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors inline-flex items-center space-x-1 py-1.5 px-2.5 rounded-lg hover:bg-slate-100"
+          {/* Search Bar */}
+          <div className="flex-1 max-w-xl mx-2 sm:mx-4">
+            <div className="relative flex items-center">
+              <span className="absolute left-4 text-slate-400">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('nav.searchPlaceholder') || 'Search products, brands, stores...'}
+                className="w-full bg-[#F8FAFC] border border-slate-200/90 rounded-full py-2.5 pl-11 pr-12 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 shadow-xs transition-all"
+              />
+              <button
+                type="button"
+                aria-label="Paste"
+                onClick={() => {
+                  navigator.clipboard
+                    ?.readText?.()
+                    .then((text) => setSearchQuery(text))
+                    .catch(() => {});
+                }}
+                className="absolute right-3 text-slate-400 hover:text-slate-700 p-1 transition-colors cursor-pointer"
+              >
+                <Clipboard className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Actions & Language Switcher */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Account Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (user) {
+                  openAccountModal();
+                } else {
+                  openAuthModal('login');
+                }
+              }}
+              className="hidden md:flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors cursor-pointer"
+              title={user ? `Account: ${user.name || 'Account'}` : 'Sign In / Register'}
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Return to Storefront</span>
-            </Link>
+              <div className="relative">
+                <User className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
+                {user && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" />
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1 truncate max-w-[65px]">
+                {user ? user.name?.split(' ')[0] || 'Account' : 'Account'}
+              </span>
+            </button>
+
+            {/* Cart Button */}
+            <button
+              type="button"
+              onClick={() => setMessage('Cart (0 items)')}
+              className="hidden md:flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors relative cursor-pointer"
+            >
+              <div className="relative">
+                <ShoppingCart className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#F59E0B] text-black font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center shadow">
+                    {cartCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">Cart</span>
+            </button>
+
+            {/* Language Switcher Dropdown */}
+            <div className="hidden md:block w-px h-6 bg-slate-200 ml-1 mr-0.5" />
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
@@ -342,10 +483,6 @@ export default function SellerApplicationPage() {
         {/* Title Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center space-x-1.5 text-[11px] uppercase tracking-widest font-mono font-bold text-[#FF6A00] bg-orange-50 px-3 py-1 rounded-full border border-orange-200 mb-2">
-              <Building2 className="w-3.5 h-3.5" />
-              <span>AlifWorld Merchant Registration</span>
-            </div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">
               Seller Store Onboarding
             </h1>
@@ -1070,9 +1207,162 @@ export default function SellerApplicationPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-400">
-        © 2026 AlifWorld Merchant Onboarding. All submitted dossiers are protected under privacy and security policy.
+      {/* LUXURY DARK STOREFRONT FOOTER */}
+      <footer className="bg-[#161614] text-white pt-16 pb-24 md:pb-12 border-t border-neutral-800 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-12 pb-12 border-b border-neutral-800">
+            {/* Brand & Slogan */}
+            <div className="space-y-4">
+              <AlifLogo size="md" href="/" inverted />
+              <p className="text-xs text-[#9CA3AF] leading-relaxed max-w-sm">
+                Your neighborhood's fastest delivery service. We bring everything you need, right to your doorstep in minutes.
+              </p>
+
+              <div className="pt-2 space-y-2 text-xs text-[#D1D5DB]">
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="font-semibold">+880 1997-469249</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="font-semibold">info@alifworld.com</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">
+                QUICK LINKS
+              </h4>
+              <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
+                <li>
+                  <Link href="/about" className="hover:text-white transition-colors cursor-pointer">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/faqs" className="hover:text-white transition-colors cursor-pointer">
+                    FAQs
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/stores" className="hover:text-white transition-colors cursor-pointer">
+                    Stores
+                  </Link>
+                </li>
+                <li className="pt-2">
+                  <Link href="/seller/apply" className="text-amber-500 font-bold hover:underline block">
+                    Become a Seller
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Policies */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">
+                POLICIES
+              </h4>
+              <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
+                <li>
+                  <Link href="/privacy" className="hover:text-white transition-colors cursor-pointer">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-white transition-colors cursor-pointer">
+                    Terms &amp; Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/shipping-policy" className="hover:text-white transition-colors cursor-pointer">
+                    Shipping Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/return-policy" className="hover:text-white transition-colors cursor-pointer">
+                    Return &amp; Refund Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Follow Us & Trust Badges */}
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-white mb-4">
+                FOLLOW US
+              </h4>
+              <div className="flex items-center space-x-3 mb-6">
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Facebook"
+                  className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
+                >
+                  <FacebookIcon className="w-3.5 h-3.5" />
+                </a>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </a>
+                <a
+                  href="https://youtube.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="YouTube"
+                  className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                  </svg>
+                </a>
+                <a
+                  href="https://x.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="X"
+                  className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
+                >
+                  <XIcon className="w-3.5 h-3.5 text-white" />
+                </a>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="space-y-2 text-xs text-[#D1D5DB] font-medium">
+                <div className="flex items-center space-x-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span>Quality Assured</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                  <span>100% Secure Checkout</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Truck className="w-4 h-4 text-amber-400" />
+                  <span>Trusted Nationwide Delivery</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#9CA3AF] gap-4">
+            <div>
+              © 2026 AlifWorld. All rights reserved.
+            </div>
+            <div className="px-3 py-1 rounded-full bg-[#262624] text-slate-400 border border-neutral-800 font-mono text-[11px]">
+              V 3.2.0
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
