@@ -7923,7 +7923,9 @@
           "title",
           "slug",
           "description",
-          "basePricePoisha"
+          "basePricePoisha",
+          "currency",
+          "productPoint"
         ],
         "properties": {
           "categoryId": {
@@ -7999,6 +8001,35 @@
             }
           }
         ]
+      },
+      "ProductVariantWriteRequest": {
+        "type": "object",
+        "required": [
+          "sku",
+          "title",
+          "pricePoisha",
+          "productPoint"
+        ],
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "pricePoisha": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "productPoint": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "barcode": {
+            "type": "string",
+            "nullable": true
+          }
+        }
       },
       "ModerationResolveRequest": {
         "type": "object",

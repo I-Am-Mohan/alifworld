@@ -2890,10 +2890,13 @@ export const openApiSpec = {
         type: 'object', properties: { available: { type: 'boolean' }, sku: { type: 'string', nullable: true }, barcode: { type: 'string', nullable: true }, conflicts: { type: 'object' } }, required: ['available', 'conflicts'],
       },
       ProductDraftRequest: {
-        type: 'object', required: ['categoryId', 'title', 'slug', 'description', 'basePricePoisha'], properties: { categoryId: { type: 'string' }, brandId: { type: 'string', nullable: true }, title: { type: 'string' }, titleBn: { type: 'string', nullable: true }, slug: { type: 'string' }, description: { type: 'string' }, descriptionBn: { type: 'string', nullable: true }, basePricePoisha: { type: 'integer', minimum: 1 }, compareAtPricePoisha: { type: 'integer', minimum: 1, nullable: true }, currency: { type: 'string', enum: ['BDT'] }, productPoint: { type: 'integer', minimum: 0 }, sku: { type: 'string', nullable: true }, tags: { type: 'array', items: { type: 'string' } } },
+        type: 'object', required: ['categoryId', 'title', 'slug', 'description', 'basePricePoisha', 'currency', 'productPoint'], properties: { categoryId: { type: 'string' }, brandId: { type: 'string', nullable: true }, title: { type: 'string' }, titleBn: { type: 'string', nullable: true }, slug: { type: 'string' }, description: { type: 'string' }, descriptionBn: { type: 'string', nullable: true }, basePricePoisha: { type: 'integer', minimum: 1 }, compareAtPricePoisha: { type: 'integer', minimum: 1, nullable: true }, currency: { type: 'string', enum: ['BDT'] }, productPoint: { type: 'integer', minimum: 0 }, sku: { type: 'string', nullable: true }, tags: { type: 'array', items: { type: 'string' } } },
       },
       ProductDraftUpdateRequest: {
         allOf: [{ $ref: '#/components/schemas/ProductDraftRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }],
+      },
+      ProductVariantWriteRequest: {
+        type: 'object', required: ['sku', 'title', 'pricePoisha', 'productPoint'], properties: { sku: { type: 'string' }, title: { type: 'string' }, pricePoisha: { type: 'integer', minimum: 1 }, productPoint: { type: 'integer', minimum: 0 }, barcode: { type: 'string', nullable: true } },
       },
       ModerationResolveRequest: {
         type: 'object', required: ['status'], properties: { status: { type: 'string', enum: ['APPROVED', 'REJECTED', 'REQUEST_CHANGES', 'DISMISSED'] }, reason: { type: 'string', nullable: true } },

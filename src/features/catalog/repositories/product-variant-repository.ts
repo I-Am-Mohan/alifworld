@@ -42,7 +42,7 @@ export class ProductVariantRepository {
     title: string;
     pricePoisha: bigint | number;
     compareAtPricePoisha?: bigint | number | null;
-    productPoint?: number | null;
+    productPoint: number;
     barcode?: string | null;
     weightGrams?: number | null;
     option1Name?: string | null;

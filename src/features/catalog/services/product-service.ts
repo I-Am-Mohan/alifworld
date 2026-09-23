@@ -38,6 +38,10 @@ export class ProductService {
   public async createProduct(actorUserId: string, input: CreateProductInput): Promise<ProductModel> {
     await this.assertSellerTenantAccess(actorUserId, input.sellerId);
 
+    if (input.currency !== 'BDT') throw new ValidationError('Product currency must be BDT.');
+    if (!Number.isSafeInteger(input.basePricePoisha) || input.basePricePoisha <= 0) throw new ValidationError('Product price must be a positive integer number of poisha.');
+    if (!Number.isSafeInteger(input.productPoint) || input.productPoint < 0) throw new ValidationError('Seller-defined Product Point must be a non-negative integer.');
+
     // Verify category exists and is active
     const category = await this.categoryRepo.findById(input.categoryId);
     if (!category || !category.isActive) {
@@ -149,6 +153,8 @@ export class ProductService {
       if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED') throw new ValidationError('Product brand must be active and approved.');
     }
     if (input.currency && input.currency !== 'BDT') throw new ValidationError('Product currency must be BDT.');
+    if (input.basePricePoisha !== undefined && (!Number.isSafeInteger(input.basePricePoisha) || input.basePricePoisha <= 0)) throw new ValidationError('Product price must be a positive integer number of poisha.');
+    if (input.productPoint !== undefined && (!Number.isSafeInteger(input.productPoint) || input.productPoint < 0)) throw new ValidationError('Seller-defined Product Point must be a non-negative integer.');
 
     if (input.sku !== undefined || input.barcode !== undefined) {
       await this.identifierPolicy.assertAvailable({ sku: input.sku || undefined, barcode: input.barcode || undefined, excludeProductId: id });
@@ -230,6 +236,10 @@ export class ProductService {
     // Publication Readiness Checklist:
     if (!product.category || !product.category.isActive) {
       throw new ValidationError('Publication failed: Product must be assigned to an active category.');
+    }
+
+    if (product.currency !== 'BDT') {
+      throw new ValidationError('Publication failed: Product currency must be BDT.');
     }
 
     if (Number(product.basePricePoisha) <= 0) {

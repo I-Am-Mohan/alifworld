@@ -164,8 +164,8 @@ export class ProductRepository {
     status?: ProductStatus;
     basePricePoisha: bigint | number;
     compareAtPricePoisha?: bigint | number | null;
-    currency?: string;
-    productPoint?: number;
+    currency: 'BDT';
+    productPoint: number;
     sku?: string | null;
     barcode?: string | null;
     isPhysical?: boolean;
