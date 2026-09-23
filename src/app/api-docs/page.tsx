@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import SwaggerUI from 'swagger-ui-react';
-import 'swagger-ui-react/swagger-ui.css';
+import { ApiReferenceReact } from '@scalar/api-reference-react';
+import '@scalar/api-reference-react/style.css';
 
 const openApiUrl = '/api/v1/openapi.json';
 
@@ -43,16 +43,16 @@ export default function ApiDocsPage() {
         <div className="mb-4 rounded-xl border border-blue-900/60 bg-blue-950/40 p-4 text-xs text-blue-100">
           <strong>How to test authenticated endpoints:</strong> click <strong>Authorize</strong>, enter your JWT access token in the format <code className="rounded bg-slate-900 px-1.5 py-0.5">Bearer &lt;token&gt;</code>, select an endpoint, click <strong>Try it out</strong>, then execute the request.
         </div>
-        <div className="swagger-shell overflow-hidden rounded-xl bg-white shadow-2xl">
-          <SwaggerUI
-            url={openApiUrl}
-            docExpansion="list"
-            defaultModelsExpandDepth={1}
-            persistAuthorization
-            tryItOutEnabled
-            displayRequestDuration
-            filter
-            deepLinking
+        <div className="scalar-shell overflow-hidden rounded-xl bg-white shadow-2xl">
+          <ApiReferenceReact
+            configuration={{
+              url: openApiUrl,
+              theme: 'purple',
+              layout: 'modern',
+              withDefaultFonts: false,
+              showSidebar: true,
+              isEditable: false,
+            }}
           />
         </div>
       </section>
