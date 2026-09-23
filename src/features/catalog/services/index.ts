@@ -8,3 +8,4 @@ export * from './product-approval-service';
 export * from './onboarding-service';
 export * from './bulk-service';
 export * from './moderation-service';
+export * from './variant-combination-service';

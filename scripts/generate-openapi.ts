@@ -2740,6 +2740,12 @@ export const openApiSpec = {
       get: { tags: ['Catalog'], summary: 'Read product option sets', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product option sets' } } },
       put: { tags: ['Catalog'], summary: 'Replace product option sets', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductOptionSetsRequest' } } } }, responses: { '200': { description: 'Option sets replaced' }, '409': { description: 'Version conflict' } } },
     },
+    '/api/v1/seller/catalog/products/{id}/variant-combinations': {
+      get: { tags: ['Catalog'], summary: 'Generate governed variant combinations', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'max', in: 'query', required: false, schema: { type: 'integer', minimum: 1, maximum: 1000, default: 1000 } }], responses: { '200': { description: 'Generated variant combinations' }, '422': { description: 'Combination count or option validation failed' } } },
+    },
+    '/api/v1/seller/catalog/products/{id}/variant-validation': {
+      get: { tags: ['Catalog'], summary: 'Validate variant completeness and duplicate combinations', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Variant validation report' } } },
+    },
     '/api/v1/seller/catalog/products/{id}/variants/{variantId}/options': {
       get: { tags: ['Catalog'], summary: 'Read normalized variant options', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'variantId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Variant options' } } },
       put: { tags: ['Catalog'], summary: 'Replace normalized variant options', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'variantId', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/VariantOptionsRequest' } } } }, responses: { '200': { description: 'Variant options replaced' }, '409': { description: 'Version conflict' } } },
