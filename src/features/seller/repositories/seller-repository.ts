@@ -33,6 +33,7 @@ export interface UpdateSellerData {
   tinNumber?: string | null;
   status?: SellerStatus | string;
   rejectionReason?: string | null;
+  restrictionReason?: string | null;
   verifiedAt?: Date | null;
   verifiedBy?: string | null;
 }

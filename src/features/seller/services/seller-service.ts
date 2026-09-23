@@ -19,6 +19,8 @@ import { prisma } from '@/shared/database/prisma';
 import { PublicSellerProfile, SellerModel, SellerStatus, KycDocumentType, KycDocumentStatus } from '../types';
 import { CreateSellerInput, UpdateSellerInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
+import { generateId, ID_PREFIXES } from '@/shared/utils/id';
+import { canTransitionSellerStatus } from '../lifecycle';
 
 export class SellerService {
   constructor(
@@ -201,6 +203,31 @@ export class SellerService {
     return updated;
   }
 
+  public async restrictSeller(sellerId: string, expectedVersion: number, reason: string, adminUserId: string): Promise<SellerModel> {
+    return this.transitionLifecycle(sellerId, expectedVersion, SellerStatus.RESTRICTED, reason, adminUserId);
+  }
+
+  public async reactivateSeller(sellerId: string, expectedVersion: number, reason: string, adminUserId: string): Promise<SellerModel> {
+    return this.transitionLifecycle(sellerId, expectedVersion, SellerStatus.VERIFIED, reason, adminUserId);
+  }
+
+  private async transitionLifecycle(sellerId: string, expectedVersion: number, targetStatus: SellerStatus, reason: string, adminUserId: string): Promise<SellerModel> {
+    if (!reason || reason.trim().length < 5) throw new ValidationError('A descriptive lifecycle reason (minimum 5 characters) is required.');
+    const current = await this.sellerRepo.findById(sellerId);
+    if (!current) throw new NotFoundError(`Seller with id '${sellerId}' not found.`);
+    if (!canTransitionSellerStatus(current.status, targetStatus)) throw new ConflictError(`Seller cannot transition from ${current.status} to ${targetStatus}.`);
+    if (current.version !== expectedVersion) throw new ConflictError('Seller was modified by another request.');
+    return prisma.$transaction(async (tx: any) => {
+      const update = await tx.seller.updateMany({ where: { id: sellerId, deletedAt: null, version: expectedVersion, status: current.status }, data: { status: targetStatus, rejectionReason: targetStatus === SellerStatus.SUSPENDED ? reason.trim() : null, restrictionReason: targetStatus === SellerStatus.RESTRICTED ? reason.trim() : null, version: expectedVersion + 1 } });
+      if (update.count !== 1) throw new ConflictError('Seller lifecycle changed before this request completed.');
+      const eventId = generateId(ID_PREFIXES.AUDIT);
+      await tx.sellerLifecycleEvent.create({ data: { id: generateId(ID_PREFIXES.CONFIG), sellerId, fromStatus: current.status, toStatus: targetStatus, reason: reason.trim(), actorId: adminUserId } });
+      await tx.outboxEvent.create({ data: { id: generateId(ID_PREFIXES.OUTBOX), eventType: targetStatus === SellerStatus.VERIFIED ? 'SELLER_REACTIVATED' : targetStatus === SellerStatus.RESTRICTED ? 'SELLER_RESTRICTED' : 'SELLER_SUSPENDED', aggregateType: 'Seller', aggregateId: sellerId, payload: { sellerId, fromStatus: current.status, toStatus: targetStatus, reason: reason.trim(), actorId: adminUserId } } });
+      await tx.auditLog.create({ data: { id: eventId, actorId: adminUserId, action: targetStatus === SellerStatus.VERIFIED ? 'SELLER_REACTIVATED' : targetStatus === SellerStatus.RESTRICTED ? 'SELLER_RESTRICTED' : 'SELLER_SUSPENDED', resource: 'Seller', resourceId: sellerId, metadata: { fromStatus: current.status, toStatus: targetStatus, reason: reason.trim() } } });
+      return tx.seller.findUnique({ where: { id: sellerId } });
+    });
+  }
+
   /**
    * Suspends a merchant store (Admin Only).
    */
@@ -210,31 +237,7 @@ export class SellerService {
     reason: string,
     adminUserId: string
   ): Promise<SellerModel> {
-    const updated = await this.sellerRepo.update(sellerId, expectedVersion, {
-      status: SellerStatus.SUSPENDED,
-      rejectionReason: reason,
-    });
-
-    await (prisma as any).outboxEvent.create({
-      data: {
-        eventType: 'SELLER_SUSPENDED',
-        aggregateType: 'Seller',
-        aggregateId: sellerId,
-        payload: { sellerId, reason, adminUserId },
-      },
-    });
-
-    await (prisma as any).auditLog.create({
-      data: {
-        actorId: adminUserId,
-        action: 'SELLER_SUSPEND',
-        resource: 'Seller',
-        resourceId: sellerId,
-        metadata: { reason },
-      },
-    });
-
-    return updated;
+    return this.transitionLifecycle(sellerId, expectedVersion, SellerStatus.SUSPENDED, reason, adminUserId);
   }
 
   /**

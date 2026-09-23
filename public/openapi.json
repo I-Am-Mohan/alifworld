@@ -2817,6 +2817,77 @@
         }
       }
     },
+    "/api/v1/admin/sellers/{id}/lifecycle": {
+      "post": {
+        "tags": [
+          "Seller Administration"
+        ],
+        "summary": "Update Seller Suspension or Reactivation State",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action",
+                  "version",
+                  "reason"
+                ],
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "RESTRICT",
+                      "SUSPEND",
+                      "REACTIVATE"
+                    ]
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Seller lifecycle state updated"
+          },
+          "403": {
+            "description": "Requires seller administration permission"
+          },
+          "409": {
+            "description": "State or version conflict"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
     "/api/v1/seller/settlements": {
       "get": {
         "tags": [

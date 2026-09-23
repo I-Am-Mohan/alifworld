@@ -387,8 +387,9 @@ model Seller {
   tradeLicenseNumber String?   @map("trade_license_number")
   binNumber          String?   @map("bin_number") // NBR Business Identification Number
   tinNumber          String?   @map("tin_number")
-  status             String    @default("DRAFT") // DRAFT, PENDING_VERIFICATION, VERIFIED, SUSPENDED, REJECTED
+  status             String    @default("DRAFT") // DRAFT, PENDING_VERIFICATION, VERIFIED, RESTRICTED, SUSPENDED, REJECTED
   rejectionReason    String?   @map("rejection_reason")
+  restrictionReason  String?   @map("restriction_reason")
   verifiedAt         DateTime? @map("verified_at")
   verifiedBy         String?   @map("verified_by")
   version            Int       @default(1)
@@ -415,6 +416,7 @@ model Seller {
   payoutProfiles    SellerPayoutProfile[]
   operationalDefaults SellerOperationalDefaults?
   notificationDefaults SellerNotificationDefault[]
+  lifecycleEvents   SellerLifecycleEvent[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -554,7 +556,25 @@ model SellerNotificationDefault {
 }
 
 // ------------------------------------------------------------------------------
-// 16. Seller Staff Delegation
+// 16. Seller Lifecycle Events
+// ------------------------------------------------------------------------------
+model SellerLifecycleEvent {
+  id        String   @id
+  sellerId  String   @map("seller_id")
+  fromStatus String  @map("from_status")
+  toStatus  String   @map("to_status")
+  reason    String
+  actorId   String   @map("actor_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  seller Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  @@index([sellerId, createdAt])
+  @@index([toStatus, createdAt])
+  @@map("seller_lifecycle_events")
+}
+
+// ------------------------------------------------------------------------------
+// 17. Seller Staff Delegation
 // ------------------------------------------------------------------------------
 model SellerStaff {
   id          String    @id @default(uuid())

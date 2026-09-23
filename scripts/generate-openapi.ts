@@ -1582,6 +1582,9 @@ export const openApiSpec = {
       get: { tags: ['Seller Portal'], summary: 'Get Seller Notification Defaults', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Notification defaults retrieved' } } },
       put: { tags: ['Seller Portal'], summary: 'Update Seller Notification Defaults', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['sellerId', 'preferences'], properties: { sellerId: { type: 'string' }, preferences: { type: 'array', items: { type: 'object', required: ['channel', 'eventType', 'enabled'], properties: { channel: { type: 'string', enum: ['EMAIL', 'SMS', 'PUSH', 'IN_APP'] }, eventType: { type: 'string', enum: ['SECURITY', 'TRANSACTIONAL', 'MARKETING'] }, enabled: { type: 'boolean' } } } } } } } } }, responses: { '200': { description: 'Notification defaults updated' }, '422': { description: 'Validation failed' } } },
     },
+    '/api/v1/admin/sellers/{id}/lifecycle': {
+      post: { tags: ['Seller Administration'], summary: 'Update Seller Suspension or Reactivation State', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['action', 'version', 'reason'], properties: { action: { type: 'string', enum: ['RESTRICT', 'SUSPEND', 'REACTIVATE'] }, version: { type: 'integer', minimum: 1 }, reason: { type: 'string', minLength: 5, maxLength: 1000 } } } } } }, responses: { '200': { description: 'Seller lifecycle state updated' }, '403': { description: 'Requires seller administration permission' }, '409': { description: 'State or version conflict' }, '422': { description: 'Validation failed' } } },
+    },
     '/api/v1/seller/settlements': {
       get: {
         tags: ['Payments & Settlements'],

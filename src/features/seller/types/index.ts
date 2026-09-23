@@ -12,6 +12,7 @@ export enum SellerStatus {
   DRAFT = 'DRAFT',
   PENDING_VERIFICATION = 'PENDING_VERIFICATION',
   VERIFIED = 'VERIFIED',
+  RESTRICTED = 'RESTRICTED',
   SUSPENDED = 'SUSPENDED',
   REJECTED = 'REJECTED',
 }
@@ -56,6 +57,7 @@ export interface SellerModel {
   tinNumber: string | null;
   status: SellerStatus | string;
   rejectionReason: string | null;
+  restrictionReason?: string | null;
   verifiedAt: Date | null;
   verifiedBy: string | null;
   version: number;
