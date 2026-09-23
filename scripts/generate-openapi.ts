@@ -2614,6 +2614,37 @@ export const openApiSpec = {
     '/api/v1/admin/collections/{id}/products': {
       put: { tags: ['Catalog'], summary: 'Replace curated collection product memberships', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CollectionProductsRequest' } } } }, responses: { '200': { description: 'Memberships replaced' }, '422': { description: 'Invalid curated membership list' } } },
     },
+    '/api/v1/admin/catalog/attributes': {
+      get: { tags: ['Catalog'], summary: 'List governed catalog attributes', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Catalog attributes' } } },
+      post: { tags: ['Catalog'], summary: 'Create governed catalog attribute', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogAttributeWriteRequest' } } } }, responses: { '201': { description: 'Attribute created' }, '409': { description: 'Code conflict' }, '422': { description: 'Validation failed' } } },
+    },
+    '/api/v1/admin/catalog/attributes/{id}': {
+      patch: { tags: ['Catalog'], summary: 'Update governed catalog attribute', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogAttributeUpdateRequest' } } } }, responses: { '200': { description: 'Attribute updated' }, '409': { description: 'Version conflict' } } },
+    },
+    '/api/v1/admin/catalog/attributes/{id}/values': {
+      get: { tags: ['Catalog'], summary: 'List governed values for an attribute', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Attribute values' } } },
+      post: { tags: ['Catalog'], summary: 'Create governed attribute value', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogAttributeValueWriteRequest' } } } }, responses: { '201': { description: 'Value created' }, '409': { description: 'Code conflict' } } },
+    },
+    '/api/v1/admin/catalog/attribute-values/{id}': {
+      patch: { tags: ['Catalog'], summary: 'Update governed attribute value', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogAttributeValueUpdateRequest' } } } }, responses: { '200': { description: 'Value updated' }, '409': { description: 'Version conflict' } } },
+    },
+    '/api/v1/catalog/categories/{id}/attributes': {
+      get: { tags: ['Catalog'], summary: 'List active attributes assigned to a category', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Category attribute contract' } } },
+    },
+    '/api/v1/catalog/attributes/{id}/values': {
+      get: { tags: ['Catalog'], summary: 'List active values for a catalog attribute', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Attribute values' } } },
+    },
+    '/api/v1/admin/catalog/categories/{id}/attributes': {
+      put: { tags: ['Catalog'], summary: 'Replace category attribute assignments', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CategoryAttributeAssignmentsRequest' } } } }, responses: { '200': { description: 'Assignments replaced' }, '422': { description: 'Invalid assignment' } } },
+    },
+    '/api/v1/seller/catalog/products/{id}/option-set': {
+      get: { tags: ['Catalog'], summary: 'Read product option sets', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Product option sets' } } },
+      put: { tags: ['Catalog'], summary: 'Replace product option sets', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ProductOptionSetsRequest' } } } }, responses: { '200': { description: 'Option sets replaced' }, '409': { description: 'Version conflict' } } },
+    },
+    '/api/v1/seller/catalog/products/{id}/variants/{variantId}/options': {
+      get: { tags: ['Catalog'], summary: 'Read normalized variant options', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'variantId', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Variant options' } } },
+      put: { tags: ['Catalog'], summary: 'Replace normalized variant options', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'variantId', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/VariantOptionsRequest' } } } }, responses: { '200': { description: 'Variant options replaced' }, '409': { description: 'Version conflict' } } },
+    },
     '/api/v1/content/{slug}': {
       get: {
         tags: ['Catalog'],
@@ -2719,6 +2750,27 @@ export const openApiSpec = {
       },
       CollectionProductsRequest: {
         type: 'object', required: ['productIds', 'version'], properties: { productIds: { type: 'array', minItems: 1, maxItems: 500, uniqueItems: true, items: { type: 'string' } }, version: { type: 'integer', minimum: 1 } },
+      },
+      CatalogAttributeWriteRequest: {
+        type: 'object', required: ['code', 'name', 'inputType'], properties: { code: { type: 'string', pattern: '^[a-z0-9]+(?:_[a-z0-9]+)*$' }, name: { type: 'string' }, nameBn: { type: 'string', nullable: true }, inputType: { type: 'string', enum: ['TEXT', 'NUMBER', 'BOOLEAN', 'SELECT', 'MULTI_SELECT', 'COLOR'] }, isFilterable: { type: 'boolean' }, isComparable: { type: 'boolean' }, isVariantAllowed: { type: 'boolean' }, displayOrder: { type: 'integer', minimum: 0 }, isActive: { type: 'boolean' } },
+      },
+      CatalogAttributeUpdateRequest: {
+        allOf: [{ $ref: '#/components/schemas/CatalogAttributeWriteRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }],
+      },
+      CatalogAttributeValueWriteRequest: {
+        type: 'object', required: ['code', 'label'], properties: { code: { type: 'string' }, label: { type: 'string' }, labelBn: { type: 'string', nullable: true }, swatch: { type: 'string', nullable: true }, displayOrder: { type: 'integer', minimum: 0 }, isActive: { type: 'boolean' } },
+      },
+      CatalogAttributeValueUpdateRequest: {
+        allOf: [{ $ref: '#/components/schemas/CatalogAttributeValueWriteRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }],
+      },
+      CategoryAttributeAssignmentsRequest: {
+        type: 'object', required: ['assignments'], properties: { assignments: { type: 'array', maxItems: 100, items: { type: 'object', required: ['attributeId'], properties: { attributeId: { type: 'string' }, isRequired: { type: 'boolean' }, isVariantDefining: { type: 'boolean' }, filterableOverride: { type: 'boolean', nullable: true }, displayOrder: { type: 'integer', minimum: 0 } } } } },
+      },
+      ProductOptionSetsRequest: {
+        type: 'object', required: ['version', 'optionSets'], properties: { version: { type: 'integer', minimum: 1 }, optionSets: { type: 'array', maxItems: 20, items: { type: 'object', required: ['attributeId', 'valueIds'], properties: { attributeId: { type: 'string' }, valueIds: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } }, isRequired: { type: 'boolean' }, isVariantDefining: { type: 'boolean' }, displayOrder: { type: 'integer', minimum: 0 } } } } },
+      },
+      VariantOptionsRequest: {
+        type: 'object', required: ['version', 'options'], properties: { version: { type: 'integer', minimum: 1 }, options: { type: 'array', maxItems: 20, items: { type: 'object', required: ['attributeId'], properties: { attributeId: { type: 'string' }, valueId: { type: 'string' }, textValue: { type: 'string' }, displayOrder: { type: 'integer', minimum: 0 } } } } },
       },
       CmsContentWriteRequest: {
         type: 'object',

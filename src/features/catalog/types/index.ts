@@ -66,6 +66,72 @@ export interface BrandModel {
   updatedAt: Date;
 }
 
+export type CatalogAttributeInputType = 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'SELECT' | 'MULTI_SELECT' | 'COLOR';
+
+export interface CatalogAttributeModel {
+  id: string;
+  code: string;
+  name: string;
+  nameBn?: string | null;
+  inputType: CatalogAttributeInputType;
+  isFilterable: boolean;
+  isComparable: boolean;
+  isVariantAllowed: boolean;
+  displayOrder: number;
+  isActive: boolean;
+  version: number;
+  deletedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CatalogAttributeValueModel {
+  id: string;
+  attributeId: string;
+  code: string;
+  label: string;
+  labelBn?: string | null;
+  swatch?: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  version: number;
+  deletedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CategoryAttributeModel {
+  id: string;
+  categoryId: string;
+  attributeId: string;
+  isRequired: boolean;
+  isVariantDefining: boolean;
+  filterableOverride?: boolean | null;
+  displayOrder: number;
+  version: number;
+  attribute?: CatalogAttributeModel;
+}
+
+export interface ProductOptionSetModel {
+  id: string;
+  productId: string;
+  attributeId: string;
+  isRequired: boolean;
+  isVariantDefining: boolean;
+  displayOrder: number;
+  version: number;
+  valueIds: string[];
+}
+
+export interface ProductVariantOptionModel {
+  id: string;
+  variantId: string;
+  attributeId: string;
+  valueId?: string | null;
+  textValue?: string | null;
+  displayOrder: number;
+}
+
 export interface ProductVariantModel {
   id: string;
   productId: string;
@@ -86,6 +152,7 @@ export interface ProductVariantModel {
   isActive: boolean;
   displayOrder: number;
   version: number;
+  options?: ProductVariantOptionModel[];
   deletedAt?: Date | null;
   deletedBy?: string | null;
   createdAt: Date;

@@ -16,6 +16,7 @@ export class ProductVariantRepository {
   public async findById(id: string): Promise<ProductVariantModel | null> {
     const variant = await (prisma as any).productVariant.findFirst({
       where: { id, deletedAt: null },
+      include: { options: { orderBy: { displayOrder: 'asc' } } },
     });
     return variant ? this.mapToModel(variant) : null;
   }
@@ -30,6 +31,7 @@ export class ProductVariantRepository {
   public async findByProductId(productId: string): Promise<ProductVariantModel[]> {
     const variants = await (prisma as any).productVariant.findMany({
       where: { productId, deletedAt: null },
+      include: { options: { orderBy: { displayOrder: 'asc' } } },
       orderBy: { displayOrder: 'asc' },
     });
     return variants.map((v: any) => this.mapToModel(v));
@@ -184,6 +186,7 @@ export class ProductVariantRepository {
       isActive: raw.isActive,
       displayOrder: raw.displayOrder,
       version: raw.version,
+      options: raw.options?.map((option: any) => ({ id: option.id, variantId: option.variantId, attributeId: option.attributeId, valueId: option.valueId, textValue: option.textValue, displayOrder: option.displayOrder })),
       deletedAt: raw.deletedAt,
       deletedBy: raw.deletedBy,
       createdAt: raw.createdAt,

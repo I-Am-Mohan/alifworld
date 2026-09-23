@@ -730,8 +730,9 @@ model Category {
 
   parent       Category?             @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children     Category[]            @relation("CategoryHierarchy")
-  products     Product[]
-  translations CategoryTranslation[]
+  products             Product[]
+  translations         CategoryTranslation[]
+  attributeAssignments CategoryAttribute[]
 
   @@index([parentId])
   @@index([isActive])
@@ -770,7 +771,154 @@ model Brand {
 }
 
 // ------------------------------------------------------------------------------
-// 16. Products & Catalog Core
+// 16. Governed Catalog Attributes and Option Contracts
+// ------------------------------------------------------------------------------
+model CatalogAttribute {
+  id              String   @id
+  code            String   @unique
+  name            String
+  nameBn          String?  @map("name_bn")
+  inputType       String   @map("input_type")
+  isFilterable    Boolean  @default(false) @map("is_filterable")
+  isComparable    Boolean  @default(false) @map("is_comparable")
+  isVariantAllowed Boolean @default(true) @map("is_variant_allowed")
+  displayOrder    Int      @default(0) @map("display_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  version         Int      @default(1)
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?  @map("deleted_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  values          CatalogAttributeValue[]
+  categoryRules   CategoryAttribute[]
+  productValues   ProductAttributeValue[]
+  optionSets      ProductOptionSet[]
+  variantOptions  ProductVariantOption[]
+
+  @@index([isActive, displayOrder])
+  @@index([deletedAt])
+  @@map("catalog_attributes")
+}
+
+model CatalogAttributeValue {
+  id          String   @id
+  attributeId String   @map("attribute_id")
+  code        String
+  label       String
+  labelBn     String?  @map("label_bn")
+  swatch      String?
+  displayOrder Int     @default(0) @map("display_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  version     Int      @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?  @map("deleted_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  attribute      CatalogAttribute       @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  variantOptions ProductVariantOption[]
+  setValues      ProductOptionSetValue[]
+  productValues  ProductAttributeValue[]
+
+  @@unique([attributeId, code])
+  @@index([attributeId, isActive, displayOrder])
+  @@map("catalog_attribute_values")
+}
+
+model CategoryAttribute {
+  id             String   @id
+  categoryId     String   @map("category_id")
+  attributeId    String   @map("attribute_id")
+  isRequired     Boolean  @default(false) @map("is_required")
+  isVariantDefining Boolean @default(false) @map("is_variant_defining")
+  filterableOverride Boolean? @map("filterable_override")
+  displayOrder   Int      @default(0) @map("display_order")
+  version        Int      @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  category  Category        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  attribute CatalogAttribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, attributeId])
+  @@index([categoryId, displayOrder])
+  @@map("category_attributes")
+}
+
+model ProductAttributeValue {
+  id          String   @id
+  productId   String   @map("product_id")
+  attributeId String   @map("attribute_id")
+  valueId     String?  @map("value_id")
+  textValue   String?  @map("text_value")
+  numberValue Decimal? @map("number_value") @db.Decimal(20, 6)
+  booleanValue Boolean? @map("boolean_value")
+  version     Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  product   Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attribute CatalogAttribute       @relation(fields: [attributeId], references: [id], onDelete: Restrict)
+  value     CatalogAttributeValue? @relation(fields: [valueId], references: [id], onDelete: Restrict)
+
+  @@unique([productId, attributeId])
+  @@index([attributeId, valueId])
+  @@map("product_attribute_values")
+}
+
+model ProductOptionSet {
+  id              String   @id
+  productId       String   @map("product_id")
+  attributeId     String   @map("attribute_id")
+  isRequired      Boolean  @default(false) @map("is_required")
+  isVariantDefining Boolean @default(false) @map("is_variant_defining")
+  displayOrder    Int      @default(0) @map("display_order")
+  version         Int      @default(1)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  product   Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attribute CatalogAttribute @relation(fields: [attributeId], references: [id], onDelete: Restrict)
+  values    ProductOptionSetValue[]
+
+  @@unique([productId, attributeId])
+  @@index([productId, displayOrder])
+  @@map("product_option_sets")
+}
+
+model ProductOptionSetValue {
+  id          String   @id
+  optionSetId String   @map("option_set_id")
+  valueId     String   @map("value_id")
+  displayOrder Int     @default(0) @map("display_order")
+
+  optionSet ProductOptionSet     @relation(fields: [optionSetId], references: [id], onDelete: Cascade)
+  value     CatalogAttributeValue @relation(fields: [valueId], references: [id], onDelete: Restrict)
+
+  @@unique([optionSetId, valueId])
+  @@map("product_option_set_values")
+}
+
+model ProductVariantOption {
+  id        String   @id
+  variantId String   @map("variant_id")
+  attributeId String @map("attribute_id")
+  valueId   String?  @map("value_id")
+  textValue String?  @map("text_value")
+  displayOrder Int    @default(0) @map("display_order")
+
+  variant   ProductVariant          @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attribute CatalogAttribute        @relation(fields: [attributeId], references: [id], onDelete: Restrict)
+  value     CatalogAttributeValue?  @relation(fields: [valueId], references: [id], onDelete: Restrict)
+
+  @@unique([variantId, attributeId])
+  @@index([attributeId, valueId])
+  @@map("product_variant_options")
+}
+
+// ------------------------------------------------------------------------------
+// 17. Products & Catalog Core
 // ------------------------------------------------------------------------------
 /// Merchant products with strict BDT integer poisha pricing and independent Product Points
 model Product {
@@ -805,10 +953,12 @@ model Product {
   seller       Seller               @relation(fields: [sellerId], references: [id], onDelete: Restrict)
   category     Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   brand        Brand?               @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  variants     ProductVariant[]
-  media        ProductMedia[]
-  slugHistory  ProductSlugHistory[]
-  translations ProductTranslation[]
+  variants        ProductVariant[]
+  media           ProductMedia[]
+  slugHistory     ProductSlugHistory[]
+  translations    ProductTranslation[]
+  attributeValues ProductAttributeValue[]
+  optionSets      ProductOptionSet[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -849,6 +999,7 @@ model ProductVariant {
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
   product        Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options        ProductVariantOption[]
   stockBalances  StockBalance[]
   stockMovements StockMovementLedger[]
   cartItems      CartItem[]

@@ -127,3 +127,73 @@ export const PublishProductSchema = z.object({
 });
 
 export type PublishProductInput = z.infer<typeof PublishProductSchema>;
+
+const CODE_REGEX = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
+
+export const CreateCatalogAttributeSchema = z.object({
+  code: z.string().trim().toLowerCase().min(2).max(60).regex(CODE_REGEX),
+  name: z.string().trim().min(2).max(100),
+  nameBn: z.string().trim().max(150).optional().nullable(),
+  inputType: z.enum(['TEXT', 'NUMBER', 'BOOLEAN', 'SELECT', 'MULTI_SELECT', 'COLOR']),
+  isFilterable: z.boolean().default(false),
+  isComparable: z.boolean().default(false),
+  isVariantAllowed: z.boolean().default(true),
+  displayOrder: z.number().int().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+export type CreateCatalogAttributeInput = z.infer<typeof CreateCatalogAttributeSchema>;
+
+export const UpdateCatalogAttributeSchema = CreateCatalogAttributeSchema.partial().extend({ version: z.number().int().positive() });
+export type UpdateCatalogAttributeInput = z.infer<typeof UpdateCatalogAttributeSchema>;
+
+export const CreateCatalogAttributeValueSchema = z.object({
+  code: z.string().trim().toLowerCase().min(1).max(60).regex(CODE_REGEX),
+  label: z.string().trim().min(1).max(100),
+  labelBn: z.string().trim().max(150).optional().nullable(),
+  swatch: z.string().trim().max(30).optional().nullable(),
+  displayOrder: z.number().int().min(0).default(0),
+  isActive: z.boolean().default(true),
+});
+export type CreateCatalogAttributeValueInput = z.infer<typeof CreateCatalogAttributeValueSchema>;
+
+export const UpdateCatalogAttributeValueSchema = CreateCatalogAttributeValueSchema.partial().extend({ version: z.number().int().positive() });
+export type UpdateCatalogAttributeValueInput = z.infer<typeof UpdateCatalogAttributeValueSchema>;
+
+export const CategoryAttributeAssignmentSchema = z.object({
+  attributeId: z.string().min(4),
+  isRequired: z.boolean().default(false),
+  isVariantDefining: z.boolean().default(false),
+  filterableOverride: z.boolean().nullable().optional(),
+  displayOrder: z.number().int().min(0).default(0),
+});
+export const CategoryAttributeAssignmentsSchema = z.object({ assignments: z.array(CategoryAttributeAssignmentSchema).max(100) }).superRefine((input, ctx) => {
+  const ids = input.assignments.map((assignment) => assignment.attributeId);
+  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['assignments'], message: 'Category attributes must be unique.' });
+});
+export type CategoryAttributeAssignmentInput = z.infer<typeof CategoryAttributeAssignmentSchema>;
+
+export const ProductOptionSetSchema = z.object({
+  attributeId: z.string().min(4),
+  valueIds: z.array(z.string().min(4)).min(1).max(100).refine((values) => new Set(values).size === values.length, 'Option values must be unique.'),
+  isRequired: z.boolean().default(false),
+  isVariantDefining: z.boolean().default(false),
+  displayOrder: z.number().int().min(0).default(0),
+});
+export const ProductOptionSetsSchema = z.object({ version: z.number().int().positive(), optionSets: z.array(ProductOptionSetSchema).max(20) }).superRefine((input, ctx) => {
+  const ids = input.optionSets.map((optionSet) => optionSet.attributeId);
+  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['optionSets'], message: 'Product option-set attributes must be unique.' });
+});
+export type ProductOptionSetsInput = z.infer<typeof ProductOptionSetsSchema>;
+
+export const VariantOptionsSchema = z.object({
+  version: z.number().int().positive(),
+  options: z.array(z.object({ attributeId: z.string().min(4), valueId: z.string().min(4).optional(), textValue: z.string().trim().max(200).optional(), displayOrder: z.number().int().min(0).default(0) })).max(20),
+}).superRefine((input, ctx) => {
+  const ids = input.options.map((option) => option.attributeId);
+  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options'], message: 'A variant cannot contain duplicate attributes.' });
+  input.options.forEach((option, index) => {
+    if (!option.valueId && !option.textValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options', index], message: 'Each option requires a governed value or text value.' });
+    if (option.valueId && option.textValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options', index], message: 'An option cannot contain both a governed value and text value.' });
+  });
+});
+export type VariantOptionsInput = z.infer<typeof VariantOptionsSchema>;
