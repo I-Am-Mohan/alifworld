@@ -98,11 +98,12 @@ interface FormState {
 }
 
 const STEPS = [
-  { id: 1, title: 'Store Identity', icon: Store, desc: 'Basic info & store handle' },
-  { id: 2, title: 'NBR Compliance', icon: FileText, desc: 'Trade license, BIN & TIN' },
-  { id: 3, title: 'Logistics Location', icon: MapPin, desc: 'Warehouse & pickup address' },
-  { id: 4, title: 'KYC Checklist', icon: ShieldCheck, desc: 'Verification documents' },
-  { id: 5, title: 'Review & Submit', icon: CheckCircle2, desc: 'Final application check' },
+  { id: 1, title: 'Seller Account', icon: User, desc: 'Credentials & verification' },
+  { id: 2, title: 'Store Identity', icon: Store, desc: 'Business info & handle' },
+  { id: 3, title: 'NBR Compliance', icon: FileText, desc: 'Trade license, BIN & TIN' },
+  { id: 4, title: 'Logistics Location', icon: MapPin, desc: 'Warehouse & pickup address' },
+  { id: 5, title: 'KYC Checklist', icon: ShieldCheck, desc: 'Verification documents' },
+  { id: 6, title: 'Review & Submit', icon: CheckCircle2, desc: 'Final application check' },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -126,7 +127,7 @@ function MerchantHeroIllustration() {
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-            Join Bangladesh's premier merchant hub. Enjoy 0% listing fees, guaranteed weekly BDT settlements, Pathao &amp; RedX express logistics, and automated NBR VAT compliance.
+            Join Bangladesh&apos;s premier merchant hub. Enjoy 0% listing fees, guaranteed weekly BDT settlements, Pathao &amp; RedX express logistics, and automated NBR VAT compliance.
           </p>
 
           <div className="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-semibold text-slate-200">
@@ -166,6 +167,17 @@ export default function SellerApplicationPage() {
   const [application, setApplication] = useState<Application | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [agreedTerms, setAgreedTerms] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verificationTicket, setVerificationTicket] = useState<string | null>(null);
+  const [accountProvisioned, setAccountProvisioned] = useState(false);
+  const [devPhoneOtp, setDevPhoneOtp] = useState<string | null>(null);
+  const [devEmailOtp, setDevEmailOtp] = useState<string | null>(null);
+  const [verificationBusy, setVerificationBusy] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     sellerName: '',
@@ -233,6 +245,9 @@ export default function SellerApplicationPage() {
         emailAddress: prev.emailAddress || user.email || '',
         mobileNumber: prev.mobileNumber || user.phone || '',
       }));
+      setAccountProvisioned(true);
+      setPhoneVerified(Boolean(user.isPhoneVerified));
+      setEmailVerified(Boolean(user.isEmailVerified));
     }
   }, [user]);
 
@@ -257,111 +272,178 @@ export default function SellerApplicationPage() {
     }
   };
 
+  const validateCredentials = (): boolean => {
+    setError(null);
+    if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
+      setError('Please enter your full name (Seller Name).');
+      return false;
+    }
+    if (!/^(\+8801[3-9]\d{8}|01[3-9]\d{8})$/.test(form.mobileNumber.trim())) {
+      setError('Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).');
+      return false;
+    }
+    if (!form.emailAddress.trim() || !form.emailAddress.includes('@')) {
+      setError('Please enter a valid email address.');
+      return false;
+    }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return false;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Password and Confirm Password do not match.');
+      return false;
+    }
+    return true;
+  };
+
+  const sendPhoneVerification = async () => {
+    if (!validateCredentials()) return;
+    try {
+      setVerificationBusy(true);
+      setError(null);
+      const response = await csrfFetch('/api/v1/auth/phone/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: form.mobileNumber.trim(),
+          purpose: accountProvisioned || user ? 'LOGIN' : 'REGISTRATION',
+        }),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to send mobile verification code.');
+      setPhoneOtpSent(true);
+      setDevPhoneOtp(json.data?.devOtpCode || null);
+      setMessage('A 6-digit verification code was sent to your mobile number.');
+    } catch (err: any) {
+      setError(err.message || 'Unable to send mobile verification code.');
+    } finally {
+      setVerificationBusy(false);
+    }
+  };
+
+  const verifyPhoneAndCreateAccount = async () => {
+    if (!/^\d{6}$/.test(phoneOtp)) {
+      setError('Enter the 6-digit mobile verification code.');
+      return;
+    }
+    try {
+      setVerificationBusy(true);
+      setError(null);
+      const verifyResponse = await csrfFetch(
+        accountProvisioned || user
+          ? '/api/v1/auth/phone/verify-login'
+          : '/api/v1/auth/phone/verify-register',
+        {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: form.mobileNumber.trim(), code: phoneOtp, clientType: 'WEB' }),
+        }
+      );
+      const verifyJson = await verifyResponse.json().catch(() => null);
+      if (!verifyResponse.ok || !verifyJson?.success) throw new Error(verifyJson?.error?.message || 'Mobile verification failed.');
+
+      if (accountProvisioned || user) {
+        setPhoneVerified(true);
+        await refreshUser();
+        setMessage('Mobile number verified. Send the email verification code to continue.');
+        return;
+      }
+
+      const names = form.sellerName.trim().split(/\s+/);
+      const firstName = names.shift() || form.sellerName.trim();
+      const lastName = names.join(' ') || 'Seller';
+      const ticket = verifyJson.data?.verificationTicket || null;
+      setVerificationTicket(ticket);
+
+      const registrationResponse = await csrfFetch('/api/v1/auth/phone/complete-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: form.mobileNumber.trim(),
+          verificationTicket: ticket,
+          firstName,
+          lastName,
+          password: form.password,
+          email: form.emailAddress.trim().toLowerCase(),
+          clientType: 'WEB',
+        }),
+      });
+      const registrationJson = await registrationResponse.json().catch(() => null);
+      if (!registrationResponse.ok || !registrationJson?.success) {
+        throw new Error(registrationJson?.error?.message || 'Unable to create your seller account.');
+      }
+
+      setPhoneVerified(true);
+      setAccountProvisioned(true);
+      await refreshUser();
+
+      await sendEmailVerificationCode();
+    } catch (err: any) {
+      setError(err.message || 'Mobile verification failed.');
+    } finally {
+      setVerificationBusy(false);
+    }
+  };
+
+  const sendEmailVerificationCode = async () => {
+    try {
+      setVerificationBusy(true);
+      setError(null);
+      const emailResponse = await csrfFetch('/api/v1/auth/email/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.emailAddress.trim().toLowerCase() }),
+      });
+      const emailJson = await emailResponse.json().catch(() => null);
+      if (!emailResponse.ok || !emailJson?.success) {
+        throw new Error(emailJson?.error?.message || 'Unable to send email verification code.');
+      }
+      setEmailOtpSent(true);
+      setDevEmailOtp(emailJson.data?.devVerificationCode || emailJson.data?.devOtpCode || null);
+      setMessage('A 6-digit verification code was sent to your email address.');
+    } catch (err: any) {
+      setError(err.message || 'Unable to send email verification code.');
+    } finally {
+      setVerificationBusy(false);
+    }
+  };
+
+  const verifyEmailAddress = async () => {
+    if (!/^\d{6}$/.test(emailOtp)) {
+      setError('Enter the 6-digit email verification code.');
+      return;
+    }
+    try {
+      setVerificationBusy(true);
+      setError(null);
+      const response = await csrfFetch('/api/v1/auth/email/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.emailAddress.trim().toLowerCase(), code: emailOtp }),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Email verification failed.');
+      setEmailVerified(true);
+      await refreshUser();
+      setMessage('Your mobile number and email address are verified. Continue to store identity.');
+    } catch (err: any) {
+      setError(err.message || 'Email verification failed.');
+    } finally {
+      setVerificationBusy(false);
+    }
+  };
+
   const ensureAuthenticatedAndSaveDraft = async (event?: FormEvent) => {
     if (event) event.preventDefault();
     setSaving(true);
     setMessage(null);
     setError(null);
 
-    let activeUser = user;
-    if (!activeUser) {
-      try {
-        const meRes = await fetch('/api/v1/auth/me');
-        if (meRes.ok) {
-          const meJson = await meRes.json().catch(() => null);
-          if (meJson?.success && meJson?.data) {
-            activeUser = meJson.data;
-          }
-        }
-      } catch {}
-    }
-
-    if (!activeUser) {
-      if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
-        setError('Please enter your full name (Seller Name).');
-        setSaving(false);
-        return null;
-      }
-      if (!form.emailAddress.trim() || !form.emailAddress.includes('@')) {
-        setError('Please enter a valid email address.');
-        setSaving(false);
-        return null;
-      }
-      if (!form.mobileNumber.trim()) {
-        setError('Please enter your mobile number.');
-        setSaving(false);
-        return null;
-      }
-      if (!form.password) {
-        setError('Please enter a password.');
-        setSaving(false);
-        return null;
-      }
-      if (form.password.length < 8) {
-        setError('Password must be at least 8 characters long.');
-        setSaving(false);
-        return null;
-      }
-      if (form.password !== form.confirmPassword) {
-        setError('Password and Confirm Password do not match.');
-        setSaving(false);
-        return null;
-      }
-
-      try {
-        const regRes = await csrfFetch('/api/v1/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: form.sellerName.trim(),
-            email: form.emailAddress.trim().toLowerCase(),
-            phone: form.mobileNumber.trim(),
-            password: form.password,
-            acceptTerms: true,
-          }),
-        });
-
-        const regJson = await regRes.json().catch(() => null);
-
-        if (regRes.status === 409) {
-          const loginRes = await csrfFetch('/api/v1/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              identifier: form.emailAddress.trim(),
-              password: form.password,
-              clientType: 'WEB',
-            }),
-          });
-          const loginJson = await loginRes.json().catch(() => null);
-          if (!loginRes.ok || !loginJson?.success) {
-            throw new Error(
-              loginJson?.error?.message ||
-                'An account with this email/phone already exists. Please verify your password.'
-            );
-          }
-          await refreshUser();
-        } else if (!regRes.ok || !regJson?.success) {
-          throw new Error(regJson?.error?.message || 'Failed to create seller account.');
-        } else {
-          const loginRes = await csrfFetch('/api/v1/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              identifier: form.emailAddress.trim(),
-              password: form.password,
-              clientType: 'WEB',
-            }),
-          });
-          if (loginRes.ok) {
-            await refreshUser();
-          }
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to create seller account.');
-        setSaving(false);
-        return null;
-      }
+    if (!accountProvisioned || !phoneVerified || !emailVerified) {
+      setError('Verify both your mobile number and email address before continuing.');
+      setSaving(false);
+      return null;
     }
 
     try {
@@ -423,7 +505,7 @@ export default function SellerApplicationPage() {
 
       setApplication(json.data);
       setMessage(t('sellerApplication.submitted'));
-      setCurrentStep(5);
+      setCurrentStep(6);
     } catch (err: any) {
       setError(err.message || t('sellerApplication.submitFailed'));
     } finally {
@@ -442,32 +524,13 @@ export default function SellerApplicationPage() {
   const validateStep = (step: number): boolean => {
     setError(null);
     if (step === 1) {
-      if (!user) {
-        if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
-          setError('Please enter your full name (Seller Name).');
-          return false;
-        }
-        if (!form.emailAddress.trim() || !form.emailAddress.includes('@')) {
-          setError('Please enter a valid email address.');
-          return false;
-        }
-        if (!form.mobileNumber.trim()) {
-          setError('Please enter your mobile number.');
-          return false;
-        }
-        if (!form.password) {
-          setError('Please enter a password.');
-          return false;
-        }
-        if (form.password.length < 8) {
-          setError('Password must be at least 8 characters long.');
-          return false;
-        }
-        if (form.password !== form.confirmPassword) {
-          setError('Password and Confirm Password do not match.');
-          return false;
-        }
+      if (!validateCredentials()) return false;
+      if (!phoneVerified || !emailVerified) {
+        setError('Complete mobile and email verification before continuing.');
+        return false;
       }
+    }
+    if (step === 2) {
       if (!form.businessName || form.businessName.trim().length < 3) {
         setError('Business name must be at least 3 characters.');
         return false;
@@ -477,7 +540,7 @@ export default function SellerApplicationPage() {
         return false;
       }
     }
-    if (step === 2) {
+    if (step === 3) {
       if (form.binNumber && !/^\d{9,13}$/.test(form.binNumber.trim())) {
         setError('NBR BIN number must be between 9 and 13 numeric digits.');
         return false;
@@ -492,11 +555,11 @@ export default function SellerApplicationPage() {
 
   const nextStep = async () => {
     if (validateStep(currentStep)) {
-      if (isEditable) {
+      if (currentStep > 1 && isEditable) {
         const saved = await ensureAuthenticatedAndSaveDraft();
         if (!saved) return;
       }
-      setCurrentStep((prev) => Math.min(5, prev + 1));
+      setCurrentStep((prev) => Math.min(6, prev + 1));
     }
   };
 
@@ -747,7 +810,7 @@ export default function SellerApplicationPage() {
           <div className="flex items-center justify-between min-w-[640px]">
             {STEPS.map((step, idx) => {
               const Icon = step.icon;
-              const isCompleted = step.id < currentStep || (step.id === 5 && application?.status === 'SUBMITTED');
+              const isCompleted = step.id < currentStep || (step.id === 6 && application?.status === 'SUBMITTED');
               const isCurrent = step.id === currentStep;
 
               return (
@@ -811,16 +874,16 @@ export default function SellerApplicationPage() {
             </div>
           ) : (
             <>
-              {/* STEP 1: STORE IDENTITY & SELLER ACCOUNT CREDENTIALS */}
+              {/* STEP 1: SELLER ACCOUNT CREDENTIALS & VERIFICATION */}
               {currentStep === 1 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
-                      <Store className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 1: Seller Account &amp; Store Identity</h2>
+                      <User className="w-5 h-5 text-[#FF6A00]" />
+                      <h2 className="text-lg font-black text-slate-900">Step 1: Seller Account Credentials</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      Enter your personal seller account credentials and business store handle.
+                      Create your account and verify both your Bangladesh mobile number and email address.
                     </p>
                   </div>
 
@@ -923,53 +986,92 @@ export default function SellerApplicationPage() {
                     </div>
                   </div>
 
-                  {/* Merchant Entity Type Tiles */}
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <section className={`rounded-2xl border p-4 ${phoneVerified ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900">Mobile verification</h3>
+                          <p className="mt-1 text-[11px] text-slate-500">We will send a six-digit OTP to {form.mobileNumber || 'your Bangladesh mobile number'}.</p>
+                        </div>
+                        {phoneVerified && <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">Verified</span>}
+                      </div>
+                      {!phoneVerified && (
+                        <div className="mt-4 space-y-3">
+                          {!phoneOtpSent ? (
+                            <button type="button" onClick={() => void sendPhoneVerification()} disabled={verificationBusy} className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                              {verificationBusy ? 'Sending…' : 'Send mobile verification code'}
+                            </button>
+                          ) : (
+                            <>
+                              <input value={phoneOtp} onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="Enter 6-digit mobile OTP" className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-center font-mono text-lg tracking-[0.35em] outline-none focus:border-[#FF6A00]" />
+                              {devPhoneOtp && <p className="text-[10px] text-amber-700">Development OTP: <strong>{devPhoneOtp}</strong></p>}
+                              <button type="button" onClick={() => void verifyPhoneAndCreateAccount()} disabled={verificationBusy || phoneOtp.length !== 6} className="w-full rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                                {verificationBusy ? 'Verifying…' : 'Verify mobile & create account'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </section>
+
+                    <section className={`rounded-2xl border p-4 ${emailVerified ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="text-sm font-black text-slate-900">Email verification</h3>
+                          <p className="mt-1 text-[11px] text-slate-500">Email verification unlocks the merchant application form.</p>
+                        </div>
+                        {emailVerified && <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">Verified</span>}
+                      </div>
+                      {!emailVerified && (
+                        <div className="mt-4 space-y-3">
+                          {!accountProvisioned ? (
+                            <div className="rounded-xl bg-slate-50 p-3 text-[11px] text-slate-500">Verify your mobile number first. The email code is sent after account creation.</div>
+                          ) : emailOtpSent ? (
+                            <>
+                              <input value={emailOtp} onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="Enter 6-digit email OTP" className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-center font-mono text-lg tracking-[0.35em] outline-none focus:border-[#FF6A00]" />
+                              {devEmailOtp && <p className="text-[10px] text-amber-700">Development OTP: <strong>{devEmailOtp}</strong></p>}
+                              <button type="button" onClick={() => void verifyEmailAddress()} disabled={verificationBusy || emailOtp.length !== 6} className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                                {verificationBusy ? 'Verifying…' : 'Verify email address'}
+                              </button>
+                            </>
+                          ) : (
+                            <button type="button" onClick={() => void sendEmailVerificationCode()} disabled={verificationBusy || !phoneVerified} className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                              {verificationBusy ? 'Sending…' : 'Send email verification code'}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </section>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: STORE IDENTITY */}
+              {currentStep === 2 && (
+                <div className="space-y-6 animate-in fade-in duration-200">
+                  <div className="border-b border-slate-100 pb-4">
+                    <div className="flex items-center space-x-2">
+                      <Store className="w-5 h-5 text-[#FF6A00]" />
+                      <h2 className="text-lg font-black text-slate-900">Step 2: Store Identity &amp; Branding</h2>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Choose your business entity, registered store name, and public AlifWorld handle.
+                    </p>
+                  </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-2">
-                      Merchant Business Entity Type *
-                    </label>
+                    <label className="block text-xs font-bold text-slate-700 mb-2">Merchant Business Entity Type *</label>
                     <div className="grid gap-3 sm:grid-cols-3">
                       {[
-                        {
-                          type: 'PROPRIETORSHIP',
-                          title: 'Proprietorship',
-                          desc: 'Individual sole trader with Trade License',
-                          icon: User,
-                        },
-                        {
-                          type: 'CORPORATE',
-                          title: 'Private Limited / Ltd',
-                          desc: 'Corporate business with BIN & TIN',
-                          icon: Building2,
-                        },
-                        {
-                          type: 'BRAND_DISTRIBUTOR',
-                          title: 'Brand / Distributor',
-                          desc: 'Official brand flagship store',
-                          icon: Award,
-                        },
+                        { type: 'PROPRIETORSHIP', title: 'Proprietorship', desc: 'Individual sole trader with Trade License', icon: User },
+                        { type: 'CORPORATE', title: 'Private Limited / Ltd', desc: 'Corporate business with BIN & TIN', icon: Building2 },
+                        { type: 'BRAND_DISTRIBUTOR', title: 'Brand / Distributor', desc: 'Official brand flagship store', icon: Award },
                       ].map((item) => {
                         const ItemIcon = item.icon;
-                        const isSelected = (form.merchantType || 'PROPRIETORSHIP') === item.type;
-
+                        const isSelected = form.merchantType === item.type;
                         return (
-                          <button
-                            key={item.type}
-                            type="button"
-                            disabled={!isEditable || saving}
-                            onClick={() => setForm((prev) => ({ ...prev, merchantType: item.type as any }))}
-                            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
-                              isSelected
-                                ? 'border-[#FF6A00] bg-orange-50/60 ring-2 ring-orange-500/20 shadow-xs'
-                                : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50 text-slate-700'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between mb-1.5">
-                              <ItemIcon
-                                className={`w-5 h-5 ${isSelected ? 'text-[#FF6A00]' : 'text-slate-400'}`}
-                              />
-                              {isSelected && <CheckCircle2 className="w-4 h-4 text-[#FF6A00]" />}
-                            </div>
+                          <button key={item.type} type="button" disabled={!isEditable || saving} onClick={() => setForm((prev) => ({ ...prev, merchantType: item.type as FormState['merchantType'] }))} className={`p-3.5 rounded-2xl border text-left transition-all ${isSelected ? 'border-[#FF6A00] bg-orange-50/60 ring-2 ring-orange-500/20' : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'}`}>
+                            <div className="flex items-center justify-between mb-1.5"><ItemIcon className={`w-5 h-5 ${isSelected ? 'text-[#FF6A00]' : 'text-slate-400'}`} />{isSelected && <CheckCircle2 className="w-4 h-4 text-[#FF6A00]" />}</div>
                             <div className="text-xs font-bold text-slate-900">{item.title}</div>
                             <div className="text-[10px] text-slate-500 mt-0.5">{item.desc}</div>
                           </button>
@@ -979,58 +1081,29 @@ export default function SellerApplicationPage() {
                   </div>
 
                   <div className="grid gap-5 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Registered Business / Store Name *
-                      </label>
-                      <input
-                        type="text"
-                        disabled={!isEditable || saving}
-                        value={form.businessName}
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        placeholder="e.g. Dhaka Tech Mart or Walton Official Store"
-                        required
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Store Handle / URL Slug *
-                      </label>
-                      <div className="flex rounded-xl border border-slate-200 bg-slate-50/50 overflow-hidden text-xs focus-within:border-[#FF6A00] focus-within:ring-2 focus-within:ring-orange-500/20">
-                        <span className="px-3.5 py-2.5 bg-slate-100 text-slate-500 font-mono text-xs border-r border-slate-200 select-none flex items-center">
-                          alifworld.com/stores/
-                        </span>
-                        <input
-                          type="text"
-                          disabled={!isEditable || saving}
-                          value={form.slug}
-                          onChange={(e) => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-'))}
-                          placeholder="dhaka-tech-mart"
-                          required
-                          className="w-full px-3.5 py-2.5 bg-transparent font-mono text-slate-900 text-sm outline-none disabled:bg-slate-100"
-                        />
+                    <label className="sm:col-span-2 block text-xs font-bold text-slate-700">Registered Business / Store Name *
+                      <input type="text" disabled={!isEditable || saving} value={form.businessName} onChange={(e) => handleNameChange(e.target.value)} placeholder="e.g. Biswas Stores" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-[#FF6A00]" />
+                    </label>
+                    <label className="sm:col-span-2 block text-xs font-bold text-slate-700">Store Handle / URL Slug *
+                      <div className="mt-1.5 flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50 focus-within:border-[#FF6A00]">
+                        <span className="flex items-center border-r border-slate-200 bg-slate-100 px-3.5 text-xs font-mono text-slate-500">alifworld.com/stores/</span>
+                        <input type="text" disabled={!isEditable || saving} value={form.slug} onChange={(e) => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-'))} placeholder="biswas-stores" className="w-full bg-transparent px-3.5 py-2.5 text-sm font-mono outline-none" />
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-1.5">
-                        Your unique storefront handle. Customers can visit your storefront directly via this link.
-                      </p>
-                    </div>
+                      <span className="mt-1.5 block text-[11px] font-normal text-slate-500">Your unique storefront handle. Customers can visit your storefront directly via this link.</span>
+                    </label>
                   </div>
                 </div>
               )}
 
-              {/* STEP 2: NBR TAX & COMPLIANCE */}
-              {currentStep === 2 && (
+              {/* STEP 3: NBR TAX & COMPLIANCE */}
+              {currentStep === 3 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
                       <FileText className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 2: NBR Tax &amp; Business Registration</h2>
+                      <h2 className="text-lg font-black text-slate-900">Step 3: NBR Tax &amp; Business Registration</h2>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Provide statutory Bangladesh Trade License, BIN, and TIN numbers.
-                    </p>
+                    <p className="text-xs text-slate-500 mt-1">Provide statutory Bangladesh Trade License, BIN, and TIN numbers.</p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 text-xs space-y-1.5">
@@ -1089,13 +1162,13 @@ export default function SellerApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 3: LOGISTICS LOCATION */}
-              {currentStep === 3 && (
+              {/* STEP 4: LOGISTICS LOCATION */}
+              {currentStep === 4 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
                       <MapPin className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 3: Warehouse &amp; Logistics Address</h2>
+                      <h2 className="text-lg font-black text-slate-900">Step 4: Warehouse &amp; Logistics Address</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       Configure pickup location for courier logistics (Pathao, RedX, Steadfast).
@@ -1178,13 +1251,13 @@ export default function SellerApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 4: KYC CHECKLIST */}
-              {currentStep === 4 && (
+              {/* STEP 5: KYC CHECKLIST */}
+              {currentStep === 5 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
                       <ShieldCheck className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 4: Merchant KYC Verification Dossier</h2>
+                      <h2 className="text-lg font-black text-slate-900">Step 5: Merchant KYC Verification Dossier</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       Upload mandatory legal identity documents in the KYC console.
@@ -1232,13 +1305,13 @@ export default function SellerApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 5: REVIEW & SUBMIT */}
-              {currentStep === 5 && (
+              {/* STEP 6: REVIEW & SUBMIT */}
+              {currentStep === 6 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
                       <CheckCircle2 className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 5: Review &amp; Submit Application</h2>
+                      <h2 className="text-lg font-black text-slate-900">Step 6: Review &amp; Submit Application</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       Verify your business information before submitting to the platform compliance team.
@@ -1257,7 +1330,7 @@ export default function SellerApplicationPage() {
                         {isEditable && (
                           <button
                             type="button"
-                            onClick={() => setCurrentStep(1)}
+                            onClick={() => setCurrentStep(2)}
                             className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -1293,7 +1366,7 @@ export default function SellerApplicationPage() {
                         {isEditable && (
                           <button
                             type="button"
-                            onClick={() => setCurrentStep(2)}
+                            onClick={() => setCurrentStep(3)}
                             className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -1327,7 +1400,7 @@ export default function SellerApplicationPage() {
                         {isEditable && (
                           <button
                             type="button"
-                            onClick={() => setCurrentStep(3)}
+                            onClick={() => setCurrentStep(4)}
                             className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
                           >
                             <Edit3 className="w-3 h-3" />
@@ -1416,7 +1489,7 @@ export default function SellerApplicationPage() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  {isEditable && (
+                  {isEditable && currentStep > 1 && (
                     <button
                       type="button"
                       disabled={saving}
@@ -1428,7 +1501,7 @@ export default function SellerApplicationPage() {
                     </button>
                   )}
 
-                  {currentStep < 5 ? (
+                  {currentStep < 6 ? (
                     <button
                       type="button"
                       onClick={nextStep}
@@ -1474,7 +1547,7 @@ export default function SellerApplicationPage() {
             <div className="space-y-4">
               <AlifLogo size="md" href="/" inverted />
               <p className="text-xs text-[#9CA3AF] leading-relaxed max-w-sm">
-                Your neighborhood's fastest delivery service. We bring everything you need, right to your doorstep in minutes.
+                Your neighborhood&apos;s fastest delivery service. We bring everything you need, right to your doorstep in minutes.
               </p>
 
               <div className="pt-2 space-y-2 text-xs text-[#D1D5DB]">
