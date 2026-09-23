@@ -70,6 +70,7 @@ export class PolicyEngine {
     this.policies.set('PRODUCT', catalogPolicy);
     this.policies.set('CATEGORY', catalogPolicy);
     this.policies.set('BRAND', catalogPolicy);
+    this.policies.set('COLLECTION', catalogPolicy);
     this.policies.set('FINANCE', walletPolicy);
     this.policies.set('PAYMENT', walletPolicy);
     this.policies.set('SETTLEMENT', walletPolicy);

@@ -574,7 +574,47 @@ model SellerLifecycleEvent {
 }
 
 // ------------------------------------------------------------------------------
-// 17. Seller Staff Delegation
+// 18. Curated and Rule-Based Collections
+// ------------------------------------------------------------------------------
+model Collection {
+  id             String   @id
+  name           String
+  slug           String   @unique
+  description    String?
+  collectionType String   @default("CURATED") @map("collection_type")
+  rule           Json?
+  status         String   @default("DRAFT")
+  isActive       Boolean  @default(true) @map("is_active")
+  displayOrder   Int      @default(0) @map("display_order")
+  version        Int      @default(1)
+  deletedAt      DateTime? @map("deleted_at")
+  deletedBy      String?   @map("deleted_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  products CollectionProduct[]
+  @@index([status, isActive])
+  @@index([collectionType])
+  @@map("collections")
+}
+
+model CollectionProduct {
+  id           String   @id
+  collectionId String   @map("collection_id")
+  productId    String   @map("product_id")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@unique([collectionId, productId])
+  @@index([collectionId, displayOrder])
+  @@index([productId])
+  @@map("collection_products")
+}
+
+// ------------------------------------------------------------------------------
+// 19. Seller Staff Delegation
 // ------------------------------------------------------------------------------
 model SellerStaff {
   id          String    @id @default(uuid())
@@ -738,6 +778,7 @@ model Product {
   sellerId             String    @map("seller_id")
   categoryId           String    @map("category_id")
   brandId              String?   @map("brand_id")
+  collectionMemberships CollectionProduct[]
   title                String
   titleBn              String?   @map("title_bn")
   slug                 String    @unique
