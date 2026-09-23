@@ -77,6 +77,11 @@ type Application = {
 };
 
 interface FormState {
+  sellerName: string;
+  mobileNumber: string;
+  emailAddress: string;
+  password: string;
+  confirmPassword: string;
   businessName: string;
   slug: string;
   merchantType: 'PROPRIETORSHIP' | 'CORPORATE' | 'BRAND_DISTRIBUTOR';
@@ -150,7 +155,7 @@ function MerchantHeroIllustration() {
 }
 
 export default function SellerApplicationPage() {
-  const { openAuthModal, openAccountModal, user } = useAuthModal();
+  const { openAuthModal, openAccountModal, user, refreshUser } = useAuthModal();
   const { t, locale } = useI18n();
 
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
@@ -163,6 +168,11 @@ export default function SellerApplicationPage() {
   const [agreedTerms, setAgreedTerms] = useState(false);
 
   const [form, setForm] = useState<FormState>({
+    sellerName: '',
+    mobileNumber: '',
+    emailAddress: '',
+    password: '',
+    confirmPassword: '',
     businessName: '',
     slug: '',
     merchantType: 'PROPRIETORSHIP',
@@ -186,10 +196,14 @@ export default function SellerApplicationPage() {
   const loadApplication = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch('/api/v1/seller/application');
+      if (response.status === 401 || response.status === 403) {
+        setApplication(null);
+        return;
+      }
       const json = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(json?.error?.message || t('sellerApplication.loadFailed'));
-      if (json.data) {
+      if (response.ok && json?.data) {
         setApplication(json.data);
         setForm((prev) => ({
           ...prev,
@@ -200,16 +214,27 @@ export default function SellerApplicationPage() {
           tinNumber: json.data.tinNumber || '',
         }));
       }
-    } catch (err: any) {
-      setError(err.message || t('sellerApplication.loadFailed'));
+    } catch {
+      setApplication(null);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     void loadApplication();
   }, [loadApplication]);
+
+  useEffect(() => {
+    if (user) {
+      setForm((prev) => ({
+        ...prev,
+        sellerName: prev.sellerName || user.name || '',
+        emailAddress: prev.emailAddress || user.email || '',
+        mobileNumber: prev.mobileNumber || user.phone || '',
+      }));
+    }
+  }, [user]);
 
   const setField = (key: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -232,11 +257,113 @@ export default function SellerApplicationPage() {
     }
   };
 
-  const saveDraft = async (event?: FormEvent) => {
+  const ensureAuthenticatedAndSaveDraft = async (event?: FormEvent) => {
     if (event) event.preventDefault();
     setSaving(true);
     setMessage(null);
     setError(null);
+
+    let activeUser = user;
+    if (!activeUser) {
+      try {
+        const meRes = await fetch('/api/v1/auth/me');
+        if (meRes.ok) {
+          const meJson = await meRes.json().catch(() => null);
+          if (meJson?.success && meJson?.data) {
+            activeUser = meJson.data;
+          }
+        }
+      } catch {}
+    }
+
+    if (!activeUser) {
+      if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
+        setError('Please enter your full name (Seller Name).');
+        setSaving(false);
+        return null;
+      }
+      if (!form.emailAddress.trim() || !form.emailAddress.includes('@')) {
+        setError('Please enter a valid email address.');
+        setSaving(false);
+        return null;
+      }
+      if (!form.mobileNumber.trim()) {
+        setError('Please enter your mobile number.');
+        setSaving(false);
+        return null;
+      }
+      if (!form.password) {
+        setError('Please enter a password.');
+        setSaving(false);
+        return null;
+      }
+      if (form.password.length < 8) {
+        setError('Password must be at least 8 characters long.');
+        setSaving(false);
+        return null;
+      }
+      if (form.password !== form.confirmPassword) {
+        setError('Password and Confirm Password do not match.');
+        setSaving(false);
+        return null;
+      }
+
+      try {
+        const regRes = await csrfFetch('/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.sellerName.trim(),
+            email: form.emailAddress.trim().toLowerCase(),
+            phone: form.mobileNumber.trim(),
+            password: form.password,
+            acceptTerms: true,
+          }),
+        });
+
+        const regJson = await regRes.json().catch(() => null);
+
+        if (regRes.status === 409) {
+          const loginRes = await csrfFetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              identifier: form.emailAddress.trim(),
+              password: form.password,
+              clientType: 'WEB',
+            }),
+          });
+          const loginJson = await loginRes.json().catch(() => null);
+          if (!loginRes.ok || !loginJson?.success) {
+            throw new Error(
+              loginJson?.error?.message ||
+                'An account with this email/phone already exists. Please verify your password.'
+            );
+          }
+          await refreshUser();
+        } else if (!regRes.ok || !regJson?.success) {
+          throw new Error(regJson?.error?.message || 'Failed to create seller account.');
+        } else {
+          const loginRes = await csrfFetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              identifier: form.emailAddress.trim(),
+              password: form.password,
+              clientType: 'WEB',
+            }),
+          });
+          if (loginRes.ok) {
+            await refreshUser();
+          }
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to create seller account.');
+        setSaving(false);
+        return null;
+      }
+    }
+
     try {
       const payload = {
         businessName: form.businessName.trim(),
@@ -274,9 +401,13 @@ export default function SellerApplicationPage() {
     }
   };
 
+  const saveDraft = async (event?: FormEvent) => {
+    return ensureAuthenticatedAndSaveDraft(event);
+  };
+
   const submitApplication = async (event: FormEvent) => {
     event.preventDefault();
-    const saved = await saveDraft();
+    const saved = await ensureAuthenticatedAndSaveDraft();
     if (!saved) return;
     setSaving(true);
     try {
@@ -311,6 +442,32 @@ export default function SellerApplicationPage() {
   const validateStep = (step: number): boolean => {
     setError(null);
     if (step === 1) {
+      if (!user) {
+        if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
+          setError('Please enter your full name (Seller Name).');
+          return false;
+        }
+        if (!form.emailAddress.trim() || !form.emailAddress.includes('@')) {
+          setError('Please enter a valid email address.');
+          return false;
+        }
+        if (!form.mobileNumber.trim()) {
+          setError('Please enter your mobile number.');
+          return false;
+        }
+        if (!form.password) {
+          setError('Please enter a password.');
+          return false;
+        }
+        if (form.password.length < 8) {
+          setError('Password must be at least 8 characters long.');
+          return false;
+        }
+        if (form.password !== form.confirmPassword) {
+          setError('Password and Confirm Password do not match.');
+          return false;
+        }
+      }
       if (!form.businessName || form.businessName.trim().length < 3) {
         setError('Business name must be at least 3 characters.');
         return false;
@@ -333,9 +490,12 @@ export default function SellerApplicationPage() {
     return true;
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (validateStep(currentStep)) {
-      if (isEditable) void saveDraft();
+      if (isEditable) {
+        const saved = await ensureAuthenticatedAndSaveDraft();
+        if (!saved) return;
+      }
       setCurrentStep((prev) => Math.min(5, prev + 1));
     }
   };
@@ -651,17 +811,116 @@ export default function SellerApplicationPage() {
             </div>
           ) : (
             <>
-              {/* STEP 1: STORE IDENTITY */}
+              {/* STEP 1: STORE IDENTITY & SELLER ACCOUNT CREDENTIALS */}
               {currentStep === 1 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
                       <Store className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 1: Store Identity &amp; Branding</h2>
+                      <h2 className="text-lg font-black text-slate-900">Step 1: Seller Account &amp; Store Identity</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      Configure your store name and public URL handle on AlifWorld.
+                      Enter your personal seller account credentials and business store handle.
                     </p>
+                  </div>
+
+                  {/* Seller Account Credentials Section */}
+                  <div className="p-5 rounded-2xl border border-orange-200/70 bg-orange-50/40 space-y-4">
+                    <div className="flex items-center justify-between border-b border-orange-200/50 pb-3">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-[#FF6A00]" />
+                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                          Seller Account Credentials
+                        </h3>
+                      </div>
+                      {user && (
+                        <span className="inline-flex items-center space-x-1 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Logged in as {user.name || user.email}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Seller Name *
+                        </label>
+                        <input
+                          type="text"
+                          disabled={Boolean(user) || !isEditable || saving}
+                          value={form.sellerName}
+                          onChange={(e) => setField('sellerName', e.target.value)}
+                          placeholder="Enter your full name"
+                          required
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Mobile Number *
+                        </label>
+                        <input
+                          type="tel"
+                          disabled={Boolean(user) || !isEditable || saving}
+                          value={form.mobileNumber}
+                          onChange={(e) => setField('mobileNumber', e.target.value)}
+                          placeholder="Enter your mobile number"
+                          required
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          disabled={Boolean(user) || !isEditable || saving}
+                          value={form.emailAddress}
+                          onChange={(e) => setField('emailAddress', e.target.value)}
+                          placeholder="Enter your email address"
+                          required
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                        />
+                      </div>
+
+                      {!user && (
+                        <>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Password *
+                            </label>
+                            <input
+                              type="password"
+                              disabled={!isEditable || saving}
+                              value={form.password}
+                              onChange={(e) => setField('password', e.target.value)}
+                              placeholder="Enter your password"
+                              required
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                              Confirm Password *
+                            </label>
+                            <input
+                              type="password"
+                              disabled={!isEditable || saving}
+                              value={form.confirmPassword}
+                              onChange={(e) => setField('confirmPassword', e.target.value)}
+                              placeholder="Enter confirm password"
+                              required
+                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* Merchant Entity Type Tiles */}
