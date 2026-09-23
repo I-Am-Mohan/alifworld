@@ -1,4 +1,26 @@
 export const bn = {
+  errors: {
+    VALIDATION_FAILED: 'দয়া করে দেখানো তথ্যগুলো পরীক্ষা করে আবার চেষ্টা করুন।',
+    UNAUTHENTICATED: 'এগিয়ে যেতে লগইন করা প্রয়োজন।',
+    UNAUTHORIZED: 'এই অনুরোধের জন্য আপনার সেশন অনুমোদিত নয়।',
+    FORBIDDEN: 'এই কাজটি করার অনুমতি আপনার নেই।',
+    NOT_FOUND: 'অনুরোধ করা তথ্য পাওয়া যায়নি।',
+    CONFLICT: 'অনুরোধটি বর্তমান তথ্যের অবস্থার সঙ্গে সামঞ্জস্যপূর্ণ নয়।',
+    RATE_LIMIT_EXCEEDED: 'অনেকবার অনুরোধ করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।',
+    INTERNAL_SERVER_ERROR: 'একটি সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।',
+    FEATURE_PENDING_REGULATORY_APPROVAL: 'এই ফিচারটি প্রয়োজনীয় নিয়ন্ত্রক অনুমোদনের অপেক্ষায় আছে।',
+  },
+  notifications: {
+    securityNotice: 'নিরাপত্তা বিজ্ঞপ্তি',
+    transactionalNotice: 'লেনদেনের আপডেট',
+    channelDisabled: 'এই বিজ্ঞপ্তি চ্যানেলটি আপনার অ্যাকাউন্টে বন্ধ করা আছে।',
+  },
+  transactional: {
+    emailVerificationSubject: 'আপনার আলিফওয়ার্ল্ড ইমেইল যাচাই করুন',
+    emailVerificationBody: 'আপনার যাচাইকরণ কোড {code}। এর মেয়াদ শেষ হবে {expiresAt}-এ।',
+    passwordResetSubject: 'আপনার আলিফওয়ার্ল্ড পাসওয়ার্ড রিসেট করুন',
+    orderConfirmationSubject: 'আপনার আলিফওয়ার্ল্ড অর্ডার {orderNumber} নিশ্চিত হয়েছে',
+  },
   common: {
     save: 'সংরক্ষণ করুন',
     cancel: 'বাতিল',

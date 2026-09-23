@@ -141,6 +141,7 @@ export interface UserModel {
   phone: string | null;
   name: string | null;
   avatarUrl: string | null;
+  locale: string;
   status: UserStatus | string;
   isEmailVerified: boolean;
   isPhoneVerified: boolean;

@@ -21,6 +21,7 @@ export interface CreateUserData {
   phone?: string | null;
   name?: string | null;
   avatarUrl?: string | null;
+  locale?: string;
   status?: string;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
@@ -29,6 +30,7 @@ export interface CreateUserData {
 export interface UpdateUserData {
   name?: string | null;
   avatarUrl?: string | null;
+  locale?: string;
   status?: string;
   isEmailVerified?: boolean;
   isPhoneVerified?: boolean;
@@ -114,6 +116,7 @@ export class UserRepository extends BaseRepository {
           phone: data.phone ? data.phone.trim() : null,
           name: data.name ? data.name.trim() : null,
           avatarUrl: data.avatarUrl || null,
+          locale: data.locale || 'bn-BD',
           status: data.status || 'ACTIVE',
           isEmailVerified: data.isEmailVerified ?? false,
           isPhoneVerified: data.isPhoneVerified ?? false,

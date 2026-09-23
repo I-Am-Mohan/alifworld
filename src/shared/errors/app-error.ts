@@ -7,16 +7,31 @@ export abstract class AppError extends Error {
   abstract readonly statusCode: number;
   abstract readonly errorCode: string;
   readonly details?: Record<string, unknown> | Array<unknown>;
+  readonly messageKey?: string;
+  readonly messageParams?: Record<string, string | number | bigint>;
 
-  constructor(message: string, details?: Record<string, unknown> | Array<unknown>) {
+  constructor(
+    message: string,
+    details?: Record<string, unknown> | Array<unknown>,
+    messageKey?: string,
+    messageParams?: Record<string, string | number | bigint>
+  ) {
     super(message);
     this.name = this.constructor.name;
     this.details = details;
+    this.messageKey = messageKey;
+    this.messageParams = messageParams;
     Object.setPrototypeOf(this, new.target.prototype);
   }
 
   get code(): string {
     return this.errorCode;
+  }
+
+  withMessageKey(key: string, params: Record<string, string | number | bigint> = {}): this {
+    (this as { messageKey?: string }).messageKey = key;
+    (this as { messageParams?: Record<string, string | number | bigint> }).messageParams = params;
+    return this;
   }
 
   toJSON() {

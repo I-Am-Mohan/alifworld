@@ -250,6 +250,7 @@ export class UserRepository {
           email: params.email,
           phone: params.phone ?? null,
           name: params.name,
+          locale: params.locale ?? 'bn-BD',
           passwordHash: params.passwordHash,
           status: 'ACTIVE',
           isEmailVerified: false,

@@ -106,6 +106,7 @@ model User {
   email           String?   @unique
   phone           String?   @unique
   name            String?
+  locale          String    @default("bn-BD")
   avatarUrl       String?   @map("avatar_url")
   status          String    @default("ACTIVE") // ACTIVE, PENDING_VERIFICATION, SUSPENDED, DELETED
   passwordHash    String?   @map("password_hash")
@@ -119,19 +120,21 @@ model User {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  roleAssignments UserRoleAssignment[]
-  ownedSellers    Seller[]             @relation("UserOwnedSellers")
-  sellerStaff     SellerStaff[]
-  orders          Order[]
-  carts           Cart[]
-  payments        Payment[]
-  wallets         Wallet[]
-  pointAccount    PointAccount?
-  userRanks       UserRank[]
-  sessions        UserSession[]
-  otpTokens       OtpToken[]
-  oauthAccounts   OAuthAccount[]
-  addresses       UserAddress[]
+  roleAssignments         UserRoleAssignment[]
+  ownedSellers            Seller[]                     @relation("UserOwnedSellers")
+  sellerStaff             SellerStaff[]
+  orders                  Order[]
+  carts                   Cart[]
+  payments                Payment[]
+  wallets                 Wallet[]
+  pointAccount            PointAccount?
+  userRanks               UserRank[]
+  sessions                UserSession[]
+  otpTokens               OtpToken[]
+  oauthAccounts           OAuthAccount[]
+  addresses               UserAddress[]
+  notificationPreferences UserNotificationPreference[]
+  notificationDeliveries  UserNotificationDelivery[]
 
   @@index([status])
   @@index([deletedAt])
@@ -233,7 +236,49 @@ model UserAddress {
 }
 
 // ------------------------------------------------------------------------------
-// 7. Role Definition
+// 7. Localized Notifications and Transactional Content
+// ------------------------------------------------------------------------------
+model UserNotificationPreference {
+  id        String   @id
+  userId    String   @map("user_id")
+  channel   String
+  eventType String   @map("event_type")
+  enabled   Boolean  @default(true)
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channel, eventType])
+  @@index([userId, eventType])
+  @@map("user_notification_preferences")
+}
+
+model UserNotificationDelivery {
+  idempotencyKey String    @id @map("idempotency_key")
+  id             String    @unique
+  userId         String    @map("user_id")
+  eventType      String    @map("event_type")
+  channel        String
+  locale         String
+  templateKey    String    @map("template_key")
+  status         String    @default("QUEUED")
+  attempts       Int       @default(0)
+  lastError      String?   @map("last_error")
+  deliveredAt    DateTime? @map("delivered_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("user_notification_deliveries")
+}
+
+// ------------------------------------------------------------------------------
+// 8. Role Definition
 // ------------------------------------------------------------------------------
 /// RBAC roles determining functional capabilities and access tiers across the platform
 model Role {

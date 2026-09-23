@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/validators/auth.validator';
+import { errorResponse, validationErrorResponse } from '@/shared/api/error-response';
 import { AuthLoginService } from '@/services/auth-login.service';
 import { AppError, RateLimitError, UnauthorizedError } from '@/shared/errors/app-error';
 import { assertRateLimit, applyRateLimitHeaders, getRateLimitPolicies } from '@/shared/rate-limit';
@@ -29,17 +30,7 @@ export async function POST(req: NextRequest) {
     const parseResult = loginSchema.safeParse(body);
 
     if (!parseResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'VALIDATION_FAILED',
-            message: 'Invalid login parameters',
-            details: parseResult.error.flatten(),
-          },
-        },
-        { status: 422 }
-      );
+      return validationErrorResponse(req, parseResult.error);
     }
 
     attemptIdentifier = parseResult.data.identifier;
@@ -126,44 +117,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (error instanceof RateLimitError) {
-      const rateLimitResponse = NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-          },
-        },
-        { status: 429 }
-      );
+      const rateLimitResponse = errorResponse(req, error);
       rateLimitResponse.headers.set('Retry-After', String(error.retryAfterSeconds));
       return rateLimitResponse;
     }
 
     if (error instanceof AppError) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: error.code,
-            message: error.message,
-            details: error.details,
-          },
-        },
-        { status: error.statusCode }
-      );
+      return errorResponse(req, error, 'Authentication processing failed');
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Authentication processing failed',
-        },
-      },
-      { status: 500 }
-    );
+    return errorResponse(req, error, 'Authentication processing failed');
   }
 }

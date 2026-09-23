@@ -1,4 +1,26 @@
 export const en = {
+  errors: {
+    VALIDATION_FAILED: 'Please check the highlighted fields and try again.',
+    UNAUTHENTICATED: 'Authentication is required to continue.',
+    UNAUTHORIZED: 'Your session is not authorized for this action.',
+    FORBIDDEN: 'You do not have permission to perform this action.',
+    NOT_FOUND: 'The requested resource was not found.',
+    CONFLICT: 'This request conflicts with the current resource state.',
+    RATE_LIMIT_EXCEEDED: 'Too many requests. Please try again later.',
+    INTERNAL_SERVER_ERROR: 'Something went wrong. Please try again later.',
+    FEATURE_PENDING_REGULATORY_APPROVAL: 'This feature is pending required regulatory approval.',
+  },
+  notifications: {
+    securityNotice: 'Security notice',
+    transactionalNotice: 'Transaction update',
+    channelDisabled: 'This notification channel is disabled for your account.',
+  },
+  transactional: {
+    emailVerificationSubject: 'Verify your AlifWorld email address',
+    emailVerificationBody: 'Your verification code is {code}. It expires at {expiresAt}.',
+    passwordResetSubject: 'Reset your AlifWorld password',
+    orderConfirmationSubject: 'Your AlifWorld order {orderNumber} is confirmed',
+  },
   common: {
     save: 'Save',
     cancel: 'Cancel',

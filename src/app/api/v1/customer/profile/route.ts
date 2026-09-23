@@ -9,10 +9,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest, defaultObjectAuthzService } from '@/shared/authz';
+import { errorResponse, validationErrorResponse } from '@/shared/api/error-response';
 import { UserRepository } from '@/features/identity/repositories/user-repository';
 import { UpdateCustomerProfileSchema } from '@/validators/customer.validator';
-import { AppError, ValidationError } from '@/shared/errors/app-error';
-import { prisma } from '@/shared/database/prisma';
+import { NotFoundError, ValidationError } from '@/shared/errors/app-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,10 +39,7 @@ export async function GET(req: NextRequest) {
 
     const user = await userRepo.findById(actor.userId);
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'Customer profile not found' } },
-        { status: 404 }
-      );
+      return errorResponse(req, new NotFoundError('Customer profile not found'));
     }
 
     // Redacted customer view (never expose password hashes, internal security tokens)
@@ -55,6 +52,7 @@ export async function GET(req: NextRequest) {
           phone: user.phone,
           name: user.name,
           avatarUrl: user.avatarUrl,
+          locale: user.locale,
           status: user.status,
           isEmailVerified: user.isEmailVerified,
           isPhoneVerified: user.isPhoneVerified,
@@ -65,13 +63,7 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(error.toJSON(), { status: error.statusCode });
-    }
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message } },
-      { status: 500 }
-    );
+    return errorResponse(req, error, 'Customer profile processing failed');
   }
 }
 
@@ -122,17 +114,7 @@ export async function PUT(req: NextRequest) {
 
     const parseResult = UpdateCustomerProfileSchema.safeParse(rawBody);
     if (!parseResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: 'VALIDATION_FAILED',
-            message: 'Invalid customer profile parameters',
-            details: parseResult.error.format(),
-          },
-        },
-        { status: 422 }
-      );
+      return validationErrorResponse(req, parseResult.error);
     }
 
     const input = parseResult.data;
@@ -140,15 +122,13 @@ export async function PUT(req: NextRequest) {
     // Fetch existing user to get version
     const existing = await userRepo.findById(actor.userId);
     if (!existing) {
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'Customer profile not found' } },
-        { status: 404 }
-      );
+      return errorResponse(req, new NotFoundError('Customer profile not found'));
     }
 
     const updated = await userRepo.update(actor.userId, existing.version, {
       name: input.name ?? existing.name,
       avatarUrl: input.avatarUrl ?? existing.avatarUrl,
+      locale: input.preferredLanguage ?? existing.locale,
     });
 
     return NextResponse.json(
@@ -160,6 +140,7 @@ export async function PUT(req: NextRequest) {
           phone: updated.phone,
           name: updated.name,
           avatarUrl: updated.avatarUrl,
+          locale: updated.locale,
           status: updated.status,
           updatedAt: updated.updatedAt,
         },
@@ -167,12 +148,6 @@ export async function PUT(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(error.toJSON(), { status: error.statusCode });
-    }
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message } },
-      { status: 500 }
-    );
+    return errorResponse(req, error, 'Customer profile processing failed');
   }
 }
