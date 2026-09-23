@@ -76,6 +76,9 @@ export class ProductApprovalService {
   private readiness(product: any): ProductReadinessResult {
     const errors: string[] = [];
     const warnings: string[] = [];
+    if (!product.title?.trim()) errors.push('Product title is required.');
+    if (!product.slug?.trim()) errors.push('Product slug is required for SEO redirects.');
+    if (!product.description?.trim() || product.description.trim().length < 10) errors.push('Product description must contain at least 10 characters.');
     if (!product.category || !product.category.isActive || product.category.deletedAt) errors.push('Product must use an active category.');
     if (product.brandId && (!product.brand || !product.brand.isActive || product.brand.approvalStatus !== 'APPROVED' || product.brand.deletedAt)) errors.push('Selected brand must be active and approved.');
     if (!product.seller || ['SUSPENDED', 'RESTRICTED'].includes(product.seller.status)) errors.push('Seller must be verified and operational.');

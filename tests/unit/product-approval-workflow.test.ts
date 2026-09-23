@@ -5,6 +5,7 @@ import { CatalogPolicy } from '@/shared/authz/policies/catalog.policy';
 
 const product = {
   id: 'prd_approval_01', sellerId: 'sel_01', status: ProductStatus.DRAFT, version: 1,
+  title: 'Approval Phone', slug: 'approval-phone', description: 'A valid approval-ready product description.',
   currency: 'BDT', basePricePoisha: 1000, productPoint: 0,
   seller: { status: 'VERIFIED', ownerUserId: 'usr_seller' },
   category: { isActive: true, attributeAssignments: [] }, brand: null,
