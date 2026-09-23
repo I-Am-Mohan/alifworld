@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency } from '@/shared/utils/localization';
 import {
   ShoppingBag,
   Trash2,
@@ -33,6 +35,7 @@ interface DemoCartItem {
 }
 
 export default function CartPage() {
+  const { locale } = useI18n();
   const [items, setItems] = useState<DemoCartItem[]>([
     {
       id: 'cit_earbuds_01',
@@ -89,10 +92,7 @@ export default function CartPage() {
     0
   );
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   const updateQuantity = (id: string, delta: number) => {
     setItems((prev) =>

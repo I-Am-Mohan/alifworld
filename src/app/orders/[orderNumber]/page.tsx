@@ -4,6 +4,8 @@ import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency, formatLocalizedDate, formatLocalizedTime } from '@/shared/utils/localization';
 import {
   Package,
   Truck,
@@ -19,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function OrderTrackingPage() {
+  const { locale } = useI18n();
   const params = useParams();
   const orderNumber = (params?.orderNumber as string) || 'ORD-20260922-0001';
 
@@ -117,10 +120,7 @@ export default function OrderTrackingPage() {
     ],
   };
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A]">
@@ -158,11 +158,7 @@ export default function OrderTrackingPage() {
               <div className="flex items-center gap-4 text-xs text-gray-500 mt-1.5">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  {new Date(order.createdAt).toLocaleDateString('en-BD', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+                  {formatLocalizedDate(new Date(order.createdAt), locale)}
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1 text-emerald-700 font-semibold">
@@ -288,10 +284,7 @@ export default function OrderTrackingPage() {
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="text-xs font-semibold text-gray-900">{event.description}</p>
                         <span className="text-[11px] text-gray-400 whitespace-nowrap">
-                          {new Date(event.occurredAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                          {formatLocalizedTime(new Date(event.occurredAt), locale)}
                         </span>
                       </div>
                       {event.location && (
@@ -328,10 +321,7 @@ export default function OrderTrackingPage() {
                   <p className="text-gray-500 mt-0.5">{entry.reason}</p>
                 </div>
                 <span className="text-gray-400">
-                  {new Date(entry.createdAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatLocalizedTime(new Date(entry.createdAt), locale)}
                 </span>
               </div>
             ))}

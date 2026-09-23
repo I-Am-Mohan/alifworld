@@ -5,6 +5,7 @@
  */
 
 import { Poisha, toPoisha, ProductPoint } from '../types/domain-terms';
+import { normalizeToCanonicalLocale } from '@/i18n/config';
 import { toBengaliNumerals } from './phone';
 
 function asPoisha(value: Poisha | bigint | number): bigint {

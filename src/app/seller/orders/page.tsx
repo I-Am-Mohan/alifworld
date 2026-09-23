@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency } from '@/shared/utils/localization';
 import {
   Package,
   Truck,
@@ -49,6 +51,7 @@ interface SellerGroupView {
 }
 
 export default function SellerOrdersPage() {
+  const { locale } = useI18n();
   const [activeFilter, setActiveFilter] = useState<string>('ALL');
   const [isDispatchModalOpen, setIsDispatchModalOpen] = useState<boolean>(false);
   const [selectedGroup, setSelectedGroup] = useState<SellerGroupView | null>(null);
@@ -114,10 +117,7 @@ export default function SellerOrdersPage() {
     },
   ]);
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   const advanceStatus = (groupId: string, nextStatus: SellerGroupView['status']) => {
     setGroups((prev) =>

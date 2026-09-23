@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency } from '@/shared/utils/localization';
 import {
   ShieldCheck,
   Building2,
@@ -66,6 +68,7 @@ interface RefundLog {
 }
 
 export default function AdminSettlementsPage() {
+  const { locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'batches' | 'payments' | 'refunds'>('batches');
   const [batches, setBatches] = useState<SettlementBatch[]>([
     {
@@ -138,10 +141,7 @@ export default function AdminSettlementsPage() {
     },
   ]);
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   const handleApproveBatch = (batchId: string) => {
     setBatches((prev) =>

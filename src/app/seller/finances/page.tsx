@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency, formatLocalizedDate } from '@/shared/utils/localization';
 import {
   Wallet,
   ArrowUpRight,
@@ -68,6 +70,7 @@ interface CommissionRecord {
 }
 
 export default function SellerFinancesPage() {
+  const { locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'settlements' | 'payouts' | 'commissions' | 'bank_account'>('settlements');
   const [requestPayoutSuccess, setRequestPayoutSuccess] = useState(false);
 
@@ -157,10 +160,7 @@ export default function SellerFinancesPage() {
     },
   ]);
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   // Aggregates
   const totalGrossPoisha = BigInt(2797000); // ৳27,970.00
@@ -377,8 +377,8 @@ export default function SellerFinancesPage() {
                           <div className="text-[10px] text-slate-500">{batch.id}</div>
                         </td>
                         <td className="p-4 text-slate-400">
-                          {new Date(batch.periodStart).toLocaleDateString()} –{' '}
-                          {new Date(batch.periodEnd).toLocaleDateString()}
+                          {formatLocalizedDate(new Date(batch.periodStart), locale)} –{' '}
+                          {formatLocalizedDate(new Date(batch.periodEnd), locale)}
                         </td>
                         <td className="p-4 text-right font-mono font-semibold">
                           {formatBdt(batch.grossOrderPoisha)}

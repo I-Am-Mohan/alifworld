@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency } from '@/shared/utils/localization';
 import {
   ShieldCheck,
   Building2,
@@ -53,6 +55,7 @@ interface SplitRuleView {
 }
 
 export default function AdminWalletsAndLedgerPage() {
+  const { locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'accounts' | 'journals' | 'rules' | 'pools'>('accounts');
 
   const [accounts] = useState<ChartAccount[]>([
@@ -164,10 +167,7 @@ export default function AdminWalletsAndLedgerPage() {
     },
   ]);
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#F59E0B]/30">

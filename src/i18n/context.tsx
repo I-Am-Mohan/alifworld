@@ -11,6 +11,7 @@ import {
   normalizeToCanonicalLocale,
 } from './config';
 import { getDictionary, TranslationSchema } from './translations';
+import { formatLocalizedText } from '@/shared/utils/localization';
 
 interface I18nContextType {
   locale: string;
@@ -143,11 +144,8 @@ export function I18nProvider({
         return path; // Return raw key as last resort
       }
 
-      // Interpolate parameters like {phone}, {percent}, {name}, etc.
       if (params) {
-        Object.entries(params).forEach(([paramKey, val]) => {
-          result = (result as string).replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(val));
-        });
+        result = formatLocalizedText(result as string, params);
       }
 
       return result;

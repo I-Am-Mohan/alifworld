@@ -11,6 +11,8 @@ import {
   RefreshCw,
   ExternalLink,
 } from 'lucide-react';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency, formatLocalizedDateTime } from '@/shared/utils/localization';
 
 interface AdminOrderView {
   id: string;
@@ -39,6 +41,7 @@ interface AdminOrderView {
 }
 
 export default function AdminOrdersPage() {
+  const { locale } = useI18n();
   const [searchTerm, setSearchTerm] = useState('');
   const [divisionFilter, setDivisionFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -46,10 +49,7 @@ export default function AdminOrdersPage() {
   // No demo data - empty orders registry
   const [orders] = useState<AdminOrderView[]>([]);
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
@@ -176,7 +176,7 @@ export default function AdminOrdersPage() {
                         {new Date(order.createdAt).toLocaleString('en-BD')}
                       </span>
                     </td>
-
+formatLocalizedDateTime(new Date(order.createdAt), locale
                     <td className="py-4 px-4">
                       <span className="font-semibold text-slate-900 block">{order.customerName}</span>
                       <span className="text-slate-400 font-mono text-[11px]">{order.customerPhone}</span>

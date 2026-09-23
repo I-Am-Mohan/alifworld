@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { AlifLogo } from '@/components/brand/logo';
+import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency } from '@/shared/utils/localization';
 import {
   Wallet,
   Coins,
@@ -24,6 +26,7 @@ import {
 } from 'lucide-react';
 
 export default function CustomerWalletPage() {
+  const { locale } = useI18n();
   const [activeTab, setActiveTab] = useState<'overview' | 'points' | 'journal' | 'ranks'>('overview');
 
   // Multi-wallet mock state matching Section 10 seed
@@ -37,10 +40,7 @@ export default function CustomerWalletPage() {
     lifetimePoints: 450,
   };
 
-  const formatBdt = (poisha: bigint) => {
-    const taka = Number(poisha) / 100;
-    return `৳${taka.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   const pointEvents = [
     {

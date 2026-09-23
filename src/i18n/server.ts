@@ -11,6 +11,7 @@ import { headers } from 'next/headers';
 import { CanonicalLocale } from './types';
 import { DEFAULT_LOCALE, normalizeToCanonicalLocale } from './config';
 import { getDictionary, resolveTranslationValue, TranslationSchema } from './translations';
+import { formatLocalizedText } from '@/shared/utils/localization';
 
 /**
  * Extracts the negotiated locale from request headers in Server Components.
@@ -48,14 +49,14 @@ export function formatServerMessage(
   const resolved = resolveTranslationValue(dict, path, params);
 
   if (resolved !== null) {
-    return resolved;
+    return formatLocalizedText(resolved, params);
   }
 
   // Fallback to default dictionary if missing in requested language
   const fallbackDict = getDictionary(DEFAULT_LOCALE);
   const fallback = resolveTranslationValue(fallbackDict, path, params);
   if (fallback !== null) {
-    return fallback;
+    return formatLocalizedText(fallback, params);
   }
 
   // Return key path if missing from all dictionaries

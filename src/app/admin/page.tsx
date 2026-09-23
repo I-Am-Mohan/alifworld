@@ -23,6 +23,7 @@ import {
   Sliders,
 } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
+import { formatLocalizedCurrency } from '@/shared/utils/localization';
 
 export default function AdminDashboardPage() {
   const { t } = useI18n();

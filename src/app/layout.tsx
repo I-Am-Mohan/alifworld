@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import './globals.css';
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { I18nProvider } from '@/i18n/context';
+import { headers } from 'next/headers';
+import { getServerLocale } from '@/i18n/server';
 
 export const metadata: Metadata = {
   title: 'AlifWorld | Bangladesh Premium Multi-Vendor Marketplace',
@@ -24,10 +25,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const locale = getServerLocale(headers());
+
   return (
-    <html lang="bn-BD" className="light">
+    <html lang={locale} className="light">
       <body className="antialiased bg-[#FAF9F6] text-slate-900 selection:bg-brand-orange selection:text-white min-h-screen">
-        <I18nProvider>
+        <I18nProvider initialLocale={locale}>
           <AuthWrapper>{children}</AuthWrapper>
         </I18nProvider>
       </body>
