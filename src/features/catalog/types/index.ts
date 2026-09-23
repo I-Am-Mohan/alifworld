@@ -123,6 +123,22 @@ export interface ProductOptionSetModel {
   valueIds: string[];
 }
 
+export interface TaxRuleModel {
+  id: string;
+  jurisdiction: 'BD';
+  categoryId?: string | null;
+  name: string;
+  taxType: string;
+  ratePercent: number;
+  priceIncludesTax: boolean;
+  effectiveFrom: Date;
+  effectiveTo?: Date | null;
+  status: 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | string;
+  version: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface ProductVariantOptionModel {
   id: string;
   variantId: string;

@@ -733,6 +733,7 @@ model Category {
   products             Product[]
   translations         CategoryTranslation[]
   attributeAssignments CategoryAttribute[]
+  taxRules             TaxRule[]
 
   @@index([parentId])
   @@index([isActive])
@@ -917,6 +918,31 @@ model ProductVariantOption {
   @@map("product_variant_options")
 }
 
+model TaxRule {
+  id              String   @id
+  jurisdiction    String   @default("BD")
+  categoryId      String?  @map("category_id")
+  name            String
+  taxType         String   @default("VAT") @map("tax_type")
+  ratePercent     Decimal  @map("rate_percent") @db.Decimal(5, 2)
+  priceIncludesTax Boolean @default(false) @map("price_includes_tax")
+  effectiveFrom   DateTime @map("effective_from")
+  effectiveTo     DateTime? @map("effective_to")
+  status          String   @default("DRAFT")
+  version         Int      @default(1)
+  createdBy       String?  @map("created_by")
+  updatedBy       String?  @map("updated_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([jurisdiction, effectiveFrom, effectiveTo])
+  @@index([categoryId, status])
+  @@index([status])
+  @@map("tax_rules")
+}
+
 // ------------------------------------------------------------------------------
 // 17. Products & Catalog Core
 // ------------------------------------------------------------------------------
@@ -1081,14 +1107,17 @@ model ProductTranslation {
 
 /// Normalized category translations keyed by canonical locale.
 model CategoryTranslation {
-  id          String   @id @default(uuid())
-  categoryId  String   @map("category_id")
-  locale      String
-  name        String
-  description String?
-  version     Int      @default(1)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  categoryId     String   @map("category_id")
+  locale         String
+  name           String
+  description    String?
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  breadcrumbLabel String? @map("breadcrumb_label")
+  version        Int      @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
@@ -1099,13 +1128,16 @@ model CategoryTranslation {
 
 /// Normalized brand translations keyed by canonical locale.
 model BrandTranslation {
-  id        String   @id @default(uuid())
-  brandId   String   @map("brand_id")
-  locale    String
-  name      String
-  version   Int      @default(1)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  brandId        String   @map("brand_id")
+  locale         String
+  name           String
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  breadcrumbLabel String? @map("breadcrumb_label")
+  version        Int      @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
 

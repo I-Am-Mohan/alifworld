@@ -35,19 +35,19 @@ export class LocalizedCatalogRepository {
     });
   }
 
-  async upsertCategoryTranslation(categoryId: string, input: { locale: string; name: string; description?: string | null }) {
+  async upsertCategoryTranslation(categoryId: string, input: { locale: string; name: string; description?: string | null; seoTitle?: string | null; seoDescription?: string | null; breadcrumbLabel?: string | null }) {
     return (prisma as any).categoryTranslation.upsert({
       where: { categoryId_locale: { categoryId, locale: input.locale } },
       create: { id: generatePrefixedId(ENTITY_PREFIXES.CATEGORY_TRANSLATION), categoryId, ...input, version: 1 },
-      update: { name: input.name, description: input.description, version: { increment: 1 } },
+      update: { name: input.name, description: input.description, seoTitle: input.seoTitle, seoDescription: input.seoDescription, breadcrumbLabel: input.breadcrumbLabel, version: { increment: 1 } },
     });
   }
 
-  async upsertBrandTranslation(brandId: string, input: { locale: string; name: string }) {
+  async upsertBrandTranslation(brandId: string, input: { locale: string; name: string; seoTitle?: string | null; seoDescription?: string | null; breadcrumbLabel?: string | null }) {
     return (prisma as any).brandTranslation.upsert({
       where: { brandId_locale: { brandId, locale: input.locale } },
       create: { id: generatePrefixedId(ENTITY_PREFIXES.BRAND_TRANSLATION), brandId, ...input, version: 1 },
-      update: { name: input.name, version: { increment: 1 } },
+      update: { name: input.name, seoTitle: input.seoTitle, seoDescription: input.seoDescription, breadcrumbLabel: input.breadcrumbLabel, version: { increment: 1 } },
     });
   }
 

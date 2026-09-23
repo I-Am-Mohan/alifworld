@@ -19,14 +19,39 @@ export const LocalizedCategoryTranslationSchema = z.object({
   locale: CatalogLocaleSchema,
   name: z.string().min(2).max(150),
   description: z.string().max(1000).optional().nullable(),
+  seoTitle: z.string().trim().max(255).optional().nullable(),
+  seoDescription: z.string().trim().max(500).optional().nullable(),
+  breadcrumbLabel: z.string().trim().max(150).optional().nullable(),
   version: z.number().int().min(1).optional(),
 });
 
 export const LocalizedBrandTranslationSchema = z.object({
   locale: CatalogLocaleSchema,
   name: z.string().min(2).max(150),
+  seoTitle: z.string().trim().max(255).optional().nullable(),
+  seoDescription: z.string().trim().max(500).optional().nullable(),
+  breadcrumbLabel: z.string().trim().max(150).optional().nullable(),
   version: z.number().int().min(1).optional(),
 });
+
+export const TaxRuleStatusSchema = z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']);
+const TaxRuleWriteBaseSchema = z.object({
+  jurisdiction: z.literal('BD').default('BD'),
+  categoryId: z.string().min(4).optional().nullable(),
+  name: z.string().trim().min(2).max(150),
+  taxType: z.string().trim().min(2).max(40).default('VAT'),
+  ratePercent: z.number().min(0).max(100),
+  priceIncludesTax: z.boolean().default(false),
+  effectiveFrom: z.coerce.date(),
+  effectiveTo: z.coerce.date().optional().nullable(),
+  status: TaxRuleStatusSchema.default('DRAFT'),
+});
+export const TaxRuleWriteSchema = TaxRuleWriteBaseSchema.superRefine((input, ctx) => {
+  if (input.effectiveTo && input.effectiveTo <= input.effectiveFrom) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['effectiveTo'], message: 'Effective end must be after effective start.' });
+});
+export const TaxRuleUpdateSchema = TaxRuleWriteBaseSchema.partial().extend({ version: z.number().int().positive() });
+export type TaxRuleWriteInput = z.infer<typeof TaxRuleWriteSchema>;
+export type TaxRuleUpdateInput = z.infer<typeof TaxRuleUpdateSchema>;
 
 export const CmsContentStatusSchema = z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']);
 export type CmsContentStatus = z.infer<typeof CmsContentStatusSchema>;
@@ -62,5 +87,6 @@ export function normalizeCatalogLocale(locale?: string | null): string {
 export function localeCandidates(locale?: string | null): string[] {
   const normalized = normalizeCatalogLocale(locale);
   const short = normalized.split('-')[0];
-  return [...new Set([normalized, short, 'bn-BD', 'bn'])];
+  const fallback = normalized.startsWith('en') ? ['en-BD', 'en'] : ['bn-BD', 'bn'];
+  return [...new Set([normalized, short, ...fallback])];
 }

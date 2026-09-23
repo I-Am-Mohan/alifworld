@@ -84,6 +84,7 @@ export const ID_PREFIXES = {
   PRODUCT_TRANSLATION: 'ptr',
   CATEGORY_TRANSLATION: 'ctr',
   BRAND_TRANSLATION: 'btr',
+  TAX_RULE: 'txr',
   COLLECTION: 'col',
   CMS_CONTENT: 'cms',
   CMS_CONTENT_TRANSLATION: 'cmt',

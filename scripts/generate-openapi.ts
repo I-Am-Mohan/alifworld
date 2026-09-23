@@ -2614,6 +2614,21 @@ export const openApiSpec = {
     '/api/v1/admin/collections/{id}/products': {
       put: { tags: ['Catalog'], summary: 'Replace curated collection product memberships', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CollectionProductsRequest' } } } }, responses: { '200': { description: 'Memberships replaced' }, '422': { description: 'Invalid curated membership list' } } },
     },
+    '/api/v1/admin/catalog/categories/{id}/translations': {
+      get: { tags: ['Catalog'], summary: 'Read category translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'locale', in: 'query', required: false, schema: { type: 'string', enum: ['bn-BD', 'en-BD'] } }], responses: { '200': { description: 'Category translation' } } },
+      put: { tags: ['Catalog'], summary: 'Upsert category translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CategoryTranslationWriteRequest' } } } }, responses: { '200': { description: 'Category translation saved' } } },
+    },
+    '/api/v1/admin/catalog/brands/{id}/translations': {
+      get: { tags: ['Catalog'], summary: 'Read brand translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }, { name: 'locale', in: 'query', required: false, schema: { type: 'string', enum: ['bn-BD', 'en-BD'] } }], responses: { '200': { description: 'Brand translation' } } },
+      put: { tags: ['Catalog'], summary: 'Upsert brand translation and SEO metadata', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/BrandTranslationWriteRequest' } } } }, responses: { '200': { description: 'Brand translation saved' } } },
+    },
+    '/api/v1/admin/catalog/tax-rules': {
+      get: { tags: ['Catalog'], summary: 'List effective-date tax rules', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Tax rules' } } },
+      post: { tags: ['Catalog'], summary: 'Create an effective-date tax rule', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TaxRuleWriteRequest' } } } }, responses: { '201': { description: 'Tax rule created' }, '422': { description: 'Invalid date range or tax rate' } } },
+    },
+    '/api/v1/admin/catalog/tax-rules/{id}': {
+      patch: { tags: ['Catalog'], summary: 'Update an effective-date tax rule', security: [{ BearerAuth: [] }], parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/TaxRuleUpdateRequest' } } } }, responses: { '200': { description: 'Tax rule updated' }, '409': { description: 'Version conflict' } } },
+    },
     '/api/v1/admin/catalog/attributes': {
       get: { tags: ['Catalog'], summary: 'List governed catalog attributes', security: [{ BearerAuth: [] }], responses: { '200': { description: 'Catalog attributes' } } },
       post: { tags: ['Catalog'], summary: 'Create governed catalog attribute', security: [{ BearerAuth: [] }], requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CatalogAttributeWriteRequest' } } } }, responses: { '201': { description: 'Attribute created' }, '409': { description: 'Code conflict' }, '422': { description: 'Validation failed' } } },
@@ -2771,6 +2786,18 @@ export const openApiSpec = {
       },
       VariantOptionsRequest: {
         type: 'object', required: ['version', 'options'], properties: { version: { type: 'integer', minimum: 1 }, options: { type: 'array', maxItems: 20, items: { type: 'object', required: ['attributeId'], properties: { attributeId: { type: 'string' }, valueId: { type: 'string' }, textValue: { type: 'string' }, displayOrder: { type: 'integer', minimum: 0 } } } } },
+      },
+      CategoryTranslationWriteRequest: {
+        type: 'object', required: ['locale', 'name'], properties: { locale: { type: 'string', enum: ['bn-BD', 'en-BD'] }, name: { type: 'string' }, description: { type: 'string', nullable: true }, seoTitle: { type: 'string', nullable: true }, seoDescription: { type: 'string', nullable: true }, breadcrumbLabel: { type: 'string', nullable: true } },
+      },
+      BrandTranslationWriteRequest: {
+        type: 'object', required: ['locale', 'name'], properties: { locale: { type: 'string', enum: ['bn-BD', 'en-BD'] }, name: { type: 'string' }, seoTitle: { type: 'string', nullable: true }, seoDescription: { type: 'string', nullable: true }, breadcrumbLabel: { type: 'string', nullable: true } },
+      },
+      TaxRuleWriteRequest: {
+        type: 'object', required: ['name', 'ratePercent', 'effectiveFrom'], properties: { jurisdiction: { type: 'string', enum: ['BD'] }, categoryId: { type: 'string', nullable: true }, name: { type: 'string' }, taxType: { type: 'string' }, ratePercent: { type: 'number', minimum: 0, maximum: 100 }, priceIncludesTax: { type: 'boolean' }, effectiveFrom: { type: 'string', format: 'date-time' }, effectiveTo: { type: 'string', format: 'date-time', nullable: true }, status: { type: 'string', enum: ['DRAFT', 'ACTIVE', 'ARCHIVED'] } },
+      },
+      TaxRuleUpdateRequest: {
+        allOf: [{ $ref: '#/components/schemas/TaxRuleWriteRequest' }, { type: 'object', required: ['version'], properties: { version: { type: 'integer', minimum: 1 } } }],
       },
       CmsContentWriteRequest: {
         type: 'object',

@@ -9,7 +9,7 @@ import {
 describe('Localized catalog and CMS content (Milestone 053)', () => {
   it('normalizes regional locale tags and preserves supported fallback order', () => {
     expect(normalizeCatalogLocale('EN_bd')).toBe('en-BD');
-    expect(localeCandidates('en-BD')).toEqual(['en-BD', 'en', 'bn-BD', 'bn']);
+    expect(localeCandidates('en-BD')).toEqual(['en-BD', 'en']);
     expect(localeCandidates('bn')).toEqual(['bn', 'bn-BD']);
   });
 

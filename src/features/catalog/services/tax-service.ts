@@ -9,8 +9,11 @@
  */
 
 import { TaxRule, TaxSnapshot, TaxCalculationBreakdown } from '../types';
+import { TaxRuleRepository } from '../repositories/tax-rule-repository';
 
 export class TaxService {
+  constructor(private readonly taxRuleRepository: TaxRuleRepository = new TaxRuleRepository()) {}
+
   /**
    * Versioned tax rules for Bangladesh jurisdiction ('BD')
    * NBR Mushak standards:
@@ -74,6 +77,11 @@ export class TaxService {
       rule.effectiveFrom <= effectiveDate && (!rule.effectiveTo || effectiveDate <= rule.effectiveTo)
     );
     return effectiveRule?.standardRatePercent ?? 15.0;
+  }
+
+  public async resolvePersistedTaxRatePercent(params: { categoryId?: string | null; date?: Date }): Promise<number> {
+    const rule = await this.taxRuleRepository.resolveEffective(params.categoryId ?? null, params.date || new Date());
+    return rule?.ratePercent ?? this.resolveTaxRatePercent({ date: params.date });
   }
 
   /**
