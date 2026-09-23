@@ -9,6 +9,8 @@ import {
   getDhakaIsoString,
   formatDhakaDateTime,
   getDhakaStartOfDay,
+  getDhakaEndOfDay,
+  getDhakaPeriodBounds,
 } from '@/shared/utils/date';
 
 describe('Domain Primitives: Date & Asia/Dhaka Timezone', () => {
@@ -27,5 +29,29 @@ describe('Domain Primitives: Date & Asia/Dhaka Timezone', () => {
     const testDate = new Date('2026-09-22T18:30:00Z'); // 2026-09-23 00:30:00 in Dhaka
     const startOfDay = getDhakaStartOfDay(testDate);
     expect(startOfDay.toISOString()).toContain('2026-09-22T18:00:00.000Z'); // 00:00:00 +06:00 = 18:00:00 UTC previous day
+  });
+
+  it('returns a local Dhaka ISO representation without relabeling it as UTC', () => {
+    expect(getDhakaIsoString(new Date('2026-09-22T18:00:00Z'))).toBe('2026-09-23T00:00:00');
+  });
+
+  it('calculates inclusive daily boundaries', () => {
+    const date = new Date('2026-09-22T18:30:00Z');
+    expect(getDhakaEndOfDay(date).toISOString()).toBe('2026-09-23T17:59:59.999Z');
+  });
+
+  it('calculates configurable weekly, monthly, and yearly boundaries', () => {
+    const date = new Date('2026-09-23T12:00:00Z'); // Wednesday in Dhaka
+    const weekly = getDhakaPeriodBounds({ date, cadence: 'WEEKLY', weekStartsOn: 6 });
+    expect(weekly.start.toISOString()).toBe('2026-09-18T18:00:00.000Z'); // Saturday 00:00 Dhaka
+    expect(weekly.end.toISOString()).toBe('2026-09-25T17:59:59.999Z');
+
+    const monthly = getDhakaPeriodBounds({ date, cadence: 'MONTHLY' });
+    expect(monthly.start.toISOString()).toBe('2026-08-31T18:00:00.000Z');
+    expect(monthly.end.toISOString()).toBe('2026-09-30T17:59:59.999Z');
+
+    const yearly = getDhakaPeriodBounds({ date, cadence: 'YEARLY' });
+    expect(yearly.start.toISOString()).toBe('2025-12-31T18:00:00.000Z');
+    expect(yearly.end.toISOString()).toBe('2026-12-31T17:59:59.999Z');
   });
 });
