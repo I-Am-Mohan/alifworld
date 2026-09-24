@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "bun run scripts/run-with-env.ts next dev",
     "build": "bun run scripts/run-with-env.ts prisma generate && bun run scripts/run-with-env.ts next build",
-    "postinstall": "prisma generate",
     "start": "bun run scripts/run-with-env.ts next start",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
