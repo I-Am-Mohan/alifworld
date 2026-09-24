@@ -10,16 +10,30 @@ export interface PrivateObjectStorage {
 export interface ProductMediaStorage extends PrivateObjectStorage {}
 
 export class S3PrivateObjectStorage implements PrivateObjectStorage {
-  private readonly client: S3Client;
-  private readonly bucket: string;
+  private _client: S3Client | null = null;
+  private _bucket: string | null = null;
 
-  constructor() {
+  private get client(): S3Client {
+    if (!this._client) {
+      this.initialize();
+    }
+    return this._client!;
+  }
+
+  private get bucket(): string {
+    if (!this._bucket) {
+      this.initialize();
+    }
+    return this._bucket!;
+  }
+
+  private initialize(): void {
     const env = getServerEnv();
     if (!env.S3_BUCKET_NAME || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY) {
       throw new Error('S3_BUCKET_NAME, S3_ACCESS_KEY_ID, and S3_SECRET_ACCESS_KEY are required for S3 storage');
     }
-    this.bucket = env.S3_BUCKET_NAME;
-    this.client = new S3Client({
+    this._bucket = env.S3_BUCKET_NAME;
+    this._client = new S3Client({
       region: env.S3_REGION ?? 'us-east-1',
       endpoint: env.S3_ENDPOINT,
       forcePathStyle: env.S3_FORCE_PATH_STYLE ?? false,
