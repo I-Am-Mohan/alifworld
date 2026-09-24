@@ -15,7 +15,7 @@ import { z } from 'zod';
 // ==============================================================================
 export const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
-  NEXT_PUBLIC_CDN_URL: z.string().url().default('http://localhost:9000/alifworld-media'),
+  NEXT_PUBLIC_CDN_URL: z.string().default(''),
   NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(['bn-BD', 'en-BD', 'bn', 'en'], {
     errorMap: () => ({ message: 'Unsupported locale in NEXT_PUBLIC_DEFAULT_LOCALE' }),
   }).default('bn-BD'),
@@ -77,21 +77,18 @@ export const serverEnvSchema = clientEnvSchema.extend({
   RATE_LIMIT_AUTH_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   RATE_LIMIT_SMS_OTP_MAX_PER_HOUR: z.coerce.number().int().positive().default(3),
 
-  // S3-Compatible Object Storage (MinIO / AWS S3)
-  S3_ENDPOINT: z.string().url().default('http://localhost:9000'),
+  // Object Storage (AWS S3 / Cloudflare R2)
+  STORAGE_PROVIDER: z.enum(['AWS_S3', 'CLOUDFLARE_R2', 'AMAZON_S3']).default('AWS_S3'),
+  S3_ENDPOINT: z.string().optional(),
   S3_REGION: z.string().default('us-east-1'),
-  S3_ACCESS_KEY_ID: z.string().min(1).default('minioadmin'),
-  S3_SECRET_ACCESS_KEY: z.string().min(1).default('minioadmin'),
-  S3_BUCKET_NAME: z.string().min(1).default('alifworld-media'),
+  S3_ACCESS_KEY_ID: z.string().default(''),
+  S3_SECRET_ACCESS_KEY: z.string().default(''),
+  S3_BUCKET_NAME: z.string().default('alifworld-media'),
   S3_FORCE_PATH_STYLE: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())
-    .default(true),
-  S3_PUBLIC_BASE_URL: z.string().url().default('http://localhost:9000/alifworld-media'),
-
-  // Search Engine (Meilisearch with PostgreSQL fallback)
-  MEILISEARCH_HOST: z.string().url().default('http://localhost:7700'),
-  MEILISEARCH_API_KEY: z.string().min(1).default('masterKey123'),
-  MEILISEARCH_INDEX_PREFIX: z.string().default('alif_'),
+    .default(false),
+  S3_PUBLIC_BASE_URL: z.string().default(''),
+  R2_ACCOUNT_ID: z.string().optional(),
 
   // Bangladesh MFS & Payment Gateways
   BKASH_APP_KEY: z.string().default('mock_bkash_app_key'),

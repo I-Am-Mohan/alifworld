@@ -18,7 +18,7 @@ describe('Environment Validation & Secret Boundaries', () => {
     it('validates valid client environment with defaults', () => {
       const parsed = validateClientEnv({});
       expect(parsed.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000');
-      expect(parsed.NEXT_PUBLIC_CDN_URL).toBe('http://localhost:9000/alifworld-media');
+      expect(parsed.NEXT_PUBLIC_CDN_URL).toBe('');
       expect(parsed.NEXT_PUBLIC_DEFAULT_LOCALE).toBe('bn-BD');
       expect(parsed.NEXT_PUBLIC_BASE_CURRENCY).toBe('BDT');
     });

@@ -30,14 +30,12 @@ export function buildContentSecurityPolicy(
 ): string {
   const frameAncestors = frameOptions === 'DENY' ? "'none'" : "'self'";
 
-  // S3/MinIO and Meilisearch endpoints allowed for media and search assets
+  // S3 / R2 endpoints allowed for media assets
   const mediaOrigins = [
     "'self'",
     'data:',
     'blob:',
     'https:',
-    'http://localhost:9000',
-    'http://127.0.0.1:9000',
   ].join(' ');
 
   const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim().replace(/\/$/, '');
@@ -49,8 +47,6 @@ export function buildContentSecurityPolicy(
     'https://api.alifworld.com',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://localhost:9000',
-    'http://localhost:7700',
   ].join(' ');
 
   const directives = [

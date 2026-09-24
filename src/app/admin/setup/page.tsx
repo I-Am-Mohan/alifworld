@@ -78,14 +78,15 @@ export default function AdminSetupPage() {
     PLATFORM_LOCALES: 'bn-BD,en-BD',
     PLATFORM_CURRENCY: 'BDT',
     PLATFORM_CURRENCIES: JSON.stringify(DEFAULT_CURRENCIES),
-    STORAGE_PROVIDER: 'INTERNAL',
-    STORAGE_S3_ENDPOINT: 'http://localhost:9000',
+    STORAGE_PROVIDER: 'AMAZON_S3',
+    STORAGE_S3_ENDPOINT: '',
     STORAGE_S3_REGION: 'us-east-1',
     STORAGE_S3_BUCKET: 'alifworld-media',
-    STORAGE_S3_ACCESS_KEY: 'minioadmin',
-    STORAGE_S3_SECRET_KEY: 'minioadmin123',
-    STORAGE_S3_CDN_URL: 'http://localhost:9000/alifworld-media',
-    STORAGE_S3_FORCE_PATH_STYLE: 'true',
+    STORAGE_S3_ACCESS_KEY: '',
+    STORAGE_S3_SECRET_KEY: '',
+    STORAGE_S3_CDN_URL: 'https://cdn.example.com',
+    STORAGE_S3_FORCE_PATH_STYLE: 'false',
+    STORAGE_R2_ACCOUNT_ID: '',
     PAYMENT_BKASH_ENABLED: 'true',
     PAYMENT_BKASH_ENV: 'sandbox',
     PAYMENT_BKASH_APP_KEY: 'bkash_test_app_key',
@@ -1026,13 +1027,12 @@ export default function AdminSetupPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2.5">
                 Active Object Storage Provider
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { id: 'INTERNAL', name: 'Internal MinIO / Local', desc: 'S3-compatible local bucket for development' },
-                  { id: 'AMAZON_S3', name: 'Amazon S3 (AWS)', desc: 'High-availability AWS cloud storage' },
-                  { id: 'CLOUDFLARE_R2', name: 'Cloudflare R2', desc: 'Zero-egress fee high-speed object storage' },
+                  { id: 'AMAZON_S3', name: 'Amazon S3 (AWS)', desc: 'High-availability AWS cloud object storage' },
+                  { id: 'CLOUDFLARE_R2', name: 'Cloudflare R2', desc: 'Zero-egress fee high-speed S3-compatible storage' },
                 ].map((prov) => {
-                  const isSelected = settings.STORAGE_PROVIDER === prov.id;
+                  const isSelected = settings.STORAGE_PROVIDER === prov.id || (prov.id === 'AMAZON_S3' && settings.STORAGE_PROVIDER === 'AWS_S3');
                   return (
                     <button
                       key={prov.id}
@@ -1055,81 +1055,168 @@ export default function AdminSetupPage() {
               </div>
             </div>
 
-            {/* S3 Details Form */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">S3 Endpoint URL</label>
-                <input
-                  type="text"
-                  value={settings.STORAGE_S3_ENDPOINT}
-                  onChange={(e) => updateSetting('STORAGE_S3_ENDPOINT', e.target.value)}
-                  placeholder="http://localhost:9000"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Bucket Name</label>
-                <input
-                  type="text"
-                  value={settings.STORAGE_S3_BUCKET}
-                  onChange={(e) => updateSetting('STORAGE_S3_BUCKET', e.target.value)}
-                  placeholder="alifworld-media"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">AWS Region / Zone</label>
-                <input
-                  type="text"
-                  value={settings.STORAGE_S3_REGION}
-                  onChange={(e) => updateSetting('STORAGE_S3_REGION', e.target.value)}
-                  placeholder="us-east-1 or auto"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Public CDN Base URL</label>
-                <input
-                  type="text"
-                  value={settings.STORAGE_S3_CDN_URL}
-                  onChange={(e) => updateSetting('STORAGE_S3_CDN_URL', e.target.value)}
-                  placeholder="https://cdn.example.com"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Access Key ID</label>
-                <input
-                  type="text"
-                  value={settings.STORAGE_S3_ACCESS_KEY}
-                  onChange={(e) => updateSetting('STORAGE_S3_ACCESS_KEY', e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Secret Access Key</label>
-                <div className="relative">
+            {/* Dynamic Form Fields Based on Selected Storage Provider */}
+            {settings.STORAGE_PROVIDER === 'CLOUDFLARE_R2' ? (
+              /* Cloudflare R2 Specific Fields */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Bucket Name *</label>
                   <input
-                    type={revealedSecrets.s3Secret ? 'text' : 'password'}
-                    value={settings.STORAGE_S3_SECRET_KEY}
-                    onChange={(e) => updateSetting('STORAGE_S3_SECRET_KEY', e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 pr-10 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                    type="text"
+                    value={settings.STORAGE_S3_BUCKET}
+                    onChange={(e) => updateSetting('STORAGE_S3_BUCKET', e.target.value)}
+                    placeholder="alifworld-media"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
                   />
-                  <button
-                    type="button"
-                    onClick={() => toggleSecret('s3Secret')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
-                  >
-                    {revealedSecrets.s3Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Cloudflare Account ID *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_R2_ACCOUNT_ID || ''}
+                    onChange={(e) => {
+                      const accountId = e.target.value.trim();
+                      updateSetting('STORAGE_R2_ACCOUNT_ID', accountId);
+                      if (accountId && !settings.STORAGE_S3_ENDPOINT) {
+                        updateSetting('STORAGE_S3_ENDPOINT', `https://${accountId}.r2.cloudflarestorage.com`);
+                      }
+                    }}
+                    placeholder="e.g. 0123456789abcdef0123456789abcdef"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 S3 API Endpoint URL *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_ENDPOINT || (settings.STORAGE_R2_ACCOUNT_ID ? `https://${settings.STORAGE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : '')}
+                    onChange={(e) => updateSetting('STORAGE_S3_ENDPOINT', e.target.value)}
+                    placeholder="https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Public Custom Domain / Base URL *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_CDN_URL}
+                    onChange={(e) => updateSetting('STORAGE_S3_CDN_URL', e.target.value)}
+                    placeholder="https://pub-media.example.com"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Access Key ID *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_ACCESS_KEY}
+                    onChange={(e) => updateSetting('STORAGE_S3_ACCESS_KEY', e.target.value)}
+                    placeholder="R2 Access Key Token"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Secret Access Key *</label>
+                  <div className="relative">
+                    <input
+                      type={revealedSecrets.s3Secret ? 'text' : 'password'}
+                      value={settings.STORAGE_S3_SECRET_KEY}
+                      onChange={(e) => updateSetting('STORAGE_S3_SECRET_KEY', e.target.value)}
+                      placeholder="R2 Secret Key Token"
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 pr-10 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret('s3Secret')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
+                    >
+                      {revealedSecrets.s3Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* AWS S3 Specific Fields */
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS S3 Bucket Name *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_BUCKET}
+                    onChange={(e) => updateSetting('STORAGE_S3_BUCKET', e.target.value)}
+                    placeholder="alifworld-media"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS Region *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_REGION}
+                    onChange={(e) => updateSetting('STORAGE_S3_REGION', e.target.value)}
+                    placeholder="us-east-1"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS S3 Custom Endpoint URL (Optional)</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_ENDPOINT}
+                    onChange={(e) => updateSetting('STORAGE_S3_ENDPOINT', e.target.value)}
+                    placeholder="Leave empty for standard AWS S3"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Public CDN / Base URL *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_CDN_URL}
+                    onChange={(e) => updateSetting('STORAGE_S3_CDN_URL', e.target.value)}
+                    placeholder="https://cdn.example.com"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS Access Key ID *</label>
+                  <input
+                    type="text"
+                    value={settings.STORAGE_S3_ACCESS_KEY}
+                    onChange={(e) => updateSetting('STORAGE_S3_ACCESS_KEY', e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS Secret Access Key *</label>
+                  <div className="relative">
+                    <input
+                      type={revealedSecrets.s3Secret ? 'text' : 'password'}
+                      value={settings.STORAGE_S3_SECRET_KEY}
+                      onChange={(e) => updateSetting('STORAGE_S3_SECRET_KEY', e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 pr-10 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSecret('s3Secret')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
+                    >
+                      {revealedSecrets.s3Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
