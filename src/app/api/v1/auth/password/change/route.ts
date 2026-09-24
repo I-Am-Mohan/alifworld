@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       parsed.data.currentPassword,
       parsed.data.newPassword,
       {
-        ipAddress: req.headers.get('x-forwarded-for') || req.ip || null,
+        ipAddress: req.headers.get('x-forwarded-for') || (req as any).ip || null,
         userAgent: req.headers.get('user-agent'),
       }
     );

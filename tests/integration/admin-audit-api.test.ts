@@ -244,7 +244,7 @@ describe('Admin Historical Audit Trail REST API Integration (Milestone 049)', ()
   describe('GET /api/v1/admin/audit/[id]', () => {
     it('returns 401 Unauthorized when unauthenticated', async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/admin/audit/aud_001');
-      const res = await getAuditLogById(req, { params: { id: 'aud_001' } });
+      const res = await getAuditLogById(req, { params: Promise.resolve({ id: 'aud_001' }) });
       expect(res.status).toBe(401);
     });
 
@@ -252,7 +252,7 @@ describe('Admin Historical Audit Trail REST API Integration (Milestone 049)', ()
       const req = new NextRequest('http://localhost:3000/api/v1/admin/audit/aud_non_existent', {
         headers: { authorization: SUPER_ADMIN_AUTH },
       });
-      const res = await getAuditLogById(req, { params: { id: 'aud_non_existent' } });
+      const res = await getAuditLogById(req, { params: Promise.resolve({ id: 'aud_non_existent' }) });
       expect(res.status).toBe(404);
     });
 
@@ -260,7 +260,7 @@ describe('Admin Historical Audit Trail REST API Integration (Milestone 049)', ()
       const req = new NextRequest('http://localhost:3000/api/v1/admin/audit/aud_002', {
         headers: { authorization: COMPLIANCE_ADMIN_AUTH },
       });
-      const res = await getAuditLogById(req, { params: { id: 'aud_002' } });
+      const res = await getAuditLogById(req, { params: Promise.resolve({ id: 'aud_002' }) });
       expect(res.status).toBe(200);
 
       const json = await res.json();

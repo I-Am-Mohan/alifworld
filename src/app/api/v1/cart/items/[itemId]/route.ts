@@ -19,7 +19,7 @@ function fail(error: unknown) {
   );
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { itemId: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
   try {
     const actor = authenticateRequest(req);
     let payload: unknown;
@@ -32,17 +32,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { itemId: st
     if (!parsed.success) {
       throw new ValidationError('Invalid cart item quantity', { issues: parsed.error.flatten() });
     }
-    const item = await cartRepository.updateItemQuantity(params.itemId, parsed.data.quantity, actor.userId, actor.userId);
+    const { itemId } = await params;
+    const item = await cartRepository.updateItemQuantity(itemId, parsed.data.quantity, actor.userId, actor.userId);
     return NextResponse.json({ success: true, data: serializeBigInt(item) });
   } catch (error) {
     return fail(error);
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { itemId: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ itemId: string }> }) {
   try {
     const actor = authenticateRequest(req);
-    await cartRepository.removeItem(params.itemId, actor.userId, actor.userId);
+    const { itemId } = await params;
+    await cartRepository.removeItem(itemId, actor.userId, actor.userId);
     return NextResponse.json({ success: true, data: { removed: true } });
   } catch (error) {
     return fail(error);

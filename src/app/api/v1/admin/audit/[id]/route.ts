@@ -19,11 +19,12 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const actor = authenticateRequest(req);
-    const record = await auditService.getAuditLogById(actor, params.id);
+    const { id } = await params;
+    const record = await auditService.getAuditLogById(actor, id);
 
     return NextResponse.json(
       {

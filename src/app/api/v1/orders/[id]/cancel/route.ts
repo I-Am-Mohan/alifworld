@@ -25,11 +25,11 @@ const orderRepo = new OrderRepository();
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const actor = authenticateRequest(req);
-    const orderId = params.id;
+    const { id: orderId } = await params;
 
     let body = {};
     try {

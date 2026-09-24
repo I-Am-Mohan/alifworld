@@ -14,9 +14,9 @@ import { buildOrganizationJsonLd } from '@/shared/seo/metadata';
 import { SeoJsonLd } from '@/shared/seo/json-ld';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const requestHeaders = headers();
+  const requestHeaders = await headers();
   const pathname = requestHeaders.get('x-pathname') || '/';
-  const locale = getServerLocale(requestHeaders);
+  const locale = getServerLocale(requestHeaders as any);
   const isPublicHome = pathname === '/' || pathname === '/bn-BD' || pathname === '/en-BD';
   const baseMetadata = isPublicHome
     ? buildSeoMetadata({
@@ -42,12 +42,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const locale = getServerLocale(headers());
+  const requestHeaders = await headers();
+  const locale = getServerLocale(requestHeaders as any);
 
   return (
     <html lang={locale} className="light">

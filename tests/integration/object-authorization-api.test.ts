@@ -326,7 +326,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
   describe('Single Order Object Authorization (/api/v1/orders/[id])', () => {
     it('returns 401 Unauthorized when unauthenticated', async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1');
-      const res = await getOrderById(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(401);
     });
 
@@ -334,7 +334,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_non_existent', {
         headers: { authorization: ALICE_AUTH },
       });
-      const res = await getOrderById(req, { params: { id: 'ord_non_existent' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_non_existent' }) });
       expect(res.status).toBe(404);
     });
 
@@ -342,7 +342,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: ALICE_AUTH },
       });
-      const res = await getOrderById(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(200);
 
       const json = await res.json();
@@ -355,7 +355,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: BOB_AUTH },
       });
-      const res = await getOrderById(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -367,7 +367,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: WALTON_SELLER_AUTH },
       });
-      const res = await getOrderById(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(200);
 
       const json = await res.json();
@@ -379,7 +379,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: APEX_SELLER_AUTH },
       });
-      const res = await getOrderById(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -401,7 +401,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
         body: JSON.stringify({ reason: 'Customer changed mind' }),
       });
 
-      const res = await cancelOrder(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -418,7 +418,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
         body: JSON.stringify({ reason: 'Item unwanted' }),
       });
 
-      const res = await cancelOrder(req, { params: { id: 'ord_alice_delivered_1' } });
+      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_delivered_1' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -435,7 +435,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
         body: JSON.stringify({ reason: 'Accidentally selected wrong quantity' }),
       });
 
-      const res = await cancelOrder(req, { params: { id: 'ord_alice_pending_1' } });
+      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
       expect(res.status).toBe(200);
 
       const json = await res.json();

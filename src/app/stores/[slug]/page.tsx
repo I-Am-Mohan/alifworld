@@ -14,7 +14,8 @@ async function getProfile(slug: string) {
 }
 
 export async function generateMetadata({ params }: StorePageProps): Promise<Metadata> {
-  const locale = getServerLocale(headers());
+  const headerList = await headers();
+  const locale = getServerLocale(headerList as any);
   const t = createTranslator(locale);
   const profile = await getProfile(params.slug);
   if (!profile) return buildSeoMetadata({ path: `/stores/${params.slug}`, locale, title: t('publicStore.notFoundTitle'), description: t('publicStore.notFoundDescription'), noIndex: true });
@@ -22,7 +23,8 @@ export async function generateMetadata({ params }: StorePageProps): Promise<Meta
 }
 
 export default async function PublicSellerStorePage({ params }: StorePageProps) {
-  const locale = getServerLocale(headers());
+  const headerList = await headers();
+  const locale = getServerLocale(headerList as any);
   const t = createTranslator(locale);
   const profile = await getProfile(params.slug);
   if (!profile) notFound();
@@ -39,7 +41,7 @@ export default async function PublicSellerStorePage({ params }: StorePageProps) 
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-black">{t('publicStore.storeInformation')}</h2>{profile.vacationMode && <div className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">{profile.vacationMessage || t('publicStore.vacationDefault')}</div>}<p className="text-sm text-slate-600">{profile.storeDescription || t('publicStore.explore', { name: profile.businessName })}</p>{profile.shippingPolicy && <section><h3 className="font-bold">{t('publicStore.shippingPolicy')}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{profile.shippingPolicy}</p></section>}{profile.returnPolicy && <section><h3 className="font-bold">{t('publicStore.returnPolicy')}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{profile.returnPolicy}</p></section>}{profile.cancellationPolicy && <section><h3 className="font-bold">{t('publicStore.cancellationPolicy')}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">{profile.cancellationPolicy}</p></section>}</div>
         <aside className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-black">{t('publicStore.contactStore')}</h2><div className="mt-4 space-y-2 text-sm text-slate-600">{profile.supportEmail && <a className="block text-amber-700 hover:underline" href={`mailto:${profile.supportEmail}`}>{profile.supportEmail}</a>}{profile.supportPhone && <a className="block text-amber-700 hover:underline" href={`tel:${profile.supportPhone}`}>{profile.supportPhone}</a>}{profile.pickupAddress && <p>{profile.pickupAddress.streetAddress}, {profile.pickupAddress.district}</p>}</div><Link href="/products" className="mt-6 inline-flex rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold">{t('publicStore.browseProducts')}</Link></aside>
       </section>
-      <SeoJsonLd data={buildBreadcrumbJsonLd([{ name: 'AlifWorld', path: '/' }, { name: profile.businessName, path: `/stores/${profile.slug}` }], getServerLocale(headers()))} />
+      <SeoJsonLd data={buildBreadcrumbJsonLd([{ name: 'AlifWorld', path: '/' }, { name: profile.businessName, path: `/stores/${profile.slug}` }], getServerLocale(headerList as any))} />
     </main>
   );
 }

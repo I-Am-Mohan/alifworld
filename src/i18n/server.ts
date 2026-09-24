@@ -17,12 +17,14 @@ import { formatLocalizedText } from '@/shared/utils/localization';
 /**
  * Extracts the negotiated locale from request headers in Server Components.
  */
-export function getServerLocale(headersList?: Headers): CanonicalLocale {
+export function getServerLocale(headersList?: Headers | any): CanonicalLocale {
   try {
     const activeHeaders = headersList || headers();
-    const headerLocale = activeHeaders.get('x-locale');
-    if (headerLocale) {
-      return normalizeToCanonicalLocale(headerLocale);
+    if (activeHeaders && typeof (activeHeaders as any).get === 'function') {
+      const headerLocale = (activeHeaders as any).get('x-locale');
+      if (headerLocale) {
+        return normalizeToCanonicalLocale(headerLocale);
+      }
     }
   } catch {
     // headers() might not be available in certain isolated test contexts

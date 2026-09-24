@@ -15,7 +15,7 @@ const authTokenService = new AuthTokenService();
  * Invariants: ADR-0022, ADR-0031
  */
 export async function POST(req: NextRequest) {
-  const ipAddress = req.headers.get('x-forwarded-for') || req.ip || null;
+  const ipAddress = req.headers.get('x-forwarded-for') || (req as any).ip || null;
   const userAgent = req.headers.get('user-agent') || null;
 
   try {

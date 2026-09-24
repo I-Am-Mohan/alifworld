@@ -7,10 +7,11 @@ export const dynamic = 'force-dynamic';
 const service = new LocalizableCatalogService();
 
 /** GET /api/v1/content/[slug]?locale=bn-BD */
-export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const locale = req.nextUrl.searchParams.get('locale') || req.headers.get('x-locale') || undefined;
-    const content = await service.getPublishedCms(params.slug, locale);
+    const { slug } = await params;
+    const content = await service.getPublishedCms(slug, locale);
     if (!content) {
       return NextResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: 'Published content was not found' } },

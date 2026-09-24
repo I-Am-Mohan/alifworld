@@ -4,7 +4,8 @@ import { getServerLocale } from '@/i18n/server';
 import { buildSeoMetadata } from '@/shared/seo/metadata';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = getServerLocale(headers());
+  const headerList = await headers();
+  const locale = getServerLocale(headerList as any);
   const isEnglish = locale === 'en-BD';
   return buildSeoMetadata({
     path: '/products',

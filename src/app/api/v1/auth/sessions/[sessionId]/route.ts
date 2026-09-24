@@ -17,14 +17,14 @@ const authTokenService = new AuthTokenService();
  */
 export async function DELETE(
   req: NextRequest,
-  context: { params: { sessionId: string } }
+  context: { params: Promise<{ sessionId: string }> }
 ) {
-  const ipAddress = req.headers.get('x-forwarded-for') || req.ip || null;
+  const ipAddress = req.headers.get('x-forwarded-for') || (req as any).ip || null;
   const userAgent = req.headers.get('user-agent') || null;
 
   try {
     const auth = await authTokenService.authenticateRequest(req);
-    const { sessionId } = await Promise.resolve(context.params);
+    const { sessionId } = await context.params;
 
     if (!sessionId) {
       return NextResponse.json(

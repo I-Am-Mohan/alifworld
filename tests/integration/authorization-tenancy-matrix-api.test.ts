@@ -195,7 +195,7 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
         headers: { authorization: SELLER_A_AUTH },
       });
 
-      const res = await getOrderById(req, { params: { id: 'ord_bob_pending' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_bob_pending' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -211,7 +211,7 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
         headers: { authorization: CUSTOMER_A_AUTH },
       });
 
-      const res = await getOrderById(req, { params: { id: 'ord_bob_pending' } });
+      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_bob_pending' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -228,7 +228,7 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
         body: JSON.stringify({ reason: 'Malicious cancellation' }),
       });
 
-      const res = await cancelOrder(req, { params: { id: 'ord_bob_pending' } });
+      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_bob_pending' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -348,7 +348,7 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
         body: JSON.stringify({ reason: 'Too late cancellation' }),
       });
 
-      const res = await cancelOrder(req, { params: { id: 'ord_alice_delivered' } });
+      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_delivered' }) });
       expect(res.status).toBe(403);
 
       const json = await res.json();

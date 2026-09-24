@@ -18,7 +18,7 @@ const authTokenService = new AuthTokenService();
  * Idempotent: If token is expired or absent, still clears cookies and returns 200.
  */
 export async function POST(req: NextRequest) {
-  const ipAddress = req.headers.get('x-forwarded-for') || req.ip || null;
+  const ipAddress = req.headers.get('x-forwarded-for') || (req as any).ip || null;
   const userAgent = req.headers.get('user-agent') || null;
 
   try {
