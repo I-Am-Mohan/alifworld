@@ -4,7 +4,11 @@ import { getServerEnv } from '@/shared/config/environment';
 const VERSION = 'v1';
 
 function key(): Buffer {
-  return createHash('sha256').update(getServerEnv().PAYOUT_PROFILE_ENCRYPTION_KEY).digest();
+  const encryptionKey = getServerEnv().PAYOUT_PROFILE_ENCRYPTION_KEY;
+  if (!encryptionKey) {
+    throw new Error('PAYOUT_PROFILE_ENCRYPTION_KEY is required for payout encryption');
+  }
+  return createHash('sha256').update(encryptionKey).digest();
 }
 
 export function encryptPayoutSecret(value: string): string {

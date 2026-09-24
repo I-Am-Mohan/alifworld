@@ -24,8 +24,8 @@ export class GoogleOAuthProvider implements IOAuthProvider {
 
   constructor(clientId?: string, clientSecret?: string) {
     const env = getServerEnv();
-    this.clientId = clientId || env.GOOGLE_CLIENT_ID;
-    this.clientSecret = clientSecret || env.GOOGLE_CLIENT_SECRET;
+    this.clientId = clientId || env.GOOGLE_CLIENT_ID || '';
+    this.clientSecret = clientSecret || env.GOOGLE_CLIENT_SECRET || '';
   }
 
   /**

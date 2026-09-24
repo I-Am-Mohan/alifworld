@@ -80,7 +80,7 @@ export class SellerRepository extends BaseRepository {
         },
       });
       if (!seller) return null;
-      const publicBase = getServerEnv().S3_PUBLIC_BASE_URL.replace(/\/$/, '');
+      const publicBase = (getServerEnv().S3_PUBLIC_BASE_URL ?? '').replace(/\/$/, '');
       const publicAssetUrl = (key?: string | null, fallback?: string | null) => key ? `${publicBase}/${key}` : fallback || null;
       const publicPickupAddress = seller.settings?.publicPickupAddressEnabled ? seller.settings?.pickupAddress ?? null : null;
       return {

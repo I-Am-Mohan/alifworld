@@ -24,8 +24,8 @@ export class FacebookOAuthProvider implements IOAuthProvider {
 
   constructor(appId?: string, appSecret?: string) {
     const env = getServerEnv();
-    this.appId = appId || env.FACEBOOK_APP_ID;
-    this.appSecret = appSecret || env.FACEBOOK_APP_SECRET;
+    this.appId = appId || env.FACEBOOK_APP_ID || '';
+    this.appSecret = appSecret || env.FACEBOOK_APP_SECRET || '';
   }
 
   private get isMock(): boolean {
