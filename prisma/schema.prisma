@@ -421,6 +421,7 @@ model Seller {
   promotions          Promotion[]
   promotionAttributions PromotionAttribution[]
   priceLists          PriceList[]
+  discountRules       DiscountRule[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -1083,6 +1084,71 @@ model PriceListRule {
   @@index([variantId])
   @@index([minQuantity, maxQuantity])
   @@map("price_list_rules")
+}
+
+// ------------------------------------------------------------------------------
+// 16d. Authoritative Discount Rule Engine
+// ------------------------------------------------------------------------------
+/// Server-side discount rule definition (Automatic or Coupon-triggered)
+model DiscountRule {
+  id                     String    @id @default(uuid())
+  code                   String?   @unique // Nullable for automatic discounts, set for coupon discounts
+  title                  String
+  titleBn                String?   @map("title_bn")
+  description            String?
+  discountType           String    @default("PERCENTAGE") @map("discount_type") // PERCENTAGE, FIXED_AMOUNT, BUY_X_GET_Y, FREE_SHIPPING
+  targetScope            String    @default("CART_SUBTOTAL") @map("target_scope") // CART_SUBTOTAL, SPECIFIC_PRODUCTS, SPECIFIC_CATEGORIES, SPECIFIC_BRANDS, SHIPPING_FEE
+  discountValue          Decimal   @default(0.00) @map("discount_value") @db.Decimal(12, 2) // e.g. 15.00% or amount in poisha
+  maxDiscountPoisha      BigInt?   @map("max_discount_poisha") // Cap on discount amount
+  minOrderSubtotalPoisha BigInt    @default(0) @map("min_order_subtotal_poisha")
+  minQuantity            Int       @default(1) @map("min_quantity")
+  buyQuantity            Int?      @map("buy_quantity") // For BUY_X_GET_Y (e.g., Buy 2)
+  getQuantity            Int?      @map("get_quantity") // For BUY_X_GET_Y (e.g., Get 1 free/discounted)
+  getDiscountPercent     Decimal?  @map("get_discount_percent") @db.Decimal(5, 2) // 100.00% = Free
+  isAutomatic            Boolean   @default(true) @map("is_automatic") // True = applies automatically at checkout; False = coupon code required
+  fundingType            String    @default("PLATFORM_FUNDED") @map("funding_type") // PLATFORM_FUNDED, SELLER_FUNDED, CO_FUNDED
+  sellerSharePercent     Decimal   @default(0.00) @map("seller_share_percent") @db.Decimal(5, 2)
+  platformSharePercent   Decimal   @default(100.00) @map("platform_share_percent") @db.Decimal(5, 2)
+  sellerId               String?   @map("seller_id") // Null for platform sitewide, or seller UUID
+  buyerSegment           String?   @map("buyer_segment") // e.g. ALL, VIP, NEW_USER
+  priority               Int       @default(0)
+  startsAt               DateTime  @map("starts_at")
+  endsAt                 DateTime? @map("ends_at")
+  usageLimit             Int?      @map("usage_limit")
+  usageCount             Int       @default(0) @map("usage_count")
+  status                 String    @default("ACTIVE") // DRAFT, ACTIVE, PAUSED, EXPIRED, ARCHIVED
+  ruleVersion            String    @default("v1.0.0") @map("rule_version")
+  createdBy              String?   @map("created_by")
+  updatedBy              String?   @map("updated_by")
+  version                Int       @default(1)
+  deletedAt              DateTime? @map("deleted_at")
+  deletedBy              String?   @map("deleted_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  seller  Seller?              @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  targets DiscountRuleTarget[]
+
+  @@index([code])
+  @@index([sellerId, status])
+  @@index([isAutomatic, status, startsAt, endsAt])
+  @@index([deletedAt])
+  @@map("discount_rules")
+}
+
+/// Target specificity links for products, categories, or brands
+model DiscountRuleTarget {
+  id             String   @id @default(uuid())
+  discountRuleId String   @map("discount_rule_id")
+  targetType     String   @map("target_type") // PRODUCT, CATEGORY, BRAND
+  targetId       String   @map("target_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  discountRule DiscountRule @relation(fields: [discountRuleId], references: [id], onDelete: Cascade)
+
+  @@index([discountRuleId])
+  @@index([targetType, targetId])
+  @@map("discount_rule_targets")
 }
 
 // ------------------------------------------------------------------------------
