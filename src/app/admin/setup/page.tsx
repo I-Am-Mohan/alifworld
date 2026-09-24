@@ -86,7 +86,12 @@ export default function AdminSetupPage() {
     STORAGE_S3_SECRET_KEY: '',
     STORAGE_S3_CDN_URL: 'https://cdn.example.com',
     STORAGE_S3_FORCE_PATH_STYLE: 'false',
+    STORAGE_R2_BUCKET: 'alifworld-r2-media',
     STORAGE_R2_ACCOUNT_ID: '',
+    STORAGE_R2_ENDPOINT: '',
+    STORAGE_R2_CDN_URL: 'https://pub-r2.example.com',
+    STORAGE_R2_ACCESS_KEY: '',
+    STORAGE_R2_SECRET_KEY: '',
     PAYMENT_BKASH_ENABLED: 'true',
     PAYMENT_BKASH_ENV: 'sandbox',
     PAYMENT_BKASH_APP_KEY: 'bkash_test_app_key',
@@ -1063,9 +1068,9 @@ export default function AdminSetupPage() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">R2 Bucket Name *</label>
                   <input
                     type="text"
-                    value={settings.STORAGE_S3_BUCKET}
-                    onChange={(e) => updateSetting('STORAGE_S3_BUCKET', e.target.value)}
-                    placeholder="alifworld-media"
+                    value={settings.STORAGE_R2_BUCKET || ''}
+                    onChange={(e) => updateSetting('STORAGE_R2_BUCKET', e.target.value)}
+                    placeholder="alifworld-r2-media"
                     className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
                   />
                 </div>
@@ -1078,8 +1083,8 @@ export default function AdminSetupPage() {
                     onChange={(e) => {
                       const accountId = e.target.value.trim();
                       updateSetting('STORAGE_R2_ACCOUNT_ID', accountId);
-                      if (accountId && !settings.STORAGE_S3_ENDPOINT) {
-                        updateSetting('STORAGE_S3_ENDPOINT', `https://${accountId}.r2.cloudflarestorage.com`);
+                      if (accountId && !settings.STORAGE_R2_ENDPOINT) {
+                        updateSetting('STORAGE_R2_ENDPOINT', `https://${accountId}.r2.cloudflarestorage.com`);
                       }
                     }}
                     placeholder="e.g. 0123456789abcdef0123456789abcdef"
@@ -1091,8 +1096,8 @@ export default function AdminSetupPage() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">R2 S3 API Endpoint URL *</label>
                   <input
                     type="text"
-                    value={settings.STORAGE_S3_ENDPOINT || (settings.STORAGE_R2_ACCOUNT_ID ? `https://${settings.STORAGE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : '')}
-                    onChange={(e) => updateSetting('STORAGE_S3_ENDPOINT', e.target.value)}
+                    value={settings.STORAGE_R2_ENDPOINT || (settings.STORAGE_R2_ACCOUNT_ID ? `https://${settings.STORAGE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : '')}
+                    onChange={(e) => updateSetting('STORAGE_R2_ENDPOINT', e.target.value)}
                     placeholder="https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
                     className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
                   />
@@ -1102,9 +1107,9 @@ export default function AdminSetupPage() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">R2 Public Custom Domain / Base URL *</label>
                   <input
                     type="text"
-                    value={settings.STORAGE_S3_CDN_URL}
-                    onChange={(e) => updateSetting('STORAGE_S3_CDN_URL', e.target.value)}
-                    placeholder="https://pub-media.example.com"
+                    value={settings.STORAGE_R2_CDN_URL || ''}
+                    onChange={(e) => updateSetting('STORAGE_R2_CDN_URL', e.target.value)}
+                    placeholder="https://pub-r2.example.com"
                     className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
                   />
                 </div>
@@ -1113,8 +1118,8 @@ export default function AdminSetupPage() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">R2 Access Key ID *</label>
                   <input
                     type="text"
-                    value={settings.STORAGE_S3_ACCESS_KEY}
-                    onChange={(e) => updateSetting('STORAGE_S3_ACCESS_KEY', e.target.value)}
+                    value={settings.STORAGE_R2_ACCESS_KEY || ''}
+                    onChange={(e) => updateSetting('STORAGE_R2_ACCESS_KEY', e.target.value)}
                     placeholder="R2 Access Key Token"
                     className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
                   />
@@ -1124,18 +1129,18 @@ export default function AdminSetupPage() {
                   <label className="block text-xs font-bold text-slate-700 mb-1">R2 Secret Access Key *</label>
                   <div className="relative">
                     <input
-                      type={revealedSecrets.s3Secret ? 'text' : 'password'}
-                      value={settings.STORAGE_S3_SECRET_KEY}
-                      onChange={(e) => updateSetting('STORAGE_S3_SECRET_KEY', e.target.value)}
+                      type={revealedSecrets.r2Secret ? 'text' : 'password'}
+                      value={settings.STORAGE_R2_SECRET_KEY || ''}
+                      onChange={(e) => updateSetting('STORAGE_R2_SECRET_KEY', e.target.value)}
                       placeholder="R2 Secret Key Token"
                       className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 pr-10 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
                     />
                     <button
                       type="button"
-                      onClick={() => toggleSecret('s3Secret')}
+                      onClick={() => toggleSecret('r2Secret')}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
                     >
-                      {revealedSecrets.s3Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {revealedSecrets.r2Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>

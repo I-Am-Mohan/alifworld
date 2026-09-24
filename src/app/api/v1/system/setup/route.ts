@@ -21,7 +21,12 @@ const DEFAULT_SETUP_CONFIGS: Record<string, string> = {
   STORAGE_S3_SECRET_KEY: '••••••••',
   STORAGE_S3_CDN_URL: 'https://cdn.example.com',
   STORAGE_S3_FORCE_PATH_STYLE: 'false',
+  STORAGE_R2_BUCKET: 'alifworld-r2-media',
   STORAGE_R2_ACCOUNT_ID: '',
+  STORAGE_R2_ENDPOINT: '',
+  STORAGE_R2_CDN_URL: 'https://pub-r2.example.com',
+  STORAGE_R2_ACCESS_KEY: '',
+  STORAGE_R2_SECRET_KEY: '••••••••',
   PAYMENT_BKASH_ENABLED: 'true',
   PAYMENT_BKASH_ENV: 'sandbox',
   PAYMENT_BKASH_APP_KEY: 'bkash_test_app_key',
@@ -136,7 +141,7 @@ export async function POST(req: NextRequest) {
     const updatedKeys: string[] = [];
 
     await prisma.$transaction(
-      async (tx) => {
+      async (tx: any) => {
         for (const [key, rawValue] of Object.entries(body)) {
           if (typeof key !== 'string' || key.length === 0) continue;
           const value = typeof rawValue === 'object' && rawValue !== null
