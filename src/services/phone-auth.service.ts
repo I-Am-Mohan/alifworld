@@ -223,6 +223,8 @@ export class PhoneAuthService {
         data: {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.phone_login_otp_dispatched',
+          aggregateType: 'User',
+          aggregateId: user.id,
           payload: {
             userId: user.id,
             phone,
@@ -453,6 +455,8 @@ export class PhoneAuthService {
         data: {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.phone_registration_otp_dispatched',
+          aggregateType: 'PhoneOTP',
+          aggregateId: phone,
           payload: {
             phone,
             otpCode: rawOtp,
@@ -686,6 +690,8 @@ export class PhoneAuthService {
         data: {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.customer_registered',
+          aggregateType: 'User',
+          aggregateId: newUser.id,
           payload: {
             userId: newUser.id,
             phone,

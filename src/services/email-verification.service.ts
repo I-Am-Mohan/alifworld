@@ -149,6 +149,8 @@ export class EmailVerificationService {
         data: {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.email_verified',
+          aggregateType: 'User',
+          aggregateId: user.id,
           payload: { userId: user.id, email: cleanEmail },
           status: 'PENDING',
         },
@@ -255,6 +257,8 @@ export class EmailVerificationService {
         data: {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.verification_email_resend',
+          aggregateType: 'User',
+          aggregateId: user.id,
           payload: {
             userId: user.id,
             email: cleanEmail,

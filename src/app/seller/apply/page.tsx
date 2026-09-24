@@ -36,6 +36,8 @@ import {
   Mail,
   ChevronDown,
   Clipboard,
+  Smartphone,
+  X,
 } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
@@ -167,10 +169,6 @@ export default function SellerApplicationPage() {
   const [application, setApplication] = useState<Application | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [agreedTerms, setAgreedTerms] = useState(false);
-  const [phoneOtp, setPhoneOtp] = useState('');
-  const [emailOtp, setEmailOtp] = useState('');
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [verificationTicket, setVerificationTicket] = useState<string | null>(null);
@@ -178,6 +176,28 @@ export default function SellerApplicationPage() {
   const [devPhoneOtp, setDevPhoneOtp] = useState<string | null>(null);
   const [devEmailOtp, setDevEmailOtp] = useState<string | null>(null);
   const [verificationBusy, setVerificationBusy] = useState(false);
+
+  // Dedicated OTP popup modal states
+  const [activeVerifyModal, setActiveVerifyModal] = useState<'phone' | 'email' | null>(null);
+  const [phoneOtpInput, setPhoneOtpInput] = useState('');
+  const [emailOtpInput, setEmailOtpInput] = useState('');
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // Field-level validation error map
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const setFieldError = (field: string, msg: string) => {
+    setFieldErrors((prev) => ({ ...prev, [field]: msg }));
+  };
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const [form, setForm] = useState<FormState>({
     sellerName: '',
@@ -204,6 +224,9 @@ export default function SellerApplicationPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const isValidPhone = /^(\+8801|01)[3-9]\d{8}$/.test(form.mobileNumber.trim());
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailAddress.trim());
 
   const loadApplication = useCallback(async () => {
     try {
@@ -253,6 +276,7 @@ export default function SellerApplicationPage() {
 
   const setField = (key: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
+    clearFieldError(key);
   };
 
   const generateSlugFromTitle = (title: string) => {
@@ -272,163 +296,263 @@ export default function SellerApplicationPage() {
     }
   };
 
-  const validateCredentials = (): boolean => {
-    setError(null);
-    if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
-      setError('Please enter your full name (Seller Name).');
-      return false;
+  // Independent Mobile Number OTP Verification
+  const handleStartPhoneVerification = async () => {
+    clearFieldError('mobileNumber');
+    const phone = form.mobileNumber.trim();
+    if (!phone) {
+      setFieldError('mobileNumber', 'Please enter your mobile number first.');
+      return;
     }
-    if (!/^(\+8801[3-9]\d{8}|01[3-9]\d{8})$/.test(form.mobileNumber.trim())) {
-      setError('Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).');
-      return false;
+    if (!isValidPhone) {
+      setFieldError('mobileNumber', 'Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).');
+      return;
     }
-    if (!form.emailAddress.trim() || !form.emailAddress.includes('@')) {
-      setError('Please enter a valid email address.');
-      return false;
-    }
-    if (form.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return false;
-    }
-    if (form.password !== form.confirmPassword) {
-      setError('Password and Confirm Password do not match.');
-      return false;
-    }
-    return true;
-  };
 
-  const sendPhoneVerification = async () => {
-    if (!validateCredentials()) return;
     try {
       setVerificationBusy(true);
-      setError(null);
-      const response = await csrfFetch('/api/v1/auth/phone/send-otp', {
+      setModalError(null);
+      const isLoginOtp = accountProvisioned || Boolean(user);
+      const res = await csrfFetch('/api/v1/auth/phone/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: form.mobileNumber.trim(),
-          purpose: accountProvisioned || user ? 'LOGIN' : 'REGISTRATION',
+          phone,
+          purpose: isLoginOtp ? 'LOGIN' : 'REGISTRATION',
         }),
       });
-      const json = await response.json().catch(() => null);
-      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to send mobile verification code.');
-      setPhoneOtpSent(true);
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error?.message || 'Failed to send mobile verification code.');
+      }
       setDevPhoneOtp(json.data?.devOtpCode || null);
-      setMessage('A 6-digit verification code was sent to your mobile number.');
+      setPhoneOtpInput('');
+      setActiveVerifyModal('phone');
     } catch (err: any) {
-      setError(err.message || 'Unable to send mobile verification code.');
+      setFieldError('mobileNumber', err.message || 'Failed to send mobile verification code.');
     } finally {
       setVerificationBusy(false);
     }
   };
 
-  const verifyPhoneAndCreateAccount = async () => {
-    if (!/^\d{6}$/.test(phoneOtp)) {
-      setError('Enter the 6-digit mobile verification code.');
+  const handleSubmitPhoneOtp = async () => {
+    if (!/^\d{6}$/.test(phoneOtpInput.trim())) {
+      setModalError('Please enter the 6-digit verification code.');
       return;
     }
     try {
       setVerificationBusy(true);
-      setError(null);
-      const verifyResponse = await csrfFetch(
-        accountProvisioned || user
-          ? '/api/v1/auth/phone/verify-login'
-          : '/api/v1/auth/phone/verify-register',
+      setModalError(null);
+      const isLoginOtp = accountProvisioned || Boolean(user);
+      const verifyRes = await csrfFetch(
+        isLoginOtp ? '/api/v1/auth/phone/verify-login' : '/api/v1/auth/phone/verify-register',
         {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: form.mobileNumber.trim(), code: phoneOtp, clientType: 'WEB' }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: form.mobileNumber.trim(),
+            code: phoneOtpInput.trim(),
+            clientType: 'WEB',
+          }),
         }
       );
-      const verifyJson = await verifyResponse.json().catch(() => null);
-      if (!verifyResponse.ok || !verifyJson?.success) throw new Error(verifyJson?.error?.message || 'Mobile verification failed.');
+      const verifyJson = await verifyRes.json().catch(() => null);
+      if (!verifyRes.ok || !verifyJson?.success) {
+        throw new Error(verifyJson?.error?.message || 'Invalid or expired verification code.');
+      }
 
-      if (accountProvisioned || user) {
+      if (isLoginOtp) {
         setPhoneVerified(true);
+        clearFieldError('mobileNumber');
+        setActiveVerifyModal(null);
         await refreshUser();
-        setMessage('Mobile number verified. Send the email verification code to continue.');
         return;
       }
 
-      const names = form.sellerName.trim().split(/\s+/);
-      const firstName = names.shift() || form.sellerName.trim();
-      const lastName = names.join(' ') || 'Seller';
       const ticket = verifyJson.data?.verificationTicket || null;
       setVerificationTicket(ticket);
 
-      const registrationResponse = await csrfFetch('/api/v1/auth/phone/complete-registration', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: form.mobileNumber.trim(),
-          verificationTicket: ticket,
-          firstName,
-          lastName,
-          password: form.password,
-          email: form.emailAddress.trim().toLowerCase(),
-          clientType: 'WEB',
-        }),
-      });
-      const registrationJson = await registrationResponse.json().catch(() => null);
-      if (!registrationResponse.ok || !registrationJson?.success) {
-        throw new Error(registrationJson?.error?.message || 'Unable to create your seller account.');
+      if (form.sellerName.trim() && form.password && form.password === form.confirmPassword) {
+        const names = form.sellerName.trim().split(/\s+/);
+        const firstName = names.shift() || form.sellerName.trim();
+        const lastName = names.join(' ') || 'Seller';
+
+        const regRes = await csrfFetch('/api/v1/auth/phone/complete-registration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: form.mobileNumber.trim(),
+            verificationTicket: ticket,
+            firstName,
+            lastName,
+            password: form.password,
+            email: form.emailAddress.trim().toLowerCase() || null,
+            clientType: 'WEB',
+          }),
+        });
+        const regJson = await regRes.json().catch(() => null);
+        if (regRes.ok && regJson?.success) {
+          setAccountProvisioned(true);
+          await refreshUser();
+        }
       }
 
       setPhoneVerified(true);
-      setAccountProvisioned(true);
-      await refreshUser();
-
-      await sendEmailVerificationCode();
+      clearFieldError('mobileNumber');
+      setActiveVerifyModal(null);
     } catch (err: any) {
-      setError(err.message || 'Mobile verification failed.');
+      setModalError(err.message || 'Verification failed. Please try again.');
     } finally {
       setVerificationBusy(false);
     }
   };
 
-  const sendEmailVerificationCode = async () => {
+  // Independent Email Address OTP Verification
+  const handleStartEmailVerification = async () => {
+    clearFieldError('emailAddress');
+    const email = form.emailAddress.trim().toLowerCase();
+    if (!email) {
+      setFieldError('emailAddress', 'Please enter your email address first.');
+      return;
+    }
+    if (!isValidEmail) {
+      setFieldError('emailAddress', 'Please enter a valid email address.');
+      return;
+    }
+
     try {
       setVerificationBusy(true);
-      setError(null);
-      const emailResponse = await csrfFetch('/api/v1/auth/email/resend', {
+      setModalError(null);
+
+      let activeUser = user;
+      if (!activeUser) {
+        try {
+          const meRes = await fetch('/api/v1/auth/me');
+          if (meRes.ok) {
+            const meJson = await meRes.json().catch(() => null);
+            if (meJson?.success && meJson?.data) activeUser = meJson.data;
+          }
+        } catch {}
+      }
+
+      if (activeUser || accountProvisioned) {
+        const res = await csrfFetch('/api/v1/auth/email/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) {
+          throw new Error(json?.error?.message || 'Failed to send email verification code.');
+        }
+        setDevEmailOtp(json.data?.devVerificationCode || json.data?.devOtpCode || null);
+        setEmailOtpInput('');
+        setActiveVerifyModal('email');
+        return;
+      }
+
+      if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
+        setFieldError('sellerName', 'Please enter your full name before verifying email.');
+        return;
+      }
+      if (!form.password) {
+        setFieldError('password', 'Please enter a password before verifying email.');
+        return;
+      }
+      if (form.password.length < 8) {
+        setFieldError('password', 'Password must be at least 8 characters long.');
+        return;
+      }
+      if (form.password !== form.confirmPassword) {
+        setFieldError('confirmPassword', 'Password and Confirm Password do not match.');
+        return;
+      }
+
+      const regRes = await csrfFetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.emailAddress.trim().toLowerCase() }),
+        body: JSON.stringify({
+          name: form.sellerName.trim(),
+          email,
+          phone: form.mobileNumber.trim() || undefined,
+          password: form.password,
+          acceptTerms: true,
+        }),
       });
-      const emailJson = await emailResponse.json().catch(() => null);
-      if (!emailResponse.ok || !emailJson?.success) {
-        throw new Error(emailJson?.error?.message || 'Unable to send email verification code.');
+
+      const regJson = await regRes.json().catch(() => null);
+
+      if (regRes.status === 409) {
+        await csrfFetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identifier: email,
+            password: form.password,
+            clientType: 'WEB',
+          }),
+        });
+        await refreshUser();
+        const resendRes = await csrfFetch('/api/v1/auth/email/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const resendJson = await resendRes.json().catch(() => null);
+        setDevEmailOtp(resendJson?.data?.devVerificationCode || null);
+      } else if (!regRes.ok || !regJson?.success) {
+        throw new Error(regJson?.error?.message || 'Failed to initiate email verification.');
+      } else {
+        setAccountProvisioned(true);
+        setDevEmailOtp(regJson.data?.devVerificationCode || null);
+        await csrfFetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identifier: email,
+            password: form.password,
+            clientType: 'WEB',
+          }),
+        });
+        await refreshUser();
       }
-      setEmailOtpSent(true);
-      setDevEmailOtp(emailJson.data?.devVerificationCode || emailJson.data?.devOtpCode || null);
-      setMessage('A 6-digit verification code was sent to your email address.');
+
+      setEmailOtpInput('');
+      setActiveVerifyModal('email');
     } catch (err: any) {
-      setError(err.message || 'Unable to send email verification code.');
+      setFieldError('emailAddress', err.message || 'Failed to send email verification code.');
     } finally {
       setVerificationBusy(false);
     }
   };
 
-  const verifyEmailAddress = async () => {
-    if (!/^\d{6}$/.test(emailOtp)) {
-      setError('Enter the 6-digit email verification code.');
+  const handleSubmitEmailOtp = async () => {
+    if (!/^\d{6}$/.test(emailOtpInput.trim())) {
+      setModalError('Please enter the 6-digit email verification code.');
       return;
     }
     try {
       setVerificationBusy(true);
-      setError(null);
-      const response = await csrfFetch('/api/v1/auth/email/verify', {
+      setModalError(null);
+      const res = await csrfFetch('/api/v1/auth/email/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.emailAddress.trim().toLowerCase(), code: emailOtp }),
+        body: JSON.stringify({
+          email: form.emailAddress.trim().toLowerCase(),
+          code: emailOtpInput.trim(),
+        }),
       });
-      const json = await response.json().catch(() => null);
-      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Email verification failed.');
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error?.message || 'Invalid or expired email verification code.');
+      }
+
       setEmailVerified(true);
+      clearFieldError('emailAddress');
+      setActiveVerifyModal(null);
       await refreshUser();
-      setMessage('Your mobile number and email address are verified. Continue to store identity.');
     } catch (err: any) {
-      setError(err.message || 'Email verification failed.');
+      setModalError(err.message || 'Email verification failed.');
     } finally {
       setVerificationBusy(false);
     }
@@ -440,8 +564,9 @@ export default function SellerApplicationPage() {
     setMessage(null);
     setError(null);
 
-    if (!accountProvisioned || !phoneVerified || !emailVerified) {
-      setError('Verify both your mobile number and email address before continuing.');
+    if (!phoneVerified || !emailVerified) {
+      setFieldError('mobileNumber', !phoneVerified ? 'Please verify your mobile number.' : '');
+      setFieldError('emailAddress', !emailVerified ? 'Please verify your email address.' : '');
       setSaving(false);
       return null;
     }
@@ -522,35 +647,75 @@ export default function SellerApplicationPage() {
   const availableUpazilas = BANGLADESH_UPAZILAS.filter((u) => u.districtId === selectedDistrict.id);
 
   const validateStep = (step: number): boolean => {
-    setError(null);
+    const errors: Record<string, string> = {};
+
     if (step === 1) {
-      if (!validateCredentials()) return false;
-      if (!phoneVerified || !emailVerified) {
-        setError('Complete mobile and email verification before continuing.');
-        return false;
+      if (!user) {
+        if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
+          errors.sellerName = 'Please enter your full name (at least 2 characters).';
+        }
+        if (!form.mobileNumber.trim()) {
+          errors.mobileNumber = 'Please enter your mobile number.';
+        } else if (!isValidPhone) {
+          errors.mobileNumber = 'Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).';
+        }
+        if (!form.emailAddress.trim()) {
+          errors.emailAddress = 'Please enter your email address.';
+        } else if (!isValidEmail) {
+          errors.emailAddress = 'Please enter a valid email address.';
+        }
+        if (!form.password) {
+          errors.password = 'Please enter a password.';
+        } else if (form.password.length < 8) {
+          errors.password = 'Password must be at least 8 characters long.';
+        }
+        if (!form.confirmPassword) {
+          errors.confirmPassword = 'Please confirm your password.';
+        } else if (form.password !== form.confirmPassword) {
+          errors.confirmPassword = 'Passwords do not match.';
+        }
+      }
+
+      if (!phoneVerified) {
+        errors.mobileNumber = errors.mobileNumber || 'Please verify your mobile number with the OTP code.';
+      }
+      if (!emailVerified) {
+        errors.emailAddress = errors.emailAddress || 'Please verify your email address with the OTP code.';
       }
     }
+
     if (step === 2) {
       if (!form.businessName || form.businessName.trim().length < 3) {
-        setError('Business name must be at least 3 characters.');
-        return false;
+        errors.businessName = 'Business name must be at least 3 characters.';
       }
       if (!form.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) {
-        setError('Store handle must be lowercase alphanumeric with hyphens.');
-        return false;
+        errors.slug = 'Store handle must be lowercase alphanumeric with hyphens.';
       }
     }
+
     if (step === 3) {
       if (form.binNumber && !/^\d{9,13}$/.test(form.binNumber.trim())) {
-        setError('NBR BIN number must be between 9 and 13 numeric digits.');
-        return false;
+        errors.binNumber = 'NBR BIN number must be between 9 and 13 numeric digits.';
       }
       if (form.tinNumber && !/^\d{10,12}$/.test(form.tinNumber.trim())) {
-        setError('Tax Identification Number (TIN) must be between 10 and 12 numeric digits.');
-        return false;
+        errors.tinNumber = 'Tax Identification Number (TIN) must be between 10 and 12 numeric digits.';
       }
     }
-    return true;
+
+    if (step === 4) {
+      if (!form.streetAddress || form.streetAddress.trim().length < 5) {
+        errors.streetAddress = 'Warehouse street address must be at least 5 characters.';
+      }
+    }
+
+    if (step === 6) {
+      if (!agreedTerms) {
+        errors.agreedTerms = 'You must accept the terms and NBR compliance policy.';
+      }
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const nextStep = async () => {
@@ -702,7 +867,7 @@ export default function SellerApplicationPage() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
         {/* Title Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -798,114 +963,106 @@ export default function SellerApplicationPage() {
           </div>
         )}
 
-        {error && (
-          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center space-x-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Two-Column Responsive Layout: Left Vertical Stepper + Right Step Form */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
+          {/* LEFT: Compact Vertical Stepper */}
+          <aside className="w-full lg:w-64 xl:w-72 shrink-0 bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-xs lg:sticky lg:top-24">
+            <div className="text-[10px] font-mono font-black uppercase tracking-wider text-slate-400 mb-3 px-1">
+              Onboarding Steps (6)
+            </div>
 
-        {/* 5-Step Horizontal Progress Stepper */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-xs overflow-x-auto">
-          <div className="flex items-center justify-between min-w-[640px]">
-            {STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              const isCompleted = step.id < currentStep || (step.id === 6 && application?.status === 'SUBMITTED');
-              const isCurrent = step.id === currentStep;
+            <nav aria-label="Registration Steps" className="space-y-1">
+              {STEPS.map((step, idx) => {
+                const isCompleted = step.id < currentStep || (step.id === 6 && application?.status === 'SUBMITTED');
+                const isCurrent = step.id === currentStep;
 
-              return (
-                <div key={step.id} className="flex items-center flex-1 last:flex-none">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (step.id < currentStep || isEditable) {
-                        if (validateStep(currentStep)) setCurrentStep(step.id);
-                      }
-                    }}
-                    className={`flex items-center space-x-3 text-left transition-all ${
-                      isCurrent
-                        ? 'text-slate-900 font-bold'
-                        : isCompleted
-                        ? 'text-emerald-700 hover:text-emerald-800 font-semibold'
-                        : 'text-slate-400 font-medium'
-                    }`}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-2xl flex items-center justify-center font-mono font-bold text-xs transition-all shadow-xs ${
-                        isCompleted
-                          ? 'bg-emerald-500 text-white shadow-emerald-500/20'
-                          : isCurrent
-                          ? 'bg-[#FF6A00] text-white shadow-orange-500/25 ring-4 ring-orange-500/15'
-                          : 'bg-slate-100 text-slate-500 border border-slate-200'
+                return (
+                  <div key={step.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (step.id < currentStep || isEditable) {
+                          if (validateStep(currentStep)) setCurrentStep(step.id);
+                        }
+                      }}
+                      className={`w-full flex items-center space-x-3 p-2.5 rounded-2xl text-left transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-orange-50/80 border border-orange-200 text-slate-900 shadow-xs'
+                          : isCompleted
+                          ? 'hover:bg-slate-50 text-slate-700'
+                          : 'text-slate-400 hover:text-slate-600'
                       }`}
                     >
-                      {isCompleted ? <Check className="w-5 h-5 stroke-[3]" /> : step.id}
-                    </div>
-                    <div>
-                      <div className="text-xs font-black tracking-tight leading-tight flex items-center space-x-1">
-                        <span>{step.title}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-normal hidden md:block">
-                        {step.desc}
-                      </div>
-                    </div>
-                  </button>
-
-                  {idx < STEPS.length - 1 && (
-                    <div className="flex-1 mx-3 sm:mx-4 h-0.5 bg-slate-200 min-w-[20px] relative">
                       <div
-                        className="h-full bg-emerald-500 transition-all duration-300"
-                        style={{ width: isCompleted ? '100%' : '0%' }}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Step Card Container */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-9 relative">
-          {loading ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500 text-xs">
-              <Loader2 className="w-8 h-8 text-[#FF6A00] animate-spin" />
-              <span>Loading onboarding profile details...</span>
-            </div>
-          ) : (
-            <>
-              {/* STEP 1: SELLER ACCOUNT CREDENTIALS & VERIFICATION */}
-              {currentStep === 1 && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  <div className="border-b border-slate-100 pb-4">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 1: Seller Account Credentials</h2>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Create your account and verify both your Bangladesh mobile number and email address.
-                    </p>
-                  </div>
-
-                  {/* Seller Account Credentials Section */}
-                  <div className="p-5 rounded-2xl border border-orange-200/70 bg-orange-50/40 space-y-4">
-                    <div className="flex items-center justify-between border-b border-orange-200/50 pb-3">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-[#FF6A00]" />
-                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                          Seller Account Credentials
-                        </h3>
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 transition-all ${
+                          isCompleted
+                            ? 'bg-emerald-500 text-white'
+                            : isCurrent
+                            ? 'bg-[#FF6A00] text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                      >
+                        {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.id}
                       </div>
-                      {user && (
-                        <span className="inline-flex items-center space-x-1 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Logged in as {user.name || user.email}</span>
-                        </span>
-                      )}
+
+                      <div className="min-w-0 flex-1">
+                        <div
+                          className={`text-xs font-bold truncate leading-tight ${
+                            isCurrent ? 'text-slate-950 font-black' : isCompleted ? 'text-slate-800' : 'text-slate-500'
+                          }`}
+                        >
+                          {step.title}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">
+                          {step.desc}
+                        </div>
+                      </div>
+
+                      {isCurrent && <ChevronRight className="w-3.5 h-3.5 text-[#FF6A00] shrink-0" />}
+                    </button>
+
+                    {idx < STEPS.length - 1 && (
+                      <div className="ml-5 w-0.5 h-2 bg-slate-200 my-0.5" />
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+          </aside>
+
+          {/* RIGHT: Step Card Container */}
+          <div className="flex-1 w-full bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-9 relative">
+            {loading ? (
+              <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500 text-xs">
+                <Loader2 className="w-8 h-8 text-[#FF6A00] animate-spin" />
+                <span>Loading onboarding profile details...</span>
+              </div>
+            ) : (
+              <>
+                {/* STEP 1: SELLER ACCOUNT CREDENTIALS & VERIFICATION */}
+                {currentStep === 1 && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-5 h-5 text-[#FF6A00]" />
+                        <h2 className="text-lg font-black text-slate-900">Step 1: Seller Account Credentials</h2>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Enter your personal details and verify your mobile number and email address to begin onboarding.
+                      </p>
                     </div>
+
+                    {/* Account Status Badge if authenticated */}
+                    {user && (
+                      <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+                        <span className="font-semibold">Logged in as {user.name || user.email}</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Verified Session</span>
+                      </div>
+                    )}
 
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
+                      {/* Seller Name */}
+                      <div className="sm:col-span-2">
                         <label className="block text-xs font-bold text-slate-700 mb-1">
                           Seller Name *
                         </label>
@@ -916,40 +1073,111 @@ export default function SellerApplicationPage() {
                           onChange={(e) => setField('sellerName', e.target.value)}
                           placeholder="Enter your full name"
                           required
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                          className={`w-full px-3.5 py-2.5 rounded-xl border bg-white text-xs font-semibold text-slate-900 placeholder-slate-400 outline-none transition-all disabled:bg-slate-100 ${
+                            fieldErrors.sellerName
+                              ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20'
+                              : 'border-slate-200 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20'
+                          }`}
                         />
+                        {fieldErrors.sellerName && (
+                          <p className="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>{fieldErrors.sellerName}</span>
+                          </p>
+                        )}
                       </div>
 
+                      {/* Mobile Number with Inline Verify Button */}
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
                           Mobile Number *
                         </label>
-                        <input
-                          type="tel"
-                          disabled={Boolean(user) || !isEditable || saving}
-                          value={form.mobileNumber}
-                          onChange={(e) => setField('mobileNumber', e.target.value)}
-                          placeholder="Enter your mobile number"
-                          required
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                        />
+                        <div className="relative flex items-center">
+                          <input
+                            type="tel"
+                            disabled={phoneVerified || Boolean(user) || !isEditable || saving}
+                            value={form.mobileNumber}
+                            onChange={(e) => setField('mobileNumber', e.target.value)}
+                            placeholder="Enter your mobile number"
+                            required
+                            className={`w-full px-3.5 py-2.5 pr-24 rounded-xl border bg-white text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition-all disabled:bg-slate-100 ${
+                              fieldErrors.mobileNumber
+                                ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20'
+                                : 'border-slate-200 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20'
+                            }`}
+                          />
+                          <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                            {phoneVerified ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Verified</span>
+                              </span>
+                            ) : isValidPhone ? (
+                              <button
+                                type="button"
+                                onClick={() => void handleStartPhoneVerification()}
+                                disabled={verificationBusy}
+                                className="px-3 py-1.5 rounded-lg bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {verificationBusy && activeVerifyModal === 'phone' ? 'Sending...' : 'Verify'}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        {fieldErrors.mobileNumber && (
+                          <p className="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>{fieldErrors.mobileNumber}</span>
+                          </p>
+                        )}
                       </div>
 
-                      <div className="sm:col-span-2">
+                      {/* Email Address with Inline Verify Button */}
+                      <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
                           Email Address *
                         </label>
-                        <input
-                          type="email"
-                          disabled={Boolean(user) || !isEditable || saving}
-                          value={form.emailAddress}
-                          onChange={(e) => setField('emailAddress', e.target.value)}
-                          placeholder="Enter your email address"
-                          required
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                        />
+                        <div className="relative flex items-center">
+                          <input
+                            type="email"
+                            disabled={emailVerified || Boolean(user) || !isEditable || saving}
+                            value={form.emailAddress}
+                            onChange={(e) => setField('emailAddress', e.target.value)}
+                            placeholder="Enter your email address"
+                            required
+                            className={`w-full px-3.5 py-2.5 pr-24 rounded-xl border bg-white text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition-all disabled:bg-slate-100 ${
+                              fieldErrors.emailAddress
+                                ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20'
+                                : 'border-slate-200 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20'
+                            }`}
+                          />
+                          <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                            {emailVerified ? (
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Verified</span>
+                              </span>
+                            ) : isValidEmail ? (
+                              <button
+                                type="button"
+                                onClick={() => void handleStartEmailVerification()}
+                                disabled={verificationBusy}
+                                className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {verificationBusy && activeVerifyModal === 'email' ? 'Sending...' : 'Verify'}
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                        {fieldErrors.emailAddress && (
+                          <p className="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>{fieldErrors.emailAddress}</span>
+                          </p>
+                        )}
                       </div>
 
+                      {/* Password & Confirm Password for unauthenticated */}
                       {!user && (
                         <>
                           <div>
@@ -963,8 +1191,18 @@ export default function SellerApplicationPage() {
                               onChange={(e) => setField('password', e.target.value)}
                               placeholder="Enter your password"
                               required
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                              className={`w-full px-3.5 py-2.5 rounded-xl border bg-white text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition-all disabled:bg-slate-100 ${
+                                fieldErrors.password
+                                  ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20'
+                                  : 'border-slate-200 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20'
+                              }`}
                             />
+                            {fieldErrors.password && (
+                              <p className="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                <span>{fieldErrors.password}</span>
+                              </p>
+                            )}
                           </div>
 
                           <div>
@@ -978,73 +1216,31 @@ export default function SellerApplicationPage() {
                               onChange={(e) => setField('confirmPassword', e.target.value)}
                               placeholder="Enter confirm password"
                               required
-                              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-900 placeholder-slate-400 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                              className={`w-full px-3.5 py-2.5 rounded-xl border bg-white text-xs font-mono text-slate-900 placeholder-slate-400 outline-none transition-all disabled:bg-slate-100 ${
+                                fieldErrors.confirmPassword
+                                  ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20'
+                                  : 'border-slate-200 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20'
+                              }`}
                             />
+                            {fieldErrors.confirmPassword && (
+                              <p className="mt-1.5 text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                <span>{fieldErrors.confirmPassword}</span>
+                              </p>
+                            )}
                           </div>
                         </>
                       )}
                     </div>
-                  </div>
 
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <section className={`rounded-2xl border p-4 ${phoneVerified ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-black text-slate-900">Mobile verification</h3>
-                          <p className="mt-1 text-[11px] text-slate-500">We will send a six-digit OTP to {form.mobileNumber || 'your Bangladesh mobile number'}.</p>
-                        </div>
-                        {phoneVerified && <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">Verified</span>}
-                      </div>
-                      {!phoneVerified && (
-                        <div className="mt-4 space-y-3">
-                          {!phoneOtpSent ? (
-                            <button type="button" onClick={() => void sendPhoneVerification()} disabled={verificationBusy} className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
-                              {verificationBusy ? 'Sending…' : 'Send mobile verification code'}
-                            </button>
-                          ) : (
-                            <>
-                              <input value={phoneOtp} onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="Enter 6-digit mobile OTP" className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-center font-mono text-lg tracking-[0.35em] outline-none focus:border-[#FF6A00]" />
-                              {devPhoneOtp && <p className="text-[10px] text-amber-700">Development OTP: <strong>{devPhoneOtp}</strong></p>}
-                              <button type="button" onClick={() => void verifyPhoneAndCreateAccount()} disabled={verificationBusy || phoneOtp.length !== 6} className="w-full rounded-xl bg-[#FF6A00] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
-                                {verificationBusy ? 'Verifying…' : 'Verify mobile & create account'}
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </section>
-
-                    <section className={`rounded-2xl border p-4 ${emailVerified ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="text-sm font-black text-slate-900">Email verification</h3>
-                          <p className="mt-1 text-[11px] text-slate-500">Email verification unlocks the merchant application form.</p>
-                        </div>
-                        {emailVerified && <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-800">Verified</span>}
-                      </div>
-                      {!emailVerified && (
-                        <div className="mt-4 space-y-3">
-                          {!accountProvisioned ? (
-                            <div className="rounded-xl bg-slate-50 p-3 text-[11px] text-slate-500">Verify your mobile number first. The email code is sent after account creation.</div>
-                          ) : emailOtpSent ? (
-                            <>
-                              <input value={emailOtp} onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="Enter 6-digit email OTP" className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-center font-mono text-lg tracking-[0.35em] outline-none focus:border-[#FF6A00]" />
-                              {devEmailOtp && <p className="text-[10px] text-amber-700">Development OTP: <strong>{devEmailOtp}</strong></p>}
-                              <button type="button" onClick={() => void verifyEmailAddress()} disabled={verificationBusy || emailOtp.length !== 6} className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
-                                {verificationBusy ? 'Verifying…' : 'Verify email address'}
-                              </button>
-                            </>
-                          ) : (
-                            <button type="button" onClick={() => void sendEmailVerificationCode()} disabled={verificationBusy || !phoneVerified} className="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
-                              {verificationBusy ? 'Sending…' : 'Send email verification code'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </section>
+                    <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-amber-900 text-xs flex items-start space-x-2.5">
+                      <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="leading-relaxed">
+                        Verify your mobile number and email address using the inline <strong>Verify</strong> buttons. You can verify either one first. Once verified, click Next Step to proceed to Store Identity.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* STEP 2: STORE IDENTITY */}
               {currentStep === 2 && (
@@ -1489,7 +1685,7 @@ export default function SellerApplicationPage() {
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  {isEditable && currentStep > 1 && (
+                  {isEditable && currentStep >= 2 && (
                     <button
                       type="button"
                       disabled={saving}
@@ -1537,6 +1733,171 @@ export default function SellerApplicationPage() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Phone OTP Verification Modal */}
+      {activeVerifyModal === 'phone' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#FF6A00] flex items-center justify-center">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-black text-slate-900">Verify Mobile Number</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveVerifyModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Enter the 6-digit numeric verification code sent to <strong className="text-slate-800">{form.mobileNumber}</strong>.
+            </p>
+
+            {devPhoneOtp && (
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono">
+                Development OTP: <strong>{devPhoneOtp}</strong>
+              </div>
+            )}
+
+            {modalError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={phoneOtpInput}
+                onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="••••••"
+                className="w-full text-center font-mono text-2xl tracking-[0.35em] font-bold py-3 px-4 rounded-xl border border-slate-300 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none"
+              />
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => void handleSubmitPhoneOtp()}
+                disabled={verificationBusy || phoneOtpInput.length !== 6}
+                className="w-full py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
+              >
+                {verificationBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                <span>Submit OTP</span>
+              </button>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <button
+                  type="button"
+                  onClick={() => void handleStartPhoneVerification()}
+                  disabled={verificationBusy}
+                  className="text-xs font-semibold text-[#FF6A00] hover:underline cursor-pointer"
+                >
+                  Resend Code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveVerifyModal(null)}
+                  className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email OTP Verification Modal */}
+      {activeVerifyModal === 'email' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-black text-slate-900">Verify Email Address</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveVerifyModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Enter the 6-digit verification code sent to <strong className="text-slate-800">{form.emailAddress}</strong>.
+            </p>
+
+            {devEmailOtp && (
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono">
+                Development OTP: <strong>{devEmailOtp}</strong>
+              </div>
+            )}
+
+            {modalError && (
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <div>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={emailOtpInput}
+                onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="••••••"
+                className="w-full text-center font-mono text-2xl tracking-[0.35em] font-bold py-3 px-4 rounded-xl border border-slate-300 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none"
+              />
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => void handleSubmitEmailOtp()}
+                disabled={verificationBusy || emailOtpInput.length !== 6}
+                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
+              >
+                {verificationBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                <span>Submit OTP</span>
+              </button>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <button
+                  type="button"
+                  onClick={() => void handleStartEmailVerification()}
+                  disabled={verificationBusy}
+                  className="text-xs font-semibold text-slate-700 hover:text-black hover:underline cursor-pointer"
+                >
+                  Resend Code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveVerifyModal(null)}
+                  className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </main>
 
       {/* LUXURY DARK STOREFRONT FOOTER */}
