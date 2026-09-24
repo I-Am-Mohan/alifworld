@@ -135,6 +135,7 @@ model User {
   notificationDeliveries  UserNotificationDelivery[]
   sellerApplications     SellerApplication[]       @relation("SellerApplicationApplicant")
   applicationReviews     SellerApplicationReview[] @relation("SellerApplicationReviewer")
+  couponRedemptions      CouponRedemption[]
 
   @@index([status])
   @@index([deletedAt])
@@ -422,6 +423,7 @@ model Seller {
   promotionAttributions PromotionAttribution[]
   priceLists          PriceList[]
   discountRules       DiscountRule[]
+  couponRedemptions   CouponRedemption[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -984,6 +986,7 @@ model Promotion {
 
   seller       Seller?                @relation(fields: [sellerId], references: [id], onDelete: SetNull)
   attributions PromotionAttribution[]
+  redemptions  CouponRedemption[]
 
   @@index([code])
   @@index([sellerId, status])
@@ -1128,6 +1131,7 @@ model DiscountRule {
 
   seller  Seller?              @relation(fields: [sellerId], references: [id], onDelete: SetNull)
   targets DiscountRuleTarget[]
+  redemptions CouponRedemption[]
 
   @@index([code])
   @@index([sellerId, status])
@@ -1149,6 +1153,42 @@ model DiscountRuleTarget {
   @@index([discountRuleId])
   @@index([targetType, targetId])
   @@map("discount_rule_targets")
+}
+
+// ------------------------------------------------------------------------------
+// 16e. Coupon Lifecycle & Redemption Controls
+// ------------------------------------------------------------------------------
+/// Atomic coupon reservation, redemption commit, and reversal audit ledger
+model CouponRedemption {
+  id                   String    @id @default(uuid())
+  couponCode           String    @map("coupon_code")
+  discountRuleId       String?   @map("discount_rule_id")
+  promotionId          String?   @map("promotion_id")
+  customerId           String    @map("customer_id")
+  orderId              String?   @map("order_id")
+  sellerId             String?   @map("seller_id")
+  discountAmountPoisha BigInt    @map("discount_amount_poisha")
+  status               String    @default("RESERVED") // RESERVED, COMMITTED, REVERSED
+  reservedAt           DateTime  @default(now()) @map("reserved_at")
+  committedAt          DateTime? @map("committed_at")
+  reversedAt           DateTime? @map("reversed_at")
+  reversalReason       String?   @map("reversal_reason")
+  ruleVersion          String    @default("v1.0.0") @map("rule_version")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  customer     User          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  discountRule DiscountRule? @relation(fields: [discountRuleId], references: [id], onDelete: SetNull)
+  promotion    Promotion?    @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  order        Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  seller       Seller?       @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+
+  @@index([couponCode, customerId])
+  @@index([customerId, status])
+  @@index([orderId])
+  @@index([sellerId, createdAt])
+  @@index([status, reservedAt])
+  @@map("coupon_redemptions")
 }
 
 // ------------------------------------------------------------------------------
@@ -1858,6 +1898,7 @@ model Order {
   refunds           Refund[]
   commissions       CommissionLedger[]
   promotionAttributions PromotionAttribution[]
+  couponRedemptions CouponRedemption[]
 
   @@index([customerId, status])
   @@index([orderNumber])
