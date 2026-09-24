@@ -1,43 +1,24 @@
-import { readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-const [envFile, ...command] = Bun.argv.slice(2);
+// Parse arguments. If first argument starts with '.env', strip it out as legacy env-file argument.
+let rawArgs = Bun.argv.slice(2);
+if (rawArgs.length > 0 && rawArgs[0].startsWith('.env')) {
+  rawArgs = rawArgs.slice(1);
+}
 
-if (!envFile || command.length === 0) {
-  console.error('Usage: bun run scripts/run-with-env.ts <env-file> <command> [...args]');
+if (rawArgs.length === 0) {
+  console.error('Usage: bun run scripts/run-with-env.ts <command> [...args]');
   process.exit(1);
 }
 
+const command = rawArgs;
 const projectDirectory = process.cwd();
-const envFilePath = resolve(projectDirectory, envFile);
+const dotEnvPath = resolve(projectDirectory, '.env');
+const hasDotEnv = await Bun.file(dotEnvPath).exists();
 
-if (!(await Bun.file(envFilePath).exists())) {
-  console.error(`Environment file not found: ${envFile}`);
-  process.exit(1);
-}
-
-// `bun run <script>` automatically loads .env files before executing this
-// runner. Remove every repository dotenv key from the inherited environment so
-// the selected file is authoritative for the child process.
 const childEnvironment = { ...process.env };
-const dotenvFiles = (await readdir(projectDirectory)).filter(
-  (fileName) => fileName === '.env' || fileName.startsWith('.env.'),
-);
 
-for (const fileName of dotenvFiles) {
-  const contents = await Bun.file(resolve(projectDirectory, fileName)).text();
-
-  for (const line of contents.split(/\r?\n/)) {
-    const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/);
-
-    if (match) {
-      delete childEnvironment[match[1]];
-    }
-  }
-}
-
-// Next.js requires a command-specific NODE_ENV. A development-targeted build
-// still needs NODE_ENV=production; APP_ENV continues to describe its target.
+// Set NODE_ENV for Next.js commands if needed
 if (command[0] === 'next') {
   if (command[1] === 'dev') {
     childEnvironment.NODE_ENV = 'development';
@@ -46,16 +27,24 @@ if (command[0] === 'next') {
   }
 }
 
-const child = Bun.spawn(
-  [process.execPath, `--env-file=${envFilePath}`, '--no-env-file', 'run', ...command],
-  {
-    cwd: projectDirectory,
-    env: childEnvironment,
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
-  },
-);
+// Prepare spawn arguments
+const spawnArgs = hasDotEnv
+  ? [process.execPath, `--env-file=${dotEnvPath}`, '--no-env-file', 'run', ...command]
+  : [process.execPath, 'run', ...command];
+
+if (!hasDotEnv) {
+  console.info('[run-with-env] .env file not found. Executing command using environment variables.');
+} else {
+  console.info('[run-with-env] Loaded environment from .env file.');
+}
+
+const child = Bun.spawn(spawnArgs, {
+  cwd: projectDirectory,
+  env: childEnvironment,
+  stdin: 'inherit',
+  stdout: 'inherit',
+  stderr: 'inherit',
+});
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => child.kill(signal));
