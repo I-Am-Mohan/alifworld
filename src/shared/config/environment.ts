@@ -43,14 +43,19 @@ export const serverEnvSchema = clientEnvSchema.extend({
 
   // PostgreSQL Database & Connection Pooling
   DATABASE_URL: z
-    .string()
-    .min(1, 'DATABASE_URL is required')
-    .default('postgresql://alifworld:alifworld_local_secret@localhost:5432/alifworld_dev?schema=public&connection_limit=10'),
+    .preprocess(
+      (val) => (typeof val === 'string' && val.trim().length > 0 ? val.trim() : undefined),
+      z.string().default('postgresql://alifworld:alifworld_local_secret@localhost:5432/alifworld_dev?schema=public&connection_limit=10')
+    ),
   DATABASE_POOL_MIN: z.coerce.number().int().nonnegative().default(2),
   DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 
   // Redis Distributed Cache, Locks & BullMQ
-  REDIS_URL: z.string().min(1).default('redis://localhost:6379/0'),
+  REDIS_URL: z
+    .preprocess(
+      (val) => (typeof val === 'string' && val.trim().length > 0 ? val.trim() : undefined),
+      z.string().default('redis://localhost:6379/0')
+    ),
   REDIS_KEY_PREFIX: z.string().default('alif:'),
   REDIS_TLS_ENABLED: z
     .preprocess((val) => val === 'true' || val === true, z.boolean())
