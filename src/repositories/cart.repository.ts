@@ -10,7 +10,7 @@
 
 import { BaseRepository } from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError, ConflictError } from '@/shared/errors/app-error';
 import { ActorContext } from '@/shared/authz/authz.types';
 
 export interface AddCartItemInput {
@@ -22,6 +22,66 @@ export interface AddCartItemInput {
 }
 
 export class CartRepository extends BaseRepository {
+  async addPublishedVariant(userId: string, variantId: string, quantity: number) {
+    if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 2147483647) {
+      throw new ValidationError('Cart item quantity must be a positive integer');
+    }
+
+    const variant = await (this.db as any).productVariant.findFirst({
+      where: {
+        id: variantId,
+        deletedAt: null,
+        isActive: true,
+        product: { deletedAt: null, status: 'PUBLISHED', currency: 'BDT', seller: { deletedAt: null, status: 'VERIFIED' } },
+      },
+      select: {
+        pricePoisha: true,
+        productPoint: true,
+        product: { select: { sellerId: true, productPoint: true } },
+      },
+    });
+    if (!variant) {
+      throw new NotFoundError('Sellable product variant not found');
+    }
+    if (variant.pricePoisha <= 0n) {
+      throw new ConflictError('Product variant does not have a valid BDT price');
+    }
+
+    const cart = await this.getOrCreateCart(userId);
+    if (cart.currency !== 'BDT' || cart.status !== 'ACTIVE') {
+      throw new ConflictError('Cart is not available for BDT purchases');
+    }
+    const item = await this.addItem(cart.id, {
+      variantId,
+      sellerId: variant.product.sellerId,
+      quantity,
+      pricePoisha: variant.pricePoisha,
+      productPoint: variant.productPoint ?? variant.product.productPoint,
+    });
+    return { cartId: cart.id, item };
+  }
+
+  private async claimEditableCart(tx: any, cartId: string, ownerId?: string) {
+    const result = await tx.cart.updateMany({
+      where: { id: cartId, status: 'ACTIVE', deletedAt: null, ...(ownerId ? { userId: ownerId } : {}) },
+      data: { version: { increment: 1 } },
+    });
+    if (result.count !== 1) {
+      throw new ConflictError('Cart is no longer editable');
+    }
+  }
+
+  private async claimEditableItem(tx: any, itemId: string, ownerId?: string) {
+    const item = await tx.cartItem.findFirst({
+      where: { id: itemId, deletedAt: null, ...(ownerId ? { cart: { userId: ownerId, deletedAt: null, status: 'ACTIVE' } } : {}) },
+      select: { cartId: true },
+    });
+    if (!item) {
+      throw new NotFoundError('Cart item not found');
+    }
+    await this.claimEditableCart(tx, item.cartId, ownerId);
+  }
+
   /**
    * Finds an active cart for an authenticated user with active items.
    */
@@ -67,7 +127,7 @@ export class CartRepository extends BaseRepository {
           items: {
             where: { deletedAt: null },
             include: {
-              variant: true,
+              variant: { include: { product: true } },
               seller: true,
             },
           },
@@ -149,41 +209,47 @@ export class CartRepository extends BaseRepository {
    * Adds or increments an item in a cart.
    */
   async addItem(cartId: string, input: AddCartItemInput) {
-    if (input.quantity <= 0) {
+    if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0 || input.quantity > 2147483647) {
       throw new ValidationError('Item quantity must be greater than zero');
     }
 
     return this.executeSafe(async () => {
-      const existingItem = await (this.db as any).cartItem.findFirst({
-        where: this.whereNotDeleted({
-          cartId,
-          variantId: input.variantId,
-        }),
-      });
+      return this.withTransaction(async (tx) => {
+        await this.claimEditableCart(tx, cartId);
+        const existingItem = await (tx as any).cartItem.findFirst({
+          where: this.whereNotDeleted({
+            cartId,
+            variantId: input.variantId,
+          }),
+        });
 
-      if (existingItem) {
-        const newQty = existingItem.quantity + input.quantity;
-        return (this.db as any).cartItem.update({
-          where: { id: existingItem.id },
+        if (existingItem) {
+          const newQty = existingItem.quantity + input.quantity;
+          if (!Number.isSafeInteger(newQty) || newQty > 2147483647) {
+            throw new ValidationError('Cart item quantity exceeds the supported range');
+          }
+          return (tx as any).cartItem.update({
+            where: { id: existingItem.id },
+            data: {
+              quantity: newQty,
+              pricePoisha: input.pricePoisha,
+              productPoint: input.productPoint ?? existingItem.productPoint,
+              version: { increment: 1 },
+            },
+          });
+        }
+
+        return (tx as any).cartItem.create({
           data: {
-            quantity: newQty,
+            id: generateId(ID_PREFIXES.CART_ITEM),
+            cartId,
+            variantId: input.variantId,
+            sellerId: input.sellerId,
+            quantity: input.quantity,
             pricePoisha: input.pricePoisha,
-            productPoint: input.productPoint ?? existingItem.productPoint,
-            version: { increment: 1 },
+            productPoint: input.productPoint ?? 0,
           },
         });
-      }
-
-      return (this.db as any).cartItem.create({
-        data: {
-          id: generateId(ID_PREFIXES.CART_ITEM),
-          cartId,
-          variantId: input.variantId,
-          sellerId: input.sellerId,
-          quantity: input.quantity,
-          pricePoisha: input.pricePoisha,
-          productPoint: input.productPoint ?? 0,
-        },
       });
     }, 'CartRepository.addItem');
   }
@@ -191,24 +257,30 @@ export class CartRepository extends BaseRepository {
   /**
    * Updates an item's quantity. Soft-deletes if quantity is zero or less.
    */
-  async updateItemQuantity(itemId: string, quantity: number, actorId?: string) {
+  async updateItemQuantity(itemId: string, quantity: number, actorId?: string, ownerId?: string) {
+    if (!Number.isSafeInteger(quantity) || quantity > 2147483647) {
+      throw new ValidationError('Cart item quantity exceeds the supported range');
+    }
     return this.executeSafe(async () => {
-      if (quantity <= 0) {
-        return (this.db as any).cartItem.update({
-          where: { id: itemId },
+      return this.withTransaction(async (tx) => {
+        await this.claimEditableItem(tx, itemId, ownerId);
+        if (quantity <= 0) {
+          return (tx as any).cartItem.update({
+            where: { id: itemId, deletedAt: null },
+            data: {
+              ...this.createSoftDeletePatch(actorId),
+              version: { increment: 1 },
+            },
+          });
+        }
+
+        return (tx as any).cartItem.update({
+          where: { id: itemId, deletedAt: null },
           data: {
-            ...this.createSoftDeletePatch(actorId),
+            quantity,
             version: { increment: 1 },
           },
         });
-      }
-
-      return (this.db as any).cartItem.update({
-        where: { id: itemId },
-        data: {
-          quantity,
-          version: { increment: 1 },
-        },
       });
     }, 'CartRepository.updateItemQuantity');
   }
@@ -216,14 +288,17 @@ export class CartRepository extends BaseRepository {
   /**
    * Soft-deletes a single item from the cart.
    */
-  async removeItem(itemId: string, actorId?: string) {
+  async removeItem(itemId: string, actorId?: string, ownerId?: string) {
     return this.executeSafe(async () => {
-      return (this.db as any).cartItem.update({
-        where: { id: itemId },
-        data: {
-          ...this.createSoftDeletePatch(actorId),
-          version: { increment: 1 },
-        },
+      return this.withTransaction(async (tx) => {
+        await this.claimEditableItem(tx, itemId, ownerId);
+        return (tx as any).cartItem.update({
+          where: { id: itemId, deletedAt: null },
+          data: {
+            ...this.createSoftDeletePatch(actorId),
+            version: { increment: 1 },
+          },
+        });
       });
     }, 'CartRepository.removeItem');
   }
@@ -233,9 +308,12 @@ export class CartRepository extends BaseRepository {
    */
   async clearCart(cartId: string, actorId?: string) {
     return this.executeSafe(async () => {
-      return (this.db as any).cartItem.updateMany({
-        where: this.whereNotDeleted({ cartId }),
-        data: this.createSoftDeletePatch(actorId),
+      return this.withTransaction(async (tx) => {
+        await this.claimEditableCart(tx, cartId);
+        return (tx as any).cartItem.updateMany({
+          where: this.whereNotDeleted({ cartId }),
+          data: this.createSoftDeletePatch(actorId),
+        });
       });
     }, 'CartRepository.clearCart');
   }

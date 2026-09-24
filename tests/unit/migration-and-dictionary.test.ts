@@ -169,7 +169,7 @@ describe('Migration, Seed & Database Data Dictionary Workflows (Milestone 030)',
       const seedPath = resolve(process.cwd(), 'prisma/seed.ts');
       const seedContent = readFileSync(seedPath, 'utf-8');
 
-      expect(seedContent).toContain('contact@alifworld.com.bd');
+      expect(seedContent).toContain('contact@mail.com');
       expect(seedContent).toContain('INITIAL_SUPERADMIN_EMAIL');
       expect(seedContent).toContain('INITIAL_SUPERADMIN_PASSWORD');
     });

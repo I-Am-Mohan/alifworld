@@ -132,7 +132,7 @@ export default function CustomerStorePage() {
   const [selectedDivisionKey, setSelectedDivisionKey] = useState<string>('dhaka');
   const [isLocationMenuOpen, setIsLocationMenuOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [cartCount, setCartCount] = useState<number>(2);
+  const [cartCount, setCartCount] = useState<number>(0);
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
@@ -144,6 +144,17 @@ export default function CustomerStorePage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setCartCount(0);
+      return;
+    }
+    fetch('/api/v1/cart', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((body) => setCartCount(body?.data?.items?.reduce((count: number, item: { quantity: number }) => count + item.quantity, 0) ?? 0))
+      .catch(() => setCartCount(0));
+  }, [user]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -158,11 +169,6 @@ export default function CustomerStorePage() {
       showToast(nextState ? t('store.product.addedWishlist') : t('store.product.removedWishlist'));
       return { ...prev, [productId]: nextState };
     });
-  };
-
-  const handleAddToCart = (productTitle: string) => {
-    setCartCount((prev) => prev + 1);
-    showToast(`${t('store.product.addedToCart')}: "${productTitle}"`);
   };
 
   const scrollToTop = () => {
@@ -674,9 +680,8 @@ export default function CustomerStorePage() {
             </button>
 
             {/* Cart Button (Desktop only: hidden on mobile because available in bottom navigation bar) */}
-            <button
-              type="button"
-              onClick={() => showToast(t('auth.cartCountToast', { count: cartCount }))}
+            <Link
+              href="/cart"
               className="hidden md:flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors relative cursor-pointer"
             >
               <div className="relative">
@@ -688,7 +693,7 @@ export default function CustomerStorePage() {
                 )}
               </div>
               <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">{t('nav.cart')}</span>
-            </button>
+            </Link>
 
             {/* Language Switcher: Positioned after cart button on desktop, and at the end on mobile! */}
             <div className="hidden md:block w-px h-6 bg-slate-200 ml-1 mr-0.5" />
@@ -1103,8 +1108,9 @@ export default function CustomerStorePage() {
                 <div className="p-4 pt-0">
                   <button
                     type="button"
-                    onClick={() => handleAddToCart(product.title)}
-                    className="w-full py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                    disabled
+                    title="Preview product is not available for checkout"
+                    className="w-full py-2.5 rounded-xl bg-[#F59E0B] text-black font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-sm opacity-50 cursor-not-allowed"
                   >
                     <ShoppingCart className="w-4 h-4" />
                     <span>{t('store.product.addToCart')}</span>
@@ -1221,8 +1227,9 @@ export default function CustomerStorePage() {
                 <div className="p-4 pt-0">
                   <button
                     type="button"
-                    onClick={() => handleAddToCart(product.title)}
-                    className="w-full py-2.5 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-black font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+                    disabled
+                    title="Preview product is not available for checkout"
+                    className="w-full py-2.5 rounded-xl bg-[#F59E0B] text-black font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-sm opacity-50 cursor-not-allowed"
                   >
                     <ShoppingCart className="w-4 h-4" />
                     <span>{t('store.product.addToCart')}</span>
@@ -1237,10 +1244,9 @@ export default function CustomerStorePage() {
       {/* FLOATING ACTION BUTTONS */}
       <div className="fixed bottom-20 sm:bottom-8 left-4 z-40 flex flex-col space-y-3">
         {/* Floating Cart Button */}
-        <button
-          type="button"
+        <Link
+          href="/cart"
           aria-label={t('common.viewCart')}
-          onClick={() => showToast(t('store.promo.openingCart', { count: cartCount }))}
           className="w-12 h-12 rounded-full bg-[#18181B] text-white shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center relative border border-slate-700 cursor-pointer"
         >
           <ShoppingCart className="w-5 h-5" />
@@ -1249,7 +1255,7 @@ export default function CustomerStorePage() {
               {cartCount}
             </span>
           )}
-        </button>
+        </Link>
 
         {/* Floating WhatsApp Support Button */}
         <a
@@ -1302,9 +1308,8 @@ export default function CustomerStorePage() {
           <span className="text-[10px] mt-1 font-semibold">{t('nav.categories')}</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => showToast(t('auth.cartCountToast', { count: cartCount }))}
+        <Link
+          href="/cart"
           className="flex flex-col items-center text-slate-500 hover:text-slate-900 relative cursor-pointer"
         >
           <div className="relative">
@@ -1316,7 +1321,7 @@ export default function CustomerStorePage() {
             )}
           </div>
           <span className="text-[10px] mt-1 font-semibold">{t('nav.bag')}</span>
-        </button>
+        </Link>
 
         <button
           type="button"
@@ -1352,7 +1357,7 @@ export default function CustomerStorePage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="font-semibold">info@alifworld.com</span>
+                  <span className="font-semibold">info@mail.com</span>
                 </div>
               </div>
             </div>

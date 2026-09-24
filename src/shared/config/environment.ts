@@ -46,7 +46,6 @@ export const serverEnvSchema = clientEnvSchema.extend({
     .string()
     .min(1, 'DATABASE_URL is required')
     .default('postgresql://alifworld:alifworld_local_secret@localhost:5432/alifworld_dev?schema=public&connection_limit=10'),
-  DIRECT_DATABASE_URL: z.string().optional(),
   DATABASE_POOL_MIN: z.coerce.number().int().nonnegative().default(2),
   DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 

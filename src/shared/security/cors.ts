@@ -57,8 +57,18 @@ export const DEFAULT_EXPOSED_HEADERS = [
  */
 export function resolveAllowedOrigins(): string[] {
   const envOrigins = process.env.CORS_ALLOWED_ORIGINS;
+  const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+  const origins = [...DEFAULT_ALLOWED_ORIGINS];
+
+  if (appUrl) {
+    const normalizedAppUrl = appUrl.trim().replace(/\/$/, '');
+    if (!origins.includes(normalizedAppUrl)) {
+      origins.push(normalizedAppUrl);
+    }
+  }
+
   if (!envOrigins) {
-    return DEFAULT_ALLOWED_ORIGINS;
+    return origins;
   }
 
   const parsed = envOrigins
@@ -66,7 +76,13 @@ export function resolveAllowedOrigins(): string[] {
     .map((o) => o.trim().replace(/\/$/, ''))
     .filter(Boolean);
 
-  return parsed.length > 0 ? parsed : DEFAULT_ALLOWED_ORIGINS;
+  for (const o of parsed) {
+    if (!origins.includes(o)) {
+      origins.push(o);
+    }
+  }
+
+  return origins;
 }
 
 /**
@@ -82,6 +98,20 @@ export function isOriginAllowed(origin: string | null | undefined, allowedOrigin
   // Exact match
   if (allowedOrigins.includes(normalized)) {
     return true;
+  }
+
+  // Configured APP_URL hostname match
+  const configuredAppUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (configuredAppUrl) {
+    try {
+      const configuredUrl = new URL(configuredAppUrl);
+      const candidateUrl = new URL(normalized);
+      if (candidateUrl.hostname === configuredUrl.hostname) {
+        return true;
+      }
+    } catch {
+      // Ignore URL parse failures
+    }
   }
 
   // Trusted production subdomains match: https://*.alifworld.com

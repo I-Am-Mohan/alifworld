@@ -8,98 +8,12 @@
  */
 
 import { pbkdf2Sync, randomBytes, timingSafeEqual } from 'crypto';
-import { PASSWORD_POLICY } from './token-policy';
+export { isCommonPassword, validatePasswordStrength } from './password-strength';
 
 const PBKDF2_ITERATIONS = 100000;
 const PBKDF2_KEY_LEN = 64;
 const PBKDF2_DIGEST = 'sha512';
 const HASH_IDENTIFIER = '$pbkdf2-sha512$';
-
-/**
- * High-frequency breached password blacklist (NIST SP 800-63B breach-safe control)
- */
-const COMMONLY_BREACHED_PASSWORDS = new Set([
-  'password1!',
-  'password123!',
-  'password@123',
-  'password@1234',
-  'password#1',
-  'qwerty@123',
-  'qwerty123!',
-  'qwertyuiop1!',
-  'admin@123',
-  'admin123!',
-  'welcome@123',
-  'welcome123!',
-  'alifworld@2026',
-  'dhaka@1234',
-  'bangladesh@1',
-  'qwerty1234!',
-  'abc12345!',
-  'abcd1234!',
-  'monkey123!',
-  'dragon123!',
-  'football1!',
-  'princess1!',
-  'sunshine1!',
-  'trustno1!',
-  'master123!',
-  '12345678@aa',
-  'letmein@123',
-  'iloveyou@123',
-  'pass@word1',
-]);
-
-export function isCommonPassword(password: string): boolean {
-  return COMMONLY_BREACHED_PASSWORDS.has(password.toLowerCase().trim());
-}
-
-/**
- * Validates raw password complexity against platform security rules and breach lists.
- */
-export function validatePasswordStrength(password: string): {
-  isValid: boolean;
-  errors: string[];
-} {
-  const errors: string[] = [];
-
-  if (!password || typeof password !== 'string') {
-    return { isValid: false, errors: ['Password is required'] };
-  }
-
-  if (password.length < PASSWORD_POLICY.MIN_LENGTH) {
-    errors.push(`Password must contain at least ${PASSWORD_POLICY.MIN_LENGTH} characters`);
-  }
-
-  if (password.length > PASSWORD_POLICY.MAX_LENGTH) {
-    errors.push(`Password must not exceed ${PASSWORD_POLICY.MAX_LENGTH} characters`);
-  }
-
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase English letter');
-  }
-
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase English letter');
-  }
-
-  if (!/\d/.test(password)) {
-    errors.push('Password must contain at least one numeric digit');
-  }
-
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    errors.push('Password must contain at least one special character (!@#$%^&*...)');
-  }
-
-  if (isCommonPassword(password)) {
-    errors.push('This password appears in known data breaches or is too common. Please choose a more unique password.');
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
-}
 
 /**
  * Hashes a plaintext password using salted PBKDF2-HMAC-SHA512.

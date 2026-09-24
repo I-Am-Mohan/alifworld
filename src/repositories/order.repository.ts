@@ -12,7 +12,7 @@
 
 import { BaseRepository, parseOffsetPagination, formatPaginatedResult, assertSellerScope, assertOwnership } from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import { NotFoundError, AuthorizationError, ValidationError } from '@/shared/errors/app-error';
+import { NotFoundError, AuthorizationError, ValidationError, ConflictError } from '@/shared/errors/app-error';
 import { ActorContext } from '@/shared/authz/authz.types';
 import { SystemRoleCode } from '@/features/identity/types';
 
@@ -43,6 +43,8 @@ export interface CreateOrderFulfillmentGroupInput {
 }
 
 export interface CreateOrderInput {
+  cartId: string;
+  cartVersion: number;
   orderNumber: string;
   customerId: string;
   currency?: string;
@@ -90,6 +92,14 @@ export class OrderRepository extends BaseRepository {
   async createOrder(input: CreateOrderInput) {
     return this.executeSafe(async () => {
       return this.withTransaction(async (tx) => {
+        const claimed = await (tx as any).cart.updateMany({
+          where: { id: input.cartId, userId: input.customerId, currency: 'BDT', status: 'ACTIVE', version: input.cartVersion, deletedAt: null },
+          data: { status: 'CONVERTED', version: { increment: 1 } },
+        });
+        if (claimed.count !== 1) {
+          throw new ConflictError('Cart is no longer available for checkout');
+        }
+
         const orderId = generateId(ID_PREFIXES.ORDER);
 
         // 1. Create parent order

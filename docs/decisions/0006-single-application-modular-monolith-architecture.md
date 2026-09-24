@@ -55,7 +55,7 @@ The application produces a single production Docker container image capable of r
 ### 5. Resilient Infrastructure Adapters
 All external systems are encapsulated behind boot-safe adapters:
 - Meilisearch is paired with an automatic PostgreSQL full-text search fallback.
-- Redis caching gracefully degrades to direct database queries if the cache cluster is temporarily unreachable.
+- Redis caching gracefully degrades to database queries if the cache cluster is temporarily unreachable.
 
 ---
 

@@ -7,7 +7,7 @@
     "contact": {
       "name": "AlifWorld Architecture & Engineering",
       "email": "engineering@alifworld.com",
-      "url": "https://alifworld.com"
+      "url": "http://localhost:3000"
     },
     "license": {
       "name": "Proprietary"
@@ -16,15 +16,7 @@
   "servers": [
     {
       "url": "http://localhost:3000",
-      "description": "Local Development Server"
-    },
-    {
-      "url": "https://staging.alifworld.com",
-      "description": "Staging Integration Server"
-    },
-    {
-      "url": "https://api.alifworld.com",
-      "description": "Production Cluster"
+      "description": "Single-Application Monolith Server"
     }
   ],
   "tags": [
@@ -1458,7 +1450,7 @@
                   },
                   "avatarUrl": {
                     "type": "string",
-                    "example": "https://cdn.alifworld.com/avatars/usr_1.jpg"
+                    "example": "http://localhost:3000/avatars/usr_1.jpg"
                   }
                 }
               }
@@ -1515,6 +1507,142 @@
             "description": "Authentication required"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Add Published Variant to Cart",
+        "description": "Price and Product Points come from the active published BDT variant on the server.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "variantId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "variantId",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cart item added"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Variant unavailable"
+          },
+          "422": {
+            "description": "Invalid quantity"
+          }
+        }
+      }
+    },
+    "/api/v1/cart/items/{itemId}": {
+      "patch": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Update Owned Cart Item Quantity",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "quantity"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quantity updated"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "409": {
+            "description": "Cart no longer editable"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Remove Owned Cart Item",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item removed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "409": {
+            "description": "Cart no longer editable"
+          }
+        }
       }
     },
     "/api/v1/cart/checkout": {
@@ -1527,6 +1655,18 @@
         "security": [
           {
             "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128
+            }
           }
         ],
         "requestBody": {
@@ -1568,6 +1708,12 @@
           },
           "403": {
             "description": "Forbidden: Cart ownership violation"
+          },
+          "409": {
+            "description": "Cart changed or request conflicts with an existing checkout"
+          },
+          "422": {
+            "description": "Invalid checkout or missing Idempotency-Key"
           }
         }
       }
@@ -10509,7 +10655,7 @@
               },
               "email": {
                 "type": "string",
-                "example": "customer@alifworld.com"
+                "example": "customer@mail.com"
               },
               "roles": {
                 "type": "array",

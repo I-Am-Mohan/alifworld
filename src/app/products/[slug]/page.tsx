@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AlifLogo } from '@/components/brand/logo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -103,7 +104,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   };
 
   const handleAddToCart = () => {
-    setCartToast(`Added ${quantity} item(s) to your shopping bag!`);
+    setCartToast('This preview product is not available for checkout.');
     setTimeout(() => setCartToast(null), 4000);
   };
 
@@ -182,7 +183,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           {/* Left Column: Image Gallery (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="aspect-square rounded-2xl border border-slate-200 bg-white overflow-hidden relative group shadow-sm flex items-center justify-center p-4">
-              <img
+              <Image unoptimized width={800} height={800}
                 src={product.media[selectedImageIndex]}
                 alt={product.title}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
@@ -207,7 +208,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                       : 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-300'
                   }`}
                 >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
+                  <Image unoptimized width={80} height={80} src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
                 </button>
               ))}
             </div>
@@ -364,6 +365,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <Button
                   variant="primary"
                   onClick={handleAddToCart}
+                  disabled
                   className="flex-1 py-3 text-sm font-black shadow-sm flex items-center justify-center space-x-2"
                 >
                   <span>🛍️</span>
@@ -374,6 +376,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
                 <Button
                   variant="secondary"
                   onClick={handleAddToCart}
+                  disabled
                   className="sm:w-44 py-3 text-sm font-black shadow-sm"
                 >
                   ⚡ Buy Now
@@ -518,7 +521,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             {product.relatedProducts.map((rel) => (
               <Card key={rel.id} className="bg-white border-slate-200/90 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
                 <div className="aspect-[4/3] bg-slate-50 p-4 flex items-center justify-center overflow-hidden">
-                  <img
+                  <Image unoptimized width={320} height={240}
                     src={rel.imageUrl}
                     alt={rel.title}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"

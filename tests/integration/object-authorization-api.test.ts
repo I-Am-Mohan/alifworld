@@ -475,6 +475,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
         headers: {
           authorization: ALICE_AUTH,
           'content-type': 'application/json',
+          'Idempotency-Key': 'cross-user-checkout-1',
         },
         body: JSON.stringify({
           cartId: 'crt_bob_1', // Bob's cart!

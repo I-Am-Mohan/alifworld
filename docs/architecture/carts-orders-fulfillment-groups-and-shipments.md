@@ -12,6 +12,48 @@ The architecture reconciles two opposing requirements in modern multi-vendor com
 
 ## 2. Core Invariants & Mathematical Guarantees
 
+### Milestone 091 Checkout Snapshot Contract (in progress)
+
+- `POST /api/v1/cart` accepts `variantId` and positive integer `quantity`; it
+    reads the BDT poisha price and independent Product Points from an active
+    published variant owned by a verified seller. Client-supplied price or Point
+    fields are not used. `PATCH/DELETE /api/v1/cart/items/{itemId}` require the
+    authenticated cart owner and update the cart version in the same transaction.
+- `POST /api/v1/cart/checkout` requires an `Idempotency-Key` header (8-128
+    permitted characters) alongside its existing `{cartId, checkout}` JSON body.
+    The owned cart's creation date and a SHA-256 digest of cart ID, actor ID,
+    key, and validated shipping payload produce a stable unique order number.
+    A retry with the same key and payload returns the committed order. A changed
+    payload cannot replay that order and conflicts after the cart is converted.
+    Concurrent claims also re-read the committed order before returning a conflict.
+    Clients must retain the same key for uncertain responses. The digest is not
+    an authorization credential; cart ownership is still checked first.
+
+- Actor: the authenticated customer who owns an active BDT cart. Other users, guest
+    carts, non-BDT carts and converted carts cannot create an order. Seller and Admin
+    actors do not receive an exception to customer ownership at checkout.
+- Input: stored cart item price in integer poisha, positive safe-integer quantity,
+    and independent non-negative integer Product Points per unit. Invalid values fail
+    with a validation error before order insertion. The order item stores the captured
+    unit price, multiplied line total, per-unit Points and multiplied Point total.
+    Points are *recorded*, not posted to a wallet at checkout.
+- Transition: ACTIVE cart to CONVERTED cart and creation of the pending order,
+    seller fulfillment groups and item snapshots occur in one database transaction.
+    Cart edits advance the cart version under the same row lock, and checkout claims
+    only the version read with its item snapshots. A competing claim returns a
+    conflict; a failed transaction restores the cart's active state. Order creation
+    is audited after commit, but audit delivery is not
+    transactionally guaranteed by this implementation.
+- Ownership: the order references the customer; each fulfillment group and item
+    retains the seller ID. Existing seller queries must enforce seller-tenant scope.
+    Historical item amounts must not be recomputed after variant edits.
+- Outstanding gates: verify concurrent item edits, retries and checkout against
+    an isolated migrated PostgreSQL database; integrate a real published-product
+    storefront journey; approve versioned tax/shipping/commission rules before
+    replacing the legacy defaults; resolve the milestone's legal and reward-posting
+    approvals. The present `v1.0.0` default is not evidence of approved pricing rules.
+
+
 ### Invariant 1: Integer Minor Units for Monetary Values (Poisha)
 All monetary attributes (`subtotalPoisha`, `discountPoisha`, `shippingFeePoisha`, `taxPoisha`, `totalPoisha`, `sellerCommissionPoisha`, `sellerPayoutPoisha`) are represented as integer minor units (`BigInt` poisha, where $1\text{ BDT} = 100\text{ poisha}$). Floating-point values are strictly prohibited in database storage and domain logic.
 

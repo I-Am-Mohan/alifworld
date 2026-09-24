@@ -70,7 +70,7 @@ Exposes only public configuration prefixed with `NEXT_PUBLIC_`:
 ### B. Server Schema (`serverEnvSchema`)
 Extends `clientEnvSchema` with all infrastructure, security, and integration variables:
 - **Application Runtime**: `NODE_ENV`, `APP_ENV`, `PORT`, `TZ` (`Asia/Dhaka`), `SUPPORTED_LOCALES`.
-- **Database (PostgreSQL & Prisma)**: `DATABASE_URL`, `DIRECT_DATABASE_URL`, `DATABASE_POOL_MIN`, `DATABASE_POOL_MAX`.
+- **Database (PostgreSQL & Prisma)**: `DATABASE_URL`, `DATABASE_POOL_MIN`, `DATABASE_POOL_MAX`.
 - **Cache & Queues (Redis & BullMQ)**: `REDIS_URL`, `REDIS_KEY_PREFIX`, `REDIS_TLS_ENABLED`.
 - **Security & Sessions**: `JWT_SECRET` (min 32 chars), `JWT_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN`, `SESSION_SECRET` (min 32 chars), `COOKIE_DOMAIN`, `COOKIE_SECURE`, rate limit ceilings.
 - **Object Storage (S3 / MinIO)**: `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET_NAME`, `S3_FORCE_PATH_STYLE`.

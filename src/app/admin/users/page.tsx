@@ -16,7 +16,7 @@ export default function AdminUsersPage() {
     {
       id: 'usr_superadmin',
       name: 'Platform Super Administrator',
-      email: 'admin@alifworld.com',
+      email: 'admin@mail.com',
       phone: '+8801700000000',
       status: 'ACTIVE',
       roles: ['SUPER_ADMIN'],
@@ -50,7 +50,7 @@ export default function AdminUsersPage() {
     {
       id: 'usr_rider0001',
       name: 'Kamrul Hasan (Pathao Courier)',
-      email: 'kamrul@courier.alifworld.com',
+      email: 'kamrul@courier.mail.com',
       phone: '+8801912998877',
       status: 'ACTIVE',
       roles: ['RIDER'],
@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
     {
       id: 'usr_finance01',
       name: 'Farhana Sultana',
-      email: 'farhana.finance@alifworld.com',
+      email: 'finance@mail.com',
       phone: '+8801555112233',
       status: 'ACTIVE',
       roles: ['FINANCE'],

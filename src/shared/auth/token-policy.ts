@@ -31,8 +31,13 @@ export const TOKEN_POLICIES = {
   MAX_OTP_ATTEMPTS: 3,
 
   // Token Issuer & Audience
-  ISSUER: 'https://alifworld.com',
-  AUDIENCE: 'https://api.alifworld.com',
+  get ISSUER() {
+    return process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  },
+  get AUDIENCE() {
+    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    return appUrl.includes('/api') ? appUrl : `${appUrl.replace(/\/$/, '')}/api/v1`;
+  },
 } as const;
 
 export type ClientType = 'WEB' | 'MOBILE_FLUTTER' | 'POS' | 'ADMIN_PORTAL';

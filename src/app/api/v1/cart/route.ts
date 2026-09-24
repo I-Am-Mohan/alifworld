@@ -9,12 +9,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest, defaultObjectAuthzService } from '@/shared/authz';
 import { CartRepository } from '@/repositories/cart.repository';
+import { AddCartItemSchema } from '@/validators/order.validator';
 import { serializeBigInt } from '@/shared/utils/currency';
-import { AppError } from '@/shared/errors/app-error';
+import { AppError, ValidationError } from '@/shared/errors/app-error';
 
 export const dynamic = 'force-dynamic';
 
 const cartRepo = new CartRepository();
+
+export async function POST(req: NextRequest) {
+  try {
+    const actor = authenticateRequest(req);
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      throw new ValidationError('Invalid JSON body');
+    }
+    const parsed = AddCartItemSchema.safeParse(payload);
+    if (!parsed.success) {
+      throw new ValidationError('Invalid cart item', { issues: parsed.error.flatten() });
+    }
+    const result = await cartRepo.addPublishedVariant(actor.userId, parsed.data.variantId, parsed.data.quantity);
+    return NextResponse.json({ success: true, data: serializeBigInt(result) }, { status: 201 });
+  } catch (error) {
+    if (error instanceof AppError) {
+      return NextResponse.json(error.toJSON(), { status: error.statusCode });
+    }
+    return NextResponse.json(
+      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Unable to add cart item' } },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * GET /api/v1/cart
@@ -35,7 +62,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: serializeBigInt(cart) || { id: null, items: [], status: 'ACTIVE' },
+        data: cart ? {
+          id: cart.id,
+          userId: cart.userId,
+          currency: cart.currency,
+          status: cart.status,
+          items: cart.items.map((item: any) => ({
+            id: item.id,
+            sellerId: item.sellerId,
+            seller: { businessName: item.seller?.businessName },
+            variantId: item.variantId,
+            variant: {
+              sku: item.variant?.sku,
+              title: item.variant?.title,
+              imageUrl: item.variant?.imageUrl,
+              product: { title: item.variant?.product?.title },
+            },
+            pricePoisha: item.pricePoisha.toString(),
+            productPoint: item.productPoint,
+            quantity: item.quantity,
+          })),
+        } : { id: null, items: [], status: 'ACTIVE', currency: 'BDT' },
       },
       { status: 200 }
     );

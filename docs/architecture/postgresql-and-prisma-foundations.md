@@ -30,7 +30,7 @@ Connection parameters strictly align with `.env.example` and the typed configura
 - **Database Name**: `alifworld_dev` (configurable via `DATABASE_URL`)
 - **Default Port**: `5432`
 - **Default Pool Size**: `10` connections per web/worker container instance
-- **Direct Connection URL**: `DIRECT_DATABASE_URL` (bypasses transaction poolers like PgBouncer for migrations)
+- **Connection URL**: `DATABASE_URL` (bypasses transaction poolers like PgBouncer for migrations)
 
 ### 2.2 Connection String Format
 ```text

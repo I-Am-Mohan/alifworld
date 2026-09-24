@@ -12,7 +12,7 @@
  *
  * Seed admin accounts:
  *   - INITIAL_SUPERADMIN_EMAIL (default: admin@mail.com)
- *   - Platform ops contact: contact@alifworld.com.bd
+ *   - Platform ops contact: contact@mail.com
  *
  * Command: bun run prisma/seed.ts (or bun run db:seed)
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
@@ -300,7 +300,7 @@ async function seed() {
   // Account seeded from environment variables for security in production.
   //
   // Primary identity: INITIAL_SUPERADMIN_EMAIL
-  // Platform ops contact: contact@alifworld.com.bd
+  // Platform ops contact: contact@mail.com
   // ----------------------------------------------------------------------------
   const adminEmail = process.env.INITIAL_SUPERADMIN_EMAIL || 'admin@mail.com';
   const adminPhone = process.env.INITIAL_SUPERADMIN_PHONE || '+8801700000000';
@@ -400,7 +400,7 @@ async function seed() {
 
   console.info(`✅ Seeded Super Administrator (${adminEmail}).`);
   console.info(`   ⚠️  Password change REQUIRED on initial login for all seeded admin accounts.`);
-  console.info(`   📧  Platform ops contact: contact@alifworld.com.bd`);
+  console.info(`   📧  Platform ops contact: contact@mail.com`);
 
   // ----------------------------------------------------------------------------
   // 5. Foundational Standard Chart of Accounts (Double-Entry Ledger)
@@ -450,7 +450,7 @@ async function seed() {
         rolesSeeded: rolesData.map((r) => r.code),
         permissionsSeeded: permissionsData.length,
         superAdminEmail: adminEmail,
-        contactEmail: 'contact@alifworld.com.bd',
+        contactEmail: 'contact@mail.com',
         note: 'Password change REQUIRED on initial login',
       },
     },

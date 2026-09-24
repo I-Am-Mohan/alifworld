@@ -14,7 +14,7 @@ AlifWorld is designed as a single-codebase modular monolith in Next.js, housing 
 
 Without strictly enforced directory structures and dependency boundaries:
 1. Business logic leaks into route handlers and React components, degrading testability and auditability.
-2. Direct database queries across bounded contexts create tight coupling, making schema evolution dangerous.
+2. database queries across bounded contexts create tight coupling, making schema evolution dangerous.
 3. Multi-tenant isolation risks accidental leakage if `sellerId` scoping is not strictly required at repository interfaces.
 4. Circular dependencies between modules compromise build reproducibility and static analysis.
 

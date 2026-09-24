@@ -241,6 +241,7 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
         headers: {
           authorization: CUSTOMER_A_AUTH,
           'content-type': 'application/json',
+          'Idempotency-Key': 'cross-user-attempt-1',
         },
         body: JSON.stringify({
           cartId: 'crt_bob_cart',

@@ -25,7 +25,7 @@ Phase 03 established the relational database schema for AlifWorld, comprising 49
 To guarantee long-term operational resilience, compliance, zero-downtime deployments, and developer alignment, the platform requires:
 1. **An Authoritative Data Dictionary**: Programmatically generated, human-readable documentation classifying all 49 models by lifecycle deletion policy (`IMMUTABLE`, `SOFT_DELETE`, `EPHEMERAL`), column types, nullability, defaults, foreign keys, and indexes.
 2. **Expand-and-Contract Migration Workflow**: Safe zero-downtime schema evolution across rolling application deployments, forbidding destructive immediate column drops or renames.
-3. **Idempotent Seed Scripts**: Guaranteed safe repeated execution of `prisma/seed.ts` via deterministic upserts, seeding the initial SuperAdmin (`contact@alifworld.com.bd`) with forced password rotation on initial login.
+3. **Idempotent Seed Scripts**: Guaranteed safe repeated execution of `prisma/seed.ts` via deterministic upserts, seeding the initial SuperAdmin (`contact@mail.com`) with forced password rotation on initial login.
 4. **Forward-Fix Rollback Playbooks**: Explicit rules prohibiting destructive `prisma migrate reset` in production environments, mandating forward-fix compensating migrations.
 5. **SuperAdmin Operational Console**: A live administrative interface (`/admin/database`) enabling platform engineers to audit data dictionary metadata, inspect migration history, and verify seed execution states.
 
@@ -86,7 +86,7 @@ Schema migrations must be phased across two or more releases:
 ### 4. Seed Idempotency & SuperAdmin Credential Provisioning
 
 - `prisma/seed.ts` is structured into 10 deterministic sections using `upsert()` with natural unique compound keys (`code`, `slug`, `sku`, `email`, `userId_type`, etc.).
-- SuperAdmin initialization provisions `contact@alifworld.com.bd` (customizable via `INITIAL_SUPERADMIN_EMAIL` and `INITIAL_SUPERADMIN_PASSWORD`).
+- SuperAdmin initialization provisions `contact@mail.com` (customizable via `INITIAL_SUPERADMIN_EMAIL` and `INITIAL_SUPERADMIN_PASSWORD`).
 - Seed sets `emailVerified: true`, links the `SUPERADMIN` role, and outputs mandatory operational instructions for forced credential rotation upon first login.
 
 ---

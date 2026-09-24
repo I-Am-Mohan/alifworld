@@ -37,7 +37,7 @@ const DEFAULT_SETUP_CONFIGS: Record<string, string> = {
   COURIER_PATHAO_ENV: 'sandbox',
   COURIER_PATHAO_CLIENT_ID: 'pathao_client_id_dev',
   COURIER_PATHAO_CLIENT_SECRET: '••••••••',
-  COURIER_PATHAO_USERNAME: 'pathao@alifworld.com',
+  COURIER_PATHAO_USERNAME: 'pathao@mail.com',
   COURIER_PATHAO_PASSWORD: '••••••••',
   COURIER_PATHAO_STORE_ID: '12480',
   COURIER_REDX_ENABLED: 'true',

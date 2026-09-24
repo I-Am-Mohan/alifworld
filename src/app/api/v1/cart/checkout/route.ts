@@ -32,6 +32,10 @@ const CartCheckoutPayloadSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
+    const idempotencyKey = req.headers.get('Idempotency-Key');
+    if (!idempotencyKey || !/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) {
+      throw new ValidationError('Idempotency-Key header must be 8-128 letters, numbers, dots, underscores, colons, or dashes');
+    }
 
     let body: any;
     try {
@@ -61,7 +65,7 @@ export async function POST(req: NextRequest) {
     const cart = await cartRepo.findOwnedById(cartId, actor);
 
     // 2. Execute authoritative checkout transaction
-    const order = await orderFulfillmentService.processCheckout(cart.id, actor.userId, checkout);
+    const order = await orderFulfillmentService.processCheckout(cart.id, actor.userId, checkout, idempotencyKey);
 
     return NextResponse.json(
       {
@@ -78,12 +82,12 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode });
     }
     return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message } },
+      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Unable to complete checkout' } },
       { status: 500 }
     );
   }

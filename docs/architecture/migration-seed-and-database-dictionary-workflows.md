@@ -8,7 +8,7 @@ This specification establishes the authoritative engineering contracts, operatio
 1. **The 49-Model Catalog & Lifecycle Classification** (`IMMUTABLE`, `SOFT_DELETE`, `EPHEMERAL`).
 2. **Expand-and-Contract Zero-Downtime Migration Protocols** for production PostgreSQL clusters.
 3. **Forward-Fix Rollback Playbooks** ensuring zero data destruction or transaction loss.
-4. **Idempotent Seed Automation** supporting multi-environment bootstrapping and initial SuperAdmin credential provisioning (`contact@alifworld.com.bd`).
+4. **Idempotent Seed Automation** supporting multi-environment bootstrapping and initial SuperAdmin credential provisioning (`contact@mail.com`).
 5. **Data Dictionary Synchronization** between Prisma schema AST, documentation (`docs/database/data-dictionary.md`), and the SuperAdmin Console (`/admin/database`).
 
 ---
@@ -120,7 +120,7 @@ The seed script (`prisma/seed.ts`) is designed to run repeatedly without side-ef
 3. **Core Permissions**: 38 standardized permissions (`users:read`, `catalog:write`, etc.).
 4. **System Roles & Initial SuperAdmin**:
    - Creates `SUPERADMIN`, `ADMIN`, `SELLER`, `CUSTOMER`, `SUPPORT`, `AUDITOR`.
-   - Provisions `contact@alifworld.com.bd` with `INITIAL_SUPERADMIN_PASSWORD` (or fallback).
+   - Provisions `contact@mail.com` with `INITIAL_SUPERADMIN_PASSWORD` (or fallback).
    - Flags SuperAdmin with mandatory password change requirement on initial login.
 5. **Demonstration Seller & Store**: Seeds verified seller with Trade License and TIN.
 6. **Catalog Structure**: Root categories and authorized brands.

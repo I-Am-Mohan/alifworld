@@ -27,9 +27,11 @@ import { useI18n } from '@/i18n/context';
 import { getBangladeshMobileOperator } from '@/shared/utils/phone';
 import { getBangladeshDistricts } from '@/shared/geo/bangladesh-geo';
 import { csrfFetch } from '@/shared/security/csrf-client';
+import { getPasswordRequirements, validatePasswordStrength } from '@/shared/auth/password-strength';
 
 type LoginStep = 'number' | 'unregistered' | 'otp' | 'password' | 'forgot';
 type RegisterStep = 'number' | 'otp' | 'name' | 'password' | 'details' | 'success';
+type RegisterField = 'phone' | 'otp' | 'firstName' | 'lastName' | 'password' | 'confirmPassword';
 
 export function AuthModal() {
   const { isOpen, mode, setMode, closeAuthModal, loginSuccess } = useAuthModal();
@@ -64,6 +66,8 @@ export function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [registerErrors, setRegisterErrors] = useState<Partial<Record<RegisterField, string>>>({});
+  const [passwordAttempted, setPasswordAttempted] = useState(false);
   const [cooldown, setCooldown] = useState(60);
   const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
   const [verificationTicket, setVerificationTicket] = useState<string | null>(null);
@@ -74,6 +78,11 @@ export function AuthModal() {
   useEffect(() => {
     if (isOpen) {
       setError(null);
+      setRegisterErrors({});
+      setPasswordAttempted(false);
+      setRegisterPassword('');
+      setConfirmPassword('');
+      setVerificationTicket(null);
       if (mode === 'login') {
         setLoginStep('number');
       } else {
@@ -181,6 +190,20 @@ export function AuthModal() {
 
   const detectedOperator = phone.trim() ? getBangladeshMobileOperator(phone.trim()) : null;
   const availableDistricts = getBangladeshDistricts(selectedDivisionKey);
+  const passwordRequirements = getPasswordRequirements(registerPassword);
+  const passwordLabels: Record<string, string> = {
+    required: translate('auth.passwordRequired'),
+    minLength: translate('auth.passwordMinLength'),
+    maxLength: translate('auth.passwordMaxLength'),
+    uppercase: translate('auth.passwordUppercase'),
+    lowercase: translate('auth.passwordLowercase'),
+    number: translate('auth.passwordNumber'),
+    special: translate('auth.passwordSpecial'),
+    unique: translate('auth.passwordUnique'),
+  };
+  const clearRegisterError = (field: RegisterField) => {
+    setRegisterErrors((current) => ({ ...current, [field]: undefined }));
+  };
 
   // OTP handlers
   const handleOtpChange = (index: number, val: string) => {
@@ -370,10 +393,11 @@ export function AuthModal() {
   const handleRegisterPhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    clearRegisterError('phone');
 
     const cleanPhone = phone.trim();
     if (!cleanPhone) {
-      setError(translate('auth.errEnterPhone'));
+      setRegisterErrors((current) => ({ ...current, phone: translate('auth.errEnterPhone') }));
       return;
     }
 
@@ -394,7 +418,7 @@ export function AuthModal() {
       setDevOtpCode(data.data.devOtpCode || null);
       setRegisterStep('otp');
     } catch (err: any) {
-      setError(err.message);
+      setRegisterErrors((current) => ({ ...current, phone: err.message }));
     } finally {
       setLoading(false);
     }
@@ -404,10 +428,11 @@ export function AuthModal() {
   const handleVerifyRegisterOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setError(null);
+    clearRegisterError('otp');
 
     const code = otp.join('');
     if (code.length < 6) {
-      setError(translate('auth.errEnter6Digits'));
+      setRegisterErrors((current) => ({ ...current, otp: translate('auth.errEnter6Digits') }));
       return;
     }
 
@@ -428,7 +453,7 @@ export function AuthModal() {
       // Advance to Name step!
       setRegisterStep('name');
     } catch (err: any) {
-      setError(err.message);
+      setRegisterErrors((current) => ({ ...current, otp: err.message }));
     } finally {
       setLoading(false);
     }
@@ -438,13 +463,12 @@ export function AuthModal() {
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (!firstName.trim()) {
-      setError(translate('auth.errEnterFirstName'));
-      return;
-    }
-    if (!lastName.trim()) {
-      setError(translate('auth.errEnterLastName'));
+    const errors = {
+      firstName: firstName.trim() ? undefined : translate('auth.errEnterFirstName'),
+      lastName: lastName.trim() ? undefined : translate('auth.errEnterLastName'),
+    };
+    setRegisterErrors((current) => ({ ...current, ...errors }));
+    if (errors.firstName || errors.lastName) {
       return;
     }
 
@@ -455,13 +479,14 @@ export function AuthModal() {
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (registerPassword.length < 8) {
-      setError(translate('auth.errPassMin8'));
-      return;
-    }
-    if (registerPassword !== confirmPassword) {
-      setError(translate('auth.errPassMismatch'));
+    setPasswordAttempted(true);
+    const errors = {
+      password: validatePasswordStrength(registerPassword).isValid ? undefined : translate('auth.passwordRequirementsError'),
+      confirmPassword: !confirmPassword ? translate('auth.confirmPasswordRequired') :
+        registerPassword !== confirmPassword ? translate('auth.errPassMismatch') : undefined,
+    };
+    setRegisterErrors((current) => ({ ...current, ...errors }));
+    if (errors.password || errors.confirmPassword) {
       return;
     }
 
@@ -495,6 +520,12 @@ export function AuthModal() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
+        if (data.error?.message?.startsWith('Password does not meet required security standards')) {
+          setRegisterStep('password');
+          setPasswordAttempted(true);
+          setRegisterErrors((current) => ({ ...current, password: translate('auth.passwordRequirementsError') }));
+          return;
+        }
         throw new Error(data.error?.message || translate('auth.errRegFailed'));
       }
 
@@ -618,7 +649,7 @@ export function AuthModal() {
                       {t.signInWithMobileDesc}
                     </p>
 
-                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    <label htmlFor="register-phone" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                       {t.mobileNumber}
                     </label>
                     <div className="relative flex items-center">
@@ -1027,6 +1058,7 @@ export function AuthModal() {
               {registerStep === 'number' && (
                 <form
                   onSubmit={handleRegisterPhoneSubmit}
+                  noValidate
                   className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300"
                 >
                   <div>
@@ -1046,9 +1078,12 @@ export function AuthModal() {
                         <span>+880</span>
                       </div>
                       <input
+                        id="register-phone"
                         type="tel"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => { setPhone(e.target.value); clearRegisterError('phone'); }}
+                        aria-invalid={!!registerErrors.phone}
+                        aria-describedby={registerErrors.phone ? 'register-phone-error' : undefined}
                         placeholder="1700112233"
                         className={`w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-20 ${detectedOperator ? 'pr-28' : 'pr-4'} py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none transition`}
                         autoFocus
@@ -1062,6 +1097,7 @@ export function AuthModal() {
                         </div>
                       )}
                     </div>
+                    {registerErrors.phone && <p id="register-phone-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.phone}</p>}
                   </div>
 
                   <button
@@ -1125,7 +1161,10 @@ export function AuthModal() {
                         inputMode="numeric"
                         maxLength={1}
                         value={digit}
-                        onChange={(e) => handleOtpChange(idx, e.target.value)}
+                        onChange={(e) => { handleOtpChange(idx, e.target.value); clearRegisterError('otp'); }}
+                        aria-label={`${t.verifyCode} ${idx + 1}`}
+                        aria-invalid={!!registerErrors.otp}
+                        aria-describedby={registerErrors.otp ? 'register-otp-error' : undefined}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                         onPaste={handleOtpPaste}
                         className="w-12 h-14 sm:w-13 sm:h-16 text-center text-xl font-black bg-[#F8FAFC] border-2 border-slate-200 focus:border-[#F59E0B] focus:ring-4 focus:ring-amber-100 rounded-2xl text-slate-900 outline-none transition"
@@ -1133,6 +1172,7 @@ export function AuthModal() {
                       />
                     ))}
                   </div>
+                  {registerErrors.otp && <p id="register-otp-error" role="alert" className="text-xs text-rose-600">{registerErrors.otp}</p>}
 
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     {cooldown > 0 ? (
@@ -1167,7 +1207,7 @@ export function AuthModal() {
 
                   <button
                     type="submit"
-                    disabled={loading || otp.join('').length < 6}
+                    disabled={loading}
                     className="w-full bg-gradient-to-r from-[#F59E0B] to-[#D97706] hover:from-[#D97706] hover:to-[#B45309] text-slate-950 font-bold py-3.5 px-4 rounded-2xl shadow-md shadow-amber-500/20 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50"
                   >
                     {loading ? (
@@ -1186,6 +1226,7 @@ export function AuthModal() {
               {registerStep === 'name' && (
                 <form
                   onSubmit={handleNameSubmit}
+                  noValidate
                   className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300"
                 >
                   <div>
@@ -1199,31 +1240,39 @@ export function AuthModal() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label htmlFor="register-first-name" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                           {t.firstName}
                         </label>
                         <input
+                          id="register-first-name"
                           type="text"
                           value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
+                          onChange={(e) => { setFirstName(e.target.value); clearRegisterError('firstName'); }}
+                          aria-invalid={!!registerErrors.firstName}
+                          aria-describedby={registerErrors.firstName ? 'register-first-name-error' : undefined}
                           placeholder={t.firstNamePlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition"
                           autoFocus
                           required
                         />
+                        {registerErrors.firstName && <p id="register-first-name-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.firstName}</p>}
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label htmlFor="register-last-name" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                           {t.lastName}
                         </label>
                         <input
+                          id="register-last-name"
                           type="text"
                           value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
+                          onChange={(e) => { setLastName(e.target.value); clearRegisterError('lastName'); }}
+                          aria-invalid={!!registerErrors.lastName}
+                          aria-describedby={registerErrors.lastName ? 'register-last-name-error' : undefined}
                           placeholder={t.lastNamePlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition"
                           required
                         />
+                        {registerErrors.lastName && <p id="register-last-name-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.lastName}</p>}
                       </div>
                     </div>
                   </div>
@@ -1242,6 +1291,7 @@ export function AuthModal() {
               {registerStep === 'password' && (
                 <form
                   onSubmit={handlePasswordSubmit}
+                  noValidate
                   className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300"
                 >
                   <div>
@@ -1258,14 +1308,17 @@ export function AuthModal() {
 
                     <div className="space-y-3 mt-3">
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label htmlFor="register-password" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                           {t.password}
                         </label>
                         <div className="relative">
                           <input
+                            id="register-password"
                             type={showPassword ? 'text' : 'password'}
                             value={registerPassword}
-                            onChange={(e) => setRegisterPassword(e.target.value)}
+                            onChange={(e) => { setRegisterPassword(e.target.value); clearRegisterError('password'); }}
+                            aria-invalid={!!registerErrors.password || (registerPassword.length > 0 && !validatePasswordStrength(registerPassword).isValid)}
+                            aria-describedby={registerErrors.password ? 'register-password-requirements register-password-error' : 'register-password-requirements'}
                             placeholder="••••••••"
                             className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-4 pr-11 py-3 text-sm text-slate-900 outline-none transition"
                             autoFocus
@@ -1274,25 +1327,43 @@ export function AuthModal() {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? translate('auth.hidePassword') : translate('auth.showPassword')}
                             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                           >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
                         </div>
+                        <ul id="register-password-requirements" className="mt-2 space-y-1 text-xs" aria-label={translate('auth.passwordChecklistTitle')}>
+                          {passwordRequirements.filter(({ key }) => key !== 'required' && key !== 'maxLength' && key !== 'unique').map(({ key, met }) => (
+                            <li key={key} className={met ? 'text-emerald-700' : registerPassword || passwordAttempted ? 'text-rose-600' : 'text-slate-500'}>
+                              {met ? '✓' : '○'} {passwordLabels[key]}
+                            </li>
+                          ))}
+                          {(registerPassword.length > 128 || passwordAttempted) && passwordRequirements.filter(({ key }) => key === 'maxLength' || key === 'unique').map(({ key, met }) => !met && (
+                            <li key={key} className="text-rose-600">○ {passwordLabels[key]}</li>
+                          ))}
+                        </ul>
+                        {registerErrors.password && <p id="register-password-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.password}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label htmlFor="register-confirm-password" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                           {t.confirmPassword}
                         </label>
                         <input
+                          id="register-confirm-password"
                           type={showPassword ? 'text' : 'password'}
                           value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onChange={(e) => { setConfirmPassword(e.target.value); clearRegisterError('confirmPassword'); }}
+                          aria-invalid={!!registerErrors.confirmPassword || (confirmPassword.length > 0 && confirmPassword !== registerPassword)}
+                          aria-describedby={registerErrors.confirmPassword || confirmPassword.length > 0 ? 'register-confirm-error' : undefined}
                           placeholder="••••••••"
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm text-slate-900 outline-none transition"
                           required
                         />
+                        {(registerErrors.confirmPassword || (confirmPassword && confirmPassword !== registerPassword && translate('auth.errPassMismatch'))) && (
+                          <p id="register-confirm-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.confirmPassword || translate('auth.errPassMismatch')}</p>
+                        )}
                       </div>
                     </div>
                   </div>

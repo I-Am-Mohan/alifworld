@@ -14,7 +14,7 @@
  * Invariants: ADR-0003, ADR-0022, ADR-0025, ADR-0027
  */
 
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, spyOn } from 'bun:test';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import {
   MODEL_DELETION_POLICIES,
@@ -25,17 +25,224 @@ import { assertSellerScope } from '@/shared/database/base-repository';
 import {
   SHIPPING_RATES_POISHA,
   PLATFORM_COMMISSION_BPS,
+  snapshotOrderLine,
+  OrderFulfillmentService,
   VALID_GROUP_TRANSITIONS,
 } from '@/services/order-fulfillment.service';
+import { CartRepository } from '@/repositories/cart.repository';
+import { OrderRepository } from '@/repositories/order.repository';
+import { auditService } from '@/shared/audit';
 import {
   CheckoutInputSchema,
   AddCartItemSchema,
   FulfillmentStatusTransitionSchema,
   DispatchShipmentSchema,
 } from '@/validators/order.validator';
-import { AuthorizationError, ConflictError, ValidationError } from '@/shared/errors/app-error';
+import { AuthorizationError, ConflictError, NotFoundError, ValidationError } from '@/shared/errors/app-error';
 
 describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () => {
+  describe('Checkout snapshot boundary', () => {
+    it('adds only a sellable variant at its stored price and Point values', async () => {
+      const repository = new CartRepository();
+      let storedVariant: any = {
+        pricePoisha: 1535n, productPoint: null, product: { sellerId: 'seller-1', productPoint: 9 },
+      };
+      let variantQuery: any;
+      Object.defineProperty(repository, 'db', { value: {
+        productVariant: { findFirst: async (query: any) => { variantQuery = query; return storedVariant; } },
+      } });
+      const cartSpy = spyOn(repository, 'getOrCreateCart').mockResolvedValue({ id: 'cart-1', currency: 'BDT', status: 'ACTIVE' } as any);
+      const addSpy = spyOn(repository, 'addItem').mockResolvedValue({ id: 'item-1', pricePoisha: 1535n } as any);
+      try {
+        const result = await repository.addPublishedVariant('buyer', 'variant-1', 2);
+        expect(result.cartId).toBe('cart-1');
+        expect(variantQuery.where).toMatchObject({
+          isActive: true, product: { status: 'PUBLISHED', currency: 'BDT', seller: { status: 'VERIFIED' } },
+        });
+        expect(addSpy).toHaveBeenCalledWith('cart-1', {
+          variantId: 'variant-1', sellerId: 'seller-1', quantity: 2, pricePoisha: 1535n, productPoint: 9,
+        });
+        storedVariant = null;
+        await expect(repository.addPublishedVariant('buyer', 'draft-variant', 1)).rejects.toBeInstanceOf(NotFoundError);
+      } finally {
+        cartSpy.mockRestore();
+        addSpy.mockRestore();
+      }
+    });
+
+    it('versions cart edits and refuses writes once checkout has claimed the cart', async () => {
+      const repository = new CartRepository();
+      let cartIsActive = true;
+      let cartVersion = 1;
+      let itemUpdates = 0;
+      const transactionSpy = spyOn(repository, 'withTransaction').mockImplementation(async (callback: any) => {
+        return callback({
+          cart: {
+            updateMany: async ({ where, data }: any) => {
+              expect(where).toMatchObject({ id: 'cart-1', status: 'ACTIVE', deletedAt: null });
+              expect(data).toEqual({ version: { increment: 1 } });
+              if (!cartIsActive) return { count: 0 };
+              cartVersion++;
+              return { count: 1 };
+            },
+          },
+          cartItem: {
+            findFirst: async ({ where }: any) => where.id ? { cartId: 'cart-1' } : null,
+            create: async () => { itemUpdates++; },
+            update: async () => { itemUpdates++; },
+            updateMany: async () => { itemUpdates++; },
+          },
+        });
+      });
+
+      try {
+        await repository.addItem('cart-1', { variantId: 'variant-1', sellerId: 'seller-1', pricePoisha: 1205n, quantity: 1 });
+        expect(cartVersion).toBe(2);
+        expect(itemUpdates).toBe(1);
+        cartIsActive = false;
+        await expect(repository.addItem('cart-1', { variantId: 'variant-1', sellerId: 'seller-1', pricePoisha: 1205n, quantity: 1 })).rejects.toBeInstanceOf(ConflictError);
+        await expect(repository.updateItemQuantity('item-1', 2)).rejects.toBeInstanceOf(ConflictError);
+        await expect(repository.removeItem('item-1')).rejects.toBeInstanceOf(ConflictError);
+        await expect(repository.clearCart('cart-1')).rejects.toBeInstanceOf(ConflictError);
+        expect(itemUpdates).toBe(1);
+      } finally {
+        transactionSpy.mockRestore();
+      }
+    });
+
+    it('refuses a second checkout before inserting any order records', async () => {
+      const repository = new OrderRepository();
+      let attemptedOrderInsert = false;
+      const transactionSpy = spyOn(repository, 'withTransaction').mockImplementation(async (callback: any) => {
+        return callback({
+          cart: {
+            updateMany: async ({ where }: any) => {
+              expect(where).toMatchObject({
+                id: 'cart-1', userId: 'buyer', currency: 'BDT', status: 'ACTIVE', version: 2, deletedAt: null,
+              });
+              return { count: 0 };
+            },
+          },
+          order: { create: async () => { attemptedOrderInsert = true; } },
+        });
+      });
+
+      try {
+        await expect(repository.createOrder({ cartId: 'cart-1', cartVersion: 2, customerId: 'buyer' } as any))
+          .rejects.toBeInstanceOf(ConflictError);
+      } finally {
+        transactionSpy.mockRestore();
+      }
+      expect(attemptedOrderInsert).toBe(false);
+    });
+
+    const checkout = CheckoutInputSchema.parse({
+      shippingName: 'Example Buyer',
+      shippingPhone: '01712345678',
+      shippingDivision: 'DHAKA',
+      shippingDistrict: 'Dhaka',
+      shippingAddress: '123 Example Street',
+    });
+
+    function serviceFor(cart: object) {
+      const cartRepo = { findById: async () => ({ createdAt: new Date('2026-09-24T00:00:00Z'), ...cart }) } as unknown as CartRepository;
+      const orderRepo = {
+        findOrderByNumber: async () => null,
+        createOrder: async () => { throw new Error('Order should not be created'); },
+      } as unknown as OrderRepository;
+      return new OrderFulfillmentService(cartRepo, orderRepo);
+    }
+
+    it('passes the frozen price and independent Point values to order persistence', async () => {
+      const cartRepo = {
+        findById: async () => ({
+          userId: 'buyer', status: 'ACTIVE', currency: 'BDT', version: 2, createdAt: new Date('2026-09-24T00:00:00Z'),
+          items: [{
+            sellerId: 'seller-1', variantId: 'variant-1', quantity: 2,
+            pricePoisha: 1205n, productPoint: 7,
+            variant: { title: 'Medium', sku: 'SKU-1', product: { title: 'Shirt' } },
+          }],
+        }),
+        markConverted: async () => {},
+      } as unknown as CartRepository;
+      let storedInput: Parameters<OrderRepository['createOrder']>[0] | undefined;
+      const orderRepo = {
+        findOrderByNumber: async () => null,
+        createOrder: async (input: Parameters<OrderRepository['createOrder']>[0]) => {
+          storedInput = input;
+          return { id: 'order-1', orderNumber: input.orderNumber,
+            totalPoisha: input.totalPoisha, totalProductPoints: input.totalProductPoints };
+        },
+      } as unknown as OrderRepository;
+      const auditSpy = spyOn(auditService, 'logBusinessEvent').mockResolvedValue(undefined);
+
+      try {
+        await new OrderFulfillmentService(cartRepo, orderRepo).processCheckout('cart-1', 'buyer', checkout, 'test-request-1');
+      } finally {
+        auditSpy.mockRestore();
+      }
+
+      expect(storedInput?.fulfillmentGroups[0].items[0]).toMatchObject({
+        unitPricePoisha: 1205n, totalPoisha: 2410n, quantity: 2,
+        productPointSnapshot: 7, totalProductPoints: 14,
+        productTitle: 'Shirt', variantTitle: 'Medium', sku: 'SKU-1',
+      });
+      expect(storedInput?.subtotalPoisha).toBe(2410n);
+      expect(storedInput?.totalProductPoints).toBe(14);
+    });
+
+    it('replays a committed order with the same key and payload, without another write', async () => {
+      let existingOrder: any = null;
+      let writes = 0;
+      let cartStatus = 'ACTIVE';
+      const cartRepo = { findById: async () => ({
+        userId: 'buyer', status: cartStatus, currency: 'BDT', version: 1,
+        createdAt: new Date('2026-09-24T00:00:00Z'), items: [{
+          sellerId: 'seller-1', variantId: 'variant-1', pricePoisha: 1205n, productPoint: 7,
+          quantity: 2, variant: { sku: 'SKU-1', title: 'Medium', product: { title: 'Shirt' } },
+        }],
+      }) } as unknown as CartRepository;
+      const orderRepo = {
+        findOrderByNumber: async (orderNumber: string) => existingOrder?.orderNumber === orderNumber ? existingOrder : null,
+        createOrder: async (input: Parameters<OrderRepository['createOrder']>[0]) => {
+          writes++;
+          cartStatus = 'CONVERTED';
+          existingOrder = { id: 'order-1', customerId: 'buyer', orderNumber: input.orderNumber,
+            totalPoisha: input.totalPoisha, totalProductPoints: input.totalProductPoints };
+          return existingOrder;
+        },
+      } as unknown as OrderRepository;
+      const auditSpy = spyOn(auditService, 'logBusinessEvent').mockResolvedValue(undefined);
+      try {
+        const service = new OrderFulfillmentService(cartRepo, orderRepo);
+        const first = await service.processCheckout('cart-1', 'buyer', checkout, 'repeat-request');
+        const replay = await service.processCheckout('cart-1', 'buyer', checkout, 'repeat-request');
+        expect(replay.orderNumber).toBe(first.orderNumber);
+        expect(writes).toBe(1);
+        await expect(service.processCheckout('cart-1', 'buyer', { ...checkout, shippingAddress: 'Another address' }, 'repeat-request'))
+          .rejects.toBeInstanceOf(ConflictError);
+      } finally {
+        auditSpy.mockRestore();
+      }
+    });
+
+    it('rejects another customer or an unowned guest cart before creating an order', async () => {
+      for (const userId of ['other-customer', null]) {
+        const service = serviceFor({ userId, status: 'ACTIVE', currency: 'BDT', items: [{}] });
+        await expect(service.processCheckout('cart-1', 'buyer', checkout, 'test-request-1')).rejects.toBeInstanceOf(AuthorizationError);
+      }
+    });
+
+    it('rejects previously converted and non-BDT carts', async () => {
+      for (const cart of [
+        { userId: 'buyer', status: 'CONVERTED', currency: 'BDT', items: [{}] },
+        { userId: 'buyer', status: 'ACTIVE', currency: 'USD', items: [{}] },
+      ]) {
+        await expect(serviceFor(cart).processCheckout('cart-1', 'buyer', checkout, 'test-request-1')).rejects.toBeInstanceOf(ConflictError);
+      }
+    });
+  });
+
   // ============================================================================
   // 1. Standardized Domain Identifiers
   // ============================================================================
@@ -96,6 +303,30 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
   // 3. Exact Integer Poisha Financial Precision
   // ============================================================================
   describe('Monetary Precision & Integer Poisha Calculations', () => {
+    it('freezes the unit price and independent Product Points using exact integer arithmetic', () => {
+      const pricePoisha = 9007199254740993n;
+      const snapshot = snapshotOrderLine(pricePoisha, 7, 3);
+
+      expect(snapshot).toEqual({
+        unitPricePoisha: pricePoisha,
+        totalPoisha: 27021597764222979n,
+        productPointSnapshot: 7,
+        totalProductPoints: 21,
+      });
+    });
+
+    it('rejects invalid price, quantity, Point units and overflowing Point totals', () => {
+      expect(() => snapshotOrderLine(0n, 1, 1)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, 1, 0)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, 1, 1.5)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, -1, 1)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, 0.5, 1)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, Number.MAX_SAFE_INTEGER, 2)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(9223372036854775807n, 0, 2)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, 2147483647, 2)).toThrow(ValidationError);
+      expect(() => snapshotOrderLine(1n, 0, 2147483648)).toThrow(ValidationError);
+    });
+
     it('computes exact line items and parent order totals without floating point error', () => {
       const unitPricePoisha = BigInt(2199000); // ৳21,990.00
       const quantity = 3;

@@ -79,7 +79,7 @@ function LegacyNewProductPage() {
                 </label>
                 <div className="flex rounded-lg border border-neutral-700 bg-neutral-800 overflow-hidden text-xs">
                   <span className="px-3 py-2 bg-neutral-900 text-neutral-500 font-mono">
-                    alifworld.com/products/
+                    {(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/^https?:\/\//, '').replace(/\/$/, '')}/products/
                   </span>
                   <input
                     type="text"

@@ -225,6 +225,8 @@ export default function SellerApplicationPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const domainDisplay = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/^https?:\/\//, '').replace(/\/$/, '');
+
   const isValidPhone = /^(\+8801|01)[3-9]\d{8}$/.test(form.mobileNumber.trim());
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailAddress.trim());
 
@@ -1282,7 +1284,7 @@ export default function SellerApplicationPage() {
                     </label>
                     <label className="sm:col-span-2 block text-xs font-bold text-slate-700">Store Handle / URL Slug *
                       <div className="mt-1.5 flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50 focus-within:border-[#FF6A00]">
-                        <span className="flex items-center border-r border-slate-200 bg-slate-100 px-3.5 text-xs font-mono text-slate-500">alifworld.com/stores/</span>
+                        <span className="flex items-center border-r border-slate-200 bg-slate-100 px-3.5 text-xs font-mono text-slate-500">{domainDisplay}/stores/</span>
                         <input type="text" disabled={!isEditable || saving} value={form.slug} onChange={(e) => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-'))} placeholder="biswas-stores" className="w-full bg-transparent px-3.5 py-2.5 text-sm font-mono outline-none" />
                       </div>
                       <span className="mt-1.5 block text-[11px] font-normal text-slate-500">Your unique storefront handle. Customers can visit your storefront directly via this link.</span>
@@ -1547,7 +1549,7 @@ export default function SellerApplicationPage() {
                         </div>
                         <div>
                           <span className="text-slate-500">Handle / Slug: </span>
-                          <span className="font-mono font-semibold text-slate-900">alifworld.com/stores/{form.slug || 'slug'}</span>
+                          <span className="font-mono font-semibold text-slate-900">{domainDisplay}/stores/{form.slug || 'slug'}</span>
                         </div>
                       </div>
                     </div>
@@ -1918,7 +1920,7 @@ export default function SellerApplicationPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Mail className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="font-semibold">info@alifworld.com</span>
+                  <span className="font-semibold">info@mail.com</span>
                 </div>
               </div>
             </div>

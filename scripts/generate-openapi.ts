@@ -7,6 +7,8 @@
 import { writeFileSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
 
+const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 export const openApiSpec = {
   openapi: '3.1.0',
   info: {
@@ -17,7 +19,7 @@ export const openApiSpec = {
     contact: {
       name: 'AlifWorld Architecture & Engineering',
       email: 'engineering@alifworld.com',
-      url: 'https://alifworld.com',
+      url: appUrl,
     },
     license: {
       name: 'Proprietary',
@@ -25,16 +27,8 @@ export const openApiSpec = {
   },
   servers: [
     {
-      url: 'http://localhost:3000',
-      description: 'Local Development Server',
-    },
-    {
-      url: 'https://staging.alifworld.com',
-      description: 'Staging Integration Server',
-    },
-    {
-      url: 'https://api.alifworld.com',
-      description: 'Production Cluster',
+      url: appUrl,
+      description: 'Single-Application Monolith Server',
     },
   ],
   tags: [
@@ -1091,7 +1085,7 @@ export const openApiSpec = {
                 type: 'object',
                 properties: {
                   name: { type: 'string', example: 'Rahim Khan' },
-                  avatarUrl: { type: 'string', example: 'https://cdn.alifworld.com/avatars/usr_1.jpg' },
+                  avatarUrl: { type: 'string', example: `${appUrl}/avatars/usr_1.jpg` },
                 },
               },
             },
@@ -1122,6 +1116,34 @@ export const openApiSpec = {
           '401': { description: 'Authentication required' },
         },
       },
+      post: {
+        tags: ['Customer & Ownership'],
+        summary: 'Add Published Variant to Cart',
+        description: 'Price and Product Points come from the active published BDT variant on the server.',
+        security: [{ BearerAuth: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: {
+          type: 'object', properties: { variantId: { type: 'string' }, quantity: { type: 'integer', minimum: 1 } },
+          required: ['variantId', 'quantity'], additionalProperties: false,
+        } } } },
+        responses: { '201': { description: 'Cart item added' }, '401': { description: 'Authentication required' }, '404': { description: 'Variant unavailable' }, '422': { description: 'Invalid quantity' } },
+      },
+    },
+    '/api/v1/cart/items/{itemId}': {
+      patch: {
+        tags: ['Customer & Ownership'], summary: 'Update Owned Cart Item Quantity',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'itemId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: {
+          type: 'object', properties: { quantity: { type: 'integer', minimum: 0 } }, required: ['quantity'], additionalProperties: false,
+        } } } },
+        responses: { '200': { description: 'Quantity updated' }, '401': { description: 'Authentication required' }, '409': { description: 'Cart no longer editable' } },
+      },
+      delete: {
+        tags: ['Customer & Ownership'], summary: 'Remove Owned Cart Item',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'itemId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { '200': { description: 'Item removed' }, '401': { description: 'Authentication required' }, '409': { description: 'Cart no longer editable' } },
+      },
     },
     '/api/v1/cart/checkout': {
       post: {
@@ -1129,6 +1151,7 @@ export const openApiSpec = {
         summary: 'Checkout Cart with Ownership Check',
         description: 'Executes checkout for the customer\'s owned cart. Prevents checking out carts belonging to another user.',
         security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', minLength: 8, maxLength: 128 } }],
         requestBody: {
           required: true,
           content: {
@@ -1151,6 +1174,8 @@ export const openApiSpec = {
           },
           '401': { description: 'Authentication required' },
           '403': { description: 'Forbidden: Cart ownership violation' },
+          '409': { description: 'Cart changed or request conflicts with an existing checkout' },
+          '422': { description: 'Invalid checkout or missing Idempotency-Key' },
         },
       },
     },
@@ -3452,7 +3477,7 @@ export const openApiSpec = {
             properties: {
               active: { type: 'boolean', example: true },
               sub: { type: 'string', example: 'usr_01j7x4b9e8m02k3f8d7c6b5a1' },
-              email: { type: 'string', example: 'customer@alifworld.com' },
+              email: { type: 'string', example: 'customer@mail.com' },
               roles: {
                 type: 'array',
                 items: { type: 'string' },

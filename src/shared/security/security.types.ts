@@ -8,7 +8,7 @@
  */
 
 export interface CorsConfig {
-  /** Whitelisted allowed origins (e.g. ['https://alifworld.com', 'https://seller.alifworld.com']) */
+  /** Whitelisted allowed origins */
   allowedOrigins: string[];
   /** Allowed HTTP methods */
   allowedMethods: string[];

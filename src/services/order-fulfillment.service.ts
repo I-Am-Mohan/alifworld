@@ -18,6 +18,7 @@ import { CheckoutInput } from '@/validators/order.validator';
 import { ValidationError, NotFoundError, ConflictError, AuthorizationError } from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { auditService } from '@/shared/audit';
+import { createHash } from 'node:crypto';
 
 // Standard logistics rates in minor integer poisha (1 BDT = 100 poisha)
 export const SHIPPING_RATES_POISHA = {
@@ -27,6 +28,23 @@ export const SHIPPING_RATES_POISHA = {
 
 // Default platform commission rate (5.00%)
 export const PLATFORM_COMMISSION_BPS = 500; // 500 basis points = 5.00%
+
+export function snapshotOrderLine(pricePoisha: bigint, productPoint: number, quantity: number) {
+  if (pricePoisha <= 0n || pricePoisha > 9223372036854775807n ||
+      !Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647 ||
+      !Number.isSafeInteger(productPoint) || productPoint < 0 ||
+      productPoint > 2147483647 || productPoint * quantity > 2147483647 ||
+      pricePoisha * BigInt(quantity) > 9223372036854775807n) {
+    throw new ValidationError('Invalid order item price, quantity, or Product Points');
+  }
+
+  return {
+    unitPricePoisha: pricePoisha,
+    totalPoisha: pricePoisha * BigInt(quantity),
+    productPointSnapshot: productPoint,
+    totalProductPoints: productPoint * quantity,
+  };
+}
 
 // Valid seller fulfillment group state machine transitions
 export const VALID_GROUP_TRANSITIONS: Record<string, string[]> = {
@@ -51,20 +69,38 @@ export class OrderFulfillmentService {
    * Executes checkout, partitioning cart items into multi-vendor seller groups
    * and freezing exact pricing and point snapshots.
    */
-  async processCheckout(cartId: string, customerId: string, input: CheckoutInput) {
+  async processCheckout(cartId: string, customerId: string, input: CheckoutInput, idempotencyKey: string) {
     // 1. Fetch cart with active items
     const cart = await this.cartRepo.findById(cartId);
-    if (!cart || cart.items.length === 0) {
+    if (cart && cart.userId !== customerId) {
+      throw new AuthorizationError('Cannot checkout cart belonging to another customer', {
+        code: 'OWNERSHIP_VIOLATION',
+      });
+    }
+
+    if (!cart) {
       throw new ValidationError('Cannot checkout with an empty cart');
     }
 
-    // Milestone 047: Object-level ownership check - verify cart belongs to the checking-out customer
-    if (cart.userId && cart.userId !== customerId) {
-      throw new AuthorizationError('Cannot checkout cart belonging to another customer', {
-        code: 'OWNERSHIP_VIOLATION',
-        cartUserId: cart.userId,
-        customerId,
-      });
+    const dateStamp = new Date(cart.createdAt).toISOString().slice(0, 10).replace(/-/g, '');
+    const requestHash = createHash('sha256')
+      .update(JSON.stringify([cartId, customerId, idempotencyKey, input]))
+      .digest('hex').slice(0, 24).toUpperCase();
+    const orderNumber = `ORD-${dateStamp}-${requestHash}`;
+    const previousOrder = await this.orderRepo.findOrderByNumber(orderNumber);
+    if (previousOrder) {
+      if (previousOrder.customerId !== customerId) {
+        throw new ConflictError('Checkout key is already in use');
+      }
+      return previousOrder;
+    }
+
+    if (cart.items.length === 0) {
+      throw new ValidationError('Cannot checkout with an empty cart');
+    }
+
+    if (cart.status !== 'ACTIVE' || cart.currency !== 'BDT') {
+      throw new ConflictError('Only active BDT carts can be checked out');
     }
 
     // 2. Group items by sellerId (Multi-Vendor Partitioning)
@@ -94,10 +130,9 @@ export class OrderFulfillmentService {
       let groupPoints = 0;
 
       const groupItems = items.map((item: any) => {
-        const unitPrice = BigInt(item.pricePoisha);
-        const lineSubtotal = unitPrice * BigInt(item.quantity);
-        const pointsSnapshot = item.productPoint ?? 0;
-        const linePoints = pointsSnapshot * item.quantity;
+        const snapshot = snapshotOrderLine(item.pricePoisha, item.productPoint, item.quantity);
+        const lineSubtotal = snapshot.totalPoisha;
+        const linePoints = snapshot.totalProductPoints;
 
         // VAT calculation (NBR Mushak standard 15% or item override)
         const taxRate = item.variant?.product?.taxRatePercent
@@ -114,13 +149,13 @@ export class OrderFulfillmentService {
           productTitle: item.variant?.product?.title ?? 'Product',
           variantTitle: item.variant?.title ?? 'Standard',
           sku: item.variant?.sku ?? 'SKU-UNKNOWN',
-          unitPricePoisha: unitPrice,
+          unitPricePoisha: snapshot.unitPricePoisha,
           quantity: item.quantity,
-          totalPoisha: lineSubtotal,
+          totalPoisha: snapshot.totalPoisha,
           taxRatePercent: taxRate,
           taxPoisha: lineTax,
-          productPointSnapshot: pointsSnapshot,
-          totalProductPoints: linePoints,
+          productPointSnapshot: snapshot.productPointSnapshot,
+          totalProductPoints: snapshot.totalProductPoints,
         };
       });
 
@@ -149,13 +184,12 @@ export class OrderFulfillmentService {
 
     const orderTotalPoisha = orderSubtotalPoisha + orderShippingFeePoisha + orderTaxPoisha;
 
-    // 5. Generate human-readable order number (ORD-YYYYMMDD-HEX)
-    const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const entropy = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const orderNumber = `ORD-${dateStamp}-${entropy}`;
-
-    // 6. Persist order with atomic fulfillment groups
-    const createdOrder = await this.orderRepo.createOrder({
+    // 5. Persist order with atomic fulfillment groups
+    let createdOrder;
+    try {
+      createdOrder = await this.orderRepo.createOrder({
+      cartId,
+      cartVersion: cart.version,
       orderNumber,
       customerId,
       subtotalPoisha: orderSubtotalPoisha,
@@ -173,12 +207,18 @@ export class OrderFulfillmentService {
       billingAddress: input.billingAddress,
       customerNotes: input.customerNotes,
       fulfillmentGroups,
-    });
+      });
+    } catch (error) {
+      if (error instanceof ConflictError) {
+        const committedOrder = await this.orderRepo.findOrderByNumber(orderNumber);
+        if (committedOrder && committedOrder.customerId === customerId) {
+          return committedOrder;
+        }
+      }
+      throw error;
+    }
 
-    // 7. Mark cart as converted
-    await this.cartRepo.markConverted(cartId);
-
-    // 8. Record immutable business audit log for order placement
+    // 7. Record immutable business audit log for order placement
     await auditService.logBusinessEvent({
       action: 'ORDER_CREATED',
       resource: 'ORDER',
@@ -193,7 +233,7 @@ export class OrderFulfillmentService {
       },
     });
 
-    return createdOrder;
+    return (await this.orderRepo.findOrderByNumber(orderNumber)) ?? createdOrder;
   }
 
   /**

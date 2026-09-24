@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AlifLogo } from '@/components/brand/logo';
+import { useAuthModal } from '@/components/auth/auth-context';
+import { csrfFetch } from '@/shared/security/csrf-client';
 import { useI18n } from '@/i18n/context';
 import { formatLocalizedCurrency } from '@/shared/utils/localization';
 import {
@@ -21,14 +24,14 @@ import {
   Store,
 } from 'lucide-react';
 
-interface DemoCartItem {
+interface CartItem {
   id: string;
   sellerId: string;
   sellerName: string;
   productTitle: string;
   variantTitle: string;
   sku: string;
-  imageUrl: string;
+  imageUrl?: string;
   pricePoisha: bigint;
   productPoint: number;
   quantity: number;
@@ -36,55 +39,60 @@ interface DemoCartItem {
 
 export default function CartPage() {
   const { locale } = useI18n();
-  const [items, setItems] = useState<DemoCartItem[]>([
-    {
-      id: 'cit_earbuds_01',
-      sellerId: 'sel_dhaka_tech',
-      sellerName: 'Dhaka Tech Ltd.',
-      productTitle: 'AuraPods Pro Wireless ANC',
-      variantTitle: 'Titanium White',
-      sku: 'AUD-AURAPOD-WHT',
-      imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&q=80',
-      pricePoisha: BigInt(299000), // ৳2,990.00
-      productPoint: 60,
-      quantity: 1,
-    },
-    {
-      id: 'cit_phone_01',
-      sellerId: 'sel_dhaka_tech',
-      sellerName: 'Dhaka Tech Ltd.',
-      productTitle: 'Nexus Pro Smartphone 5G',
-      variantTitle: 'Midnight Black / 128GB',
-      sku: 'PHN-NEXUS-BLK',
-      imageUrl: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300&q=80',
-      pricePoisha: BigInt(2199000), // ৳21,990.00
-      productPoint: 450,
-      quantity: 1,
-    },
-  ]);
+  const { user, isLoadingUser, openAuthModal } = useAuthModal();
+  const [cartId, setCartId] = useState<string | null>(null);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busyItem, setBusyItem] = useState<string | null>(null);
+  const checkoutAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
 
   const [division, setDivision] = useState<string>('DHAKA');
-  const [recipientName, setRecipientName] = useState<string>('Tanvir Ahmed');
-  const [phone, setPhone] = useState<string>('01700112233');
-  const [address, setAddress] = useState<string>('House 42, Road 11, Block D, Gulshan-2, Dhaka');
+  const [recipientName, setRecipientName] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [district, setDistrict] = useState<string>('');
+  const [address, setAddress] = useState<string>('');
   const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
   const [orderCreated, setOrderCreated] = useState<string | null>(null);
+
+  const loadCart = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/v1/cart', { cache: 'no-store' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message || 'Unable to load your cart');
+      setCartId(body.data?.id ?? null);
+      setItems((body.data?.items ?? []).map((item: any) => ({
+        id: item.id,
+        sellerId: item.sellerId,
+        sellerName: item.seller?.businessName ?? '',
+        productTitle: item.variant?.product?.title ?? '',
+        variantTitle: item.variant?.title ?? '',
+        sku: item.variant?.sku ?? '',
+        imageUrl: item.variant?.imageUrl ?? undefined,
+        pricePoisha: BigInt(item.pricePoisha),
+        productPoint: item.productPoint,
+        quantity: item.quantity,
+      })));
+      setError(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to load your cart');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoadingUser) return;
+    if (user) void loadCart();
+    else setIsLoading(false);
+  }, [user, isLoadingUser]);
 
   // Math in integer poisha (1 BDT = 100 poisha)
   const subtotalPoisha = items.reduce(
     (acc, item) => acc + item.pricePoisha * BigInt(item.quantity),
     BigInt(0)
   );
-
-  // Group items by seller for distinct fulfillment calculations
-  const sellerCount = new Set(items.map((i) => i.sellerId)).size;
-  const shippingPerSeller = division === 'DHAKA' ? BigInt(6000) : BigInt(12000);
-  const totalShippingFeePoisha = items.length > 0 ? shippingPerSeller * BigInt(sellerCount) : BigInt(0);
-
-  // NBR Standard VAT (15.00%)
-  const totalTaxPoisha = (subtotalPoisha * BigInt(15)) / BigInt(100);
-
-  const grandTotalPoisha = subtotalPoisha + totalShippingFeePoisha + totalTaxPoisha;
 
   // Discrete Product Points (STRICT: independent integer loyalty units)
   const totalProductPoints = items.reduce(
@@ -94,31 +102,65 @@ export default function CartPage() {
 
   const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
-  const updateQuantity = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const newQty = item.quantity + delta;
-            return newQty > 0 ? { ...item, quantity: newQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as DemoCartItem[]
-    );
+  const updateQuantity = async (id: string, delta: number) => {
+    const item = items.find((entry) => entry.id === id);
+    if (!item) return;
+    setBusyItem(id);
+    try {
+      const response = await csrfFetch(`/api/v1/cart/items/${encodeURIComponent(id)}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: item.quantity + delta }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message || 'Unable to update quantity');
+      checkoutAttempt.current = null;
+      await loadCart();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to update quantity');
+    } finally {
+      setBusyItem(null);
+    }
   };
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const removeItem = async (id: string) => {
+    setBusyItem(id);
+    try {
+      const response = await csrfFetch(`/api/v1/cart/items/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message || 'Unable to remove item');
+      checkoutAttempt.current = null;
+      await loadCart();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to remove item');
+    } finally {
+      setBusyItem(null);
+    }
   };
 
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!cartId) return;
     setIsCheckingOut(true);
-    setTimeout(() => {
+    setError(null);
+    const checkout = { shippingName: recipientName, shippingPhone: phone, shippingDivision: division,
+      shippingDistrict: district, shippingAddress: address };
+    const fingerprint = JSON.stringify([cartId, checkout]);
+    if (checkoutAttempt.current?.fingerprint !== fingerprint) {
+      checkoutAttempt.current = { fingerprint, key: crypto.randomUUID() };
+    }
+    try {
+      const response = await csrfFetch('/api/v1/cart/checkout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': checkoutAttempt.current.key },
+        body: JSON.stringify({ cartId, checkout }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.message || 'Checkout failed');
+      setOrderCreated(body.data.orderNumber);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Checkout failed');
+    } finally {
       setIsCheckingOut(false);
-      setOrderCreated('ORD-20260922-0001');
-    }, 600);
+    }
   };
 
   return (
@@ -142,19 +184,27 @@ export default function CartPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {orderCreated ? (
+        {error && <div role="alert" className="mb-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error} <button type="button" onClick={() => void loadCart()} className="underline">Retry loading cart</button></div>}
+        {(isLoadingUser || isLoading) ? (
+          <p role="status">Loading cart...</p>
+        ) : !user ? (
+          <div className="py-16 text-center space-y-4">
+            <h1 className="text-xl font-bold">Sign in to view your cart</h1>
+            <button type="button" onClick={() => openAuthModal('login')} className="px-5 py-2 bg-[#1B5E20] text-white">Sign in</button>
+          </div>
+        ) : orderCreated ? (
           <div className="max-w-2xl mx-auto bg-white border border-green-200 rounded-2xl p-8 text-center shadow-sm">
             <div className="w-16 h-16 bg-green-100 text-[#1B5E20] rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Order placed</h1>
             <p className="text-gray-600 mb-4">
-              Your order <span className="font-semibold text-gray-900">#{orderCreated}</span> has been successfully recorded in the transaction ledger and partitioned into seller fulfillment groups.
+              Your order <span className="font-semibold text-gray-900">#{orderCreated}</span> was recorded. Payment and fulfillment are pending.
             </p>
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 inline-flex items-center gap-3">
               <Sparkles className="w-5 h-5 text-[#1B5E20]" />
               <span className="text-sm font-semibold text-[#1B5E20]">
-                {totalProductPoints} Product Points (PP) snapshotted and pending delivery release!
+                {totalProductPoints} Product Points (PP) recorded with the order. Posting is subject to approved eligibility rules.
               </span>
             </div>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
@@ -162,7 +212,7 @@ export default function CartPage() {
                 href={`/orders/${orderCreated}`}
                 className="px-6 py-3 bg-[#1B5E20] hover:bg-[#154a19] text-white font-medium rounded-xl shadow transition-colors flex items-center justify-center gap-2"
               >
-                Track Live Shipment <ArrowRight className="w-4 h-4" />
+                View Order <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/"
@@ -207,11 +257,7 @@ export default function CartPage() {
                 <div className="divide-y divide-gray-100">
                   {items.map((item) => (
                     <div key={item.id} className="py-4 flex gap-4 items-start">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.productTitle}
-                        className="w-20 h-20 object-cover rounded-xl border border-gray-100 flex-shrink-0"
-                      />
+                      {item.imageUrl ? <Image unoptimized src={item.imageUrl} alt={item.productTitle} width={80} height={80} className="w-20 h-20 object-cover rounded-xl border border-gray-100 flex-shrink-0" /> : <span className="w-20 h-20 bg-gray-100 flex items-center justify-center" aria-hidden="true"><ShoppingBag /></span>}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
                           <Store className="w-3.5 h-3.5 text-[#1B5E20]" />
@@ -239,6 +285,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, -1)}
+                            disabled={busyItem === item.id}
                             className="p-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-l-lg transition-colors"
                             aria-label="Decrease quantity"
                           >
@@ -250,6 +297,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, 1)}
+                            disabled={busyItem === item.id}
                             className="p-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-r-lg transition-colors"
                             aria-label="Increase quantity"
                           >
@@ -259,6 +307,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
+                          disabled={busyItem === item.id}
                           className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
                         >
                           <Trash2 className="w-3.5 h-3.5" /> Remove
@@ -334,6 +383,11 @@ export default function CartPage() {
                   </div>
 
                   <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="shipping-district">District</label>
+                    <input id="shipping-district" required value={district} onChange={(event) => setDistrict(event.target.value)} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl" />
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
                       Full Delivery Address
                     </label>
@@ -368,21 +422,16 @@ export default function CartPage() {
                       <Truck className="w-4 h-4 text-gray-400" />
                       Courier Fulfillment ({division})
                     </span>
-                    <span className="font-semibold text-gray-900">
-                      {formatBdt(totalShippingFeePoisha)}
-                    </span>
+                    <span className="font-semibold text-gray-900">Calculated at checkout</span>
                   </div>
 
                   <div className="flex justify-between text-gray-600">
-                    <span>NBR Mushak 6.3 VAT (15%)</span>
-                    <span className="font-semibold text-gray-900">{formatBdt(totalTaxPoisha)}</span>
+                    <span>Tax</span>
+                    <span className="font-semibold text-gray-900">Calculated at checkout</span>
                   </div>
 
                   <div className="pt-3 border-t border-gray-100 flex justify-between items-baseline">
-                    <span className="text-base font-bold text-gray-900">Total Payable</span>
-                    <span className="text-2xl font-black text-[#1B5E20]">
-                      {formatBdt(grandTotalPoisha)}
-                    </span>
+                    <span className="text-base font-bold text-gray-900">Final total available after checkout</span>
                   </div>
                 </div>
 
@@ -400,7 +449,7 @@ export default function CartPage() {
                         {totalProductPoints} Product Points (PP)
                       </p>
                       <p className="text-[11px] text-amber-700/90 mt-0.5 leading-snug">
-                        Product points are discrete integer tokens designated per SKU with zero conversion rate to BDT cash. Points snapshot at checkout and release upon delivery completion.
+                        Product Points are independent of BDT. Eligibility for posting requires an approved rule.
                       </p>
                     </div>
                   </div>
@@ -414,7 +463,7 @@ export default function CartPage() {
                   className="w-full py-3.5 px-4 bg-[#1B5E20] hover:bg-[#154a19] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isCheckingOut ? (
-                    'Recording Atomic Ledger Order...'
+                    'Placing order...'
                   ) : (
                     <>
                       Confirm & Place Order <ArrowRight className="w-4 h-4" />
@@ -424,7 +473,7 @@ export default function CartPage() {
 
                 <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
                   <ShieldCheck className="w-4 h-4 text-[#1B5E20]" />
-                  <span>Integer Poisha Financial Precision • Zero Rounding Error</span>
+                  <span>Prices are stored in integer poisha</span>
                 </div>
               </div>
             </div>

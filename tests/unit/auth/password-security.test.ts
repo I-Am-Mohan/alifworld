@@ -4,10 +4,28 @@ import {
   PASSWORD_RESET_POLICY,
 } from '@/services/password-security.service';
 import { hashPassword, isCommonPassword, verifyPassword } from '@/shared/auth/password';
+import { getPasswordRequirements, validatePasswordStrength } from '@/shared/auth/password-strength';
 import { hashToken } from '@/shared/auth/jwt';
 import { UnauthorizedError, ValidationError } from '@/shared/errors/app-error';
 
 describe('Password reset, change, and breach-safe controls (Milestone 037)', () => {
+  it('shares all registration password requirements with server validation', () => {
+    const weak = getPasswordRequirements('lowercase');
+    expect(weak.filter(({ met }) => !met).map(({ key }) => key)).toEqual([
+      'uppercase', 'number', 'special',
+    ]);
+    expect(validatePasswordStrength('lowercase').errors).toEqual([
+      'Password must contain at least one uppercase English letter',
+      'Password must contain at least one numeric digit',
+      'Password must contain at least one special character (!@#$%^&*...)',
+    ]);
+    expect(validatePasswordStrength('Welcome@123').isValid).toBe(false);
+    expect(getPasswordRequirements('Welcome@123').find(({ key }) => key === 'unique')?.met).toBe(false);
+    expect(validatePasswordStrength('NewUnique@Pass2027').isValid).toBe(true);
+    expect(validatePasswordStrength('')).toEqual({ isValid: false, errors: ['Password is required'] });
+    expect(validatePasswordStrength(null as unknown as string)).toEqual({ isValid: false, errors: ['Password is required'] });
+    expect(validatePasswordStrength(123 as unknown as string)).toEqual({ isValid: false, errors: ['Password is required'] });
+  });
   const fixedNow = new Date('2026-09-22T12:00:00.000Z');
   const rawResetToken = 'reset_token_with_more_than_thirty_two_secure_characters_037';
   const originalPassword = 'Original@Pass2026';

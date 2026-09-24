@@ -40,8 +40,11 @@ export function buildContentSecurityPolicy(
     'http://127.0.0.1:9000',
   ].join(' ');
 
+  const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim().replace(/\/$/, '');
+
   const connectOrigins = [
     "'self'",
+    appUrl,
     'https://*.alifworld.com',
     'https://api.alifworld.com',
     'http://localhost:3000',

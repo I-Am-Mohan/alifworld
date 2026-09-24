@@ -102,7 +102,7 @@ export default function AdminSetupPage() {
     COURIER_PATHAO_ENV: 'sandbox',
     COURIER_PATHAO_CLIENT_ID: 'pathao_client_id_dev',
     COURIER_PATHAO_CLIENT_SECRET: 'pathao_secret_dev',
-    COURIER_PATHAO_USERNAME: 'pathao@alifworld.com',
+    COURIER_PATHAO_USERNAME: 'pathao@mail.com',
     COURIER_PATHAO_PASSWORD: 'pathao_password_dev',
     COURIER_PATHAO_STORE_ID: '12480',
     COURIER_REDX_ENABLED: 'true',
@@ -1096,7 +1096,7 @@ export default function AdminSetupPage() {
                   type="text"
                   value={settings.STORAGE_S3_CDN_URL}
                   onChange={(e) => updateSetting('STORAGE_S3_CDN_URL', e.target.value)}
-                  placeholder="https://cdn.alifworld.com"
+                  placeholder="https://cdn.example.com"
                   className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white"
                 />
               </div>

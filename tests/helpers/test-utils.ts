@@ -18,7 +18,7 @@ export function createMockSession(overrides: Partial<MockUserSession> = {}): Moc
     userId: overrides.userId ?? 'usr_test_01j7x4b9e8m02k3',
     role: overrides.role ?? 'CUSTOMER',
     sellerId: overrides.sellerId,
-    email: overrides.email ?? 'tester@alifworld.com',
+    email: overrides.email ?? 'tester@mail.com',
   };
 }
 
