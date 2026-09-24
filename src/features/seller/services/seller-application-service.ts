@@ -38,7 +38,7 @@ export class SellerApplicationService {
       throw new ConflictError('Seller application was modified by another request.', { expectedVersion, actualVersion: application.version });
     }
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       const updated = await (tx as any).sellerApplication.updateMany({
         where: { id: applicationId, applicantUserId: userId, deletedAt: null, version: expectedVersion, status: { in: ['DRAFT', 'CHANGES_REQUESTED'] } },
         data: { status: 'SUBMITTED', submittedAt: new Date(), reviewedAt: null, reviewedBy: null, reviewReason: null, version: expectedVersion + 1 },
@@ -85,7 +85,7 @@ export class SellerApplicationService {
       throw new ValidationError('A reason is required for this review decision.');
     }
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: any) => {
       const now = new Date();
       let sellerId = application.sellerId;
       if (input.decision === 'APPROVED') {
