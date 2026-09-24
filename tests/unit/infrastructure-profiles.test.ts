@@ -14,8 +14,15 @@ describe('Remote Infrastructure & Object Storage Configuration', () => {
   });
 
   it('validates AWS S3 and Cloudflare R2 object storage provider schemas', () => {
-    const s3Config = serverEnvSchema.parse({
+    const baseEnv = {
       DATABASE_URL: 'postgresql://user:pass@remote-host:5432/db',
+      REDIS_URL: 'redis://localhost:6379/0',
+      JWT_SECRET: 'change_me_to_a_secure_random_string_in_production_min_32_chars',
+      SESSION_SECRET: 'change_me_to_another_secure_random_string_32_chars',
+    };
+
+    const s3Config = serverEnvSchema.parse({
+      ...baseEnv,
       STORAGE_PROVIDER: 'AWS_S3',
       S3_BUCKET_NAME: 'alifworld-media',
       S3_REGION: 'us-east-1',
@@ -24,7 +31,7 @@ describe('Remote Infrastructure & Object Storage Configuration', () => {
     expect(s3Config.S3_BUCKET_NAME).toBe('alifworld-media');
 
     const r2Config = serverEnvSchema.parse({
-      DATABASE_URL: 'postgresql://user:pass@remote-host:5432/db',
+      ...baseEnv,
       STORAGE_PROVIDER: 'CLOUDFLARE_R2',
       S3_BUCKET_NAME: 'r2-media-bucket',
       R2_ACCOUNT_ID: '0123456789abcdef',

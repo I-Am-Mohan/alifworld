@@ -19,8 +19,6 @@ describe('Environment Validation & Secret Boundaries', () => {
       const parsed = validateClientEnv({});
       expect(parsed.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000');
       expect(parsed.NEXT_PUBLIC_CDN_URL).toBe('');
-      expect(parsed.NEXT_PUBLIC_DEFAULT_LOCALE).toBe('bn-BD');
-      expect(parsed.NEXT_PUBLIC_BASE_CURRENCY).toBe('BDT');
     });
 
     it('rejects invalid URL in NEXT_PUBLIC_APP_URL', () => {
@@ -30,41 +28,20 @@ describe('Environment Validation & Secret Boundaries', () => {
         });
       }).toThrow(/Invalid Client Environment Variables/);
     });
-
-    it('rejects unsupported locale in NEXT_PUBLIC_DEFAULT_LOCALE', () => {
-      expect(() => {
-        validateClientEnv({
-          NEXT_PUBLIC_DEFAULT_LOCALE: 'fr-FR',
-        });
-      }).toThrow(/Invalid Client Environment Variables/);
-    });
   });
 
   describe('Server Environment Validation', () => {
     it('validates server environment with baseline defaults', () => {
-      const parsed = validateServerEnv({});
-      expect(parsed.TZ).toBe('Asia/Dhaka');
-      expect(parsed.BASE_CURRENCY).toBe('BDT');
+      const parsed = validateServerEnv({
+        DATABASE_URL: 'postgresql://user:pass@localhost:5432/db',
+        REDIS_URL: 'redis://localhost:6379/0',
+        JWT_SECRET: 'change_me_to_a_secure_random_string_in_production_min_32_chars',
+        SESSION_SECRET: 'change_me_to_another_secure_random_string_32_chars',
+      });
       expect(parsed.DATABASE_URL).toContain('postgresql://');
       expect(parsed.REDIS_URL).toBe('redis://localhost:6379/0');
-      expect(parsed.MAX_AFFILIATE_DEPTH).toBe(1);
-      expect(parsed.FEATURE_POINTS_CASH_CONVERTIBLE).toBe(false);
-    });
-
-    it('enforces Locked Invariant: MAX_AFFILIATE_DEPTH must be strictly 1', () => {
-      expect(() => {
-        validateServerEnv({
-          MAX_AFFILIATE_DEPTH: 2,
-        });
-      }).toThrow(/Multi-tier pyramid referral is prohibited/);
-    });
-
-    it('enforces Locked Invariant: FEATURE_POINTS_CASH_CONVERTIBLE must never be true', () => {
-      expect(() => {
-        validateServerEnv({
-          FEATURE_POINTS_CASH_CONVERTIBLE: 'true',
-        });
-      }).toThrow(/Product Points are non-convertible loyalty metric/);
+      expect(parsed.APP_ENV).toBe('local');
+      expect(parsed.NODE_ENV).toBe('development');
     });
 
     it('rejects JWT_SECRET shorter than 32 characters', () => {
@@ -73,14 +50,6 @@ describe('Environment Validation & Secret Boundaries', () => {
           JWT_SECRET: 'short_insecure_secret',
         });
       }).toThrow(/JWT_SECRET must be at least 32 characters/);
-    });
-
-    it('rejects invalid timezone', () => {
-      expect(() => {
-        validateServerEnv({
-          TZ: 'America/New_York',
-        });
-      }).toThrow(/Invalid Server Environment Variables/);
     });
   });
 

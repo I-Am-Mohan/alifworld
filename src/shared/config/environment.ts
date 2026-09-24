@@ -194,6 +194,77 @@ export const serverEnvSchema = clientEnvSchema.extend({
     .default(3),
 
   // --------------------------------------------------------------------------
+  // OAuth Identity Providers
+  // --------------------------------------------------------------------------
+
+  GOOGLE_CLIENT_ID: z
+    .string()
+    .optional(),
+
+  GOOGLE_CLIENT_SECRET: z
+    .string()
+    .optional(),
+
+  FACEBOOK_APP_ID: z
+    .string()
+    .optional(),
+
+  FACEBOOK_APP_SECRET: z
+    .string()
+    .optional(),
+
+  // --------------------------------------------------------------------------
+  // Object Storage (S3 / R2)
+  // --------------------------------------------------------------------------
+
+  STORAGE_PROVIDER: z
+    .enum(['AWS_S3', 'CLOUDFLARE_R2'])
+    .optional(),
+
+  S3_BUCKET_NAME: z
+    .string()
+    .optional(),
+
+  S3_REGION: z
+    .string()
+    .optional(),
+
+  S3_ENDPOINT: z
+    .string()
+    .optional(),
+
+  S3_FORCE_PATH_STYLE: z
+    .preprocess(
+      (value) => value === 'true' || value === true,
+      z.boolean()
+    )
+    .optional(),
+
+  S3_ACCESS_KEY_ID: z
+    .string()
+    .optional(),
+
+  S3_SECRET_ACCESS_KEY: z
+    .string()
+    .optional(),
+
+  S3_PUBLIC_BASE_URL: z
+    .string()
+    .optional(),
+
+  R2_ACCOUNT_ID: z
+    .string()
+    .optional(),
+
+  // --------------------------------------------------------------------------
+  // Encryption Keys
+  // --------------------------------------------------------------------------
+
+  PAYOUT_PROFILE_ENCRYPTION_KEY: z
+    .string()
+    .optional(),
+
+  // --------------------------------------------------------------------------
   // Observability / Logging / Telemetry
   // --------------------------------------------------------------------------
 

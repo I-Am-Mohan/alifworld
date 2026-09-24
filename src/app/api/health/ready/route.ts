@@ -20,9 +20,6 @@ export async function GET() {
         data: {
           status: 'ready',
           environment: config.appEnv,
-          timezone: config.timezone,
-          currency: config.baseCurrency,
-          locales: config.supportedLocales,
           checks: {
             process: 'healthy',
             configuration: 'valid',
@@ -31,11 +28,6 @@ export async function GET() {
               status: dbHealth.status,
               latencyMs: dbHealth.latencyMs,
               ...(dbHealth.error ? { error: dbHealth.error } : {}),
-            },
-            gates: {
-              pointsCashConvertible: config.gates.featurePointsCashConvertible,
-              affiliateDepth: config.gates.maxAffiliateDepth,
-              lotteryEnabled: config.gates.featureLotteryEnabled,
             },
           },
           timestamp: new Date().toISOString(),
