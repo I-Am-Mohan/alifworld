@@ -418,6 +418,8 @@ model Seller {
   onboardingProgress SellerCatalogOnboardingProgress[]
   importJobs          CatalogImportJob[]
   exportJobs          CatalogExportJob[]
+  promotions          Promotion[]
+  promotionAttributions PromotionAttribution[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -943,6 +945,81 @@ model TaxRule {
   @@index([categoryId, status])
   @@index([status])
   @@map("tax_rules")
+}
+
+// ------------------------------------------------------------------------------
+// 16b. Promotions, Vouchers & Funding Attribution
+// ------------------------------------------------------------------------------
+/// Versioned promotional campaign / coupon with defined funding attribution
+model Promotion {
+  id                     String    @id @default(uuid())
+  code                   String    @unique
+  title                  String
+  titleBn                String?   @map("title_bn")
+  description            String?
+  promotionType          String    @default("PERCENTAGE") @map("promotion_type") // PERCENTAGE, FIXED_AMOUNT, FREE_SHIPPING
+  fundingType            String    @default("PLATFORM_FUNDED") @map("funding_type") // PLATFORM_FUNDED, SELLER_FUNDED, CO_FUNDED
+  sellerSharePercent     Decimal   @default(0.00) @map("seller_share_percent") @db.Decimal(5, 2)
+  platformSharePercent   Decimal   @default(100.00) @map("platform_share_percent") @db.Decimal(5, 2)
+  sellerId               String?   @map("seller_id") // Nullable if sitewide/platform-managed, or specific seller ID if seller-scoped
+  discountValue          Decimal   @default(0.00) @map("discount_value") @db.Decimal(12, 2)
+  maxDiscountPoisha      BigInt?   @map("max_discount_poisha")
+  minOrderSubtotalPoisha BigInt    @default(0) @map("min_order_subtotal_poisha")
+  usageLimit             Int?      @map("usage_limit")
+  usageCount             Int       @default(0) @map("usage_count")
+  perCustomerLimit       Int?      @default(1) @map("per_customer_limit")
+  startsAt               DateTime  @map("starts_at")
+  endsAt                 DateTime? @map("ends_at")
+  status                 String    @default("ACTIVE") // DRAFT, ACTIVE, PAUSED, EXPIRED, ARCHIVED
+  ruleVersion            String    @default("v1.0.0") @map("rule_version")
+  createdBy              String?   @map("created_by")
+  updatedBy              String?   @map("updated_by")
+  version                Int       @default(1)
+  deletedAt              DateTime? @map("deleted_at")
+  deletedBy              String?   @map("deleted_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  seller       Seller?                @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  attributions PromotionAttribution[]
+
+  @@index([code])
+  @@index([sellerId, status])
+  @@index([status, startsAt, endsAt])
+  @@index([deletedAt])
+  @@map("promotions")
+}
+
+/// Immutable audit record tracking funding attribution split (seller vs platform) for applied discounts
+model PromotionAttribution {
+  id                   String   @id @default(uuid())
+  orderId              String   @map("order_id")
+  fulfillmentGroupId   String?  @map("fulfillment_group_id")
+  orderItemId          String?  @map("order_item_id")
+  sellerId             String?  @map("seller_id")
+  promotionId          String?  @map("promotion_id")
+  couponCode           String?  @map("coupon_code")
+  fundingType          String   @map("funding_type") // PLATFORM_FUNDED, SELLER_FUNDED, CO_FUNDED
+  discountAmountPoisha BigInt   @map("discount_amount_poisha")
+  sellerSharePoisha    BigInt   @map("seller_share_poisha")
+  platformSharePoisha  BigInt   @map("platform_share_poisha")
+  sellerSharePercent   Decimal  @map("seller_share_percent") @db.Decimal(5, 2)
+  platformSharePercent Decimal  @map("platform_share_percent") @db.Decimal(5, 2)
+  ruleVersion          String   @default("v1.0.0") @map("rule_version")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  order            Order                   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fulfillmentGroup SellerFulfillmentGroup? @relation(fields: [fulfillmentGroupId], references: [id], onDelete: Cascade)
+  orderItem        OrderItem?              @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  seller           Seller?                 @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  promotion        Promotion?              @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([fulfillmentGroupId])
+  @@index([sellerId, createdAt])
+  @@index([promotionId])
+  @@index([couponCode])
+  @@map("promotion_attributions")
 }
 
 // ------------------------------------------------------------------------------
@@ -1607,6 +1684,8 @@ model Order {
   currency           String    @default("BDT")
   subtotalPoisha     BigInt    @map("subtotal_poisha")
   discountPoisha     BigInt    @default(0) @map("discount_poisha")
+  sellerDiscountPoisha BigInt  @default(0) @map("seller_discount_poisha")
+  platformDiscountPoisha BigInt @default(0) @map("platform_discount_poisha")
   shippingFeePoisha  BigInt    @default(0) @map("shipping_fee_poisha")
   taxPoisha          BigInt    @default(0) @map("tax_poisha")
   totalPoisha        BigInt    @map("total_poisha")
@@ -1641,6 +1720,7 @@ model Order {
   payments          Payment[]
   refunds           Refund[]
   commissions       CommissionLedger[]
+  promotionAttributions PromotionAttribution[]
 
   @@index([customerId, status])
   @@index([orderNumber])
@@ -1663,6 +1743,9 @@ model SellerFulfillmentGroup {
   groupNumber            String    @unique @map("group_number") // e.g. SFG-20260922-XXXX-SEL01
   status                 String    @default("PENDING") // PENDING, ACCEPTED, PACKING, READY_FOR_PICKUP, HANDED_OVER_TO_COURIER, IN_TRANSIT, DELIVERED, CANCELLED, REJECTED
   subtotalPoisha         BigInt    @map("subtotal_poisha")
+  discountPoisha         BigInt    @default(0) @map("discount_poisha")
+  sellerDiscountPoisha   BigInt    @default(0) @map("seller_discount_poisha")
+  platformDiscountPoisha BigInt    @default(0) @map("platform_discount_poisha")
   shippingFeePoisha      BigInt    @default(0) @map("shipping_fee_poisha")
   taxPoisha              BigInt    @default(0) @map("tax_poisha")
   totalPoisha            BigInt    @map("total_poisha")
@@ -1688,6 +1771,7 @@ model SellerFulfillmentGroup {
   shipments   Shipment[]
   refunds     Refund[]
   commissions CommissionLedger[]
+  promotionAttributions PromotionAttribution[]
 
   @@index([sellerId, status])
   @@index([orderId])
@@ -1713,6 +1797,9 @@ model OrderItem {
   unitPricePoisha      BigInt    @map("unit_price_poisha")
   quantity             Int
   totalPoisha          BigInt    @map("total_poisha")
+  discountPoisha       BigInt    @default(0) @map("discount_poisha")
+  sellerDiscountPoisha BigInt    @default(0) @map("seller_discount_poisha")
+  platformDiscountPoisha BigInt  @default(0) @map("platform_discount_poisha")
   taxRatePercent       Decimal?  @map("tax_rate_percent") @db.Decimal(5, 2)
   taxPoisha            BigInt    @default(0) @map("tax_poisha")
   productPointSnapshot Int       @default(0) @map("product_point_snapshot") // Independent discrete points per unit
@@ -1729,6 +1816,7 @@ model OrderItem {
   seller           Seller                 @relation(fields: [sellerId], references: [id], onDelete: Restrict)
   variant          ProductVariant         @relation(fields: [variantId], references: [id], onDelete: Restrict)
   refundItems      RefundItem[]
+  promotionAttributions PromotionAttribution[]
 
   @@index([orderId])
   @@index([fulfillmentGroupId])
