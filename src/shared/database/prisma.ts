@@ -21,14 +21,16 @@ const globalForPrisma = globalThis as unknown as {
  */
 export function createPrismaClient(): PrismaClient {
   const isDevelopment = process.env.NODE_ENV === 'development';
-  const connectionString =
-    process.env.DATABASE_URL ||
-    process.env.DIRECT_DATABASE_URL ||
-    'postgresql://placeholder:placeholder@localhost:5432/placeholder';
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required to create PrismaClient');
+  }
 
   return new PrismaClient({
     adapter: new PrismaPg({ connectionString }),
-    log: isDevelopment ? ['query', 'error', 'warn'] : ['error', 'warn'],
+    log: isDevelopment
+      ? ['query', 'error', 'warn']
+      : ['error', 'warn'],
     errorFormat: 'colorless',
   });
 }
