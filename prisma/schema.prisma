@@ -972,6 +972,9 @@ model Promotion {
   usageLimit             Int?      @map("usage_limit")
   usageCount             Int       @default(0) @map("usage_count")
   perCustomerLimit       Int?      @default(1) @map("per_customer_limit")
+  priority               Int       @default(0)
+  isStackable            Boolean   @default(true) @map("is_stackable")
+  exclusionScope         String    @default("STACKABLE") @map("exclusion_scope") // EXCLUSIVE_SITEWIDE, EXCLUSIVE_CATEGORY, EXCLUSIVE_PRODUCT, STACKABLE
   startsAt               DateTime  @map("starts_at")
   endsAt                 DateTime? @map("ends_at")
   status                 String    @default("ACTIVE") // DRAFT, ACTIVE, PAUSED, EXPIRED, ARCHIVED
@@ -1115,6 +1118,8 @@ model DiscountRule {
   sellerId               String?   @map("seller_id") // Null for platform sitewide, or seller UUID
   buyerSegment           String?   @map("buyer_segment") // e.g. ALL, VIP, NEW_USER
   priority               Int       @default(0)
+  isStackable            Boolean   @default(true) @map("is_stackable")
+  exclusionScope         String    @default("STACKABLE") @map("exclusion_scope") // EXCLUSIVE_SITEWIDE, EXCLUSIVE_CATEGORY, EXCLUSIVE_PRODUCT, STACKABLE
   startsAt               DateTime  @map("starts_at")
   endsAt                 DateTime? @map("ends_at")
   usageLimit             Int?      @map("usage_limit")
