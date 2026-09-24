@@ -241,10 +241,12 @@ export interface ProductModel {
 
 export interface TaxRule {
   id: string;
-  jurisdiction: 'BD';
-  categoryId?: string;
+  jurisdiction: string;
+  categoryId?: string | null;
   name: string;
   standardRatePercent: number; // e.g. 15.00 standard, 5.00 for ICT hardware, 0.00 for exempt
+  taxType?: string; // VAT, SD, CUSTOM
+  priceIncludesTax?: boolean;
   effectiveFrom: Date;
   effectiveTo?: Date | null;
   description: string;
@@ -257,10 +259,13 @@ export interface TaxCalculationBreakdown {
   taxRatePercent: number;
   taxAmountPoisha: bigint;
   grossPricePoisha: bigint;
+  priceIncludesTax: boolean;
+  taxType: string;
+  taxRuleId?: string | null;
 }
 
 export interface TaxSnapshot {
-  jurisdiction: 'BD';
+  jurisdiction: string;
   effectiveDate: string; // ISO date
   totalNetPoisha: bigint;
   totalTaxPoisha: bigint;

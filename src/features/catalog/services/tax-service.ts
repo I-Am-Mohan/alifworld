@@ -87,6 +87,7 @@ export class TaxService {
   /**
    * Calculates tax using integer poisha and integer basis points.
    * Rounding rule: half-up to the nearest poisha.
+   * Supports both Exclusive Tax (priceIncludesTax = false) and Inclusive Tax (priceIncludesTax = true).
    */
   public calculateTaxForLineItem(params: {
     lineItemId?: string;
@@ -94,24 +95,66 @@ export class TaxService {
     netPricePoisha: bigint | number | string;
     quantity: number;
     taxRatePercent: number | string;
+    priceIncludesTax?: boolean;
+    taxType?: string;
+    taxRuleId?: string | null;
   }): TaxCalculationBreakdown {
     if (!Number.isSafeInteger(params.quantity) || params.quantity < 1) {
       throw new Error('Tax quantity must be a positive safe integer.');
     }
 
-    const unitPricePoisha = this.toPoisha(params.netPricePoisha);
-    const totalNetPoisha = unitPricePoisha * BigInt(params.quantity);
-    const rateBasisPoints = this.percentToBasisPoints(params.taxRatePercent);
-    const taxAmountPoisha = this.roundHalfUp(totalNetPoisha * BigInt(rateBasisPoints), 10000n);
-    const grossPricePoisha = totalNetPoisha + taxAmountPoisha;
+    const priceIncludesTax = params.priceIncludesTax ?? false;
+    const taxType = params.taxType || 'VAT';
+    const ratePercentNum = Number(params.taxRatePercent);
+
+    if (ratePercentNum === 0) {
+      const basePoisha = this.toPoisha(params.netPricePoisha) * BigInt(params.quantity);
+      return {
+        lineItemId: params.lineItemId,
+        title: params.title,
+        netPricePoisha: basePoisha,
+        taxRatePercent: 0,
+        taxAmountPoisha: 0n,
+        grossPricePoisha: basePoisha,
+        priceIncludesTax,
+        taxType,
+        taxRuleId: params.taxRuleId || null,
+      };
+    }
+
+    const inputPoisha = this.toPoisha(params.netPricePoisha);
+    const totalInputPoisha = inputPoisha * BigInt(params.quantity);
+    const rateBasisPoints = BigInt(this.percentToBasisPoints(params.taxRatePercent));
+
+    let netPricePoisha: bigint;
+    let taxAmountPoisha: bigint;
+    let grossPricePoisha: bigint;
+
+    if (priceIncludesTax) {
+      // Inclusive Tax: Input is gross display price
+      grossPricePoisha = totalInputPoisha;
+      // Tax = Gross * Rate / (100 + Rate) => (Gross * BasisPoints) / (10000 + BasisPoints)
+      const denominator = 10000n + rateBasisPoints;
+      taxAmountPoisha = this.roundHalfUp(grossPricePoisha * rateBasisPoints, denominator);
+      netPricePoisha = grossPricePoisha - taxAmountPoisha;
+    } else {
+      // Exclusive Tax: Input is net price
+      netPricePoisha = totalInputPoisha;
+      // Tax = Net * Rate / 100 => (Net * BasisPoints) / 10000
+      taxAmountPoisha = this.roundHalfUp(netPricePoisha * rateBasisPoints, 10000n);
+      grossPricePoisha = netPricePoisha + taxAmountPoisha;
+    }
 
     return {
       lineItemId: params.lineItemId,
       title: params.title,
-      netPricePoisha: totalNetPoisha,
-      taxRatePercent: Number(params.taxRatePercent),
+      netPricePoisha,
+      taxRatePercent: ratePercentNum,
       taxAmountPoisha,
       grossPricePoisha,
+      priceIncludesTax,
+      taxType,
+      taxRuleId: params.taxRuleId || null,
     };
   }
 
@@ -127,8 +170,12 @@ export class TaxService {
       quantity: number;
       productTaxRatePercent?: number | null;
       categoryTaxRatePercent?: number | null;
+      priceIncludesTax?: boolean;
+      taxType?: string;
+      taxRuleId?: string | null;
     }>,
-    effectiveDate: Date = new Date()
+    effectiveDate: Date = new Date(),
+    jurisdiction: string = 'BD'
   ): TaxSnapshot {
     let totalNetPoisha = 0n;
     let totalTaxPoisha = 0n;
@@ -146,6 +193,9 @@ export class TaxService {
         netPricePoisha: item.netPricePoisha,
         quantity: item.quantity,
         taxRatePercent: rate,
+        priceIncludesTax: item.priceIncludesTax,
+        taxType: item.taxType,
+        taxRuleId: item.taxRuleId,
       });
 
       totalNetPoisha += breakdown.netPricePoisha;
@@ -155,7 +205,7 @@ export class TaxService {
     });
 
     return {
-      jurisdiction: 'BD',
+      jurisdiction,
       effectiveDate: effectiveDate.toISOString(),
       totalNetPoisha,
       totalTaxPoisha,
