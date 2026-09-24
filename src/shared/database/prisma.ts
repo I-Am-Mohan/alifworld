@@ -9,6 +9,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { getAppConfig } from '@/shared/config/environment';
 
 const globalForPrisma = globalThis as unknown as {
@@ -20,8 +21,13 @@ const globalForPrisma = globalThis as unknown as {
  */
 export function createPrismaClient(): PrismaClient {
   const isDevelopment = process.env.NODE_ENV === 'development';
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required to create PrismaClient');
+  }
 
   return new PrismaClient({
+    adapter: new PrismaPg({ connectionString }),
     log: isDevelopment
       ? ['query', 'error', 'warn']
       : ['error', 'warn'],
