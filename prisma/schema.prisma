@@ -420,6 +420,7 @@ model Seller {
   exportJobs          CatalogExportJob[]
   promotions          Promotion[]
   promotionAttributions PromotionAttribution[]
+  priceLists          PriceList[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -1023,6 +1024,68 @@ model PromotionAttribution {
 }
 
 // ------------------------------------------------------------------------------
+// 16c. Multi-Channel Price Lists & Tier Pricing
+// ------------------------------------------------------------------------------
+/// Channel or segment-specific price lists (Retail, B2B, Campaign, Negotiated)
+model PriceList {
+  id           String    @id @default(uuid())
+  sellerId     String?   @map("seller_id") // Null for sitewide platform price list, or seller UUID
+  code         String    @unique
+  name         String
+  description  String?
+  channel      String    @default("RETAIL") // RETAIL, B2B, CAMPAIGN, NEGOTIATED
+  currency     String    @default("BDT")
+  buyerSegment String?   @map("buyer_segment") // e.g. PUBLIC, VIP, WHOLESALE_GOLD, B2B_CORP
+  priority     Int       @default(0) // Higher priority overrides lower priority when eligible
+  startsAt     DateTime? @map("starts_at")
+  endsAt       DateTime? @map("ends_at")
+  status       String    @default("ACTIVE") // DRAFT, ACTIVE, INACTIVE, ARCHIVED
+  ruleVersion  String    @default("v1.0.0") @map("rule_version")
+  createdBy    String?   @map("created_by")
+  updatedBy    String?   @map("updated_by")
+  version      Int       @default(1)
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  seller Seller?         @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  rules  PriceListRule[]
+
+  @@index([code])
+  @@index([sellerId, status])
+  @@index([channel, buyerSegment, status])
+  @@index([deletedAt])
+  @@map("price_lists")
+}
+
+/// Price list entries defining variant/product overrides, volume tiers, and quantity breaks
+model PriceListRule {
+  id                   String   @id @default(uuid())
+  priceListId          String   @map("price_list_id")
+  productId            String?  @map("product_id")
+  variantId            String?  @map("variant_id")
+  pricePoisha          BigInt   @map("price_poisha")
+  compareAtPricePoisha BigInt?  @map("compare_at_price_poisha")
+  minQuantity          Int      @default(1) @map("min_quantity") // Volume tier MOQ / break start
+  maxQuantity          Int?     @map("max_quantity") // Volume tier break end (null = infinity)
+  productPointOverride Int?     @map("product_point_override")
+  status               String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  priceList PriceList       @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  product   Product?        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([priceListId])
+  @@index([productId])
+  @@index([variantId])
+  @@index([minQuantity, maxQuantity])
+  @@map("price_list_rules")
+}
+
+// ------------------------------------------------------------------------------
 // 17. Products & Catalog Core
 // ------------------------------------------------------------------------------
 /// Merchant products with strict BDT integer poisha pricing and independent Product Points
@@ -1040,6 +1103,9 @@ model Product {
   status               String    @default("DRAFT") // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, PUBLISHED, ARCHIVED
   basePricePoisha      BigInt    @map("base_price_poisha") // Integer minor units (1 BDT = 100 poisha)
   compareAtPricePoisha BigInt?   @map("compare_at_price_poisha") // MSRP / strikethrough price in poisha
+  costPricePoisha      BigInt?   @map("cost_price_poisha") // COGS in poisha
+  minPricePoisha       BigInt?   @map("min_price_poisha") // MAP floor in poisha
+  minOrderQuantity     Int       @default(1) @map("min_order_quantity") // MOQ
   currency             String    @default("BDT")
   productPoint         Int       @default(0) @map("product_point") // Discrete integer Product Points (independent from price!)
   sku                  String?   @unique
@@ -1074,6 +1140,7 @@ model Product {
   versionHistory   ProductVersionHistory[]
   moderationReviews CatalogModerationReview[]
   duplicateFingerprint ProductDuplicateFingerprint?
+  priceListRules   PriceListRule[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -1095,6 +1162,9 @@ model ProductVariant {
   title                String
   pricePoisha          BigInt    @map("price_poisha") // Variant price in integer poisha
   compareAtPricePoisha BigInt?   @map("compare_at_price_poisha")
+  costPricePoisha      BigInt?   @map("cost_price_poisha")
+  minPricePoisha       BigInt?   @map("min_price_poisha")
+  minOrderQuantity     Int?      @map("min_order_quantity")
   productPoint         Int?      @map("product_point") // Optional variant points override
   barcode              String?
   weightGrams          Int?      @map("weight_grams")
@@ -1119,6 +1189,7 @@ model ProductVariant {
   stockMovements StockMovementLedger[]
   cartItems      CartItem[]
   orderItems     OrderItem[]
+  priceListRules PriceListRule[]
 
   @@index([productId])
   @@index([isActive])
