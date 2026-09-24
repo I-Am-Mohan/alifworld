@@ -15,8 +15,10 @@ build/
 dist/
 
 # Environment Variables & Secrets (Keep .env.example tracked)
-.env*
+
 !.env.example
+.env.local
+.env
 *.pem
 *.key
 *.cert
