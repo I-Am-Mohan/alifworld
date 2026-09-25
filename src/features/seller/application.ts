@@ -39,7 +39,7 @@ export const SellerApplicationReviewSchema = z.object({
   decision: z.enum(['UNDER_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED']),
   reason: z.string().trim().max(1000).optional(),
 }).superRefine((value, ctx) => {
-  if (value.decision !== 'UNDER_REVIEW' && (!value.reason || value.reason.length < 5)) {
+  if ((value.decision === 'CHANGES_REQUESTED' || value.decision === 'REJECTED') && (!value.reason || value.reason.length < 5)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reason'], message: 'A reason of at least 5 characters is required for this decision.' });
   }
 });
