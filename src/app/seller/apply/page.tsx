@@ -426,129 +426,17 @@ export default function SellerApplicationPage() {
       setVerificationBusy(true);
       setModalError(null);
 
-      let activeUser = user;
-      if (!activeUser) {
-        try {
-          const meRes = await fetch('/api/v1/auth/me');
-          if (meRes.ok) {
-            const meJson = await meRes.json().catch(() => null);
-            if (meJson?.success && meJson?.data) activeUser = meJson.data;
-          }
-        } catch {}
-      }
-
-      if (activeUser || accountProvisioned) {
-        const res = await csrfFetch('/api/v1/auth/email/resend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-        const json = await res.json().catch(() => null);
-        if (!res.ok || !json?.success) {
-          throw new Error(json?.error?.message || 'Failed to send email verification code.');
-        }
-        setDevEmailOtp(json.data?.devVerificationCode || json.data?.devOtpCode || null);
-        setEmailOtpInput('');
-        setActiveVerifyModal('email');
-        return;
-      }
-
-      if (!activeUser && !accountProvisioned) {
-        if (!phoneVerified) {
-          setFieldError('mobileNumber', 'Mobile verification is mandatory before email verification. Please verify your mobile number first.');
-          return;
-        }
-        if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
-          setFieldError('sellerName', 'Please enter your full name (at least 2 characters) before verifying email.');
-          return;
-        }
-        if (!form.password) {
-          setFieldError('password', 'Please enter a password before verifying email.');
-          return;
-        }
-        const hasUpper = /[A-Z]/.test(form.password);
-        const hasLower = /[a-z]/.test(form.password);
-        const hasNumber = /\d/.test(form.password);
-        const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password);
-        if (form.password.length < 8 || !hasUpper || !hasLower || !hasNumber || !hasSymbol) {
-          setFieldError('password', 'Password must be at least 8 characters and include uppercase (A-Z), lowercase (a-z), number (0-9), and special character.');
-          return;
-        }
-        if (form.password !== form.confirmPassword) {
-          setFieldError('confirmPassword', 'Password and Confirm Password do not match.');
-          return;
-        }
-      }
-
-      const regRes = await csrfFetch('/api/v1/auth/register', {
+      const res = await csrfFetch('/api/v1/auth/email/resend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.sellerName.trim(),
-          email,
-          phone: form.mobileNumber.trim() || undefined,
-          password: form.password,
-          acceptTerms: true,
-        }),
+        body: JSON.stringify({ email }),
       });
-
-      const regJson = await regRes.json().catch(() => null);
-
-      if (regRes.status === 409) {
-        await csrfFetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: email,
-            password: form.password,
-            clientType: 'WEB',
-          }),
-        });
-        await refreshUser();
-        const resendRes = await csrfFetch('/api/v1/auth/email/resend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-        const resendJson = await resendRes.json().catch(() => null);
-        setDevEmailOtp(resendJson?.data?.devVerificationCode || null);
-      } else if (!regRes.ok || !regJson?.success) {
-        const errorObj = regJson?.error;
-        if (errorObj?.details && typeof errorObj.details === 'object') {
-          Object.entries(errorObj.details).forEach(([field, msg]) => {
-            if (typeof msg === 'string') {
-              if (field.includes('email')) setFieldError('emailAddress', msg);
-              else if (field.includes('password')) setFieldError('password', msg);
-              else if (field.includes('name')) setFieldError('sellerName', msg);
-              else if (field.includes('phone')) setFieldError('mobileNumber', msg);
-              else setFieldError(field, msg);
-            }
-          });
-        }
-        if (errorObj?.issues && Array.isArray(errorObj.issues)) {
-          errorObj.issues.forEach((issue: any) => {
-            if (issue.field?.includes('email')) setFieldError('emailAddress', issue.message);
-            if (issue.field?.includes('password')) setFieldError('password', issue.message);
-            if (issue.field?.includes('name')) setFieldError('sellerName', issue.message);
-            if (issue.field?.includes('phone')) setFieldError('mobileNumber', issue.message);
-          });
-        }
-        throw new Error(errorObj?.message || 'Failed to initiate email verification.');
-      } else {
-        setAccountProvisioned(true);
-        setDevEmailOtp(regJson.data?.devVerificationCode || null);
-        await csrfFetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identifier: email,
-            password: form.password,
-            clientType: 'WEB',
-          }),
-        });
-        await refreshUser();
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        throw new Error(json?.error?.message || 'Failed to send email verification code.');
       }
 
+      setDevEmailOtp(json.data?.devVerificationCode || json.data?.devOtpCode || null);
       setEmailOtpInput('');
       setActiveVerifyModal('email');
     } catch (err: any) {
@@ -604,6 +492,72 @@ export default function SellerApplicationPage() {
     }
 
     try {
+      let activeUser = user;
+      if (!activeUser && !accountProvisioned) {
+        // Register seller user account
+        const regRes = await csrfFetch('/api/v1/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: form.sellerName.trim(),
+            email: form.emailAddress.trim().toLowerCase(),
+            phone: form.mobileNumber.trim() || undefined,
+            password: form.password,
+            acceptTerms: true,
+          }),
+        });
+
+        const regJson = await regRes.json().catch(() => null);
+
+        if (regRes.status === 409) {
+          // Attempt login if user already exists
+          const loginRes = await csrfFetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              identifier: form.emailAddress.trim().toLowerCase(),
+              password: form.password,
+              clientType: 'WEB',
+            }),
+          });
+          const loginJson = await loginRes.json().catch(() => null);
+          if (!loginRes.ok || !loginJson?.success) {
+            setFieldError('password', loginJson?.error?.message || 'Failed to authenticate seller account.');
+            setSaving(false);
+            return null;
+          }
+          await refreshUser();
+        } else if (!regRes.ok || !regJson?.success) {
+          const errorObj = regJson?.error;
+          if (errorObj?.details && typeof errorObj.details === 'object') {
+            Object.entries(errorObj.details).forEach(([field, msg]) => {
+              if (typeof msg === 'string') {
+                if (field.includes('email')) setFieldError('emailAddress', msg);
+                else if (field.includes('password')) setFieldError('password', msg);
+                else if (field.includes('name')) setFieldError('sellerName', msg);
+                else if (field.includes('phone')) setFieldError('mobileNumber', msg);
+                else setFieldError(field, msg);
+              }
+            });
+          }
+          setError(errorObj?.message || 'Account registration failed.');
+          setSaving(false);
+          return null;
+        } else {
+          setAccountProvisioned(true);
+          await csrfFetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              identifier: form.emailAddress.trim().toLowerCase(),
+              password: form.password,
+              clientType: 'WEB',
+            }),
+          });
+          await refreshUser();
+        }
+      }
+
       const payload = {
         businessName: form.businessName.trim(),
         slug: form.slug.trim().toLowerCase(),

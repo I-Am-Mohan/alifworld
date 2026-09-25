@@ -60,19 +60,16 @@ export class EmailVerificationService {
   async verifyEmail(email: string, code: string): Promise<VerificationResult> {
     const cleanEmail = email.trim().toLowerCase();
 
-    // 1. Locate user
+    // 1. Locate user if exists
     const user = await this.userRepo.findUserByEmail(cleanEmail);
-    if (!user) {
-      throw new NotFoundError(`No user account found with email '${cleanEmail}'`);
-    }
 
-    if (user.isEmailVerified) {
+    if (user?.isEmailVerified) {
       return {
         verified: true,
         alreadyVerified: true,
         email: cleanEmail,
         userId: user.id,
-        message: 'Email address is already verified. You can log in.',
+        message: 'Email address is already verified.',
       };
     }
 
@@ -118,7 +115,7 @@ export class EmailVerificationService {
       );
     }
 
-    // 5. Code is valid: mark OTP consumed, mark user verified in atomic transaction
+    // 5. Code is valid: mark OTP consumed, mark user verified if user exists
     await this.prisma.$transaction(async (tx: any) => {
       // Mark OTP used
       await tx.otpToken.update({
@@ -126,43 +123,45 @@ export class EmailVerificationService {
         data: { isUsed: true },
       });
 
-      // Mark user email verified
-      await tx.user.update({
-        where: { id: user.id },
-        data: { isEmailVerified: true },
-      });
+      if (user) {
+        // Mark user email verified
+        await tx.user.update({
+          where: { id: user.id },
+          data: { isEmailVerified: true },
+        });
 
-      // Audit Log
-      await tx.auditLog.create({
-        data: {
-          id: generateId(ID_PREFIXES.AUDIT),
-          actorId: user.id,
-          actorRole: 'CUSTOMER',
-          action: 'EMAIL_VERIFIED',
-          resource: 'User',
-          resourceId: user.id,
-          metadata: { email: cleanEmail },
-        },
-      });
+        // Audit Log
+        await tx.auditLog.create({
+          data: {
+            id: generateId(ID_PREFIXES.AUDIT),
+            actorId: user.id,
+            actorRole: 'CUSTOMER',
+            action: 'EMAIL_VERIFIED',
+            resource: 'User',
+            resourceId: user.id,
+            metadata: { email: cleanEmail },
+          },
+        });
 
-      // Outbox Event
-      await tx.outboxEvent.create({
-        data: {
-          id: generateId(ID_PREFIXES.OUTBOX),
-          eventType: 'auth.email_verified',
-          aggregateType: 'User',
-          aggregateId: user.id,
-          payload: { userId: user.id, email: cleanEmail },
-          status: 'PENDING',
-        },
-      });
+        // Outbox Event
+        await tx.outboxEvent.create({
+          data: {
+            id: generateId(ID_PREFIXES.OUTBOX),
+            eventType: 'auth.email_verified',
+            aggregateType: 'User',
+            aggregateId: user.id,
+            payload: { userId: user.id, email: cleanEmail },
+            status: 'PENDING',
+          },
+        });
+      }
     });
 
     return {
       verified: true,
       email: cleanEmail,
-      userId: user.id,
-      message: 'Email verified successfully! You can now log in to your AlifWorld account.',
+      userId: user?.id,
+      message: 'Email verified successfully!',
     };
   }
 
@@ -173,16 +172,8 @@ export class EmailVerificationService {
     const cleanEmail = email.trim().toLowerCase();
 
     const user = await this.userRepo.findUserByEmail(cleanEmail);
-    if (!user) {
-      // Neutral response to avoid user account enumeration
-      return {
-        success: true,
-        message: 'If an account exists with this email, a verification code has been sent.',
-        cooldownSeconds: EMAIL_VERIFICATION_CONSTANTS.RESEND_COOLDOWN_SECONDS,
-      };
-    }
 
-    if (user.isEmailVerified) {
+    if (user?.isEmailVerified) {
       return {
         success: true,
         alreadyVerified: true,
@@ -242,7 +233,7 @@ export class EmailVerificationService {
       await tx.otpToken.create({
         data: {
           id: generateId(ID_PREFIXES.OTP),
-          userId: user.id,
+          userId: user?.id ?? null,
           identifier: cleanEmail,
           purpose: EMAIL_VERIFICATION_CONSTANTS.PURPOSE,
           tokenHash,
@@ -259,11 +250,11 @@ export class EmailVerificationService {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.verification_email_resend',
           aggregateType: 'User',
-          aggregateId: user.id,
+          aggregateId: user?.id ?? cleanEmail,
           payload: {
-            userId: user.id,
+            userId: user?.id ?? null,
             email: cleanEmail,
-            name: user.name,
+            name: user?.name ?? 'Seller',
             verificationCode: rawVerificationCode,
             expiresAt: expiresAt.toISOString(),
           },
@@ -271,28 +262,30 @@ export class EmailVerificationService {
         },
       });
 
-      // Audit Log
-      await tx.auditLog.create({
-        data: {
-          id: generateId(ID_PREFIXES.AUDIT),
-          actorId: user.id,
-          actorRole: 'CUSTOMER',
-          action: 'VERIFICATION_CODE_RESENT',
-          resource: 'User',
-          resourceId: user.id,
-          metadata: { email: cleanEmail },
-        },
-      });
+      if (user) {
+        // Audit Log
+        await tx.auditLog.create({
+          data: {
+            id: generateId(ID_PREFIXES.AUDIT),
+            actorId: user.id,
+            actorRole: 'CUSTOMER',
+            action: 'VERIFICATION_CODE_RESENT',
+            resource: 'User',
+            resourceId: user.id,
+            metadata: { email: cleanEmail },
+          },
+        });
+      }
     });
 
     // Dispatch email via SMTP if configured
     sendEmailViaSmtp({
       to: cleanEmail,
-      subject: 'AlifWorld Email Verification Code (Resent)',
+      subject: 'AlifWorld Email Verification Code',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
           <h2 style="color: #FF6A00; margin-top: 0;">AlifWorld Email Verification</h2>
-          <p>Hi ${user.name || 'User'},</p>
+          <p>Hi ${user?.name || 'Seller'},</p>
           <p>Your requested 6-digit email verification code is:</p>
           <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #0f172a; border-radius: 8px; margin: 15px 0;">
             ${rawVerificationCode}
@@ -306,7 +299,7 @@ export class EmailVerificationService {
 
     return {
       success: true,
-      message: 'A new 6-digit verification code has been sent to your email.',
+      message: 'A 6-digit verification code has been sent to your email.',
       cooldownSeconds: EMAIL_VERIFICATION_CONSTANTS.RESEND_COOLDOWN_SECONDS,
       ...(isDev && { devVerificationCode: rawVerificationCode }),
     };
