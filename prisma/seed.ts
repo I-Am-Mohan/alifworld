@@ -310,30 +310,43 @@ async function seed() {
   // NOTE: Password change REQUIRED on initial login — enforce via mustChangePassword flag in production.
   const passwordHash = hashPassword(adminPassword);
 
-  const superAdminUser = await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {
-      passwordHash,
-      name: adminName,
-      status: 'ACTIVE',
-      isEmailVerified: true,
-      isPhoneVerified: true,
-      deletedAt: null,
-      deletedBy: null,
-    },
-    create: {
-      id: generateId(ID_PREFIXES.USER),
-      email: adminEmail,
-      phone: adminPhone,
-      name: adminName,
-      passwordHash,
-      status: 'ACTIVE',
-      isEmailVerified: true,
-      isPhoneVerified: true,
-      tokenVersion: 1,
-      version: 1,
+  let superAdminUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: adminEmail }, { phone: adminPhone }],
     },
   });
+
+  if (superAdminUser) {
+    superAdminUser = await prisma.user.update({
+      where: { id: superAdminUser.id },
+      data: {
+        email: adminEmail,
+        phone: adminPhone,
+        passwordHash,
+        name: adminName,
+        status: 'ACTIVE',
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        deletedAt: null,
+        deletedBy: null,
+      },
+    });
+  } else {
+    superAdminUser = await prisma.user.create({
+      data: {
+        id: generateId(ID_PREFIXES.USER),
+        email: adminEmail,
+        phone: adminPhone,
+        name: adminName,
+        passwordHash,
+        status: 'ACTIVE',
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        tokenVersion: 1,
+        version: 1,
+      },
+    });
+  }
 
   // Ensure role assignments for SUPER_ADMIN and ADMIN (idempotent via findFirst + create)
   const rolesToAssign = ['SUPER_ADMIN', 'ADMIN'];
