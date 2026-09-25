@@ -23,6 +23,7 @@ import {
   Sparkles,
   Info,
   ShieldAlert,
+  ShieldCheck,
   ArrowLeftRight,
   Languages,
   Check,
@@ -34,7 +35,7 @@ import { CurrencyConfig, DEFAULT_CURRENCIES, parseCurrencies, formatCurrencyAmou
 import { LanguageDefinition } from '@/i18n/types';
 import { csrfFetch } from '@/shared/security/csrf-client';
 
-type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'smtp' | 'features';
+type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'smtp' | 'compliance' | 'features';
 
 export default function AdminSetupPage() {
   const { t } = useI18n();
@@ -133,6 +134,19 @@ export default function AdminSetupPage() {
     SMTP_PASSWORD: 'password123',
     SMTP_FROM_NAME: 'AlifWorld Notifications',
     SMTP_FROM_EMAIL: 'noreply@alifworld.com',
+    COMPLIANCE_FIELDS_CONFIG: JSON.stringify([
+      { id: 'tradeLicenseNumber', name: 'Trade License Number', type: 'TEXT', regex: '^[A-Za-z0-9_-]{3,50}$', hint: 'Issued by municipal City Corporation or Paurashava', required: true },
+      { id: 'binNumber', name: 'NBR BIN (VAT Registration Number)', type: 'NUMBER', regex: '^\\d{9,13}$', hint: '13-digit Business Identification Number', required: false },
+      { id: 'tinNumber', name: 'e-TIN (Taxpayer Identification Number)', type: 'NUMBER', regex: '^\\d{12}$', hint: '12-digit e-TIN number', required: false },
+    ]),
+    KYC_DOCUMENTS_CONFIG: JSON.stringify([
+      { id: 'TRADE_LICENSE', name: 'Trade License Copy', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Valid municipal trade license document', required: true },
+      { id: 'NID_FRONT', name: 'National ID (NID) Front', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'Smart Card or original NID front photo', required: true },
+      { id: 'NID_BACK', name: 'National ID (NID) Back', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'NID back photo showing residential address', required: true },
+      { id: 'BIN_CERTIFICATE', name: 'NBR BIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'VAT Registration certificate', required: false },
+      { id: 'BANK_CHEQUE_LEAF', name: 'Bank Cheque Leaf', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.pdf', minSizeKb: 10, maxSizeKb: 5120, hint: 'Cancelled cheque leaf for bank payout verification', required: false },
+      { id: 'TIN_CERTIFICATE', name: 'e-TIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Tax identification dossier document', required: false },
+    ]),
     FEATURE_COD_ENABLED: 'true',
     FEATURE_POINTS_REWARDS_ENABLED: 'true',
     FEATURE_POINTS_CASH_CONVERTIBLE: 'false',
@@ -459,6 +473,7 @@ export default function AdminSetupPage() {
     { id: 'couriers', label: 'Couriers & Logistics', icon: Truck },
     { id: 'sms', label: 'SMS Gateway Provider', icon: MessageSquare },
     { id: 'smtp', label: 'SMTP & Email Gateway', icon: Mail },
+    { id: 'compliance', label: 'Document Verification & KYC', icon: ShieldAlert },
     { id: 'features', label: 'Feature Flags & Invariants', icon: Flag },
   ];
 
@@ -1908,6 +1923,336 @@ export default function AdminSetupPage() {
                   <span>{sendingSmtpTest ? 'Sending...' : 'Send Test Email'}</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Document Verification & Merchant KYC Configuration */}
+      {activeTab === 'compliance' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          {/* Document Verification Fields (Step 3) */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <ShieldAlert className="w-5 h-5 text-amber-600" />
+                  <span>Step 3: Document Verification Dynamic Fields Configuration</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure text, number, and file compliance fields required during seller onboarding step 3.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const current = JSON.parse(settings.COMPLIANCE_FIELDS_CONFIG || '[]');
+                    const newField = {
+                      id: `custom_${Date.now()}`,
+                      name: 'New Compliance Record',
+                      type: 'TEXT',
+                      regex: '',
+                      hint: 'Custom compliance number or document identifier',
+                      required: false,
+                    };
+                    updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...current, newField]));
+                  } catch {}
+                }}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-colors shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Compliance Field</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {(() => {
+                let fields: any[] = [];
+                try {
+                  fields = JSON.parse(settings.COMPLIANCE_FIELDS_CONFIG || '[]');
+                } catch {
+                  fields = [];
+                }
+
+                return fields.map((f: any, idx: number) => (
+                  <div key={f.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 flex items-center space-x-2">
+                        <span>Field #{idx + 1}: {f.name}</span>
+                        {f.required && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
+                            Required
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = fields.filter((_, i) => i !== idx);
+                          updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify(updated));
+                        }}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                        title="Remove Field"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Field Name (Label) *</label>
+                        <input
+                          type="text"
+                          value={f.name || ''}
+                          onChange={(e) => {
+                            fields[idx].name = e.target.value;
+                            updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                          }}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold outline-none focus:border-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Field Type *</label>
+                        <select
+                          value={f.type || 'TEXT'}
+                          onChange={(e) => {
+                            fields[idx].type = e.target.value;
+                            updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                          }}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold outline-none focus:border-amber-500 cursor-pointer"
+                        >
+                          <option value="TEXT">Text String</option>
+                          <option value="NUMBER">Numeric Digits</option>
+                          <option value="FILE">File Upload</option>
+                        </select>
+                      </div>
+
+                      {f.type === 'FILE' ? (
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Allowed Extensions</label>
+                          <input
+                            type="text"
+                            value={f.allowedExtensions || '.pdf,.jpg,.jpeg,.png'}
+                            onChange={(e) => {
+                              fields[idx].allowedExtensions = e.target.value;
+                              updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                            }}
+                            placeholder=".pdf,.jpg,.png"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono outline-none focus:border-amber-500"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Regex Pattern</label>
+                          <input
+                            type="text"
+                            value={f.regex || ''}
+                            onChange={(e) => {
+                              fields[idx].regex = e.target.value;
+                              updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                            }}
+                            placeholder="e.g. ^\d{9,13}$"
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono outline-none focus:border-amber-500"
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-4">
+                        <label className="flex items-center space-x-2 text-xs font-bold text-slate-800 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(f.required)}
+                            onChange={(e) => {
+                              fields[idx].required = e.target.checked;
+                              updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                            }}
+                            className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+                          />
+                          <span>Mandatory Required Field</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Help Hint / Description</label>
+                      <input
+                        type="text"
+                        value={f.hint || ''}
+                        onChange={(e) => {
+                          fields[idx].hint = e.target.value;
+                          updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                        }}
+                        placeholder="Guidance text displayed under input field"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs outline-none focus:border-amber-500 text-slate-600"
+                      />
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+
+          {/* KYC Document Upload Fields (Step 5) */}
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <ShieldCheck className="w-5 h-5 text-amber-600" />
+                  <span>Step 5: Merchant KYC Dossier Upload Configuration</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure required legal document upload fields, file extensions, and file size limits (Min/Max KB).
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    const current = JSON.parse(settings.KYC_DOCUMENTS_CONFIG || '[]');
+                    const newDoc = {
+                      id: `CUSTOM_DOC_${Date.now()}`,
+                      name: 'Custom Verification Document',
+                      type: 'FILE',
+                      allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+                      minSizeKb: 10,
+                      maxSizeKb: 10240,
+                      hint: 'Upload scanned copy or photo of legal document',
+                      required: false,
+                    };
+                    updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...current, newDoc]));
+                  } catch {}
+                }}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition-colors shrink-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add KYC Document Field</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {(() => {
+                let docs: any[] = [];
+                try {
+                  docs = JSON.parse(settings.KYC_DOCUMENTS_CONFIG || '[]');
+                } catch {
+                  docs = [];
+                }
+
+                return docs.map((d: any, idx: number) => (
+                  <div key={d.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-900 flex items-center space-x-2">
+                        <span>Document #{idx + 1}: {d.name}</span>
+                        {d.required && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
+                            Required
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = docs.filter((_, i) => i !== idx);
+                          updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify(updated));
+                        }}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                        title="Remove Document Field"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Document Name *</label>
+                        <input
+                          type="text"
+                          value={d.name || ''}
+                          onChange={(e) => {
+                            docs[idx].name = e.target.value;
+                            updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...docs]));
+                          }}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold outline-none focus:border-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Allowed Extensions *</label>
+                        <input
+                          type="text"
+                          value={d.allowedExtensions || '.pdf,.jpg,.jpeg,.png'}
+                          onChange={(e) => {
+                            docs[idx].allowedExtensions = e.target.value;
+                            updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...docs]));
+                          }}
+                          placeholder=".pdf,.jpg,.jpeg,.png"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono outline-none focus:border-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Min / Max File Size (KB)</label>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            value={d.minSizeKb ?? 10}
+                            onChange={(e) => {
+                              docs[idx].minSizeKb = parseInt(e.target.value, 10) || 0;
+                              updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...docs]));
+                            }}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono outline-none"
+                            placeholder="Min KB"
+                          />
+                          <span className="text-slate-400 font-bold">-</span>
+                          <input
+                            type="number"
+                            value={d.maxSizeKb ?? 10240}
+                            onChange={(e) => {
+                              docs[idx].maxSizeKb = parseInt(e.target.value, 10) || 10240;
+                              updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...docs]));
+                            }}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-mono outline-none"
+                            placeholder="Max KB"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4">
+                        <label className="flex items-center space-x-2 text-xs font-bold text-slate-800 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(d.required)}
+                            onChange={(e) => {
+                              docs[idx].required = e.target.checked;
+                              updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...docs]));
+                            }}
+                            className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+                          />
+                          <span>Mandatory Required Document</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Guidance Hint / Description</label>
+                      <input
+                        type="text"
+                        value={d.hint || ''}
+                        onChange={(e) => {
+                          docs[idx].hint = e.target.value;
+                          updateSetting('KYC_DOCUMENTS_CONFIG', JSON.stringify([...docs]));
+                        }}
+                        placeholder="Guidance text displayed under file input picker"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs outline-none focus:border-amber-500 text-slate-600"
+                      />
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>

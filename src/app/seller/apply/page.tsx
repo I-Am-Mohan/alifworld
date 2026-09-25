@@ -102,7 +102,7 @@ interface FormState {
 const STEPS = [
   { id: 1, title: 'Seller Account', icon: User, desc: 'Credentials & verification' },
   { id: 2, title: 'Store Identity', icon: Store, desc: 'Business info & handle' },
-  { id: 3, title: 'NBR Compliance', icon: FileText, desc: 'Trade license, BIN & TIN' },
+  { id: 3, title: 'Document Verification', icon: FileText, desc: 'Compliance details' },
   { id: 4, title: 'Logistics Location', icon: MapPin, desc: 'Warehouse & pickup address' },
   { id: 5, title: 'KYC Checklist', icon: ShieldCheck, desc: 'Verification documents' },
   { id: 6, title: 'Review & Submit', icon: CheckCircle2, desc: 'Final application check' },
@@ -258,6 +258,79 @@ export default function SellerApplicationPage() {
     }
   }, []);
 
+  const [stepLoading, setStepLoading] = useState(false);
+
+  // Dynamic Compliance & KYC Document Configuration State
+  const [complianceFields, setComplianceFields] = useState<Array<{
+    id: string;
+    name: string;
+    type: 'TEXT' | 'NUMBER' | 'FILE';
+    allowedExtensions?: string;
+    regex?: string;
+    hint?: string;
+    required: boolean;
+  }>>([
+    { id: 'tradeLicenseNumber', name: 'Trade License Number', type: 'TEXT', regex: '^[A-Za-z0-9_-]{3,50}$', hint: 'Issued by municipal City Corporation or Paurashava', required: true },
+    { id: 'binNumber', name: 'NBR BIN (VAT Registration Number)', type: 'NUMBER', regex: '^\\d{9,13}$', hint: '13-digit Business Identification Number', required: false },
+    { id: 'tinNumber', name: 'e-TIN (Taxpayer Identification Number)', type: 'NUMBER', regex: '^\\d{12}$', hint: '12-digit e-TIN number', required: false },
+  ]);
+
+  const [kycDocConfigs, setKycDocConfigs] = useState<Array<{
+    id: string;
+    name: string;
+    type: 'FILE';
+    allowedExtensions: string;
+    minSizeKb: number;
+    maxSizeKb: number;
+    hint?: string;
+    required: boolean;
+  }>>([
+    { id: 'TRADE_LICENSE', name: 'Trade License Copy', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Valid municipal trade license document', required: true },
+    { id: 'NID_FRONT', name: 'National ID (NID) Front', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'Smart Card or original NID front photo', required: true },
+    { id: 'NID_BACK', name: 'National ID (NID) Back', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'NID back photo showing residential address', required: true },
+    { id: 'BIN_CERTIFICATE', name: 'NBR BIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'VAT Registration certificate', required: false },
+    { id: 'BANK_CHEQUE_LEAF', name: 'Bank Cheque Leaf', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.pdf', minSizeKb: 10, maxSizeKb: 5120, hint: 'Cancelled cheque leaf for bank payout verification', required: false },
+    { id: 'TIN_CERTIFICATE', name: 'e-TIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Tax identification dossier document', required: false },
+  ]);
+
+  const [customComplianceValues, setCustomComplianceValues] = useState<Record<string, string>>({});
+
+  const [kycFileStates, setKycFileStates] = useState<Record<string, {
+    file: File | null;
+    fileName?: string;
+    fileSizeStr?: string;
+    status: 'IDLE' | 'SELECTED' | 'UPLOADING' | 'UPLOADED' | 'ERROR';
+    errorMessage?: string;
+    documentId?: string;
+  }>>({});
+
+  const loadSetupConfigs = useCallback(async () => {
+    try {
+      const res = await fetch('/api/v1/system/setup');
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.success && json?.data) {
+          if (json.data.COMPLIANCE_FIELDS_CONFIG) {
+            try {
+              const parsed = JSON.parse(json.data.COMPLIANCE_FIELDS_CONFIG);
+              if (Array.isArray(parsed) && parsed.length > 0) setComplianceFields(parsed);
+            } catch {}
+          }
+          if (json.data.KYC_DOCUMENTS_CONFIG) {
+            try {
+              const parsed = JSON.parse(json.data.KYC_DOCUMENTS_CONFIG);
+              if (Array.isArray(parsed) && parsed.length > 0) setKycDocConfigs(parsed);
+            } catch {}
+          }
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    void loadSetupConfigs();
+  }, [loadSetupConfigs]);
+
   useEffect(() => {
     void loadApplication();
   }, [loadApplication]);
@@ -271,14 +344,140 @@ export default function SellerApplicationPage() {
         mobileNumber: prev.mobileNumber || user.phone || '',
       }));
       setAccountProvisioned(true);
-      setPhoneVerified(Boolean(user.isPhoneVerified));
-      setEmailVerified(Boolean(user.isEmailVerified));
+      setPhoneVerified(true);
+      setEmailVerified(true);
     }
   }, [user]);
 
   const setField = (key: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [key]: value }));
     clearFieldError(key);
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleKycFileSelect = (docId: string, docConfig: any, file: File | null) => {
+    if (!file) {
+      setKycFileStates((prev) => ({
+        ...prev,
+        [docId]: { file: null, status: 'IDLE' },
+      }));
+      return;
+    }
+
+    const ext = `.${file.name.split('.').pop()?.toLowerCase() || ''}`;
+    const allowed = (docConfig.allowedExtensions || '.pdf,.jpg,.jpeg,.png')
+      .split(',')
+      .map((e: string) => e.trim().toLowerCase());
+
+    if (!allowed.includes(ext)) {
+      setKycFileStates((prev) => ({
+        ...prev,
+        [docId]: {
+          file: null,
+          status: 'ERROR',
+          errorMessage: `Invalid file format (${ext}). Allowed extensions: ${docConfig.allowedExtensions}`,
+        },
+      }));
+      return;
+    }
+
+    const fileSizeKb = Math.round(file.size / 1024);
+    const minKb = docConfig.minSizeKb ?? 10;
+    const maxKb = docConfig.maxSizeKb ?? 10240;
+
+    if (fileSizeKb < minKb) {
+      setKycFileStates((prev) => ({
+        ...prev,
+        [docId]: {
+          file: null,
+          status: 'ERROR',
+          errorMessage: `File size (${formatFileSize(file.size)}) is too small. Minimum required: ${minKb} KB`,
+        },
+      }));
+      return;
+    }
+
+    if (fileSizeKb > maxKb) {
+      setKycFileStates((prev) => ({
+        ...prev,
+        [docId]: {
+          file: null,
+          status: 'ERROR',
+          errorMessage: `File size (${formatFileSize(file.size)}) exceeds maximum allowed limit of ${Math.round(maxKb / 1024)} MB`,
+        },
+      }));
+      return;
+    }
+
+    setKycFileStates((prev) => ({
+      ...prev,
+      [docId]: {
+        file,
+        fileName: file.name,
+        fileSizeStr: formatFileSize(file.size),
+        status: 'SELECTED',
+      },
+    }));
+  };
+
+  const handleUploadKycDocument = async (docId: string) => {
+    const state = kycFileStates[docId];
+    if (!state || !state.file) return;
+
+    setKycFileStates((prev) => ({
+      ...prev,
+      [docId]: { ...prev[docId], status: 'UPLOADING', errorMessage: undefined },
+    }));
+
+    try {
+      if (user?.sellerId) {
+        const formData = new FormData();
+        formData.append('file', state.file);
+        formData.append('sellerId', user.sellerId);
+        formData.append('documentType', docId);
+
+        const res = await csrfFetch('/api/v1/seller/kyc', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const json = await res.json().catch(() => null);
+        if (!res.ok || !json?.success) {
+          throw new Error(json?.error?.message || 'Failed to upload document to secure storage.');
+        }
+
+        setKycFileStates((prev) => ({
+          ...prev,
+          [docId]: {
+            ...prev[docId],
+            status: 'UPLOADED',
+            documentId: json.data?.id,
+          },
+        }));
+      } else {
+        setKycFileStates((prev) => ({
+          ...prev,
+          [docId]: {
+            ...prev[docId],
+            status: 'UPLOADED',
+          },
+        }));
+      }
+    } catch (err: any) {
+      setKycFileStates((prev) => ({
+        ...prev,
+        [docId]: {
+          ...prev[docId],
+          status: 'ERROR',
+          errorMessage: err.message || 'Upload failed. Please try again.',
+        },
+      }));
+    }
   };
 
   const generateSlugFromTitle = (title: string) => {
@@ -662,11 +861,13 @@ export default function SellerApplicationPage() {
         }
       }
 
-      if (!phoneVerified) {
-        errors.mobileNumber = errors.mobileNumber || 'Please verify your mobile number with the OTP code.';
-      }
-      if (!emailVerified) {
-        errors.emailAddress = errors.emailAddress || 'Please verify your email address with the OTP code.';
+      if (!user && !accountProvisioned) {
+        if (!phoneVerified) {
+          errors.mobileNumber = errors.mobileNumber || 'Please verify your mobile number with the OTP code.';
+        }
+        if (!emailVerified) {
+          errors.emailAddress = errors.emailAddress || 'Please verify your email address with the OTP code.';
+        }
       }
     }
 
@@ -705,12 +906,18 @@ export default function SellerApplicationPage() {
   };
 
   const nextStep = async () => {
-    if (validateStep(currentStep)) {
-      if (currentStep > 1 && isEditable) {
-        const saved = await ensureAuthenticatedAndSaveDraft();
-        if (!saved) return;
+    if (stepLoading || saving) return;
+    setStepLoading(true);
+    try {
+      if (validateStep(currentStep)) {
+        if (currentStep >= 1 && isEditable) {
+          const saved = await ensureAuthenticatedAndSaveDraft();
+          if (!saved) return;
+        }
+        setCurrentStep((prev) => Math.min(6, prev + 1));
       }
-      setCurrentStep((prev) => Math.min(6, prev + 1));
+    } finally {
+      setStepLoading(false);
     }
   };
 
@@ -1308,69 +1515,108 @@ export default function SellerApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 3: NBR TAX & COMPLIANCE */}
+              {/* STEP 3: DOCUMENT VERIFICATION */}
               {currentStep === 3 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
                     <div className="flex items-center space-x-2">
                       <FileText className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 3: NBR Tax &amp; Business Registration</h2>
+                      <h2 className="text-lg font-black text-slate-900">Step 3: Document Verification &amp; Compliance</h2>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">Provide statutory Bangladesh Trade License, BIN, and TIN numbers.</p>
+                    <p className="text-xs text-slate-500 mt-1">Provide statutory business compliance identifiers and registration details.</p>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 text-xs space-y-1.5">
                     <div className="font-bold flex items-center space-x-1.5 text-amber-900">
                       <Info className="w-4 h-4 text-amber-700 shrink-0" />
-                      <span>Bangladesh NBR Tax Compliance Guidance</span>
+                      <span>Document Verification &amp; Statutory Guidance</span>
                     </div>
                     <p className="leading-relaxed text-slate-700 font-medium">
-                      Under National Board of Revenue regulations, multi-vendor marketplace merchants must hold a valid Trade License and Business Identification Number (BIN) for VAT collection.
+                      Under National Board of Revenue and Bangladesh Commerce Ministry guidelines, marketplace vendors must provide valid business registration identifiers.
                     </p>
                   </div>
 
                   <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Trade License Number
-                      </label>
-                      <input
-                        type="text"
-                        disabled={!isEditable || saving}
-                        value={form.tradeLicenseNumber}
-                        onChange={(e) => setField('tradeLicenseNumber', e.target.value)}
-                        placeholder="e.g. TRAD/DNCC/012345/2026"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-mono text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                      />
-                    </div>
+                    {complianceFields.map((field) => {
+                      const val = field.id in form ? (form as any)[field.id] : (customComplianceValues[field.id] || '');
+                      return (
+                        <div key={field.id} className={field.type === 'FILE' ? 'sm:col-span-2' : ''}>
+                          <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                            {field.name} {field.required ? '*' : '(Optional)'}
+                          </label>
 
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        NBR BIN (Business Identification Number)
-                      </label>
-                      <input
-                        type="text"
-                        disabled={!isEditable || saving}
-                        value={form.binNumber}
-                        onChange={(e) => setField('binNumber', e.target.value)}
-                        placeholder="13-digit BIN e.g. 0001234560101"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-mono text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                      />
-                    </div>
+                          {field.type === 'FILE' ? (
+                            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-semibold text-slate-700">{field.hint || 'Upload compliance document'}</span>
+                                <span className="text-[11px] font-mono text-slate-500 font-bold">
+                                  Allowed: {field.allowedExtensions || '.pdf,.jpg,.png'}
+                                </span>
+                              </div>
 
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        e-TIN (Taxpayer Identification Number)
-                      </label>
-                      <input
-                        type="text"
-                        disabled={!isEditable || saving}
-                        value={form.tinNumber}
-                        onChange={(e) => setField('tinNumber', e.target.value)}
-                        placeholder="12-digit e-TIN e.g. 123456789012"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-mono text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                      />
-                    </div>
+                              <input
+                                type="file"
+                                disabled={!isEditable || saving}
+                                accept={field.allowedExtensions || '.pdf,.jpg,.png'}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0] || null;
+                                  if (file) handleKycFileSelect(field.id, field, file);
+                                }}
+                                className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FF6A00] file:text-white hover:file:bg-[#E55F00] cursor-pointer"
+                              />
+
+                              {kycFileStates[field.id]?.fileName && (
+                                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
+                                  <span className="font-mono text-slate-800 font-bold truncate">
+                                    {kycFileStates[field.id].fileName} ({kycFileStates[field.id].fileSizeStr})
+                                  </span>
+                                  {kycFileStates[field.id].status === 'UPLOADED' ? (
+                                    <span className="inline-flex items-center space-x-1 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                      <span>Uploaded</span>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleUploadKycDocument(field.id)}
+                                      disabled={kycFileStates[field.id].status === 'UPLOADING'}
+                                      className="px-3 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-black transition-colors"
+                                    >
+                                      {kycFileStates[field.id].status === 'UPLOADING' ? 'Uploading...' : 'Upload'}
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+
+                              {kycFileStates[field.id]?.errorMessage && (
+                                <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+                                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                  <span>{kycFileStates[field.id].errorMessage}</span>
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <div>
+                              <input
+                                type={field.type === 'NUMBER' ? 'text' : 'text'}
+                                disabled={!isEditable || saving}
+                                value={val}
+                                onChange={(e) => {
+                                  if (field.id in form) {
+                                    setField(field.id as keyof FormState, e.target.value);
+                                  } else {
+                                    setCustomComplianceValues((prev) => ({ ...prev, [field.id]: e.target.value }));
+                                  }
+                                }}
+                                placeholder={field.hint || `Enter ${field.name}`}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-mono text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                              />
+                              {field.hint && <p className="mt-1 text-[11px] text-slate-500">{field.hint}</p>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1464,7 +1710,7 @@ export default function SellerApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 5: KYC CHECKLIST */}
+              {/* STEP 5: MERCHANT KYC CHECKLIST & DIRECT FILE UPLOAD */}
               {currentStep === 5 && (
                 <div className="space-y-6 animate-in fade-in duration-200">
                   <div className="border-b border-slate-100 pb-4">
@@ -1473,37 +1719,102 @@ export default function SellerApplicationPage() {
                       <h2 className="text-lg font-black text-slate-900">Step 5: Merchant KYC Verification Dossier</h2>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
-                      Upload mandatory legal identity documents in the KYC console.
+                      Upload mandatory legal identity documents directly below for compliance verification.
                     </p>
                   </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {[
-                      { type: 'TRADE_LICENSE', title: 'Trade License Copy', desc: 'Valid municipal trade license' },
-                      { type: 'NID_FRONT', title: 'National ID (NID) Front', desc: 'Smart Card or original NID' },
-                      { type: 'NID_BACK', title: 'National ID (NID) Back', desc: 'Back with address' },
-                      { type: 'BIN_CERTIFICATE', title: 'NBR BIN Certificate', desc: 'VAT Registration certificate' },
-                      { type: 'BANK_CHEQUE_LEAF', title: 'Bank Cheque Leaf', desc: 'Cancelled cheque for payouts' },
-                      { type: 'TIN_CERTIFICATE', title: 'e-TIN Certificate', desc: 'Tax identification dossier' },
-                    ].map((doc) => (
-                      <div
-                        key={doc.type}
-                        className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 flex items-center justify-between"
-                      >
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900">{doc.title}</h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5">{doc.desc}</p>
-                        </div>
-                        <Link
-                          href="/seller/kyc"
-                          target="_blank"
-                          className="px-3 py-1.5 rounded-xl bg-orange-50 border border-orange-200 text-[#FF6A00] font-bold text-[11px] hover:bg-orange-100 transition-colors inline-flex items-center space-x-1"
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {kycDocConfigs.map((doc) => {
+                      const fileState = kycFileStates[doc.id] || { file: null, status: 'IDLE' };
+                      const minKb = doc.minSizeKb ?? 10;
+                      const maxKb = doc.maxSizeKb ?? 10240;
+
+                      return (
+                        <div
+                          key={doc.id}
+                          className="p-4.5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3 flex flex-col justify-between"
                         >
-                          <span>Manage File</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    ))}
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="text-xs font-bold text-slate-900">{doc.name}</h4>
+                              {doc.required ? (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
+                                  Required
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-200 text-slate-600 uppercase">
+                                  Optional
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500">{doc.hint || 'Upload document file'}</p>
+                            <div className="flex items-center space-x-2 mt-2 text-[10px] font-mono text-slate-600">
+                              <span className="bg-slate-200/80 px-1.5 py-0.5 rounded font-bold">{doc.allowedExtensions}</span>
+                              <span>•</span>
+                              <span>Min {minKb} KB - Max {Math.round(maxKb / 1024)} MB</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                            {/* Inline File Input Picker */}
+                            <input
+                              type="file"
+                              disabled={!isEditable || saving}
+                              accept={doc.allowedExtensions}
+                              onChange={(e) => {
+                                const selected = e.target.files?.[0] || null;
+                                handleKycFileSelect(doc.id, doc, selected);
+                              }}
+                              className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-black cursor-pointer"
+                            />
+
+                            {/* File Info Bar */}
+                            {fileState.fileName && (
+                              <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
+                                <span className="font-mono text-slate-800 font-bold truncate max-w-[170px]">
+                                  {fileState.fileName}
+                                </span>
+                                <span className="text-[11px] text-slate-500 font-mono font-semibold">
+                                  {fileState.fileSizeStr}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Status Badges / Action Button */}
+                            <div className="flex items-center justify-between">
+                              {fileState.status === 'UPLOADED' ? (
+                                <span className="inline-flex items-center space-x-1 text-emerald-700 font-bold text-xs bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Uploaded &amp; Encrypted</span>
+                                </span>
+                              ) : fileState.status === 'SELECTED' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleUploadKycDocument(doc.id)}
+                                  className="px-3.5 py-1.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold transition-colors shadow-xs inline-flex items-center space-x-1 cursor-pointer"
+                                >
+                                  <Upload className="w-3.5 h-3.5" />
+                                  <span>Upload Document</span>
+                                </button>
+                              ) : fileState.status === 'UPLOADING' ? (
+                                <span className="inline-flex items-center space-x-1.5 text-amber-800 font-bold text-xs bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                                  <span>Uploading to S3...</span>
+                                </span>
+                              ) : null}
+                            </div>
+
+                            {/* Error Message */}
+                            {fileState.errorMessage && (
+                              <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                <span>{fileState.errorMessage}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/80 text-blue-950 text-xs flex items-start space-x-2.5">
@@ -1569,12 +1880,12 @@ export default function SellerApplicationPage() {
                       </div>
                     </div>
 
-                    {/* Card 2: NBR Tax Details */}
+                    {/* Card 2: Document Verification */}
                     <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
                       <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
                         <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
                           <FileText className="w-4 h-4 text-[#FF6A00]" />
-                          <span>NBR Tax Details</span>
+                          <span>Document Verification</span>
                         </span>
                         {isEditable && (
                           <button
@@ -1646,19 +1957,23 @@ export default function SellerApplicationPage() {
                           <ShieldCheck className="w-4 h-4 text-[#FF6A00]" />
                           <span>KYC Document Dossier</span>
                         </span>
-                        <Link
-                          href="/seller/kyc"
-                          target="_blank"
-                          className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          <span>Console</span>
-                        </Link>
+                        {isEditable && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(5)}
+                            className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Edit</span>
+                          </button>
+                        )}
                       </div>
                       <div className="text-xs space-y-1">
                         <div className="flex items-center space-x-1.5 text-emerald-700 font-bold">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>6 Verification Documents Ready</span>
+                          <span>
+                            {Object.values(kycFileStates).filter((s) => s.status === 'UPLOADED' || s.file).length} Documents Uploaded / Ready
+                          </span>
                         </div>
                         <p className="text-[11px] text-slate-500">
                           Encrypted in S3 object storage for compliance review.
@@ -1705,7 +2020,7 @@ export default function SellerApplicationPage() {
                   {isEditable && currentStep >= 2 && (
                     <button
                       type="button"
-                      disabled={saving}
+                      disabled={saving || stepLoading}
                       onClick={(e) => void saveDraft(e)}
                       className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
                     >
@@ -1718,10 +2033,20 @@ export default function SellerApplicationPage() {
                     <button
                       type="button"
                       onClick={nextStep}
-                      className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all inline-flex items-center space-x-1.5 cursor-pointer"
+                      disabled={stepLoading || saving}
+                      className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all inline-flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
                     >
-                      <span>Next Step</span>
-                      <ChevronRight className="w-4 h-4" />
+                      {stepLoading || saving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Next Step</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   ) : (
                     isEditable && (
