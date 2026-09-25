@@ -2,10 +2,12 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
+  Clock,
   Loader2,
   Store,
   Building2,
@@ -158,6 +160,7 @@ function MerchantHeroIllustration() {
 }
 
 export default function SellerApplicationPage() {
+  const router = useRouter();
   const { openAuthModal, openAccountModal, user, refreshUser } = useAuthModal();
   const { t, locale } = useI18n();
 
@@ -799,10 +802,17 @@ export default function SellerApplicationPage() {
 
   const submitApplication = async (event: FormEvent) => {
     event.preventDefault();
-    const saved = await ensureAuthenticatedAndSaveDraft();
-    if (!saved) return;
     setSaving(true);
     try {
+      const filesUploaded = await uploadAllSelectedFiles();
+      if (!filesUploaded) {
+        setError('Failed to upload one or more selected documents before submission.');
+        return;
+      }
+
+      const saved = await ensureAuthenticatedAndSaveDraft();
+      if (!saved) return;
+
       const response = await csrfFetch(`/api/v1/seller/application/${saved.id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -816,6 +826,7 @@ export default function SellerApplicationPage() {
       setApplication(json.data);
       setMessage(t('sellerApplication.submitted'));
       setCurrentStep(6);
+      router.push('/seller/status');
     } catch (err: any) {
       setError(err.message || t('sellerApplication.submitFailed'));
     } finally {
@@ -905,11 +916,36 @@ export default function SellerApplicationPage() {
     return Object.keys(errors).length === 0;
   };
 
+  const uploadAllSelectedFiles = async (): Promise<boolean> => {
+    const docIdsToUpload = Object.keys(kycFileStates).filter(
+      (id) => kycFileStates[id]?.status === 'SELECTED' && kycFileStates[id]?.file
+    );
+
+    if (docIdsToUpload.length === 0) return true;
+
+    for (let i = 0; i < docIdsToUpload.length; i++) {
+      const docId = docIdsToUpload[i];
+      await handleUploadKycDocument(docId);
+      const updatedState = kycFileStates[docId];
+      if (updatedState?.status === 'ERROR') {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const nextStep = async () => {
     if (stepLoading || saving) return;
     setStepLoading(true);
     try {
       if (validateStep(currentStep)) {
+        // Automatically upload selected files sequentially for this step
+        const filesUploaded = await uploadAllSelectedFiles();
+        if (!filesUploaded) {
+          setError('Failed to upload one or more selected documents. Please resolve the file error and try again.');
+          return;
+        }
+
         if (currentStep >= 1 && isEditable) {
           const saved = await ensureAuthenticatedAndSaveDraft();
           if (!saved) return;
@@ -1174,17 +1210,17 @@ export default function SellerApplicationPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (step.id < currentStep || isEditable) {
+                        if (isEditable && (step.id < currentStep)) {
                           if (validateStep(currentStep)) setCurrentStep(step.id);
                         }
                       }}
-                      className={`w-full flex items-center space-x-3 p-2.5 rounded-2xl text-left transition-all cursor-pointer ${
+                      className={`w-full flex items-center space-x-3 p-2.5 rounded-2xl text-left transition-all ${
                         isCurrent
                           ? 'bg-orange-50/80 border border-orange-200 text-slate-900 shadow-xs'
                           : isCompleted
                           ? 'hover:bg-slate-50 text-slate-700'
                           : 'text-slate-400 hover:text-slate-600'
-                      }`}
+                      } ${!isEditable ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <div
                         className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 transition-all ${
@@ -2004,7 +2040,7 @@ export default function SellerApplicationPage() {
               {/* Stepper Navigation Buttons */}
               <div className="mt-8 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  {currentStep > 1 && (
+                  {currentStep > 1 && isEditable && (
                     <button
                       type="button"
                       onClick={prevStep}
@@ -2017,6 +2053,16 @@ export default function SellerApplicationPage() {
                 </div>
 
                 <div className="flex items-center space-x-3">
+                  {!isEditable && (
+                    <Link
+                      href="/seller/status"
+                      className="px-5 py-2.5 rounded-xl bg-orange-50 border border-orange-200 text-[#FF6A00] hover:bg-orange-100 text-xs font-bold transition-all inline-flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <Clock className="w-4 h-4 text-[#FF6A00]" />
+                      <span>Track Application Status</span>
+                    </Link>
+                  )}
+
                   {isEditable && currentStep >= 2 && (
                     <button
                       type="button"
@@ -2030,24 +2076,26 @@ export default function SellerApplicationPage() {
                   )}
 
                   {currentStep < 6 ? (
-                    <button
-                      type="button"
-                      onClick={nextStep}
-                      disabled={stepLoading || saving}
-                      className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all inline-flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                    >
-                      {stepLoading || saving ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Processing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Next Step</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </>
-                      )}
-                    </button>
+                    isEditable && (
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        disabled={stepLoading || saving}
+                        className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all inline-flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        {stepLoading || saving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Processing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Next Step</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </button>
+                    )
                   ) : (
                     isEditable && (
                       <button

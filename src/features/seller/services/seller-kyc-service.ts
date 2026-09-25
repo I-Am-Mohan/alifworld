@@ -111,10 +111,29 @@ export class SellerKycService {
     input: Omit<SubmitKycDocumentInput, 'fileUrl' | 'fileSize' | 'mimeType'> & { mimeType: string },
     file: Uint8Array
   ): Promise<SellerKycDocumentModel> {
-    const seller = await this.sellerRepo.findById(input.sellerId);
-    if (!seller) throw new NotFoundError(`Seller with id '${input.sellerId}' not found.`, { sellerId: input.sellerId });
+    let seller = await this.sellerRepo.findById(input.sellerId);
+    if (!seller) {
+      seller = await (prisma as any).seller.findFirst({ where: { ownerUserId: actorUserId, deletedAt: null } });
+    }
 
-    const isOwner = seller.ownerUserId === actorUserId;
+    if (!seller) {
+      const sellerId = generateId(ID_PREFIXES.SELLER);
+      seller = await (prisma as any).seller.create({
+        data: {
+          id: sellerId,
+          ownerUserId: actorUserId,
+          businessName: 'Pending Merchant Store',
+          slug: `store-${sellerId.slice(-8)}`,
+          status: 'DRAFT',
+          version: 1,
+        },
+      });
+    }
+
+    const activeSeller = seller!;
+    input.sellerId = activeSeller.id;
+
+    const isOwner = activeSeller.ownerUserId === actorUserId;
     const hasTenantStaffRole = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SELLER_STAFF, input.sellerId);
     const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
     if (!isOwner && !hasTenantStaffRole && !isSuperAdmin) {
@@ -124,7 +143,7 @@ export class SellerKycService {
     const contentSha256 = createHash('sha256').update(file).digest('hex');
     const duplicate = await this.kycRepo.findByContentHash(input.sellerId, contentSha256);
     if (duplicate) {
-      throw new ValidationError('This document has already been uploaded for this seller.', { documentId: duplicate.id });
+      return duplicate;
     }
 
     const documentId = generateId(ID_PREFIXES.KYC_DOCUMENT);
@@ -149,8 +168,8 @@ export class SellerKycService {
         uploadedBy: actorUserId,
       });
 
-      if (seller.status === 'DRAFT') {
-        await this.sellerRepo.update(seller.id, seller.version, { status: 'PENDING_VERIFICATION' });
+      if (activeSeller.status === 'DRAFT') {
+        await this.sellerRepo.update(activeSeller.id, activeSeller.version, { status: 'PENDING_VERIFICATION' });
       }
 
       await (prisma as any).outboxEvent.create({

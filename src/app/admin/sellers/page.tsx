@@ -136,7 +136,76 @@ export default function AdminSellersPage() {
         <div className="mb-4"><h2 className="text-lg font-black text-slate-900">{t('admin.kycReviewTitle')}</h2><p className="text-sm text-slate-600">{t('admin.kycReviewDescription')}</p></div>
         {kycLoading ? <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />{t('common.loading')}</div> : kycDocuments.length === 0 ? <p className="text-sm text-slate-500">{t('admin.kycReviewEmpty')}</p> : <div className="grid gap-3">{kycDocuments.map((document) => <article key={document.id} className="rounded-xl border border-slate-200 p-4"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div><h3 className="font-bold text-slate-900">{document.documentType}</h3><p className="text-xs text-slate-500">{document.seller?.businessName || document.sellerId} · {document.mimeType} · {(document.fileSize / 1024 / 1024).toFixed(2)} MB</p><p className="mt-1 text-xs font-semibold text-amber-700">{document.status}</p></div><div className="flex flex-wrap gap-2"><button type="button" disabled={busyId === document.id} onClick={() => void viewKyc(document.id)} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold">{t('admin.kycView')}</button><button type="button" disabled={busyId === document.id} onClick={() => void reviewKyc(document, 'VERIFIED')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white">{t('admin.kycVerify')}</button></div></div><textarea value={reason[document.id] || ''} onChange={(event) => setReason((current) => ({ ...current, [document.id]: event.target.value }))} placeholder={t('admin.reasonRequired')} className="mt-3 min-h-16 w-full rounded-xl border border-slate-300 p-3 text-sm" /><button type="button" disabled={busyId === document.id} onClick={() => void reviewKyc(document, 'REJECTED')} className="mt-2 rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white">{t('admin.kycReject')}</button></article>)}</div>}
       </section>
-      {loading ? <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />{t('common.loading')}</div> : items.length === 0 ? <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">{t('admin.sellerApplicationEmpty')}</div> : <div className="grid gap-4">{items.map((application) => <article key={application.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between"><div><h2 className="text-lg font-black text-slate-900">{application.businessName}</h2><p className="text-xs text-slate-500">{application.slug} · {application.applicantUserId}</p><p className="mt-2 text-xs font-bold uppercase tracking-wide text-amber-700">{application.status}</p></div><div className="flex flex-wrap gap-2"><button disabled={busyId === application.id || application.status === 'UNDER_REVIEW'} onClick={() => void review(application, 'UNDER_REVIEW')} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold">{t('admin.markUnderReview')}</button><button disabled={busyId === application.id || application.status !== 'UNDER_REVIEW'} onClick={() => void review(application, 'APPROVED')} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white">{t('admin.approve')}</button></div></div><textarea value={reason[application.id] || ''} onChange={(event) => setReason((current) => ({ ...current, [application.id]: event.target.value }))} placeholder={t('admin.reasonRequired')} className="mt-4 min-h-20 w-full rounded-xl border border-slate-300 p-3 text-sm" /><div className="mt-3 flex flex-wrap gap-2"><button disabled={busyId === application.id || application.status !== 'UNDER_REVIEW'} onClick={() => void review(application, 'CHANGES_REQUESTED')} className="rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-slate-950">{t('admin.requestChanges')}</button><button disabled={busyId === application.id || application.status !== 'UNDER_REVIEW'} onClick={() => void review(application, 'REJECTED')} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white">{t('admin.reject')}</button></div></article>)}</div>}
+      {loading ? (
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {t('common.loading')}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+          {t('admin.sellerApplicationEmpty')}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {items.map((application) => (
+            <article key={application.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h2 className="text-lg font-black text-slate-900">{application.businessName}</h2>
+                  <p className="text-xs text-slate-500">
+                    {application.slug} · {application.applicantUserId}
+                  </p>
+                  <p className="mt-2 text-xs font-bold uppercase tracking-wide text-amber-700">
+                    {application.status}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    disabled={busyId === application.id || application.status === 'UNDER_REVIEW'}
+                    onClick={() => void review(application, 'UNDER_REVIEW')}
+                    className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-bold disabled:opacity-50"
+                  >
+                    {t('admin.markUnderReview')}
+                  </button>
+                  <button
+                    disabled={busyId === application.id}
+                    onClick={() => void review(application, 'APPROVED')}
+                    className="rounded-lg bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors disabled:opacity-50"
+                  >
+                    {t('admin.approve')}
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                value={reason[application.id] || ''}
+                onChange={(event) =>
+                  setReason((current) => ({ ...current, [application.id]: event.target.value }))
+                }
+                placeholder={t('admin.reasonRequired')}
+                className="mt-4 min-h-20 w-full rounded-xl border border-slate-300 p-3 text-sm"
+              />
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  disabled={busyId === application.id}
+                  onClick={() => void review(application, 'CHANGES_REQUESTED')}
+                  className="rounded-lg bg-amber-500 hover:bg-amber-600 px-3.5 py-2 text-xs font-bold text-slate-950 transition-colors disabled:opacity-50"
+                >
+                  {t('admin.requestChanges')}
+                </button>
+                <button
+                  disabled={busyId === application.id}
+                  onClick={() => void review(application, 'REJECTED')}
+                  className="rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-2 text-xs font-bold text-white transition-colors disabled:opacity-50"
+                >
+                  {t('admin.reject')}
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

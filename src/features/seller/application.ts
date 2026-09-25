@@ -46,7 +46,7 @@ export const SellerApplicationReviewSchema = z.object({
 
 export const SELLER_APPLICATION_TRANSITIONS: Record<SellerApplicationStatus, readonly SellerApplicationStatus[]> = {
   DRAFT: ['SUBMITTED'],
-  SUBMITTED: ['UNDER_REVIEW'],
+  SUBMITTED: ['UNDER_REVIEW', 'APPROVED', 'CHANGES_REQUESTED', 'REJECTED'],
   UNDER_REVIEW: ['CHANGES_REQUESTED', 'APPROVED', 'REJECTED'],
   CHANGES_REQUESTED: ['SUBMITTED'],
   APPROVED: [],
