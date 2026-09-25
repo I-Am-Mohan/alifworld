@@ -356,6 +356,8 @@ export class UserRepository {
         data: {
           id: generateId(ID_PREFIXES.OUTBOX),
           eventType: 'auth.customer_registered',
+          aggregateType: 'User',
+          aggregateId: user.id,
           payload: {
             userId: user.id,
             email: params.email,

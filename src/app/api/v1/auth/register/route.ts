@@ -20,13 +20,29 @@ export async function POST(req: NextRequest) {
     const parseResult = customerRegistrationSchema.safeParse(body);
 
     if (!parseResult.success) {
+      const issueSummary = parseResult.error.issues
+        .map((i) => `${i.path.join('.') || 'input'}: ${i.message}`)
+        .join('; ');
+
+      const fieldDetails: Record<string, string> = {};
+      parseResult.error.issues.forEach((i) => {
+        const fieldName = i.path.join('.');
+        if (fieldName && !fieldDetails[fieldName]) {
+          fieldDetails[fieldName] = i.message;
+        }
+      });
+
       return NextResponse.json(
         {
           success: false,
           error: {
             code: 'VALIDATION_FAILED',
-            message: 'Registration input validation failed',
-            details: parseResult.error.flatten(),
+            message: `Registration validation failed: ${issueSummary}`,
+            details: fieldDetails,
+            issues: parseResult.error.issues.map((i) => ({
+              field: i.path.join('.'),
+              message: i.message,
+            })),
           },
         },
         { status: 422 }

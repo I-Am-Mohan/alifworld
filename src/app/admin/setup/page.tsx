@@ -9,6 +9,7 @@ import {
   CreditCard,
   Truck,
   MessageSquare,
+  Mail,
   Flag,
   Save,
   RefreshCw,
@@ -33,7 +34,7 @@ import { CurrencyConfig, DEFAULT_CURRENCIES, parseCurrencies, formatCurrencyAmou
 import { LanguageDefinition } from '@/i18n/types';
 import { csrfFetch } from '@/shared/security/csrf-client';
 
-type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'features';
+type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'smtp' | 'features';
 
 export default function AdminSetupPage() {
   const { t } = useI18n();
@@ -124,6 +125,14 @@ export default function AdminSetupPage() {
     SMS_GATEWAY_API_KEY: 'greenweb_token_demo_sample',
     SMS_GATEWAY_SENDER_ID: 'ALIFWORLD',
     SMS_GATEWAY_ENDPOINT: 'https://api.greenweb.com.bd/api.php',
+    SMTP_ENABLED: 'true',
+    SMTP_HOST: 'smtp.mailgun.org',
+    SMTP_PORT: '587',
+    SMTP_SECURE: 'false',
+    SMTP_USER: 'postmaster@mg.alifworld.com',
+    SMTP_PASSWORD: 'password123',
+    SMTP_FROM_NAME: 'AlifWorld Notifications',
+    SMTP_FROM_EMAIL: 'noreply@alifworld.com',
     FEATURE_COD_ENABLED: 'true',
     FEATURE_POINTS_REWARDS_ENABLED: 'true',
     FEATURE_POINTS_CASH_CONVERTIBLE: 'false',
@@ -415,12 +424,41 @@ export default function AdminSetupPage() {
     }, 1200);
   };
 
+  const [smtpTestEmail, setSmtpTestEmail] = useState('admin@alifworld.com');
+  const [sendingSmtpTest, setSendingSmtpTest] = useState(false);
+
+  const handleSendTestSmtpEmail = async () => {
+    if (!smtpTestEmail.trim()) {
+      showToast('Please enter a valid recipient email address', 'error');
+      return;
+    }
+    setSendingSmtpTest(true);
+    try {
+      const res = await csrfFetch('/api/v1/system/setup/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientEmail: smtpTestEmail.trim() }),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.success) {
+        showToast(json.data?.message || 'Test email dispatched successfully!');
+      } else {
+        throw new Error(json?.error?.message || 'Failed to dispatch test email');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setSendingSmtpTest(false);
+    }
+  };
+
   const tabs = [
     { id: 'localization', label: 'Localization & Currencies', icon: Globe },
     { id: 'storage', label: 'S3 Storage & Cloud', icon: HardDrive },
     { id: 'payments', label: 'Payment Gateways', icon: CreditCard },
     { id: 'couriers', label: 'Couriers & Logistics', icon: Truck },
     { id: 'sms', label: 'SMS Gateway Provider', icon: MessageSquare },
+    { id: 'smtp', label: 'SMTP & Email Gateway', icon: Mail },
     { id: 'features', label: 'Feature Flags & Invariants', icon: Flag },
   ];
 
@@ -1713,6 +1751,161 @@ export default function AdminSetupPage() {
                 >
                   {sendingTestSms ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   <span>Test SMS</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: SMTP Configuration & Email Gateway */}
+      {activeTab === 'smtp' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <Mail className="w-5 h-5 text-amber-600" />
+                  <span>SMTP Configuration &amp; Email Gateway</span>
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure outgoing transactional email server settings for account verification, password resets, and order notifications.
+                </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold text-slate-700">Enable SMTP Gateway:</span>
+                <button
+                  type="button"
+                  onClick={() => toggleSetting('SMTP_ENABLED')}
+                  className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out cursor-pointer ${
+                    settings.SMTP_ENABLED === 'true' ? 'bg-emerald-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <div
+                    className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                      settings.SMTP_ENABLED === 'true' ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* SMTP Connection Parameters */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Server Host *</label>
+                <input
+                  type="text"
+                  value={settings.SMTP_HOST || ''}
+                  onChange={(e) => updateSetting('SMTP_HOST', e.target.value)}
+                  placeholder="smtp.mailgun.org or smtp.gmail.com"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Port *</label>
+                <input
+                  type="text"
+                  value={settings.SMTP_PORT || ''}
+                  onChange={(e) => updateSetting('SMTP_PORT', e.target.value)}
+                  placeholder="587 or 465"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Security / TLS</label>
+                <select
+                  value={settings.SMTP_SECURE || 'false'}
+                  onChange={(e) => updateSetting('SMTP_SECURE', e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-bold text-slate-900 cursor-pointer"
+                >
+                  <option value="false">STARTTLS (Port 587 / 25)</option>
+                  <option value="true">SSL / TLS (Port 465)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Username *</label>
+                <input
+                  type="text"
+                  value={settings.SMTP_USER || ''}
+                  onChange={(e) => updateSetting('SMTP_USER', e.target.value)}
+                  placeholder="postmaster@mg.alifworld.com"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Password *</label>
+                <div className="relative">
+                  <input
+                    type={revealedSecrets['smtp_pass'] ? 'text' : 'password'}
+                    value={settings.SMTP_PASSWORD || ''}
+                    onChange={(e) => updateSetting('SMTP_PASSWORD', e.target.value)}
+                    placeholder="Enter SMTP password or API token"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono text-slate-900 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleSecret('smtp_pass')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {revealedSecrets['smtp_pass'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Sender From Email *</label>
+                <input
+                  type="email"
+                  value={settings.SMTP_FROM_EMAIL || ''}
+                  onChange={(e) => updateSetting('SMTP_FROM_EMAIL', e.target.value)}
+                  placeholder="noreply@alifworld.com"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono text-slate-900"
+                />
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className="block text-xs font-bold text-slate-700 mb-1">Sender From Name</label>
+                <input
+                  type="text"
+                  value={settings.SMTP_FROM_NAME || ''}
+                  onChange={(e) => updateSetting('SMTP_FROM_NAME', e.target.value)}
+                  placeholder="AlifWorld Notifications"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-semibold text-slate-900"
+                />
+              </div>
+            </div>
+
+            {/* Test Email Dispatch Tool */}
+            <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+              <div>
+                <span className="text-xs font-bold text-slate-900 block">Test SMTP Email Gateway</span>
+                <span className="text-[11px] text-slate-500">
+                  Send a test notification email to verify SMTP credentials and connection.
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="email"
+                  value={smtpTestEmail}
+                  onChange={(e) => setSmtpTestEmail(e.target.value)}
+                  placeholder="recipient@example.com"
+                  className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-mono text-slate-900 w-52 bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendTestSmtpEmail}
+                  disabled={sendingSmtpTest}
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition-colors shrink-0 disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
+                >
+                  {sendingSmtpTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>{sendingSmtpTest ? 'Sending...' : 'Send Test Email'}</span>
                 </button>
               </div>
             </div>

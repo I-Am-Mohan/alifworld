@@ -609,7 +609,9 @@ export class OAuthService {
       await tx.outboxEvent.create({
         data: {
           id: outboxId,
-          topic: 'customer.registered',
+          eventType: 'auth.customer_registered',
+          aggregateType: 'User',
+          aggregateId: user.id,
           payload: {
             userId: user.id,
             email: user.email,

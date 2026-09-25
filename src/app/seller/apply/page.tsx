@@ -453,21 +453,31 @@ export default function SellerApplicationPage() {
         return;
       }
 
-      if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
-        setFieldError('sellerName', 'Please enter your full name before verifying email.');
-        return;
-      }
-      if (!form.password) {
-        setFieldError('password', 'Please enter a password before verifying email.');
-        return;
-      }
-      if (form.password.length < 8) {
-        setFieldError('password', 'Password must be at least 8 characters long.');
-        return;
-      }
-      if (form.password !== form.confirmPassword) {
-        setFieldError('confirmPassword', 'Password and Confirm Password do not match.');
-        return;
+      if (!activeUser && !accountProvisioned) {
+        if (!phoneVerified) {
+          setFieldError('mobileNumber', 'Mobile verification is mandatory before email verification. Please verify your mobile number first.');
+          return;
+        }
+        if (!form.sellerName.trim() || form.sellerName.trim().length < 2) {
+          setFieldError('sellerName', 'Please enter your full name (at least 2 characters) before verifying email.');
+          return;
+        }
+        if (!form.password) {
+          setFieldError('password', 'Please enter a password before verifying email.');
+          return;
+        }
+        const hasUpper = /[A-Z]/.test(form.password);
+        const hasLower = /[a-z]/.test(form.password);
+        const hasNumber = /\d/.test(form.password);
+        const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password);
+        if (form.password.length < 8 || !hasUpper || !hasLower || !hasNumber || !hasSymbol) {
+          setFieldError('password', 'Password must be at least 8 characters and include uppercase (A-Z), lowercase (a-z), number (0-9), and special character.');
+          return;
+        }
+        if (form.password !== form.confirmPassword) {
+          setFieldError('confirmPassword', 'Password and Confirm Password do not match.');
+          return;
+        }
       }
 
       const regRes = await csrfFetch('/api/v1/auth/register', {
@@ -503,7 +513,27 @@ export default function SellerApplicationPage() {
         const resendJson = await resendRes.json().catch(() => null);
         setDevEmailOtp(resendJson?.data?.devVerificationCode || null);
       } else if (!regRes.ok || !regJson?.success) {
-        throw new Error(regJson?.error?.message || 'Failed to initiate email verification.');
+        const errorObj = regJson?.error;
+        if (errorObj?.details && typeof errorObj.details === 'object') {
+          Object.entries(errorObj.details).forEach(([field, msg]) => {
+            if (typeof msg === 'string') {
+              if (field.includes('email')) setFieldError('emailAddress', msg);
+              else if (field.includes('password')) setFieldError('password', msg);
+              else if (field.includes('name')) setFieldError('sellerName', msg);
+              else if (field.includes('phone')) setFieldError('mobileNumber', msg);
+              else setFieldError(field, msg);
+            }
+          });
+        }
+        if (errorObj?.issues && Array.isArray(errorObj.issues)) {
+          errorObj.issues.forEach((issue: any) => {
+            if (issue.field?.includes('email')) setFieldError('emailAddress', issue.message);
+            if (issue.field?.includes('password')) setFieldError('password', issue.message);
+            if (issue.field?.includes('name')) setFieldError('sellerName', issue.message);
+            if (issue.field?.includes('phone')) setFieldError('mobileNumber', issue.message);
+          });
+        }
+        throw new Error(errorObj?.message || 'Failed to initiate email verification.');
       } else {
         setAccountProvisioned(true);
         setDevEmailOtp(regJson.data?.devVerificationCode || null);
@@ -1231,6 +1261,37 @@ export default function SellerApplicationPage() {
                               </p>
                             )}
                           </div>
+
+                          {/* Live Password Format Guidance Checklist */}
+                          {form.password.length > 0 && (
+                            <div className="sm:col-span-2 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 animate-in fade-in">
+                              <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                Password Requirements &amp; Format
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-medium text-slate-600">
+                                <div className={`flex items-center space-x-1.5 ${form.password.length >= 8 ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
+                                  <Check className={`w-3.5 h-3.5 ${form.password.length >= 8 ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                  <span>Minimum 8 characters</span>
+                                </div>
+                                <div className={`flex items-center space-x-1.5 ${/[A-Z]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
+                                  <Check className={`w-3.5 h-3.5 ${/[A-Z]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                  <span>Uppercase letter (A-Z)</span>
+                                </div>
+                                <div className={`flex items-center space-x-1.5 ${/[a-z]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
+                                  <Check className={`w-3.5 h-3.5 ${/[a-z]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                  <span>Lowercase letter (a-z)</span>
+                                </div>
+                                <div className={`flex items-center space-x-1.5 ${/\d/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
+                                  <Check className={`w-3.5 h-3.5 ${/\d/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                  <span>Numeric digit (0-9)</span>
+                                </div>
+                                <div className={`flex items-center space-x-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
+                                  <Check className={`w-3.5 h-3.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                  <span>Special symbol (!@#$%...)</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
