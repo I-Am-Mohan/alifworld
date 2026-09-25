@@ -40,7 +40,25 @@ export const ResolvePriceQuerySchema = z.object({
   buyerSegment: z.string().optional(),
 });
 
+export const QuoteLineItemInputSchema = z.object({
+  variantId: z.string().uuid(),
+  quantity: z.coerce.number().int().min(1).default(1),
+  sellerId: z.string().uuid().optional(),
+});
+
+export const CalculateQuoteSchema = z.object({
+  lineItems: z.array(QuoteLineItemInputSchema).min(1, 'At least one line item is required'),
+  channel: PriceListChannelEnum.default('RETAIL'),
+  buyerSegment: z.string().optional().nullable(),
+  couponCode: z.string().optional().nullable(),
+  shippingFeePoisha: z.union([z.string(), z.number(), z.bigint()]).default(0).transform((val) => BigInt(val)),
+  priceIncludesTax: z.boolean().default(false),
+});
+
 export type CreatePriceListInput = z.infer<typeof CreatePriceListSchema>;
 export type UpdatePriceListInput = z.infer<typeof UpdatePriceListSchema>;
 export type CreatePriceListRuleInput = z.infer<typeof CreatePriceListRuleSchema>;
 export type ResolvePriceQueryInput = z.infer<typeof ResolvePriceQuerySchema>;
+export type QuoteLineItemInput = z.infer<typeof QuoteLineItemInputSchema>;
+export type CalculateQuoteInput = z.infer<typeof CalculateQuoteSchema>;
+export type CalculateQuoteRawInput = z.input<typeof CalculateQuoteSchema>;

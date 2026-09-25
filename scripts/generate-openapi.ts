@@ -47,6 +47,7 @@ export const openApiSpec = {
     { name: 'Customer Support', description: 'Omnichannel customer assistance, order incident tickets, and live SLA resolution' },
     { name: 'Logistics & Delivery', description: 'Delivery rider dispatch, assignment lease claiming, and live GPS telemetry' },
     { name: 'Customer & Ownership', description: 'Customer self-service, profile anti-tampering, and object-level ownership checks' },
+    { name: 'Pricing & Tax', description: 'Authoritative server-side pricing resolution, cart quote calculation, promotions, and tax' },
     { name: 'Audit & Compliance', description: 'Immutable security event auditing, business operation logs, and compliance exploration' },
   ],
   paths: {
@@ -139,6 +140,92 @@ export const openApiSpec = {
             content: {
               'application/json': {
                 schema: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/pricing/resolve': {
+      post: {
+        tags: ['Pricing & Tax'],
+        summary: 'Resolve Variant Unit Price',
+        description: 'Resolves authoritative unit price, volume breaks, and MAP floor protection for a product variant in integer poisha.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  variantId: { type: 'string', format: 'uuid' },
+                  quantity: { type: 'integer', minimum: 1, default: 1 },
+                  channel: { type: 'string', enum: ['RETAIL', 'B2B', 'CAMPAIGN', 'NEGOTIATED'], default: 'RETAIL' },
+                  buyerSegment: { type: 'string' },
+                },
+                required: ['variantId'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Variant price resolved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/pricing/quote': {
+      post: {
+        tags: ['Pricing & Tax'],
+        summary: 'Calculate Authoritative Cart Quote',
+        description: 'Calculates complete server-side price quote with price rules, stacked promotions, tax breakdown, seller vs platform attribution splits, Product Points, and grand total.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  lineItems: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        variantId: { type: 'string', format: 'uuid' },
+                        quantity: { type: 'integer', minimum: 1, default: 1 },
+                        sellerId: { type: 'string', format: 'uuid' },
+                      },
+                      required: ['variantId'],
+                    },
+                    minItems: 1,
+                  },
+                  channel: { type: 'string', enum: ['RETAIL', 'B2B', 'CAMPAIGN', 'NEGOTIATED'], default: 'RETAIL' },
+                  buyerSegment: { type: 'string' },
+                  couponCode: { type: 'string' },
+                  shippingFeePoisha: { type: 'string', default: '0' },
+                  priceIncludesTax: { type: 'boolean', default: false },
+                },
+                required: ['lineItems'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Quote calculated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
               },
             },
           },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { errorResponse } from '@/shared/api/error-response';
+import { z } from 'zod';
+import { errorResponse, validationErrorResponse } from '@/shared/api/error-response';
 import { prisma } from '@/shared/database/prisma';
 import { PricingService } from '@/services/pricing.service';
 import { ResolvePriceQuerySchema } from '@/validators/pricing.validator';
@@ -30,6 +31,9 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return validationErrorResponse(req, error);
+    }
     return errorResponse(req, error);
   }
 }
