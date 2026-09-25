@@ -518,6 +518,22 @@ export class InventoryService {
     return this.movementRepo.list(options);
   }
 
+  public async listPaginatedMovements(options?: {
+    warehouseId?: string;
+    variantId?: string;
+    stockBalanceId?: string;
+    sellerId?: string;
+    movementType?: MovementType;
+    sourceType?: SourceType;
+    sourceId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    page?: number;
+    limit?: number;
+  }) {
+    return this.movementRepo.listPaginated(options);
+  }
+
   private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {
     try {
       await (prisma as any).outboxEvent.create({

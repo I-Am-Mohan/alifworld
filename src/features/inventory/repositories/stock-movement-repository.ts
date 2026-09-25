@@ -9,7 +9,7 @@
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
 
-import { prisma } from '@/shared/database/prisma';
+import { prisma as defaultPrisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
 import { StockMovementModel, MovementType, SourceType } from '../types';
 
@@ -29,13 +29,18 @@ export interface CreateMovementInput {
 }
 
 export class StockMovementRepository {
+  constructor(private readonly prismaClient?: any) {}
+
+  private get prisma() {
+    return this.prismaClient || (defaultPrisma as any);
+  }
   /**
    * Appends an immutable stock movement record to the ledger.
    */
   public async record(input: CreateMovementInput): Promise<StockMovementModel> {
     const id = generatePrefixedId(ENTITY_PREFIXES.STOCK_MOVEMENT);
 
-    const record = await (prisma as any).stockMovementLedger.create({
+    const record = await (this.prisma as any).stockMovementLedger.create({
       data: {
         id,
         stockBalanceId: input.stockBalanceId,
@@ -57,7 +62,7 @@ export class StockMovementRepository {
   }
 
   public async findById(id: string): Promise<StockMovementModel | null> {
-    const record = await (prisma as any).stockMovementLedger.findUnique({
+    const record = await (this.prisma as any).stockMovementLedger.findUnique({
       where: { id },
     });
 
@@ -65,7 +70,7 @@ export class StockMovementRepository {
   }
 
   public async findByStockBalance(stockBalanceId: string, limit = 50): Promise<StockMovementModel[]> {
-    const records = await (prisma as any).stockMovementLedger.findMany({
+    const records = await (this.prisma as any).stockMovementLedger.findMany({
       where: { stockBalanceId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -75,7 +80,7 @@ export class StockMovementRepository {
   }
 
   public async findByWarehouse(warehouseId: string, limit = 50): Promise<StockMovementModel[]> {
-    const records = await (prisma as any).stockMovementLedger.findMany({
+    const records = await (this.prisma as any).stockMovementLedger.findMany({
       where: { warehouseId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -85,7 +90,7 @@ export class StockMovementRepository {
   }
 
   public async findByVariant(variantId: string, limit = 50): Promise<StockMovementModel[]> {
-    const records = await (prisma as any).stockMovementLedger.findMany({
+    const records = await (this.prisma as any).stockMovementLedger.findMany({
       where: { variantId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -109,13 +114,77 @@ export class StockMovementRepository {
     if (options?.sourceType) where.sourceType = options.sourceType;
     if (options?.sourceId) where.sourceId = options.sourceId;
 
-    const records = await (prisma as any).stockMovementLedger.findMany({
+    const records = await (this.prisma as any).stockMovementLedger.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: options?.limit ?? 50,
     });
 
     return records.map((r: any) => this.mapToModel(r));
+  }
+
+  public async listPaginated(options?: {
+    warehouseId?: string;
+    variantId?: string;
+    stockBalanceId?: string;
+    sellerId?: string;
+    movementType?: MovementType;
+    sourceType?: SourceType;
+    sourceId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    items: StockMovementModel[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = options?.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (options?.warehouseId) where.warehouseId = options.warehouseId;
+    if (options?.variantId) where.variantId = options.variantId;
+    if (options?.stockBalanceId) where.stockBalanceId = options.stockBalanceId;
+    if (options?.movementType) where.movementType = options.movementType;
+    if (options?.sourceType) where.sourceType = options.sourceType;
+    if (options?.sourceId) where.sourceId = options.sourceId;
+
+    if (options?.sellerId) {
+      where.variant = {
+        product: {
+          sellerId: options.sellerId,
+        },
+      };
+    }
+
+    if (options?.startDate || options?.endDate) {
+      where.createdAt = {};
+      if (options.startDate) where.createdAt.gte = options.startDate;
+      if (options.endDate) where.createdAt.lte = options.endDate;
+    }
+
+    const [records, total] = await Promise.all([
+      (this.prisma as any).stockMovementLedger.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      (this.prisma as any).stockMovementLedger.count({ where }),
+    ]);
+
+    return {
+      items: records.map((r: any) => this.mapToModel(r)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   private mapToModel(record: any): StockMovementModel {

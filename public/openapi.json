@@ -924,6 +924,111 @@
         }
       }
     },
+    "/api/v1/inventory/movements": {
+      "get": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "List Stock Movement Ledger Records",
+        "description": "Lists append-only, immutable inventory movement ledger records with pagination and filtering.",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stockBalanceId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "movementType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RECEIVE",
+                "RESERVE",
+                "RELEASE",
+                "COMMIT",
+                "ADJUST",
+                "RETURN",
+                "DAMAGE",
+                "WRITE_OFF"
+              ]
+            }
+          },
+          {
+            "name": "sourceType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PURCHASE_ORDER",
+                "CHECKOUT_RESERVATION",
+                "ORDER_FULFILLMENT",
+                "RETURN_RMA",
+                "AUDIT_ADJUSTMENT"
+              ]
+            }
+          },
+          {
+            "name": "sourceId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock movement ledger records retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/inventory/intake": {
       "post": {
         "tags": [

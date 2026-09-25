@@ -112,3 +112,29 @@ export const QueryStockBalancesSchema = z.object({
 });
 
 export type QueryStockBalancesInput = z.infer<typeof QueryStockBalancesSchema>;
+
+export const QueryStockMovementsSchema = z.object({
+  warehouseId: z.string().optional(),
+  variantId: z.string().optional(),
+  stockBalanceId: z.string().optional(),
+  sellerId: z.string().optional(),
+  movementType: z.enum([
+    MovementType.RECEIVE,
+    MovementType.RESERVE,
+    MovementType.RELEASE,
+    MovementType.COMMIT,
+    MovementType.ADJUST,
+    MovementType.RETURN,
+    MovementType.DAMAGE,
+    MovementType.WRITE_OFF,
+  ]).optional(),
+  sourceType: z.nativeEnum(SourceType).optional(),
+  sourceId: z.string().optional(),
+  startDate: z.coerce.date().optional(),
+  endDate: z.coerce.date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type QueryStockMovementsInput = z.infer<typeof QueryStockMovementsSchema>;
+export type QueryStockMovementsRawInput = z.input<typeof QueryStockMovementsSchema>;
