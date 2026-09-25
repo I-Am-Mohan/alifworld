@@ -232,6 +232,97 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/pricing/history': {
+      get: {
+        tags: ['Pricing & Tax'],
+        summary: 'List Price History Audit Log',
+        description: 'Lists append-only historical price change records for product variants with seller scoping and pagination.',
+        parameters: [
+          { name: 'variantId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'productId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'sellerId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Price history records retrieved',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/pricing/scheduled': {
+      get: {
+        tags: ['Pricing & Tax'],
+        summary: 'List Scheduled Future Price Changes',
+        description: 'Lists upcoming scheduled price rules and price lists starting in the future.',
+        parameters: [
+          { name: 'variantId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'productId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'sellerId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'channel', in: 'query', schema: { type: 'string', enum: ['RETAIL', 'B2B', 'CAMPAIGN', 'NEGOTIATED'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Scheduled price changes retrieved',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/pricing/variants/{id}': {
+      put: {
+        tags: ['Pricing & Tax'],
+        summary: 'Update Base Variant Price',
+        description: 'Updates base variant pricing in integer poisha and appends a PriceHistory log entry.',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  pricePoisha: { type: 'string' },
+                  compareAtPricePoisha: { type: 'string' },
+                  reason: { type: 'string' },
+                },
+                required: ['pricePoisha'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Variant base price updated',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],

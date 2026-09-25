@@ -55,6 +55,30 @@ export const CalculateQuoteSchema = z.object({
   priceIncludesTax: z.boolean().default(false),
 });
 
+export const QueryPriceHistorySchema = z.object({
+  variantId: z.string().uuid().optional(),
+  productId: z.string().uuid().optional(),
+  sellerId: z.string().uuid().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const QueryScheduledPricesSchema = z.object({
+  variantId: z.string().uuid().optional(),
+  productId: z.string().uuid().optional(),
+  sellerId: z.string().uuid().optional(),
+  channel: PriceListChannelEnum.optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const UpdateVariantPriceSchema = z.object({
+  variantId: z.string().uuid(),
+  pricePoisha: z.union([z.string(), z.number(), z.bigint()]).transform((val) => BigInt(val)),
+  compareAtPricePoisha: z.union([z.string(), z.number(), z.bigint()]).optional().nullable().transform((val) => val != null ? BigInt(val) : null).default(null),
+  reason: z.string().max(500).optional(),
+});
+
 export type CreatePriceListInput = z.infer<typeof CreatePriceListSchema>;
 export type UpdatePriceListInput = z.infer<typeof UpdatePriceListSchema>;
 export type CreatePriceListRuleInput = z.infer<typeof CreatePriceListRuleSchema>;
@@ -62,3 +86,9 @@ export type ResolvePriceQueryInput = z.infer<typeof ResolvePriceQuerySchema>;
 export type QuoteLineItemInput = z.infer<typeof QuoteLineItemInputSchema>;
 export type CalculateQuoteInput = z.infer<typeof CalculateQuoteSchema>;
 export type CalculateQuoteRawInput = z.input<typeof CalculateQuoteSchema>;
+export type QueryPriceHistoryInput = z.infer<typeof QueryPriceHistorySchema>;
+export type QueryPriceHistoryRawInput = z.input<typeof QueryPriceHistorySchema>;
+export type QueryScheduledPricesInput = z.infer<typeof QueryScheduledPricesSchema>;
+export type QueryScheduledPricesRawInput = z.input<typeof QueryScheduledPricesSchema>;
+export type UpdateVariantPriceInput = z.infer<typeof UpdateVariantPriceSchema>;
+export type UpdateVariantPriceRawInput = z.input<typeof UpdateVariantPriceSchema>;

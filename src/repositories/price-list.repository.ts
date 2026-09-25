@@ -117,4 +117,128 @@ export class PriceListRepository {
       },
     });
   }
+
+  /**
+   * Records an append-only price history entry.
+   */
+  async createPriceHistoryEntry(data: Prisma.PriceHistoryCreateInput) {
+    return this.prisma.priceHistory.create({ data });
+  }
+
+  /**
+   * Lists append-only price history records with filtering and pagination.
+   */
+  async listPriceHistory(params: {
+    variantId?: string;
+    productId?: string;
+    sellerId?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.PriceHistoryWhereInput = {
+      ...(params.variantId ? { variantId: params.variantId } : {}),
+      ...(params.productId ? { productId: params.productId } : {}),
+      ...(params.sellerId ? { sellerId: params.sellerId } : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.priceHistory.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { effectiveAt: 'desc' },
+        include: {
+          variant: { select: { id: true, sku: true, title: true } },
+          product: { select: { id: true, title: true, sellerId: true } },
+        },
+      }),
+      this.prisma.priceHistory.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Lists scheduled future price lists and price list rules.
+   */
+  async listScheduledPrices(params: {
+    variantId?: string;
+    productId?: string;
+    sellerId?: string | null;
+    channel?: string;
+    now?: Date;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const skip = (page - 1) * limit;
+    const now = params.now || new Date();
+
+    const where: Prisma.PriceListRuleWhereInput = {
+      status: 'ACTIVE',
+      priceList: {
+        status: 'ACTIVE',
+        deletedAt: null,
+        startsAt: { gt: now },
+        ...(params.sellerId !== undefined
+          ? params.sellerId === null
+            ? { sellerId: null }
+            : { OR: [{ sellerId: params.sellerId }, { sellerId: null }] }
+          : {}),
+        ...(params.channel ? { channel: params.channel } : {}),
+      },
+      ...(params.variantId ? { variantId: params.variantId } : {}),
+      ...(params.productId ? { productId: params.productId } : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      this.prisma.priceListRule.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { priceList: { startsAt: 'asc' } },
+        include: {
+          priceList: { select: { id: true, code: true, name: true, channel: true, priority: true, startsAt: true, endsAt: true, sellerId: true } },
+          variant: { select: { id: true, sku: true, title: true } },
+          product: { select: { id: true, title: true } },
+        },
+      }),
+      this.prisma.priceListRule.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Updates base variant pricing poisha and compare-at poisha.
+   */
+  async updateVariantBasePrice(variantId: string, data: { pricePoisha: bigint; compareAtPricePoisha?: bigint | null }) {
+    return this.prisma.productVariant.update({
+      where: { id: variantId },
+      data: {
+        pricePoisha: data.pricePoisha,
+        compareAtPricePoisha: data.compareAtPricePoisha,
+      },
+      include: {
+        product: true,
+      },
+    });
+  }
 }

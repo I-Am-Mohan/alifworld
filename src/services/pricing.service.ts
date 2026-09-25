@@ -12,6 +12,15 @@ import {
   CalculateQuoteInput,
   CalculateQuoteRawInput,
   CalculateQuoteSchema,
+  QueryPriceHistoryInput,
+  QueryPriceHistoryRawInput,
+  QueryPriceHistorySchema,
+  QueryScheduledPricesInput,
+  QueryScheduledPricesRawInput,
+  QueryScheduledPricesSchema,
+  UpdateVariantPriceInput,
+  UpdateVariantPriceRawInput,
+  UpdateVariantPriceSchema,
 } from '../validators/pricing.validator';
 import {
   resolveEffectivePrice,
@@ -232,7 +241,7 @@ export class PricingService {
       throw new AuthorizationError('Insufficient permissions to add rules to this price list');
     }
 
-    return this.repo.addPriceListRule({
+    const rule = await this.repo.addPriceListRule({
       priceList: { connect: { id: input.priceListId } },
       product: input.productId ? { connect: { id: input.productId } } : undefined,
       variant: input.variantId ? { connect: { id: input.variantId } } : undefined,
@@ -241,6 +250,112 @@ export class PricingService {
       minQuantity: input.minQuantity ?? 1,
       maxQuantity: input.maxQuantity ?? null,
       productPointOverride: input.productPointOverride ?? null,
+    });
+
+    if (input.variantId) {
+      const variantRecord = await this.repo.getVariantWithProduct(input.variantId);
+      if (variantRecord) {
+        await this.repo.createPriceHistoryEntry({
+          variant: { connect: { id: variantRecord.id } },
+          product: { connect: { id: variantRecord.productId } },
+          sellerId: priceList.sellerId || variantRecord.product.sellerId,
+          priceListId: priceList.id,
+          priceListRuleId: rule.id,
+          changeType: priceList.startsAt && new Date(priceList.startsAt) > new Date() ? 'SCHEDULED_PRICE_ADDED' : 'PRICE_LIST_RULE_ADDED',
+          previousPricePoisha: variantRecord.pricePoisha,
+          newPricePoisha: input.pricePoisha,
+          previousCompareAtPoisha: variantRecord.compareAtPricePoisha,
+          newCompareAtPoisha: input.compareAtPricePoisha ?? null,
+          reason: `Added rule to price list ${priceList.code}`,
+          actorId: actor.userId,
+        });
+      }
+    }
+
+    return rule;
+  }
+
+  async updateVariantBasePrice(actor: ActorContext, rawInput: UpdateVariantPriceRawInput) {
+    const input = UpdateVariantPriceSchema.parse(rawInput);
+    const variantRecord = await this.repo.getVariantWithProduct(input.variantId);
+    if (!variantRecord) {
+      throw new NotFoundError(`Product variant with ID '${input.variantId}' not found`);
+    }
+
+    const isSeller = actor.roles.includes('SELLER');
+    const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
+
+    if (isSeller && variantRecord.product.sellerId !== actor.sellerId) {
+      throw new AuthorizationError('Insufficient permissions to update pricing for this seller product');
+    }
+    if (!isSeller && !isAdmin) {
+      throw new AuthorizationError('Insufficient permissions to update product variant pricing');
+    }
+
+    const previousPricePoisha = variantRecord.pricePoisha;
+    const previousCompareAtPoisha = variantRecord.compareAtPricePoisha;
+
+    const updatedVariant = await this.repo.updateVariantBasePrice(input.variantId, {
+      pricePoisha: input.pricePoisha,
+      compareAtPricePoisha: input.compareAtPricePoisha ?? null,
+    });
+
+    await this.repo.createPriceHistoryEntry({
+      variant: { connect: { id: variantRecord.id } },
+      product: { connect: { id: variantRecord.productId } },
+      sellerId: variantRecord.product.sellerId,
+      changeType: 'BASE_PRICE_UPDATE',
+      previousPricePoisha,
+      newPricePoisha: input.pricePoisha,
+      previousCompareAtPoisha,
+      newCompareAtPoisha: input.compareAtPricePoisha ?? null,
+      reason: input.reason || 'Base variant price update',
+      actorId: actor.userId,
+    });
+
+    return updatedVariant;
+  }
+
+  async getPriceHistory(actor: ActorContext, rawQuery: QueryPriceHistoryRawInput) {
+    const query = QueryPriceHistorySchema.parse(rawQuery);
+    const isSeller = actor.roles.includes('SELLER');
+    const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
+
+    let scopedSellerId: string | undefined = query.sellerId;
+    if (isSeller) {
+      scopedSellerId = actor.sellerId || undefined;
+    } else if (isAdmin) {
+      scopedSellerId = query.sellerId || undefined;
+    }
+
+    return this.repo.listPriceHistory({
+      variantId: query.variantId,
+      productId: query.productId,
+      sellerId: scopedSellerId,
+      page: query.page,
+      limit: query.limit,
+    });
+  }
+
+  async getScheduledPrices(actor: ActorContext, rawQuery: QueryScheduledPricesRawInput) {
+    const query = QueryScheduledPricesSchema.parse(rawQuery);
+    const isSeller = actor.roles.includes('SELLER');
+    const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
+
+    let scopedSellerId: string | null | undefined = query.sellerId;
+    if (isSeller) {
+      scopedSellerId = actor.sellerId || null;
+    } else if (isAdmin) {
+      scopedSellerId = query.sellerId || undefined;
+    }
+
+    return this.repo.listScheduledPrices({
+      variantId: query.variantId,
+      productId: query.productId,
+      sellerId: scopedSellerId,
+      channel: query.channel,
+      page: query.page,
+      limit: query.limit,
     });
   }
 

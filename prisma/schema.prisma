@@ -1092,6 +1092,33 @@ model PriceListRule {
   @@map("price_list_rules")
 }
 
+/// Append-only historical log of product variant base prices, compare-at changes, and scheduled price activations
+model PriceHistory {
+  id                      String   @id @default(uuid())
+  variantId               String   @map("variant_id")
+  productId               String   @map("product_id")
+  sellerId                String?  @map("seller_id")
+  priceListId             String?  @map("price_list_id")
+  priceListRuleId         String?  @map("price_list_rule_id")
+  changeType              String   @map("change_type") // BASE_PRICE_UPDATE, COMPARE_AT_UPDATE, SCHEDULED_PRICE_ACTIVATED, PRICE_LIST_RULE_ADDED, PRICE_LIST_RULE_UPDATED
+  previousPricePoisha     BigInt?  @map("previous_price_poisha")
+  newPricePoisha          BigInt   @map("new_price_poisha")
+  previousCompareAtPoisha BigInt?  @map("previous_compare_at_poisha")
+  newCompareAtPoisha      BigInt?  @map("new_compare_at_poisha")
+  reason                  String?
+  effectiveAt             DateTime @default(now()) @map("effective_at")
+  actorId                 String?  @map("actor_id")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([variantId, effectiveAt])
+  @@index([productId, effectiveAt])
+  @@index([sellerId, effectiveAt])
+  @@map("price_history")
+}
+
 // ------------------------------------------------------------------------------
 // 16d. Authoritative Discount Rule Engine
 // ------------------------------------------------------------------------------
@@ -1252,6 +1279,7 @@ model Product {
   moderationReviews CatalogModerationReview[]
   duplicateFingerprint ProductDuplicateFingerprint?
   priceListRules   PriceListRule[]
+  priceHistory     PriceHistory[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -1301,6 +1329,7 @@ model ProductVariant {
   cartItems      CartItem[]
   orderItems     OrderItem[]
   priceListRules PriceListRule[]
+  priceHistory   PriceHistory[]
 
   @@index([productId])
   @@index([isActive])
