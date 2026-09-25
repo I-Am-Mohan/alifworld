@@ -13,6 +13,7 @@ import { getPrismaClient } from '@/shared/database/prisma';
 import { hashToken } from '@/shared/auth/jwt';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { ValidationError, NotFoundError } from '@/shared/errors/app-error';
+import { sendEmailViaSmtp } from '@/shared/email/smtp-transport';
 
 export const EMAIL_VERIFICATION_CONSTANTS = {
   PURPOSE: 'EMAIL_VERIFICATION',
@@ -283,6 +284,23 @@ export class EmailVerificationService {
         },
       });
     });
+
+    // Dispatch email via SMTP if configured
+    sendEmailViaSmtp({
+      to: cleanEmail,
+      subject: 'AlifWorld Email Verification Code (Resent)',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="color: #FF6A00; margin-top: 0;">AlifWorld Email Verification</h2>
+          <p>Hi ${user.name || 'User'},</p>
+          <p>Your requested 6-digit email verification code is:</p>
+          <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #0f172a; border-radius: 8px; margin: 15px 0;">
+            ${rawVerificationCode}
+          </div>
+          <p style="font-size: 12px; color: #64748b;">This verification code will expire in 15 minutes.</p>
+        </div>
+      `,
+    }).catch(() => undefined);
 
     const isDev = process.env.NODE_ENV !== 'production';
 
