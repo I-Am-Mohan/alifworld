@@ -94,3 +94,21 @@ export const AdjustStockSchema = z.object({
 });
 
 export type AdjustStockInput = z.infer<typeof AdjustStockSchema>;
+
+export const QuarantineStockSchema = z.object({
+  stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
+  action: z.enum(['QUARANTINE', 'RELEASE_TO_AVAILABLE', 'RELEASE_TO_DAMAGED']),
+  quantity: z.number().int().min(1, 'Quarantine quantity must be at least 1 unit'),
+  reason: z.string().min(5, 'Mandatory audit reason required for quarantine operations'),
+});
+
+export type QuarantineStockInput = z.infer<typeof QuarantineStockSchema>;
+
+export const QueryStockBalancesSchema = z.object({
+  warehouseId: z.string().optional(),
+  variantId: z.string().optional(),
+  sellerId: z.string().optional(),
+  lowStockOnly: z.coerce.boolean().optional(),
+});
+
+export type QueryStockBalancesInput = z.infer<typeof QueryStockBalancesSchema>;

@@ -25,3 +25,4 @@ export * from './policies/support.policy';
 export * from './policies/system-service.policy';
 export * from './policies/pricing.policy';
 export * from './policies/warehouse.policy';
+export * from './policies/inventory.policy';

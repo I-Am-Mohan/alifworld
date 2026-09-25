@@ -169,6 +169,12 @@ export class StockBalanceRepository {
     if (newReserved < 0) {
       throw new ConflictError(`Invalid inventory state: reserved cannot be negative (${newReserved}).`);
     }
+    if (newDamaged < 0) {
+      throw new ConflictError(`Invalid inventory state: damaged cannot be negative (${newDamaged}).`);
+    }
+    if (newQuarantined < 0) {
+      throw new ConflictError(`Invalid inventory state: quarantined cannot be negative (${newQuarantined}).`);
+    }
 
     const available = newOnHand - newReserved - newDamaged - newQuarantined;
     if (available < 0) {

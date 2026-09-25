@@ -842,6 +842,260 @@
         }
       }
     },
+    "/api/v1/inventory/balances": {
+      "get": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "List Inventory Stock Balances",
+        "description": "Lists warehouse stock balances with on-hand, reserved, available, damaged, and quarantine counts.",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "lowStockOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock balances retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/balances/{id}": {
+      "get": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Get Stock Balance by ID",
+        "description": "Retrieves a single stock balance record by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock balance retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/intake": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Receive Stock Intake",
+        "description": "Receives incoming stock at a warehouse facility and appends an immutable RECEIVE movement.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "warehouseId": {
+                    "type": "string"
+                  },
+                  "variantId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "sourceType": {
+                    "type": "string",
+                    "default": "PURCHASE_ORDER"
+                  },
+                  "sourceId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "warehouseId",
+                  "variantId",
+                  "quantity",
+                  "sourceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stock received successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/adjust": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Manual Audit Stock Adjustment",
+        "description": "Performs a manual audit inventory adjustment (ADJUST, DAMAGE, WRITE_OFF) with mandatory justification.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stockBalanceId": {
+                    "type": "string"
+                  },
+                  "movementType": {
+                    "type": "string",
+                    "enum": [
+                      "ADJUST",
+                      "DAMAGE",
+                      "WRITE_OFF"
+                    ]
+                  },
+                  "quantityDelta": {
+                    "type": "integer"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "stockBalanceId",
+                  "movementType",
+                  "quantityDelta",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock adjusted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/quarantine": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Quarantine Stock Transfer / Release",
+        "description": "Performs a quarantine transfer or release operation (QUARANTINE, RELEASE_TO_AVAILABLE, RELEASE_TO_DAMAGED).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stockBalanceId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "QUARANTINE",
+                      "RELEASE_TO_AVAILABLE",
+                      "RELEASE_TO_DAMAGED"
+                    ]
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "stockBalanceId",
+                  "action",
+                  "quantity",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quarantine operation completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [

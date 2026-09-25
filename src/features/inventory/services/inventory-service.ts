@@ -25,11 +25,13 @@ import {
   ReleaseReservationSchema,
   CommitReservationSchema,
   AdjustStockSchema,
+  QuarantineStockSchema,
   ReceiveStockInput,
   ReserveStockInput,
   ReleaseReservationInput,
   CommitReservationInput,
   AdjustStockInput,
+  QuarantineStockInput,
 } from '../validators';
 import {
   StockBalanceModel,
@@ -355,6 +357,88 @@ export class InventoryService {
     await this.recordOutboxEvent('inventory.stock_adjusted', updatedBalance.id, {
       movementType: validated.movementType,
       quantityDelta: validated.quantityDelta,
+      actorId,
+      reason: validated.reason,
+    });
+
+    return { balance: updatedBalance, movement };
+  }
+
+  /**
+   * Transfers stock to or from quarantine (e.g. quality inspection, RMA return inspection).
+   * Validates available stock non-negativity.
+   */
+  public async quarantineStock(
+    input: QuarantineStockInput,
+    actorId: string
+  ): Promise<{ balance: StockBalanceModel; movement: StockMovementModel }> {
+    const validated = QuarantineStockSchema.parse(input);
+
+    const currentBalance = await this.stockBalanceRepo.findById(validated.stockBalanceId);
+    if (!currentBalance) {
+      throw new NotFoundError(`Stock balance '${validated.stockBalanceId}' not found.`);
+    }
+
+    const deltas: {
+      onHandDelta?: number;
+      reservedDelta?: number;
+      damagedDelta?: number;
+      quarantinedDelta?: number;
+    } = {};
+
+    let movementType: MovementType = MovementType.ADJUST;
+    let quantityDelta = validated.quantity;
+
+    if (validated.action === 'QUARANTINE') {
+      deltas.quarantinedDelta = validated.quantity;
+      movementType = MovementType.ADJUST;
+      quantityDelta = -validated.quantity;
+    } else if (validated.action === 'RELEASE_TO_AVAILABLE') {
+      if (currentBalance.quarantined < validated.quantity) {
+        throw new ConflictError(
+          `Cannot release ${validated.quantity} quarantined units. Current quarantined balance: ${currentBalance.quarantined}.`
+        );
+      }
+      deltas.quarantinedDelta = -validated.quantity;
+      movementType = MovementType.RELEASE;
+      quantityDelta = validated.quantity;
+    } else if (validated.action === 'RELEASE_TO_DAMAGED') {
+      if (currentBalance.quarantined < validated.quantity) {
+        throw new ConflictError(
+          `Cannot release ${validated.quantity} quarantined units. Current quarantined balance: ${currentBalance.quarantined}.`
+        );
+      }
+      deltas.quarantinedDelta = -validated.quantity;
+      deltas.onHandDelta = -validated.quantity;
+      deltas.damagedDelta = validated.quantity;
+      movementType = MovementType.DAMAGE;
+      quantityDelta = -validated.quantity;
+    }
+
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      currentBalance.id,
+      currentBalance.version,
+      deltas
+    );
+
+    const movement = await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType,
+      quantityDelta,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: SourceType.AUDIT_ADJUSTMENT,
+      sourceId: currentBalance.id,
+      actorId,
+      reason: validated.reason,
+    });
+
+    await this.recordOutboxEvent('inventory.stock_quarantined', updatedBalance.id, {
+      action: validated.action,
+      quantity: validated.quantity,
       actorId,
       reason: validated.reason,
     });

@@ -68,3 +68,4 @@ bun.lock
 .agents
 .claude
 .windsurf
+skills-lock.json
