@@ -588,6 +588,44 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/inventory/reserve': {
+      post: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Atomically Reserve Stock',
+        description: 'Atomically reserves available warehouse stock for a checkout session with deterministic TTL expiry and concurrency protection.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  warehouseId: { type: 'string' },
+                  variantId: { type: 'string' },
+                  quantity: { type: 'integer', minimum: 1 },
+                  cartId: { type: 'string' },
+                  orderId: { type: 'string' },
+                  ttlMinutes: { type: 'integer', default: 15 },
+                },
+                required: ['warehouseId', 'variantId', 'quantity'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Stock reserved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/inventory/adjust': {
       post: {
         tags: ['Inventory & Warehousing'],

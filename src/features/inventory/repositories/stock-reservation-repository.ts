@@ -8,14 +8,20 @@
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
 
-import { prisma } from '@/shared/database/prisma';
+import { prisma as defaultPrisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
 import { ConflictError, NotFoundError } from '@/shared/errors/app-error';
 import { StockReservationModel, ReservationStatus, calculateAvailableStock } from '../types';
 
 export class StockReservationRepository {
+  constructor(private readonly prismaClient?: any) {}
+
+  private get prisma() {
+    return this.prismaClient || (defaultPrisma as any);
+  }
+
   public async findById(id: string): Promise<StockReservationModel | null> {
-    const record = await (prisma as any).stockReservation.findFirst({
+    const record = await (this.prisma as any).stockReservation.findFirst({
       where: { id, deletedAt: null },
       include: {
         stockBalance: {
@@ -33,7 +39,7 @@ export class StockReservationRepository {
   }
 
   public async findActiveByCartId(cartId: string): Promise<StockReservationModel[]> {
-    const records = await (prisma as any).stockReservation.findMany({
+    const records = await (this.prisma as any).stockReservation.findMany({
       where: {
         cartId,
         status: ReservationStatus.ACTIVE,
@@ -52,7 +58,7 @@ export class StockReservationRepository {
   }
 
   public async findActiveByOrderId(orderId: string): Promise<StockReservationModel[]> {
-    const records = await (prisma as any).stockReservation.findMany({
+    const records = await (this.prisma as any).stockReservation.findMany({
       where: {
         orderId,
         status: ReservationStatus.ACTIVE,
@@ -69,6 +75,38 @@ export class StockReservationRepository {
     return records.map((r: any) => this.mapToModel(r));
   }
 
+  public async findExistingActiveReservation(params: {
+    stockBalanceId: string;
+    cartId?: string | null;
+    orderId?: string | null;
+    quantity: number;
+  }): Promise<StockReservationModel | null> {
+    if (!params.cartId && !params.orderId) return null;
+
+    const where: any = {
+      stockBalanceId: params.stockBalanceId,
+      quantity: params.quantity,
+      status: ReservationStatus.ACTIVE,
+      expiresAt: { gt: new Date() },
+      deletedAt: null,
+    };
+
+    if (params.cartId) where.cartId = params.cartId;
+    if (params.orderId) where.orderId = params.orderId;
+
+    const record = await (this.prisma as any).stockReservation.findFirst({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        stockBalance: {
+          include: { warehouse: true, variant: true },
+        },
+      },
+    });
+
+    return record ? this.mapToModel(record) : null;
+  }
+
   public async create(data: {
     stockBalanceId: string;
     quantity: number;
@@ -80,7 +118,7 @@ export class StockReservationRepository {
     const ttl = data.ttlMinutes ?? 15;
     const expiresAt = new Date(Date.now() + ttl * 60 * 1000);
 
-    const record = await (prisma as any).stockReservation.create({
+    const record = await (this.prisma as any).stockReservation.create({
       data: {
         id,
         stockBalanceId: data.stockBalanceId,
@@ -117,7 +155,7 @@ export class StockReservationRepository {
       throw new ConflictError(`Cannot commit reservation '${id}' in status '${existing.status}'.`);
     }
 
-    const updated = await (prisma as any).stockReservation.update({
+    const updated = await (this.prisma as any).stockReservation.update({
       where: { id },
       data: {
         status: ReservationStatus.COMMITTED,
@@ -151,7 +189,7 @@ export class StockReservationRepository {
       throw new ConflictError(`Cannot release reservation '${id}' in status '${existing.status}'.`);
     }
 
-    const updated = await (prisma as any).stockReservation.update({
+    const updated = await (this.prisma as any).stockReservation.update({
       where: { id },
       data: {
         status: ReservationStatus.RELEASED,
@@ -184,7 +222,7 @@ export class StockReservationRepository {
       throw new ConflictError(`Cannot expire reservation '${id}' in status '${existing.status}'.`);
     }
 
-    const updated = await (prisma as any).stockReservation.update({
+    const updated = await (this.prisma as any).stockReservation.update({
       where: { id },
       data: {
         status: ReservationStatus.EXPIRED,
@@ -201,7 +239,7 @@ export class StockReservationRepository {
   }
 
   public async findExpiredActiveReservations(cutoffDate: Date = new Date()): Promise<StockReservationModel[]> {
-    const records = await (prisma as any).stockReservation.findMany({
+    const records = await (this.prisma as any).stockReservation.findMany({
       where: {
         status: ReservationStatus.ACTIVE,
         expiresAt: { lte: cutoffDate },
@@ -232,7 +270,7 @@ export class StockReservationRepository {
     if (options?.orderId) where.orderId = options.orderId;
     if (options?.cartId) where.cartId = options.cartId;
 
-    const records = await (prisma as any).stockReservation.findMany({
+    const records = await (this.prisma as any).stockReservation.findMany({
       where,
       take: options?.limit ?? 50,
       orderBy: { createdAt: 'desc' },

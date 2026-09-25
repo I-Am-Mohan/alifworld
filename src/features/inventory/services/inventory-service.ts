@@ -28,6 +28,7 @@ import {
   QuarantineStockSchema,
   ReceiveStockInput,
   ReserveStockInput,
+  ReserveStockRawInput,
   ReleaseReservationInput,
   CommitReservationInput,
   AdjustStockInput,
@@ -104,38 +105,84 @@ export class InventoryService {
 
   /**
    * Reserves available stock for a checkout session with deterministic TTL expiry.
-   * Throws ConflictError if available stock is insufficient or concurrent updates race.
+   * Features idempotency under retries and atomic OCC retry loop for concurrency protection.
    */
   public async reserveStock(
-    input: ReserveStockInput
+    input: ReserveStockRawInput
   ): Promise<{ reservation: StockReservationModel; balance: StockBalanceModel }> {
     const validated = ReserveStockSchema.parse(input);
 
-    const balance = await this.stockBalanceRepo.findByWarehouseAndVariant(
+    const initialBalance = await this.stockBalanceRepo.findByWarehouseAndVariant(
       validated.warehouseId,
       validated.variantId
     );
 
-    if (!balance) {
+    if (!initialBalance) {
       throw new NotFoundError(
         `No stock balance found for warehouse '${validated.warehouseId}' and variant '${validated.variantId}'.`
       );
     }
 
-    if (balance.available < validated.quantity) {
-      throw new ConflictError(
-        `Insufficient stock available. Requested: ${validated.quantity}, Available: ${balance.available}.`
-      );
+    // 1. Idempotency Check: if active unexpired reservation already exists for this cart/order reference, return it
+    if (validated.cartId || validated.orderId) {
+      const existingReservation = await this.reservationRepo.findExistingActiveReservation({
+        stockBalanceId: initialBalance.id,
+        cartId: validated.cartId,
+        orderId: validated.orderId,
+        quantity: validated.quantity,
+      });
+
+      if (existingReservation) {
+        const currentBal = await this.stockBalanceRepo.findById(initialBalance.id);
+        return { reservation: existingReservation, balance: currentBal || initialBalance };
+      }
     }
 
-    // Atomically lock reserved quantity via OCC
-    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
-      balance.id,
-      balance.version,
-      { reservedDelta: validated.quantity }
-    );
+    // 2. Atomic OCC Retry Loop for Concurrency Protection
+    const maxRetries = 3;
+    let attempt = 0;
+    let updatedBalance: StockBalanceModel | null = null;
 
-    // Create reservation record with TTL cutoff
+    while (attempt < maxRetries) {
+      attempt++;
+      const currentBalance = await this.stockBalanceRepo.findByWarehouseAndVariant(
+        validated.warehouseId,
+        validated.variantId
+      );
+
+      if (!currentBalance) {
+        throw new NotFoundError(
+          `No stock balance found for warehouse '${validated.warehouseId}' and variant '${validated.variantId}'.`
+        );
+      }
+
+      if (currentBalance.available < validated.quantity) {
+        throw new ConflictError(
+          `Insufficient stock available. Requested: ${validated.quantity}, Available: ${currentBalance.available}.`
+        );
+      }
+
+      try {
+        updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+          currentBalance.id,
+          currentBalance.version,
+          { reservedDelta: validated.quantity }
+        );
+        break; // Success! Break retry loop
+      } catch (err) {
+        if (err instanceof ConflictError && attempt < maxRetries) {
+          // Concurrency collision occurred; retry with fresh balance
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!updatedBalance) {
+      throw new ConflictError('Concurrent inventory reservation race condition. Please retry your request.');
+    }
+
+    // 3. Create reservation record with TTL cutoff
     const reservation = await this.reservationRepo.create({
       stockBalanceId: updatedBalance.id,
       quantity: validated.quantity,
@@ -144,7 +191,7 @@ export class InventoryService {
       ttlMinutes: validated.ttlMinutes,
     });
 
-    // Record audit trail ledger entry
+    // 4. Record audit trail ledger entry
     await this.movementRepo.record({
       stockBalanceId: updatedBalance.id,
       warehouseId: updatedBalance.warehouseId,

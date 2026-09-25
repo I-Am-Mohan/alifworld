@@ -69,6 +69,7 @@ export const ReserveStockSchema = z.object({
 });
 
 export type ReserveStockInput = z.infer<typeof ReserveStockSchema>;
+export type ReserveStockRawInput = z.input<typeof ReserveStockSchema>;
 
 export const ReleaseReservationSchema = z.object({
   reservationId: z.string().min(4, 'Reservation ID is required'),
