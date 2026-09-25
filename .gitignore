@@ -65,3 +65,6 @@ UI References
 AlifWorld-300-Milestones/
 *.tsbuildinfo
 bun.lock
+.agents
+.claude
+.windsurf
