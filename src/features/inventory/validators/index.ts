@@ -40,6 +40,7 @@ export const CreateWarehouseSchema = z.object({
 });
 
 export type CreateWarehouseInput = z.infer<typeof CreateWarehouseSchema>;
+export type CreateWarehouseRawInput = z.input<typeof CreateWarehouseSchema>;
 
 export const UpdateWarehouseSchema = CreateWarehouseSchema.partial().extend({
   version: z.number().int().min(1, 'Version is required for optimistic concurrency control'),

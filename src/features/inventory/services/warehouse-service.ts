@@ -9,34 +9,42 @@
  */
 
 import { WarehouseRepository } from '../repositories/warehouse-repository';
-import { CreateWarehouseSchema, UpdateWarehouseSchema, CreateWarehouseInput, UpdateWarehouseInput } from '../validators';
+import { CreateWarehouseSchema, UpdateWarehouseSchema, CreateWarehouseInput, UpdateWarehouseInput, CreateWarehouseRawInput } from '../validators';
 import { WarehouseModel } from '../types';
 import { AuthorizationError, ConflictError, NotFoundError } from '@/shared/errors/app-error';
-
-export interface ActorContext {
-  sellerId?: string | null;
-  isAdmin?: boolean;
-  userId?: string;
-}
+import { ActorContext } from '@/shared/authz';
+import { WarehousePolicy } from '@/shared/authz/policies/warehouse.policy';
 
 export class WarehouseService {
   constructor(private readonly warehouseRepo: WarehouseRepository = new WarehouseRepository()) {}
 
-  public async createWarehouse(input: CreateWarehouseInput, actor?: ActorContext): Promise<WarehouseModel> {
-    const validated = CreateWarehouseSchema.parse(input);
+  private isActorAdmin(actor?: ActorContext | any): boolean {
+    if (!actor) return false;
+    if (actor.isAdmin) return true;
+    if (Array.isArray(actor.roles)) {
+      return actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
+    }
+    return false;
+  }
 
-    // Multi-tenant check
-    if (actor && !actor.isAdmin) {
-      if (!actor.sellerId) {
-        throw new AuthorizationError('Only authorized sellers or platform administrators can create warehouses.');
+  public async createWarehouse(rawInput: CreateWarehouseRawInput, actor?: ActorContext | any): Promise<WarehouseModel> {
+    const validated = CreateWarehouseSchema.parse(rawInput);
+
+    // Multi-tenant check via WarehousePolicy / Actor check
+    if (actor) {
+      const isAdmin = this.isActorAdmin(actor);
+      if (!isAdmin) {
+        if (!actor.sellerId) {
+          throw new AuthorizationError('Only authorized sellers or platform administrators can create warehouses.');
+        }
+        if (validated.isPlatformHub) {
+          throw new AuthorizationError('Sellers cannot create platform fulfillment hubs.');
+        }
+        if (validated.sellerId && validated.sellerId !== actor.sellerId) {
+          throw new AuthorizationError('Cannot create warehouse for another seller.');
+        }
+        validated.sellerId = actor.sellerId;
       }
-      if (validated.isPlatformHub) {
-        throw new AuthorizationError('Sellers cannot create platform fulfillment hubs.');
-      }
-      if (validated.sellerId && validated.sellerId !== actor.sellerId) {
-        throw new AuthorizationError('Cannot create warehouse for another seller.');
-      }
-      validated.sellerId = actor.sellerId;
     }
 
     // Check code uniqueness
@@ -51,7 +59,7 @@ export class WarehouseService {
   public async updateWarehouse(
     id: string,
     input: UpdateWarehouseInput,
-    actor?: ActorContext
+    actor?: ActorContext | any
   ): Promise<WarehouseModel> {
     const validated = UpdateWarehouseSchema.parse(input);
     const existing = await this.warehouseRepo.findById(id);
@@ -61,12 +69,15 @@ export class WarehouseService {
     }
 
     // Multi-tenant check
-    if (actor && !actor.isAdmin) {
-      if (!actor.sellerId || existing.sellerId !== actor.sellerId) {
-        throw new AuthorizationError('Unauthorized to update this warehouse.');
-      }
-      if (validated.isPlatformHub) {
-        throw new AuthorizationError('Sellers cannot designate platform hubs.');
+    if (actor) {
+      const isAdmin = this.isActorAdmin(actor);
+      if (!isAdmin) {
+        if (!actor.sellerId || existing.sellerId !== actor.sellerId) {
+          throw new AuthorizationError('Unauthorized to update this warehouse.');
+        }
+        if (validated.isPlatformHub) {
+          throw new AuthorizationError('Sellers cannot designate platform hubs.');
+        }
       }
     }
 
@@ -81,15 +92,18 @@ export class WarehouseService {
     return this.warehouseRepo.update(id, validated.version, validated);
   }
 
-  public async getWarehouse(id: string, actor?: ActorContext): Promise<WarehouseModel> {
+  public async getWarehouse(id: string, actor?: ActorContext | any): Promise<WarehouseModel> {
     const warehouse = await this.warehouseRepo.findById(id);
     if (!warehouse) {
       throw new NotFoundError(`Warehouse with id '${id}' not found.`);
     }
 
-    if (actor && !actor.isAdmin && actor.sellerId) {
-      if (warehouse.sellerId && warehouse.sellerId !== actor.sellerId && !warehouse.isPlatformHub) {
-        throw new AuthorizationError('Unauthorized to access this warehouse.');
+    if (actor) {
+      const isAdmin = this.isActorAdmin(actor);
+      if (!isAdmin && actor.sellerId) {
+        if (warehouse.sellerId && warehouse.sellerId !== actor.sellerId && !warehouse.isPlatformHub) {
+          throw new AuthorizationError('Unauthorized to access this warehouse.');
+        }
       }
     }
 
@@ -103,25 +117,29 @@ export class WarehouseService {
       isPlatformHub?: boolean;
       isActive?: boolean;
     },
-    actor?: ActorContext
+    actor?: ActorContext | any
   ): Promise<WarehouseModel[]> {
     const filter = { ...options };
 
-    if (actor && !actor.isAdmin && actor.sellerId) {
-      // Sellers can see their own warehouses or platform fulfillment hubs
-      filter.sellerId = actor.sellerId;
+    if (actor) {
+      const isAdmin = this.isActorAdmin(actor);
+      if (!isAdmin && actor.sellerId) {
+        // Sellers can see their own warehouses or platform fulfillment hubs
+        filter.sellerId = actor.sellerId;
+      }
     }
 
     return this.warehouseRepo.findMany(filter);
   }
 
-  public async deleteWarehouse(id: string, actor: ActorContext): Promise<void> {
+  public async deleteWarehouse(id: string, actor: ActorContext | any): Promise<void> {
     const existing = await this.warehouseRepo.findById(id);
     if (!existing) {
       throw new NotFoundError(`Warehouse with id '${id}' not found.`);
     }
 
-    if (!actor.isAdmin && (!actor.sellerId || existing.sellerId !== actor.sellerId)) {
+    const isAdmin = this.isActorAdmin(actor);
+    if (!isAdmin && (!actor.sellerId || existing.sellerId !== actor.sellerId)) {
       throw new AuthorizationError('Unauthorized to delete this warehouse.');
     }
 

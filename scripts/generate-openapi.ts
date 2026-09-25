@@ -48,6 +48,7 @@ export const openApiSpec = {
     { name: 'Logistics & Delivery', description: 'Delivery rider dispatch, assignment lease claiming, and live GPS telemetry' },
     { name: 'Customer & Ownership', description: 'Customer self-service, profile anti-tampering, and object-level ownership checks' },
     { name: 'Pricing & Tax', description: 'Authoritative server-side pricing resolution, cart quote calculation, promotions, and tax' },
+    { name: 'Inventory & Warehousing', description: 'Platform fulfillment centers, merchant warehouses, and stock management across Bangladesh divisions' },
     { name: 'Audit & Compliance', description: 'Immutable security event auditing, business operation logs, and compliance exploration' },
   ],
   paths: {
@@ -312,6 +313,155 @@ export const openApiSpec = {
         responses: {
           '200': {
             description: 'Variant base price updated',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/warehouses': {
+      get: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'List Warehouses and Fulfillment Hubs',
+        description: 'Lists fulfillment centers and merchant warehouse facilities with division, active status, and seller filters.',
+        parameters: [
+          { name: 'division', in: 'query', schema: { type: 'string', enum: ['DHAKA', 'CHITTAGONG', 'RAJSHAHI', 'KHULNA', 'BARISAL', 'SYLHET', 'RANGPUR', 'MYMENSINGH'] } },
+          { name: 'isPlatformHub', in: 'query', schema: { type: 'boolean' } },
+          { name: 'isActive', in: 'query', schema: { type: 'boolean' } },
+          { name: 'sellerId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Warehouses retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Create Warehouse or Fulfillment Hub',
+        description: 'Creates a new warehouse or fulfillment hub. Sellers can create merchant warehouses; platform hubs require Admin role.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  code: { type: 'string', example: 'DHK-HUB-01' },
+                  division: { type: 'string', enum: ['DHAKA', 'CHITTAGONG', 'RAJSHAHI', 'KHULNA', 'BARISAL', 'SYLHET', 'RANGPUR', 'MYMENSINGH'] },
+                  district: { type: 'string' },
+                  upazila: { type: 'string' },
+                  addressLine: { type: 'string' },
+                  postalCode: { type: 'string' },
+                  isPlatformHub: { type: 'boolean', default: false },
+                  isActive: { type: 'boolean', default: true },
+                  sellerId: { type: 'string', format: 'uuid' },
+                },
+                required: ['name', 'code', 'division', 'district', 'addressLine'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Warehouse created successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/warehouses/{id}': {
+      get: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Get Warehouse by ID',
+        description: 'Retrieves detailed warehouse configuration by ID.',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Warehouse retrieved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Update Warehouse',
+        description: 'Updates warehouse configuration with optimistic concurrency control.',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  version: { type: 'integer', minimum: 1 },
+                  name: { type: 'string' },
+                  code: { type: 'string' },
+                  division: { type: 'string' },
+                  district: { type: 'string' },
+                  upazila: { type: 'string' },
+                  addressLine: { type: 'string' },
+                  postalCode: { type: 'string' },
+                  isActive: { type: 'boolean' },
+                },
+                required: ['version'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Warehouse updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Soft Delete Warehouse',
+        description: 'Soft deletes a warehouse by ID.',
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Warehouse soft-deleted successfully',
             content: {
               'application/json': {
                 schema: {

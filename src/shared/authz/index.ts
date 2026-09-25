@@ -23,3 +23,5 @@ export * from './policies/customer.policy';
 export * from './policies/rider.policy';
 export * from './policies/support.policy';
 export * from './policies/system-service.policy';
+export * from './policies/pricing.policy';
+export * from './policies/warehouse.policy';
