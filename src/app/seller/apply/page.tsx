@@ -760,6 +760,12 @@ export default function SellerApplicationPage() {
         }
       }
 
+      // If business name or store handle is not yet filled in (e.g. on Step 1),
+      // complete user authentication and return without posting incomplete application draft.
+      if (!form.businessName.trim() || form.businessName.trim().length < 3 || !form.slug.trim()) {
+        return (application || { id: 'pending_draft', status: 'DRAFT' }) as Application;
+      }
+
       const payload = {
         businessName: form.businessName.trim(),
         slug: form.slug.trim().toLowerCase(),
