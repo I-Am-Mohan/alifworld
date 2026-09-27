@@ -1597,6 +1597,170 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/customer/preferences': {
+      get: {
+        tags: ['Customer Experience'],
+        summary: 'Get Customer Preferences',
+        description: 'Retrieves notification and marketing communication preferences.',
+        responses: {
+          '200': {
+            description: 'Customer preferences returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      put: {
+        tags: ['Customer Experience'],
+        summary: 'Update Customer Preferences',
+        description: 'Updates email, SMS, and promotional communication preferences.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  emailMarketing: { type: 'boolean' },
+                  smsMarketing: { type: 'boolean' },
+                  orderStatusUpdates: { type: 'boolean' },
+                  promotionalPush: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Preferences updated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/customer/consent': {
+      get: {
+        tags: ['Customer Experience'],
+        summary: 'Get Customer Regulatory Consent',
+        description: 'Retrieves customer agreement to terms, privacy policies, and marketing consent.',
+        responses: {
+          '200': {
+            description: 'Consent status returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      put: {
+        tags: ['Customer Experience'],
+        summary: 'Update Customer Consent',
+        description: 'Updates regulatory consent records with version tracking.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  termsAccepted: { type: 'boolean' },
+                  termsVersion: { type: 'string' },
+                  privacyAccepted: { type: 'boolean' },
+                  privacyVersion: { type: 'string' },
+                  marketingConsent: { type: 'boolean' },
+                },
+                required: ['termsAccepted', 'termsVersion', 'privacyAccepted', 'privacyVersion'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Consent updated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/customer/security': {
+      get: {
+        tags: ['Customer Experience'],
+        summary: 'Get Account Security Overview',
+        description: 'Retrieves password status, 2FA status, verification status, and active session count.',
+        responses: {
+          '200': {
+            description: 'Security overview returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      post: {
+        tags: ['Customer Experience'],
+        summary: 'Change Customer Password',
+        description: 'Verifies current password, applies cryptographic hashing to new password, and invalidates other active sessions.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  currentPassword: { type: 'string' },
+                  newPassword: { type: 'string' },
+                  confirmPassword: { type: 'string' },
+                },
+                required: ['currentPassword', 'newPassword', 'confirmPassword'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password changed successfully and sessions invalidated',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/customer/organization': {
+      get: {
+        tags: ['Customer Experience'],
+        summary: 'Get Business Buyer Organization',
+        description: 'Retrieves B2B organization details and private credit limits for approved members.',
+        responses: {
+          '200': {
+            description: 'Organization details returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      post: {
+        tags: ['Customer Experience'],
+        summary: 'Register Business Buyer Organization',
+        description: 'Applies to register account as an approved B2B wholesale buyer organization.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  companyName: { type: 'string' },
+                  businessType: { type: 'string', enum: ['CORPORATION', 'LLC', 'PARTNERSHIP', 'SOLE_PROPRIETORSHIP'] },
+                  tradeLicenseNumber: { type: 'string' },
+                  binNumber: { type: 'string' },
+                  tinNumber: { type: 'string' },
+                },
+                required: ['companyName', 'businessType', 'tradeLicenseNumber'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Business buyer application submitted successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],
