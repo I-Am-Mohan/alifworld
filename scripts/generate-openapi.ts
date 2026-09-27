@@ -1457,6 +1457,75 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/catalog/landing/category/{slug}': {
+      get: {
+        tags: ['Discovery & Landing Pages'],
+        summary: 'Get Category Landing Page',
+        description: 'Retrieves category details, parent/child breadcrumb hierarchy, and filtered catalog products.',
+        parameters: [
+          { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'brand', in: 'query', schema: { type: 'string' } },
+          { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['relevance', 'price_asc', 'price_desc', 'points_desc'] } },
+        ],
+        responses: {
+          '200': {
+            description: 'Category landing page details and products',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/catalog/landing/brand/{slug}': {
+      get: {
+        tags: ['Discovery & Landing Pages'],
+        summary: 'Get Brand Flagship Landing Page',
+        description: 'Retrieves brand profile, verified authority status, and brand product catalog.',
+        parameters: [
+          { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['relevance', 'price_asc', 'price_desc', 'points_desc'] } },
+        ],
+        responses: {
+          '200': {
+            description: 'Brand flagship page details and products',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/catalog/landing/collection/{slug}': {
+      get: {
+        tags: ['Discovery & Landing Pages'],
+        summary: 'Get Collection Landing Page',
+        description: 'Retrieves curated promotional collection landing page with member products.',
+        parameters: [
+          { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Collection details and products',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],
