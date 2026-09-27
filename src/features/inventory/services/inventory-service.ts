@@ -33,6 +33,9 @@ import {
   CreateStockCountSchema,
   SubmitStockCountCorrectionSchema,
   ApproveStockCountCorrectionSchema,
+  ReceiveRmaReturnSchema,
+  InspectQuarantineItemSchema,
+  RestockItemSchema,
   ReceiveStockInput,
   ReserveStockInput,
   ReserveStockRawInput,
@@ -47,6 +50,9 @@ import {
   CreateStockCountInput,
   SubmitStockCountCorrectionInput,
   ApproveStockCountCorrectionInput,
+  ReceiveRmaReturnInput,
+  InspectQuarantineItemInput,
+  RestockItemInput,
 } from '../validators';
 import {
   StockBalanceModel,
@@ -54,6 +60,7 @@ import {
   StockMovementModel,
   StockTransferRecord,
   StockCountCorrectionRecord,
+  RmaReturnRecord,
   MovementType,
   ReservationStatus,
   SourceType,
@@ -62,6 +69,7 @@ import {
 export class InventoryService {
   private transfers = new Map<string, StockTransferRecord>();
   private countCorrections = new Map<string, StockCountCorrectionRecord>();
+  private rmaReturns = new Map<string, RmaReturnRecord>();
 
   constructor(
     private readonly stockBalanceRepo: StockBalanceRepository = new StockBalanceRepository(),
@@ -1119,6 +1127,225 @@ export class InventoryService {
 
   public async listStockTransfers(): Promise<StockTransferRecord[]> {
     return Array.from(this.transfers.values());
+  }
+
+  /**
+   * Processes RMA return merchandise intake at a warehouse.
+   * Depending on initialDisposition, places item in quarantined balance (inspection), onHand (restock), or damaged.
+   */
+  public async processRmaReturnIntake(
+    input: ReceiveRmaReturnInput,
+    actorId: string
+  ): Promise<{ rmaRecord: RmaReturnRecord; balance: StockBalanceModel }> {
+    const validated = ReceiveRmaReturnSchema.parse(input);
+
+    const stockBalance = await this.stockBalanceRepo.getOrCreate(
+      validated.warehouseId,
+      validated.variantId
+    );
+
+    const deltas: {
+      onHandDelta?: number;
+      quarantinedDelta?: number;
+      damagedDelta?: number;
+    } = {};
+
+    let status: 'RECEIVED' | 'RESTOCKED' | 'DAMAGED' = 'RECEIVED';
+    let movementType: MovementType = MovementType.RETURN;
+
+    if (validated.initialDisposition === 'QUARANTINE_INSPECTION') {
+      deltas.onHandDelta = validated.quantity;
+      deltas.quarantinedDelta = validated.quantity;
+      movementType = MovementType.ADJUST;
+      status = 'RECEIVED';
+    } else if (validated.initialDisposition === 'RESTOCK_AVAILABLE') {
+      deltas.onHandDelta = validated.quantity;
+      movementType = MovementType.RETURN;
+      status = 'RESTOCKED';
+    } else if (validated.initialDisposition === 'MARK_DAMAGED') {
+      deltas.damagedDelta = validated.quantity;
+      movementType = MovementType.DAMAGE;
+      status = 'DAMAGED';
+    }
+
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      stockBalance.id,
+      stockBalance.version,
+      deltas
+    );
+
+    await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType,
+      quantityDelta: validated.quantity,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: SourceType.RETURN_RMA,
+      sourceId: validated.rmaNumber,
+      actorId,
+      reason: validated.customerReason ?? `RMA Return Intake (${validated.initialDisposition})`,
+    });
+
+    const rmaRecord: RmaReturnRecord = {
+      id: `rma_${Math.random().toString(36).substring(2, 9)}`,
+      rmaNumber: validated.rmaNumber,
+      orderId: validated.orderId,
+      warehouseId: validated.warehouseId,
+      variantId: validated.variantId,
+      quantity: validated.quantity,
+      disposition: validated.initialDisposition,
+      status,
+      receivedBy: actorId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.rmaReturns.set(validated.rmaNumber, rmaRecord);
+
+    await this.recordOutboxEvent('inventory.return_received', rmaRecord.id, {
+      rmaNumber: validated.rmaNumber,
+      orderId: validated.orderId,
+      disposition: validated.initialDisposition,
+      quantity: validated.quantity,
+      receivedBy: actorId,
+    });
+
+    return { rmaRecord, balance: updatedBalance };
+  }
+
+  /**
+   * Conducts quality control inspection on quarantined returned items.
+   * Restocks passed items into available inventory or moves failed items to damaged/write-off.
+   */
+  public async inspectQuarantinedReturn(
+    input: InspectQuarantineItemInput,
+    actorId: string
+  ): Promise<{ rmaRecord?: RmaReturnRecord; balance: StockBalanceModel }> {
+    const validated = InspectQuarantineItemSchema.parse(input);
+
+    const stockBalance = await this.stockBalanceRepo.findById(validated.stockBalanceId);
+    if (!stockBalance) {
+      throw new NotFoundError(`Stock balance '${validated.stockBalanceId}' not found.`);
+    }
+
+    if (stockBalance.quarantined < validated.quantity) {
+      throw new ConflictError(
+        `Insufficient quarantined stock for inspection. Quarantined: ${stockBalance.quarantined}, Requested: ${validated.quantity}.`
+      );
+    }
+
+    const deltas: {
+      onHandDelta?: number;
+      quarantinedDelta?: number;
+      damagedDelta?: number;
+    } = {
+      quarantinedDelta: -validated.quantity,
+    };
+
+    let movementType: MovementType = MovementType.RELEASE;
+
+    if (validated.inspectionResult === 'PASSED_RESTOCK') {
+      movementType = MovementType.RELEASE;
+    } else if (validated.inspectionResult === 'FAILED_DAMAGED') {
+      deltas.damagedDelta = validated.quantity;
+      movementType = MovementType.DAMAGE;
+    } else if (validated.inspectionResult === 'FAILED_WRITE_OFF') {
+      deltas.onHandDelta = -validated.quantity;
+      movementType = MovementType.WRITE_OFF;
+    }
+
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      stockBalance.id,
+      stockBalance.version,
+      deltas
+    );
+
+    await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType,
+      quantityDelta: validated.quantity,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: SourceType.RETURN_RMA,
+      sourceId: validated.rmaNumber,
+      actorId,
+      reason: `QC Inspection (${validated.inspectionResult}): ${validated.inspectionNotes}`,
+    });
+
+    const rmaRecord = this.rmaReturns.get(validated.rmaNumber);
+    if (rmaRecord) {
+      const updatedRma: RmaReturnRecord = {
+        ...rmaRecord,
+        inspectionResult: validated.inspectionResult,
+        inspectionNotes: validated.inspectionNotes,
+        status: validated.inspectionResult === 'PASSED_RESTOCK' ? 'RESTOCKED' : 'INSPECTED',
+        inspectedBy: actorId,
+        updatedAt: new Date(),
+      };
+      this.rmaReturns.set(validated.rmaNumber, updatedRma);
+    }
+
+    await this.recordOutboxEvent('inventory.return_inspected', validated.rmaNumber, {
+      rmaNumber: validated.rmaNumber,
+      inspectionResult: validated.inspectionResult,
+      inspectedBy: actorId,
+    });
+
+    return { rmaRecord: this.rmaReturns.get(validated.rmaNumber), balance: updatedBalance };
+  }
+
+  /**
+   * Direct restocking of a returned item into available stock.
+   */
+  public async restockReturnedItem(
+    input: RestockItemInput,
+    actorId: string
+  ): Promise<{ balance: StockBalanceModel; movement: StockMovementModel }> {
+    const validated = RestockItemSchema.parse(input);
+
+    const stockBalance = await this.stockBalanceRepo.findById(validated.stockBalanceId);
+    if (!stockBalance) {
+      throw new NotFoundError(`Stock balance '${validated.stockBalanceId}' not found.`);
+    }
+
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      stockBalance.id,
+      stockBalance.version,
+      { onHandDelta: validated.quantity }
+    );
+
+    const movement = await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType: MovementType.RETURN,
+      quantityDelta: validated.quantity,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: SourceType.RETURN_RMA,
+      sourceId: validated.rmaNumber,
+      actorId,
+      reason: validated.reason ?? `Restocked returned item under RMA ${validated.rmaNumber}`,
+    });
+
+    await this.recordOutboxEvent('inventory.return_restocked', validated.rmaNumber, {
+      rmaNumber: validated.rmaNumber,
+      quantity: validated.quantity,
+      restockedBy: actorId,
+    });
+
+    return { balance: updatedBalance, movement };
+  }
+
+  public async listRmaReturns(): Promise<RmaReturnRecord[]> {
+    return Array.from(this.rmaReturns.values());
   }
 
   private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {

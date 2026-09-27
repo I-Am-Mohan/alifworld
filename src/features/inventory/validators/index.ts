@@ -214,3 +214,34 @@ export const ApproveStockCountCorrectionSchema = z.object({
 });
 
 export type ApproveStockCountCorrectionInput = z.infer<typeof ApproveStockCountCorrectionSchema>;
+
+export const ReceiveRmaReturnSchema = z.object({
+  rmaNumber: z.string().min(3, 'RMA number is required'),
+  orderId: z.string().min(2, 'Order ID is required'),
+  warehouseId: z.string().min(4, 'Warehouse ID is required'),
+  variantId: z.string().min(4, 'Product Variant ID is required'),
+  quantity: z.number().int().min(1, 'Quantity must be at least 1 unit'),
+  initialDisposition: z.enum(['QUARANTINE_INSPECTION', 'RESTOCK_AVAILABLE', 'MARK_DAMAGED']).default('QUARANTINE_INSPECTION'),
+  customerReason: z.string().max(255).optional().nullable(),
+});
+
+export type ReceiveRmaReturnInput = z.infer<typeof ReceiveRmaReturnSchema>;
+
+export const InspectQuarantineItemSchema = z.object({
+  rmaNumber: z.string().min(3, 'RMA number is required'),
+  stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
+  quantity: z.number().int().min(1, 'Inspection quantity must be at least 1 unit'),
+  inspectionResult: z.enum(['PASSED_RESTOCK', 'FAILED_DAMAGED', 'FAILED_WRITE_OFF']),
+  inspectionNotes: z.string().min(5, 'Mandatory inspection notes required'),
+});
+
+export type InspectQuarantineItemInput = z.infer<typeof InspectQuarantineItemSchema>;
+
+export const RestockItemSchema = z.object({
+  rmaNumber: z.string().min(3, 'RMA number is required'),
+  stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
+  quantity: z.number().int().min(1, 'Restock quantity must be at least 1 unit'),
+  reason: z.string().max(255).optional().nullable(),
+});
+
+export type RestockItemInput = z.infer<typeof RestockItemSchema>;

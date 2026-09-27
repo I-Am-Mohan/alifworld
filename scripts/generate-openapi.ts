@@ -1097,6 +1097,118 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/inventory/returns/intake': {
+      post: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Process RMA Return Intake',
+        description: 'Processes incoming RMA return merchandise at a warehouse with initial disposition (QUARANTINE_INSPECTION, RESTOCK_AVAILABLE, MARK_DAMAGED).',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  rmaNumber: { type: 'string' },
+                  orderId: { type: 'string' },
+                  warehouseId: { type: 'string' },
+                  variantId: { type: 'string' },
+                  quantity: { type: 'integer', minimum: 1 },
+                  initialDisposition: { type: 'string', enum: ['QUARANTINE_INSPECTION', 'RESTOCK_AVAILABLE', 'MARK_DAMAGED'], default: 'QUARANTINE_INSPECTION' },
+                  customerReason: { type: 'string' },
+                },
+                required: ['rmaNumber', 'orderId', 'warehouseId', 'variantId', 'quantity'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'RMA return intake processed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/inventory/returns/inspect': {
+      post: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Inspect Quarantined Returned Stock',
+        description: 'Performs quality control inspection on quarantined returned stock, updating disposition to PASSED_RESTOCK, FAILED_DAMAGED, or FAILED_WRITE_OFF.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  rmaNumber: { type: 'string' },
+                  stockBalanceId: { type: 'string' },
+                  quantity: { type: 'integer', minimum: 1 },
+                  inspectionResult: { type: 'string', enum: ['PASSED_RESTOCK', 'FAILED_DAMAGED', 'FAILED_WRITE_OFF'] },
+                  inspectionNotes: { type: 'string' },
+                },
+                required: ['rmaNumber', 'stockBalanceId', 'quantity', 'inspectionResult', 'inspectionNotes'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Quarantine return inspection recorded successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/inventory/returns/restock': {
+      post: {
+        tags: ['Inventory & Warehousing'],
+        summary: 'Restock Returned Merchandise',
+        description: 'Restocks returned items directly into available warehouse inventory balance.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  rmaNumber: { type: 'string' },
+                  stockBalanceId: { type: 'string' },
+                  quantity: { type: 'integer', minimum: 1 },
+                  reason: { type: 'string' },
+                },
+                required: ['rmaNumber', 'stockBalanceId', 'quantity'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Returned merchandise restocked successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],

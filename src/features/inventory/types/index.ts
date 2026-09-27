@@ -153,6 +153,23 @@ export interface StockCountCorrectionRecord {
   updatedAt: Date;
 }
 
+export interface RmaReturnRecord {
+  id: string;
+  rmaNumber: string;
+  orderId: string;
+  warehouseId: string;
+  variantId: string;
+  quantity: number;
+  disposition: 'QUARANTINE_INSPECTION' | 'RESTOCK_AVAILABLE' | 'MARK_DAMAGED';
+  inspectionResult?: 'PASSED_RESTOCK' | 'FAILED_DAMAGED' | 'FAILED_WRITE_OFF' | null;
+  inspectionNotes?: string | null;
+  status: 'RECEIVED' | 'INSPECTED' | 'RESTOCKED' | 'DAMAGED';
+  receivedBy: string;
+  inspectedBy?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 /**
  * Pure calculation helper enforcing the core inventory invariant:
  * Available = onHand - reserved - damaged - quarantined
