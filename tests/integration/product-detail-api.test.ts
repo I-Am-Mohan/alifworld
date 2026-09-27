@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
-import { GET as getProductDetailRoute } from '@/app/api/v1/catalog/products/[slug]/route';
+import { GET as getProductDetailRoute } from '@/app/api/v1/catalog/products/[id]/route';
 import { productDetailService } from '@/features/catalog/services/product-detail.service';
 import { NextRequest } from 'next/server';
 
@@ -51,7 +51,7 @@ describe('Milestone 117: Product Detail REST API Integration Tests', () => {
     });
 
     const res = await getProductDetailRoute(req, {
-      params: Promise.resolve({ slug: 'walton-primo-s8' }),
+      params: Promise.resolve({ id: 'walton-primo-s8' }),
     });
     const body = await res.json();
 
@@ -69,7 +69,7 @@ describe('Milestone 117: Product Detail REST API Integration Tests', () => {
     });
 
     const res = await getProductDetailRoute(req, {
-      params: Promise.resolve({ slug: 'walton-primo-s8-old' }),
+      params: Promise.resolve({ id: 'walton-primo-s8-old' }),
     });
     const body = await res.json();
 

@@ -1,591 +1,409 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
 import { AlifLogo } from '@/components/brand/logo';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { ProductDetailResult, ProductVariantDetail } from '@/features/catalog/services/product-detail.service';
 
-interface ProductDetailPageProps {
-  params: {
-    slug: string;
-  };
-}
+export default function ProductDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const slug = (params?.slug as string) || 'walton-primo-s8';
 
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedColor, setSelectedColor] = useState('Midnight Black');
-  const [selectedStorage, setSelectedStorage] = useState('8GB / 128GB');
+  const [product, setProduct] = useState<ProductDetailResult | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariantDetail | null>(null);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'specs' | 'description' | 'reviews'>('specs');
-  const [cartToast, setCartToast] = useState<string | null>(null);
+  const [locale, setLocale] = useState<'en-BD' | 'bn-BD'>('en-BD');
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'shipping'>('description');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const product = {
-    id: 'prd_walton_s8pro_01',
-    title: 'Walton Primo S8 Pro Gaming Smartphone (8GB / 128GB)',
-    titleBn: 'ওয়ালটন প্রিমো এস৮ প্রো গেমিং স্মার্টফোন (৮জিবি র‍্যাম / ১২৮জিবি রম)',
-    slug: params.slug || 'walton-primo-s8-pro',
-    brand: 'Walton',
-    category: 'Smartphones & Tablets',
-    seller: {
-      id: 'sel_dhaka_tech_01',
-      name: 'Dhaka Tech Electronics',
-      slug: 'dhaka-tech',
-      isVerified: true,
-      rating: '4.9 ★ (1,240 reviews)',
-      location: 'Banani, Dhaka',
-    },
-    priceBdt: '৳21,990.00',
-    compareAtPriceBdt: '৳24,990.00',
-    discountPercent: '12% OFF',
-    productPoints: 450,
-    taxRatePercent: 5.0,
-    sku: 'WALT-S8PRO-BLK-128',
-    warranty: '1 Year Official Walton Warranty (Nationwide Service Centers)',
-    description:
-      'Flagship gaming and multimedia performance powered by the high-efficiency MediaTek Helio gaming processor. Equipped with an ultra-responsive 6.78-inch FHD+ 90Hz display, a versatile 64MP AI Quad-Camera matrix, and a long-lasting 5000mAh battery accompanied by a 33W super-fast charger in the box.',
-    descriptionBn:
-      'অক্টাকোর গেমিং প্রসেসর সমৃদ্ধ ওয়ালটন প্রিমো এস৮ প্রো। রয়েছে ৬.৭৮ ইঞ্চি ফুল এইচডি প্লাস ৯০ হার্জ ডিসপ্লে, ৬৪ মেগাপিক্সেল এআই কোয়াড ক্যামেরা এবং ৩৩ ওয়াট ফাস্ট চার্জিং সুবিধা।',
-    colors: [
-      { name: 'Midnight Black', hex: '#1E293B', inStock: true },
-      { name: 'Ocean Blue', hex: '#0284C7', inStock: true },
-      { name: 'Emerald Green', hex: '#059669', inStock: true },
-    ],
-    storages: ['6GB / 64GB', '8GB / 128GB'],
-    media: [
-      'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&h=800&fit=crop',
-      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&h=800&fit=crop',
-      'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=800&h=800&fit=crop',
-    ],
-    specs: [
-      { key: 'Display Screen', value: '6.78" FHD+ IPS LCD, 90Hz Refresh Rate, 500 nits' },
-      { key: 'Processor / Chipset', value: 'MediaTek Helio G95 Octa-core Gaming Processor' },
-      { key: 'RAM & Internal Storage', value: '8GB LPDDR4X RAM + 128GB UFS 2.1 Storage' },
-      { key: 'Rear Camera System', value: '64MP Main (f/1.8) + 8MP Ultra-wide + 2MP Macro + 2MP Depth' },
-      { key: 'Selfie Camera', value: '16MP AI Front Camera with Portrait Mode' },
-      { key: 'Battery & Charging', value: '5000mAh Li-Po, 33W Type-C Fast Charger Included' },
-      { key: 'Security & Sensors', value: 'Side-mounted Fingerprint Sensor, AI Face Unlock' },
-      { key: 'Operating System', value: 'Android 12 (Clean Stock Experience, No Bloatware)' },
-      { key: 'SIM & Connectivity', value: 'Dual 4G Nano-SIM + Dedicated MicroSD Slot up to 512GB' },
-    ],
-    reviews: [
-      { user: 'Sabbir Ahmed', rating: 5, date: '18 September 2026', comment: 'Excellent performance and camera quality! Delivery arrived in Dhaka within 24 hours. Walton genuine warranty validated on arrival.' },
-      { user: 'Tahmina Akter', rating: 5, date: '12 September 2026', comment: 'Smooth 90Hz screen and battery lasts well over a day on heavy usage. Received 450 Product Points directly in my balance!' },
-      { user: 'Mahmudul Hasan', rating: 4, date: '04 September 2026', comment: 'Great budget gaming phone. The 33W charger in the box is very handy.' },
-    ],
-    relatedProducts: [
-      {
-        id: 'rel_xiaomi_earbuds',
-        title: 'Xiaomi Redmi Buds 5 Pro Wireless ANC',
-        price: '৳6,490.00',
-        points: 120,
-        imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&auto=format&fit=crop&q=80',
-        slug: 'xiaomi-redmi-buds-5-pro',
-      },
-      {
-        id: 'rel_fast_charger',
-        title: 'Anker 65W GaN Dual-Port Fast Charger',
-        price: '৳3,250.00',
-        points: 65,
-        imageUrl: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=500&auto=format&fit=crop&q=80',
-        slug: 'anker-65w-gan-charger',
-      },
-      {
-        id: 'rel_walton_pad',
-        title: 'Walton Walpad 10H Android Tablet (4GB/64GB)',
-        price: '৳17,500.00',
-        points: 350,
-        imageUrl: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500&auto=format&fit=crop&q=80',
-        slug: 'walton-walpad-10h',
-      },
-    ]
+  useEffect(() => {
+    fetch(`/api/v1/catalog/products/${slug}?locale=${locale}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (body?.data) {
+          if (body.data.isRedirect && body.data.targetUrl) {
+            // Handle SEO historical slug redirect
+            router.replace(body.data.targetUrl);
+            return;
+          }
+          setProduct(body.data);
+          if (body.data.variants && body.data.variants.length > 0) {
+            setSelectedVariant(body.data.variants[0]);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Failed to load product details:', err);
+      })
+      .finally(() => setLoading(false));
+  }, [slug, locale, router]);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleAddToCart = () => {
-    setCartToast('This preview product is not available for checkout.');
-    setTimeout(() => setCartToast(null), 4000);
-  };
+  const isBn = locale === 'bn-BD';
+  const displayTitle = isBn && product?.titleBn ? product.titleBn : product?.title;
+  const displayDescription = isBn && product?.descriptionBn ? product.descriptionBn : product?.description;
+
+  const currentPriceFormatted = selectedVariant
+    ? selectedVariant.priceBdtFormatted
+    : product?.basePriceBdtFormatted;
+
+  const currentPoints = selectedVariant
+    ? selectedVariant.productPoint
+    : product?.productPoint || 0;
+
+  const inStock = selectedVariant ? selectedVariant.inStock : product?.variants?.some((v) => v.inStock);
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
-      {/* Top Banner */}
-      <div className="bg-slate-900 text-white text-xs py-2 px-4 text-center font-medium">
-        <span>🇧🇩 100% Authentic Nationwide Marketplace • Earn Loyalty Product Points with Every Delivery</span>
-      </div>
+      {/* Schema.org JSON-LD SEO Metadata */}
+      {product?.jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(product.jsonLd) }}
+        />
+      )}
 
-      {/* Main Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 bg-[#18181B] text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 text-xs font-bold border border-slate-700 animate-fade-in">
+          <span>✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Header */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <AlifLogo size="md" />
-
-          {/* Search bar */}
-          <div className="hidden md:flex flex-1 max-w-md mx-6">
-            <div className="relative w-full">
-              <input
-                type="search"
-                placeholder="Search products, brands, essentials in Bangladesh..."
-                className="w-full pl-10 pr-4 py-2 text-xs rounded-full border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6A00]/20 focus:border-[#FF6A00] transition-all"
-              />
-              <span className="absolute left-3.5 top-2.5 text-slate-400 text-xs">🔍</span>
-            </div>
+          <div className="flex items-center space-x-6">
+            <AlifLogo size="sm" href="/" />
+            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-black hidden sm:block">
+              {isBn ? 'পণ্য বিবরণী' : 'Product Details'}
+            </span>
           </div>
 
           <div className="flex items-center space-x-3">
-            <Link href="/products" className="text-xs font-bold text-slate-600 hover:text-[#FF6A00] px-2 py-1">
-              Browse Catalog
-            </Link>
-            <Link href="/seller">
-              <Button variant="outline" size="sm" className="text-xs font-bold">
-                Seller Center
-              </Button>
-            </Link>
-            <Link href="/admin">
-              <Button variant="secondary" size="sm" className="text-xs font-bold">
-                Admin Console
-              </Button>
+            <button
+              onClick={() => setLocale(isBn ? 'en-BD' : 'bn-BD')}
+              className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-all"
+            >
+              {isBn ? 'English' : 'বাংলা'}
+            </button>
+            <Link
+              href="/search"
+              className="px-3.5 py-1.5 rounded-lg bg-black text-white hover:bg-neutral-800 text-xs font-bold transition-all shadow-xs"
+            >
+              {isBn ? 'ক্যাটালগ' : 'Catalog'}
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Breadcrumbs */}
-      <nav className="bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex items-center space-x-2 flex-wrap">
-          <Link href="/" className="hover:text-slate-900">Home</Link>
-          <span>/</span>
-          <Link href="/products" className="hover:text-slate-900">Electronics &amp; Gadgets</Link>
-          <span>/</span>
-          <span className="text-slate-700 font-semibold">{product.category}</span>
-          <span>/</span>
-          <span className="text-[#FF6A00] font-bold truncate max-w-xs">{product.title}</span>
-        </div>
-      </nav>
-
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
-        {/* Cart Toast Notification */}
-        {cartToast && (
-          <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between shadow-sm animate-fade-in">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg">🛍️</span>
-              <span>{cartToast}</span>
-            </div>
-            <Link href="/products" className="text-emerald-700 underline text-xs">
-              Continue Shopping →
-            </Link>
-          </div>
+      {/* Main PDP Layout */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
+        {/* Breadcrumb Navigation */}
+        {product?.breadcrumbs && (
+          <nav aria-label="Breadcrumbs" className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+            {product.breadcrumbs.map((crumb, idx) => (
+              <React.Fragment key={crumb.href || idx}>
+                {idx > 0 && <span>/</span>}
+                <Link
+                  href={crumb.href || '/'}
+                  className={idx === product.breadcrumbs.length - 1 ? 'font-bold text-slate-900' : 'hover:underline'}
+                >
+                  {crumb.label}
+                </Link>
+              </React.Fragment>
+            ))}
+          </nav>
         )}
 
-        {/* Product Hero Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-          {/* Left Column: Image Gallery (5 cols) */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="aspect-square rounded-2xl border border-slate-200 bg-white overflow-hidden relative group shadow-sm flex items-center justify-center p-4">
-              <Image unoptimized width={800} height={800}
-                src={product.media[selectedImageIndex]}
-                alt={product.title}
-                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-              />
-              <Badge variant="orange" className="absolute top-4 left-4 font-black text-xs shadow-sm">
-                {product.discountPercent}
-              </Badge>
-              <Badge variant="blue" className="absolute top-4 right-4 font-bold text-xs shadow-sm">
-                Official BD Model
-              </Badge>
-            </div>
-
-            {/* Thumbnail selector */}
-            <div className="flex space-x-3">
-              {product.media.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
-                  className={`w-20 h-20 rounded-xl border bg-white overflow-hidden p-1 transition-all ${
-                    selectedImageIndex === idx
-                      ? 'border-[#FF6A00] ring-2 ring-[#FF6A00]/30 shadow-sm'
-                      : 'border-slate-200 opacity-70 hover:opacity-100 hover:border-slate-300'
-                  }`}
-                >
-                  <Image unoptimized width={80} height={80} src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-contain" />
-                </button>
-              ))}
-            </div>
-
-            {/* Merchant Guarantee Card */}
-            <Card className="bg-slate-50/70 border-slate-200/90 shadow-sm p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-sm font-bold text-[#FF6A00] shadow-sm">
-                  DT
-                </div>
-                <div className="flex-1">
-                  <div className="text-xs font-black text-slate-900 flex items-center gap-1.5">
-                    <span>Sold by {product.seller.name}</span>
-                    <Badge variant="green" size="sm">✓ Verified Merchant</Badge>
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    {product.seller.rating} • {product.seller.location}
-                  </div>
-                </div>
-              </div>
-            </Card>
+        {loading ? (
+          <div className="p-20 text-center text-xs text-slate-500 font-medium">
+            Loading localized product details...
           </div>
-
-          {/* Right Column: Details & Purchasing (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <Badge variant="blue" className="font-bold">
-                  {product.brand}
-                </Badge>
-                <span className="text-slate-300">•</span>
-                <span className="text-xs text-slate-500 font-mono font-medium">SKU: {product.sku}</span>
-                <span className="text-slate-300">•</span>
-                <span className="text-xs text-amber-500 font-bold">★★★★★ 4.9 (1,240 reviews)</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                {product.title}
-              </h1>
-              <p className="text-sm text-slate-500 mt-1 font-medium">{product.titleBn}</p>
-            </div>
-
-            {/* Price & Loyalty Points Box */}
-            <Card className="bg-white border-slate-200/90 shadow-sm p-5 space-y-4">
-              <div className="flex items-baseline space-x-3">
-                <span className="text-3xl sm:text-4xl font-black text-slate-900 font-mono">
-                  {product.priceBdt}
-                </span>
-                <span className="text-base font-mono line-through text-slate-400">
-                  {product.compareAtPriceBdt}
-                </span>
-                <Badge variant="orange" size="sm">
-                  Save ৳3,000.00
-                </Badge>
-              </div>
-
-              {/* Independent Product Points Loyalty Reward */}
-              <div className="p-3.5 rounded-xl bg-orange-50/70 border border-[#FF6A00]/20 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">🪙</span>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900">
-                      Earn <span className="text-[#FF6A00] font-black font-mono">{product.productPoints} Product Points</span> on Delivery
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      Independent customer loyalty reward • Automatically credited to your wallet
-                    </div>
-                  </div>
-                </div>
-                <Badge variant="orange" size="sm">Points Engine</Badge>
-              </div>
-
-              <div className="text-xs text-slate-500 flex items-center space-x-2 pt-1">
-                <span>✓ NBR Mushak-6.3 VAT Inclusive ({product.taxRatePercent}% ICT Concession)</span>
-                <span>•</span>
-                <span>Integer Poisha Precision</span>
-              </div>
-            </Card>
-
-            {/* Color Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                Color Option: <span className="text-slate-900 font-black">{selectedColor}</span>
-              </label>
-              <div className="flex space-x-2">
-                {product.colors.map((c) => (
-                  <button
-                    key={c.name}
-                    onClick={() => setSelectedColor(c.name)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center space-x-2 transition-all ${
-                      selectedColor === c.name
-                        ? 'border-[#FF6A00] bg-orange-50 text-[#FF6A00] ring-1 ring-[#FF6A00]'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                    }`}
-                  >
-                    <span
-                      className="w-3.5 h-3.5 rounded-full border border-slate-300 inline-block"
-                      style={{ backgroundColor: c.hex }}
-                    />
-                    <span>{c.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Storage Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                RAM / Storage Option: <span className="text-slate-900 font-black">{selectedStorage}</span>
-              </label>
-              <div className="flex space-x-2">
-                {product.storages.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSelectedStorage(s)}
-                    className={`px-4 py-2 rounded-lg border text-xs font-bold transition-all ${
-                      selectedStorage === s
-                        ? 'border-[#0284C7] bg-sky-50 text-[#0284C7] ring-1 ring-[#0284C7]'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quantity and Actions */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center border border-slate-200 rounded-lg bg-white shadow-sm overflow-hidden">
-                  <button
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="px-3 py-2 text-slate-600 hover:bg-slate-100 font-bold text-sm"
-                  >
-                    -
-                  </button>
-                  <span className="px-4 py-2 text-xs font-mono font-bold text-slate-900">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="px-3 py-2 text-slate-600 hover:bg-slate-100 font-bold text-sm"
-                  >
-                    +
-                  </button>
-                </div>
-                <span className="text-xs text-emerald-600 font-bold">
-                  ✓ In Stock (Dhaka Hub Ready to Dispatch)
-                </span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Primary Button: Vibrant Orange from logo arrow */}
-                <Button
-                  variant="primary"
-                  onClick={handleAddToCart}
-                  disabled
-                  className="flex-1 py-3 text-sm font-black shadow-sm flex items-center justify-center space-x-2"
-                >
-                  <span>🛍️</span>
-                  <span>Add to Shopping Bag</span>
-                </Button>
-
-                {/* Secondary Button: Solid Clean Black */}
-                <Button
-                  variant="secondary"
-                  onClick={handleAddToCart}
-                  disabled
-                  className="sm:w-44 py-3 text-sm font-black shadow-sm"
-                >
-                  ⚡ Buy Now
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="py-3 px-4 text-xs font-bold hover:bg-slate-50 text-slate-700"
-                >
-                  ♡ Wishlist
-                </Button>
-              </div>
-            </div>
-
-            {/* Trust and Delivery Badges */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
-              <div className="p-3 rounded-xl border border-slate-200 bg-white flex items-center space-x-3 shadow-sm">
-                <span className="text-2xl">🚚</span>
-                <div>
-                  <div className="text-xs font-bold text-slate-900">Fast Nationwide Delivery</div>
-                  <div className="text-[11px] text-slate-500">Dhaka: 24 hrs • Nationwide: 48-72 hrs</div>
-                </div>
-              </div>
-              <div className="p-3 rounded-xl border border-slate-200 bg-white flex items-center space-x-3 shadow-sm">
-                <span className="text-2xl">🛡️</span>
-                <div>
-                  <div className="text-xs font-bold text-slate-900">Official Brand Warranty</div>
-                  <div className="text-[11px] text-slate-500">1 Year Official Service Warranty</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Tabs Section */}
-        <section className="mt-14 border-t border-slate-200 pt-8">
-          <div className="flex items-center space-x-4 border-b border-slate-200 mb-6">
-            <button
-              onClick={() => setActiveTab('specs')}
-              className={`pb-3 text-sm font-bold transition-colors border-b-2 ${
-                activeTab === 'specs'
-                  ? 'border-[#FF6A00] text-[#FF6A00]'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
+        ) : !product ? (
+          <div className="p-20 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
+            <span className="text-4xl">🔍</span>
+            <h3 className="text-base font-black text-slate-900">
+              {isBn ? 'পণ্যটি খুঁজে পাওয়া যায়নি' : 'Product Not Found'}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {isBn ? 'পণ্যটি অপসারিত হতে পারে অ��বা লিংকটি সঠিক নয়।' : 'The requested product could not be located.'}
+            </p>
+            <Link
+              href="/search"
+              className="inline-flex items-center justify-center px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors mt-2"
             >
-              Technical Specifications
-            </button>
-            <button
-              onClick={() => setActiveTab('description')}
-              className={`pb-3 text-sm font-bold transition-colors border-b-2 ${
-                activeTab === 'description'
-                  ? 'border-[#FF6A00] text-[#FF6A00]'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Description &amp; Highlights
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`pb-3 text-sm font-bold transition-colors border-b-2 ${
-                activeTab === 'reviews'
-                  ? 'border-[#FF6A00] text-[#FF6A00]'
-                  : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              Customer Reviews ({product.reviews.length})
-            </button>
-          </div>
-
-          {activeTab === 'specs' && (
-            <Card className="bg-white border-slate-200/90 shadow-sm overflow-hidden">
-              <div className="divide-y divide-slate-100 text-xs">
-                {product.specs.map((spec, i) => (
-                  <div
-                    key={spec.key}
-                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1 ${
-                      i % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'
-                    }`}
-                  >
-                    <span className="font-bold text-slate-700 sm:w-1/3">{spec.key}</span>
-                    <span className="text-slate-900 sm:w-2/3 font-medium">{spec.value}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {activeTab === 'description' && (
-            <Card className="bg-white border-slate-200/90 shadow-sm p-6 space-y-4">
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#FF6A00] mb-2">
-                  Product Overview
-                </h3>
-                <p className="text-slate-700 text-sm leading-relaxed">{product.description}</p>
-              </div>
-              <div className="pt-4 border-t border-slate-100">
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#0284C7] mb-2">
-                  বাংলা বিবরণ
-                </h3>
-                <p className="text-slate-700 text-sm leading-relaxed">{product.descriptionBn}</p>
-              </div>
-            </Card>
-          )}
-
-          {activeTab === 'reviews' && (
-            <div className="space-y-4">
-              {product.reviews.map((rev, i) => (
-                <Card key={i} className="bg-white border-slate-200/90 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700">
-                        {rev.user.charAt(0)}
-                      </div>
-                      <span className="font-bold text-sm text-slate-900">{rev.user}</span>
-                      <Badge variant="green" size="sm">Verified Buyer</Badge>
-                    </div>
-                    <span className="text-xs text-slate-400">{rev.date}</span>
-                  </div>
-                  <div className="flex items-center space-x-1 text-amber-500 text-xs my-2">
-                    {'★'.repeat(rev.rating)}
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">{rev.comment}</p>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Recommended Accessories Section */}
-        <section className="mt-14">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl font-black text-slate-900">Frequently Bought Together</h2>
-              <p className="text-xs text-slate-500">Complementary devices and certified accessories</p>
-            </div>
-            <Link href="/products" className="text-xs font-bold text-[#FF6A00] hover:underline">
-              View All →
+              {isBn ? 'ক্যাটালগে ফিরে যান' : 'Back to Search'}
             </Link>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {product.relatedProducts.map((rel) => (
-              <Card key={rel.id} className="bg-white border-slate-200/90 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
-                <div className="aspect-[4/3] bg-slate-50 p-4 flex items-center justify-center overflow-hidden">
-                  <Image unoptimized width={320} height={240}
-                    src={rel.imageUrl}
-                    alt={rel.title}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-xs text-slate-900 line-clamp-2 min-h-[32px]">{rel.title}</h3>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-black text-slate-900 font-mono">{rel.price}</span>
-                    <Badge variant="orange" size="sm">+{rel.points} pts</Badge>
+        ) : (
+          <div className="space-y-12">
+            {/* Top Product Hero: Media Gallery + Buying Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* Left Column: Media Gallery */}
+              <div className="space-y-4">
+                <div className="w-full aspect-square rounded-2xl bg-white border border-slate-200 flex items-center justify-center p-6 overflow-hidden shadow-xs relative">
+                  <div className="text-center space-y-3">
+                    <span className="text-6xl">📦</span>
+                    <div className="text-xs font-mono text-slate-400">
+                      {product.media[activeMediaIndex]?.altText || displayTitle}
+                    </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-3 text-xs font-bold hover:border-[#FF6A00] hover:text-[#FF6A00]"
+                  {product.brand && (
+                    <Badge className="absolute top-4 left-4 bg-slate-900 text-white text-[10px] font-bold">
+                      {product.brand.name}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Thumbnails */}
+                {product.media.length > 1 && (
+                  <div className="flex space-x-3 overflow-x-auto pb-2">
+                    {product.media.map((m, idx) => (
+                      <button
+                        key={m.id || idx}
+                        onClick={() => setActiveMediaIndex(idx)}
+                        className={`w-16 h-16 rounded-xl border-2 transition-all shrink-0 flex items-center justify-center bg-white text-xs ${
+                          idx === activeMediaIndex ? 'border-[#FF6A00] shadow-sm' : 'border-slate-200 opacity-60'
+                        }`}
+                      >
+                        📷 {idx + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Title, Variant Selector, Pricing & CTA */}
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center space-x-2 text-xs">
+                    {product.brand && (
+                      <Link
+                        href={`/brands/${product.brand.slug}`}
+                        className="font-bold text-[#FF6A00] hover:underline uppercase tracking-wider"
+                      >
+                        {product.brand.name}
+                      </Link>
+                    )}
+                    {product.brand?.isVerified && (
+                      <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                        ✓ Verified Partner
+                      </Badge>
+                    )}
+                  </div>
+
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-2 leading-tight">
+                    {displayTitle}
+                  </h1>
+
+                  <div className="flex items-center space-x-2 mt-2 text-xs text-slate-500">
+                    <span className="text-amber-500 font-bold">★ 4.8</span>
+                    <span>(24 reviews)</span>
+                    <span>•</span>
+                    <Link href={`/categories/${product.category.slug}`} className="hover:underline">
+                      {isBn && product.category.nameBn ? product.category.nameBn : product.category.name}
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Pricing & Product Point Reward Box */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="flex items-baseline space-x-3">
+                    <div className="text-3xl font-black text-slate-900">৳{currentPriceFormatted}</div>
+                    {product.compareAtPriceBdtFormatted && (
+                      <div className="text-sm font-semibold text-slate-400 line-through">
+                        ৳{product.compareAtPriceBdtFormatted}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Independent Product Point Badge (ADR-0001, ADR-0003) */}
+                  <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FF6A00]/10 border border-[#FF6A00]/30 text-[#FF6A00] text-xs font-black">
+                    <span>★ +{currentPoints} Product Points</span>
+                    <span className="text-[10px] text-slate-500 font-normal">
+                      ({isBn ? 'অর্ডার সমাপ্তির পর ওয়ালেটে জমা হবে' : 'Credited upon order completion'})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Variant Selection Matrix */}
+                {product.variants.length > 1 && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-slate-700 uppercase tracking-wider">
+                        {isBn ? 'ভেরিয়েন্ট নির্বাচন করুন:' : 'Select Variant / Configuration:'}
+                      </span>
+                      {selectedVariant && (
+                        <span className="font-mono text-slate-500 text-[11px]">
+                          SKU: {selectedVariant.sku}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {product.variants.map((v) => {
+                        const isSelected = selectedVariant?.id === v.id;
+                        return (
+                          <button
+                            key={v.id}
+                            onClick={() => setSelectedVariant(v)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all text-left ${
+                              isSelected
+                                ? 'border-[#FF6A00] bg-[#FF6A00]/5 text-[#FF6A00] shadow-xs'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                            }`}
+                          >
+                            <div>{v.title}</div>
+                            <div className="text-[10px] font-mono opacity-80 mt-0.5">
+                              ৳{v.priceBdtFormatted}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Stock Availability Indicator */}
+                <div className="flex items-center space-x-2 text-xs">
+                  {inStock ? (
+                    <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                      ✓ {isBn ? 'স্টকে উপলব্ধ' : 'In Stock'}
+                      {selectedVariant ? ` (${selectedVariant.availableQuantity} available)` : ''}
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-red-50 text-red-700 border border-red-200 text-xs font-bold">
+                      ✕ {isBn ? 'স্টক শেষ' : 'Out of Stock'}
+                    </Badge>
+                  )}
+                  {product.warranty && (
+                    <span className="text-slate-500 font-medium">🛡️ {product.warranty}</span>
+                  )}
+                </div>
+
+                {/* Quantity & CTA Buttons */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center border border-slate-300 rounded-lg bg-white">
+                      <button
+                        onClick={() => setQuantity(Math.max(product.minOrderQuantity, quantity - 1))}
+                        className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                      >
+                        -
+                      </button>
+                      <span className="px-4 py-1.5 text-xs font-black font-mono">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <Button
+                      disabled={!inStock}
+                      onClick={() => showToast(`Added ${quantity}x ${selectedVariant?.title || displayTitle} to cart!`)}
+                      className={`flex-1 py-3 text-xs font-bold ${
+                        inStock
+                          ? 'bg-[#FF6A00] hover:bg-[#E55F00] text-white shadow-sm'
+                          : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {isBn ? 'কার্টে যোগ করুন' : 'Add to Cart'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Merchant Card */}
+                <Card className="p-4 border border-slate-200 bg-white flex items-center justify-between shadow-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Sold & Fulfilled by</span>
+                    <div className="font-bold text-xs text-slate-900">{product.seller.storeName}</div>
+                  </div>
+                  <Link
+                    href={`/search?sellerId=${product.seller.id}`}
+                    className="inline-flex items-center justify-center px-3 py-1.5 border border-slate-300 rounded-md text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                   >
-                    Add Accessory
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    Visit Store
+                  </Link>
+                </Card>
+              </div>
+            </div>
+
+            {/* Bottom Tabs: Description, Specs, Shipping */}
+            <div className="border-t border-slate-200 pt-8 space-y-6">
+              <div className="flex space-x-6 border-b border-slate-200 text-xs font-bold">
+                <button
+                  onClick={() => setActiveTab('description')}
+                  className={`pb-3 border-b-2 transition-colors ${
+                    activeTab === 'description'
+                      ? 'border-[#FF6A00] text-[#FF6A00]'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {isBn ? 'বিস্তারিত বর্ণনা' : 'Description & Overview'}
+                </button>
+                <button
+                  onClick={() => setActiveTab('specifications')}
+                  className={`pb-3 border-b-2 transition-colors ${
+                    activeTab === 'specifications'
+                      ? 'border-[#FF6A00] text-[#FF6A00]'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {isBn ? 'বৈশিষ্ট্য ও স্পেসিফিকেশন' : 'Specifications'}
+                </button>
+              </div>
+
+              {activeTab === 'description' && (
+                <div className="prose prose-sm max-w-none text-slate-700 leading-relaxed text-xs">
+                  <p>{displayDescription}</p>
+                </div>
+              )}
+
+              {activeTab === 'specifications' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Brand</span>
+                    <span className="font-bold text-slate-800">{product.brand?.name || 'Generic'}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Category</span>
+                    <span className="font-bold text-slate-800">{product.category.name}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Warranty</span>
+                    <span className="font-bold text-slate-800">{product.warranty || 'Standard Warranty'}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-slate-500">Minimum Order Qty</span>
+                    <span className="font-bold text-slate-800">{product.minOrderQuantity} units</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </section>
+        )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200/80 mt-16 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 text-xs">
-            <div>
-              <AlifLogo size="sm" className="mb-3" />
-              <p className="text-slate-500 leading-relaxed">
-                Bangladesh&apos;s trusted marketplace. Pure authentic products, integer poisha precision, and statutory NBR compliance.
-              </p>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider mb-3">Customer Service</h4>
-              <ul className="space-y-2 text-slate-600">
-                <li><Link href="/help" className="hover:text-slate-900">Help Center &amp; FAQs</Link></li>
-                <li><Link href="/returns" className="hover:text-slate-900">Returns &amp; Replacement</Link></li>
-                <li><Link href="/contact" className="hover:text-slate-900">24/7 Hotline Support</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider mb-3">Seller Ecosystem</h4>
-              <ul className="space-y-2 text-slate-600">
-                <li><Link href="/seller" className="hover:text-slate-900">Become an Alif Merchant</Link></li>
-                <li><Link href="/seller/kyc" className="hover:text-slate-900">Merchant KYC Guidelines</Link></li>
-                <li><Link href="/seller/inventory" className="hover:text-slate-900">Fulfillment by Alif (FBA)</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-slate-900 uppercase tracking-wider mb-3">Accepted Payment Methods</h4>
-              <div className="flex flex-wrap gap-2 text-slate-500 font-mono text-[11px]">
-                <span className="px-2 py-1 bg-slate-100 rounded border border-slate-200">bKash</span>
-                <span className="px-2 py-1 bg-slate-100 rounded border border-slate-200">Nagad</span>
-                <span className="px-2 py-1 bg-slate-100 rounded border border-slate-200">Visa / MC</span>
-                <span className="px-2 py-1 bg-slate-100 rounded border border-slate-200">Cash on Delivery</span>
-              </div>
-            </div>
-          </div>
-          <div className="pt-6 border-t border-slate-100 text-center text-xs text-slate-400">
-            © 2026 AlifWorld. All rights reserved. Dhaka, Bangladesh.
-          </div>
+      <footer className="bg-white border-t border-slate-200 py-6 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 font-medium">
+          AlifWorld Localized Storefront • Multi-Variant Selection, BDT Pricing & Verified Warranties
         </div>
       </footer>
     </div>

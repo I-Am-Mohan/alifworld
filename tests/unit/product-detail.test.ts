@@ -8,9 +8,19 @@ class MockPrismaProductDb {
 
   public product = {
     findFirst: async ({ where }: any) => {
-      const match = this.products.find(
-        (p) => p.slug === where.slug && (where.deletedAt === null ? p.deletedAt === null : true)
-      );
+      const match = this.products.find((p) => {
+        const matchesIdentifier =
+          (where.slug && p.slug === where.slug) ||
+          (where.id && p.id === where.id) ||
+          (where.OR &&
+            where.OR.some(
+              (clause: any) =>
+                (clause.slug && p.slug === clause.slug) ||
+                (clause.id && p.id === clause.id)
+            ));
+        const matchesDeleted = where.deletedAt === null ? p.deletedAt === null : true;
+        return matchesIdentifier && matchesDeleted;
+      });
       return match ? { ...match } : null;
     },
   };

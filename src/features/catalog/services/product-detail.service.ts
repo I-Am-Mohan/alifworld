@@ -86,16 +86,16 @@ export class ProductDetailService {
   constructor(private readonly db: any = prisma) {}
 
   /**
-   * Resolves product details by slug. If slug was historically renamed, returns a redirect directive.
+   * Resolves product details by slug or ID. If slug was historically renamed, returns a redirect directive.
    */
   public async getProductBySlug(
-    slug: string,
+    identifier: string,
     locale: 'en-BD' | 'bn-BD' = 'en-BD'
   ): Promise<ProductDetailResult | ProductDetailRedirect> {
-    // 1. Direct slug lookup
+    // 1. Direct slug or ID lookup
     let product = await this.db.product.findFirst({
       where: {
-        slug,
+        OR: [{ slug: identifier }, { id: identifier }],
         deletedAt: null,
       },
       include: {
@@ -123,7 +123,7 @@ export class ProductDetailService {
     // 2. Slug History lookup for permanent redirects (SEO preservation)
     if (!product) {
       const historyEntry = await this.db.productSlugHistory.findFirst({
-        where: { oldSlug: slug },
+        where: { oldSlug: identifier },
         include: {
           product: true,
         },
@@ -137,11 +137,11 @@ export class ProductDetailService {
         };
       }
 
-      throw new NotFoundError(`Product with slug '${slug}' not found.`);
+      throw new NotFoundError(`Product with identifier '${identifier}' not found.`);
     }
 
     if (product.status !== 'PUBLISHED') {
-      throw new NotFoundError(`Product '${slug}' is currently not available for viewing.`);
+      throw new NotFoundError(`Product '${identifier}' is currently not available for viewing.`);
     }
 
     // Resolve translations
