@@ -37,6 +37,7 @@ import { AlifLogo } from '@/components/brand/logo';
 import { useAuthModal } from '@/components/auth/auth-context';
 import { useI18n } from '@/i18n/context';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
+import { CmsHomeSections } from '@/components/store/cms-home-sections';
 
 // Custom Vector SVG Icons
 function BasketIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -785,6 +786,11 @@ export default function CustomerStorePage() {
           </div>
         </div>
       </nav>
+
+      {/* DYNAMIC CMS-DRIVEN STOREFRONT HERO & PROMO SECTIONS */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
+        <CmsHomeSections locale={locale as any} />
+      </div>
 
       {/* HERO SECTION */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#E0F2FE] via-[#F0F9FF] to-[#FAF9F6]">

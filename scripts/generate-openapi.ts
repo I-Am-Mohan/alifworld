@@ -1402,6 +1402,61 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/cms/home': {
+      get: {
+        tags: ['CMS & Content'],
+        summary: 'Get Localized Storefront Homepage',
+        description: 'Retrieves published homepage layout, hero carousel banners, feature blocks, and category showcases localized for en-BD or bn-BD.',
+        parameters: [
+          { name: 'locale', in: 'query', schema: { type: 'string', enum: ['en-BD', 'bn-BD'], default: 'en-BD' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Localized homepage layout returned successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+      put: {
+        tags: ['CMS & Content'],
+        summary: 'Update Storefront Homepage Layout',
+        description: 'Admin endpoint to update homepage sections, banner ordering, and promotional highlights with optimistic concurrency control.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  version: { type: 'integer', minimum: 1 },
+                  status: { type: 'string', enum: ['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED'], default: 'PUBLISHED' },
+                  sections: { type: 'array', items: { type: 'object' } },
+                },
+                required: ['version', 'sections'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Homepage layout updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],
