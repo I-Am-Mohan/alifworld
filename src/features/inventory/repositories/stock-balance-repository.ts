@@ -204,6 +204,37 @@ export class StockBalanceRepository {
     return this.mapToModel(updated);
   }
 
+  public async updateThresholds(
+    id: string,
+    lowStockThreshold: number,
+    reorderPoint: number
+  ): Promise<StockBalanceModel> {
+    const current = await (prisma as any).stockBalance.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!current) {
+      throw new NotFoundError(`Stock balance with id '${id}' not found.`);
+    }
+
+    const updated = await (prisma as any).stockBalance.update({
+      where: { id },
+      data: {
+        lowStockThreshold,
+        reorderPoint,
+        version: { increment: 1 },
+      },
+      include: {
+        warehouse: true,
+        variant: {
+          include: { product: true },
+        },
+      },
+    });
+
+    return this.mapToModel(updated);
+  }
+
   private mapToModel(raw: any): StockBalanceModel {
     const available = calculateAvailableStock({
       onHand: raw.onHand,

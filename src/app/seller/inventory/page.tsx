@@ -273,6 +273,12 @@ export default function SellerInventoryPage() {
           </div>
 
           <div className="flex items-center space-x-3">
+            <Link
+              href="/seller/inventory/low-stock"
+              className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>⚠ Low Stock Alerts</span>
+            </Link>
             <Button
               onClick={() => setActiveTab('intake')}
               className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs shadow-sm shadow-orange-500/25"

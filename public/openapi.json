@@ -1439,6 +1439,135 @@
         }
       }
     },
+    "/api/v1/inventory/alerts/low-stock": {
+      "get": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "List Low Stock Alerts",
+        "description": "Lists stock balances currently triggering low-stock alerts (available <= lowStockThreshold). Enforces seller-tenant scoping.",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of low stock alert balances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/balances/{id}/thresholds": {
+      "put": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Update Stock Balance Thresholds",
+        "description": "Configures lowStockThreshold and reorderPoint settings for a stock balance.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lowStockThreshold": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reorderPoint": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "lowStockThreshold",
+                  "reorderPoint"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock thresholds updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/reorder-recommendations": {
+      "get": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "List Reorder Recommendations",
+        "description": "Lists calculated inventory reorder recommendations for items at or below reorderPoint with urgency classification.",
+        "parameters": [
+          {
+            "name": "warehouseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of inventory reorder recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [

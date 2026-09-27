@@ -27,6 +27,7 @@ import {
   AdjustStockSchema,
   QuarantineStockSchema,
   CompensateInventorySchema,
+  UpdateStockThresholdsSchema,
   ReceiveStockInput,
   ReserveStockInput,
   ReserveStockRawInput,
@@ -35,6 +36,7 @@ import {
   AdjustStockInput,
   QuarantineStockInput,
   CompensateInventoryInput,
+  UpdateStockThresholdsInput,
 } from '../validators';
 import {
   StockBalanceModel,
@@ -643,6 +645,92 @@ export class InventoryService {
     lowStockOnly?: boolean;
   }): Promise<StockBalanceModel[]> {
     return this.stockBalanceRepo.findMany(options);
+  }
+
+  /**
+   * Updates low stock threshold and reorder point configuration for a stock balance.
+   * Automatically triggers low stock detection outbox alert if current balance is at or below threshold.
+   */
+  public async updateStockThresholds(
+    input: UpdateStockThresholdsInput,
+    actorId?: string
+  ): Promise<StockBalanceModel> {
+    const validated = UpdateStockThresholdsSchema.parse(input);
+
+    const updated = await this.stockBalanceRepo.updateThresholds(
+      validated.stockBalanceId,
+      validated.lowStockThreshold,
+      validated.reorderPoint
+    );
+
+    if (updated.available <= updated.lowStockThreshold) {
+      await this.recordOutboxEvent('inventory.low_stock_detected', updated.id, {
+        stockBalanceId: updated.id,
+        warehouseId: updated.warehouseId,
+        variantId: updated.variantId,
+        available: updated.available,
+        lowStockThreshold: updated.lowStockThreshold,
+        reorderPoint: updated.reorderPoint,
+        triggeredBy: actorId ?? 'SYSTEM',
+      });
+    }
+
+    return updated;
+  }
+
+  /**
+   * Lists stock balances currently triggering low stock alerts (available <= lowStockThreshold).
+   */
+  public async listLowStockAlerts(options?: {
+    warehouseId?: string;
+    sellerId?: string;
+  }): Promise<StockBalanceModel[]> {
+    return this.stockBalanceRepo.findMany({
+      warehouseId: options?.warehouseId,
+      sellerId: options?.sellerId,
+      lowStockOnly: true,
+    });
+  }
+
+  /**
+   * Generates calculated reorder recommendations based on available stock vs reorderPoint.
+   */
+  public async getReorderRecommendations(options?: {
+    warehouseId?: string;
+    sellerId?: string;
+  }): Promise<
+    Array<{
+      stockBalance: StockBalanceModel;
+      currentAvailable: number;
+      reorderPoint: number;
+      lowStockThreshold: number;
+      recommendedReorderQuantity: number;
+      urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+    }>
+  > {
+    const allBalances = await this.stockBalanceRepo.findMany({
+      warehouseId: options?.warehouseId,
+      sellerId: options?.sellerId,
+    });
+
+    const recommendations = allBalances
+      .filter((b) => b.available <= b.reorderPoint)
+      .map((b) => {
+        const recommendedQty = Math.max(b.reorderPoint * 2 - b.available, b.reorderPoint);
+        const urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM' =
+          b.available === 0 ? 'CRITICAL' : b.available <= b.lowStockThreshold ? 'HIGH' : 'MEDIUM';
+
+        return {
+          stockBalance: b,
+          currentAvailable: b.available,
+          reorderPoint: b.reorderPoint,
+          lowStockThreshold: b.lowStockThreshold,
+          recommendedReorderQuantity: recommendedQty,
+          urgency,
+        };
+      });
+
+    return recommendations.sort((a, b) => a.currentAvailable - b.currentAvailable);
   }
 
   public async getMovementLedger(options?: {

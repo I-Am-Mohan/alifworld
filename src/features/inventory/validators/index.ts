@@ -156,3 +156,18 @@ export const QueryStockMovementsSchema = z.object({
 
 export type QueryStockMovementsInput = z.infer<typeof QueryStockMovementsSchema>;
 export type QueryStockMovementsRawInput = z.input<typeof QueryStockMovementsSchema>;
+
+export const UpdateStockThresholdsSchema = z.object({
+  stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
+  lowStockThreshold: z.number().int().min(0, 'Low stock threshold must be >= 0'),
+  reorderPoint: z.number().int().min(0, 'Reorder point must be >= 0'),
+});
+
+export type UpdateStockThresholdsInput = z.infer<typeof UpdateStockThresholdsSchema>;
+
+export const QueryLowStockAlertsSchema = z.object({
+  warehouseId: z.string().optional(),
+  sellerId: z.string().optional(),
+});
+
+export type QueryLowStockAlertsInput = z.infer<typeof QueryLowStockAlertsSchema>;
