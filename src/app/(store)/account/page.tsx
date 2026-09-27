@@ -777,6 +777,14 @@ export default function CustomerAccountPage() {
                     Private Credit Limit: ৳250,000.00 (Protected Invariant)
                   </div>
                 </div>
+                <div className="pt-2">
+                  <Link
+                    href="/b2b"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-colors"
+                  >
+                    {isBn ? 'B2B পোর্টালে যান (RFQ ও কোটেশন) →' : 'Open B2B Portal (RFQs & Quotes) →'}
+                  </Link>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleB2BSubmit} className="space-y-4 text-xs">

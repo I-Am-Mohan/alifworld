@@ -1761,6 +1761,274 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/b2b/organization': {
+      get: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Get Buyer Organization',
+        description: 'Retrieves active Business Buyer Organization details for authenticated customer.',
+        responses: {
+          '200': {
+            description: 'Organization details returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      post: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Register Buyer Organization',
+        description: 'Registers a customer as a new Business Buyer organization in PENDING_APPROVAL status with credit terms disabled.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  companyName: { type: 'string' },
+                  businessType: { type: 'string', enum: ['CORPORATION', 'LLC', 'PARTNERSHIP', 'SOLE_PROPRIETORSHIP'] },
+                  tradeLicenseNumber: { type: 'string' },
+                  binNumber: { type: 'string' },
+                  tinNumber: { type: 'string' },
+                },
+                required: ['companyName', 'businessType'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Organization registered successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/organization/members': {
+      get: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'List Organization Members',
+        description: 'Lists all members and their roles within the buyer organization.',
+        responses: {
+          '200': {
+            description: 'Members listed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      post: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Invite Organization Member',
+        description: 'Adds or invites a new member with role and optional internal spending limit.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  userId: { type: 'string' },
+                  role: { type: 'string', enum: ['ADMIN', 'PURCHASER', 'APPROVER', 'VIEWER'] },
+                  spendingLimitPoisha: { type: 'integer' },
+                },
+                required: ['userId'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Member added successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/rfqs': {
+      get: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'List RFQs',
+        description: 'Lists Requests for Quote for buyer organization or seller.',
+        responses: {
+          '200': {
+            description: 'RFQs listed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      post: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Create RFQ',
+        description: 'Submits a new Request for Quote with line items, PO reference, and Minimum Order Quantity (MOQ) validation.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  sellerId: { type: 'string' },
+                  title: { type: 'string' },
+                  purchaseOrderRef: { type: 'string' },
+                  requiredDeliveryDate: { type: 'string', format: 'date-time' },
+                  shippingAddress: { type: 'string' },
+                  notes: { type: 'string' },
+                  expiresInDays: { type: 'integer' },
+                  items: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        productId: { type: 'string' },
+                        variantId: { type: 'string' },
+                        productTitle: { type: 'string' },
+                        quantity: { type: 'integer' },
+                        targetPricePoisha: { type: 'integer' },
+                        specifications: { type: 'string' },
+                      },
+                      required: ['productId', 'productTitle', 'quantity'],
+                    },
+                  },
+                },
+                required: ['title', 'items'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'RFQ created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/rfqs/{id}': {
+      get: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Get RFQ Details',
+        description: 'Retrieves RFQ details with items and quote counts.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'RFQ details returned',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      delete: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Cancel RFQ',
+        description: 'Cancels an open RFQ.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'RFQ cancelled successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/quotes': {
+      get: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'List Quotes',
+        description: 'Lists quotes responding to RFQs.',
+        responses: {
+          '200': {
+            description: 'Quotes listed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+      post: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Create Seller Quote',
+        description: 'Seller creates a formal quote response with unit prices, quantity breaks, and payment terms.',
+        parameters: [{ name: 'rfqId', in: 'query', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  validUntilDays: { type: 'integer' },
+                  shippingPoisha: { type: 'integer' },
+                  taxPoisha: { type: 'integer' },
+                  paymentTerms: { type: 'string', enum: ['IMMEDIATE', 'NET_15', 'NET_30', 'NET_60'] },
+                  notes: { type: 'string' },
+                  items: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        productId: { type: 'string' },
+                        variantId: { type: 'string' },
+                        productTitle: { type: 'string' },
+                        quantity: { type: 'integer' },
+                        unitPricePoisha: { type: 'integer' },
+                        quantityBreakTier: { type: 'string' },
+                        leadTimeDays: { type: 'integer' },
+                      },
+                      required: ['productId', 'productTitle', 'quantity', 'unitPricePoisha'],
+                    },
+                  },
+                },
+                required: ['items'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Quote created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/quotes/{id}': {
+      get: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Get Quote Details',
+        description: 'Retrieves full quote details, items, and negotiation versions.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Quote details returned',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/quotes/{id}/accept': {
+      post: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Accept Quote',
+        description: 'Buyer accepts an approved quote before expiration.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Quote accepted successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/b2b/quotes/{id}/convert': {
+      post: {
+        tags: ['B2B & Negotiated Commerce'],
+        summary: 'Convert Quote to Cart',
+        description: 'Converts an accepted quote to an active Cart with locked negotiated pricing.',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Quote converted to cart successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
     '/api/v1/customer/wishlists': {
       get: {
         tags: ['Customer Experience'],

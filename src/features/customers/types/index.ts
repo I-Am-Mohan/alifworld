@@ -66,3 +66,5 @@ export interface BusinessBuyerOrganization {
 }
 
 export * from './wishlist.types';
+export * from './b2b.types';
+

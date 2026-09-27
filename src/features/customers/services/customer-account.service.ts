@@ -34,6 +34,8 @@ import {
   RegisterBusinessBuyerSchema,
 } from '../validators';
 
+import { b2bCommerceService } from './b2b-commerce.service';
+
 export class CustomerAccountService {
   // In-memory backing stores for dynamic consent and B2B organizations
   private consentRecords = new Map<string, CustomerConsent>();
@@ -351,6 +353,23 @@ export class CustomerAccountService {
   public async getBusinessOrganization(
     userId: string
   ): Promise<BusinessBuyerOrganization | null> {
+    const dbOrg = await b2bCommerceService.getUserOrganization(userId);
+    if (dbOrg) {
+      return {
+        id: dbOrg.id,
+        companyName: dbOrg.companyName,
+        businessType: dbOrg.businessType as any,
+        tradeLicenseNumber: dbOrg.tradeLicenseNumber,
+        binNumber: dbOrg.binNumber,
+        tinNumber: dbOrg.tinNumber,
+        creditLimitPoisha: dbOrg.creditLimitPoisha,
+        status: dbOrg.status as any,
+        membershipRole: (dbOrg.currentUserRole || 'ADMIN') as any,
+        membersCount: dbOrg.membersCount || 1,
+        createdAt: dbOrg.createdAt,
+      };
+    }
+
     const membership = this.organizationMembers.get(userId);
     if (!membership) {
       return null;
@@ -376,36 +395,20 @@ export class CustomerAccountService {
   ): Promise<BusinessBuyerOrganization> {
     const validated = RegisterBusinessBuyerSchema.parse(input);
 
-    const existingMembership = this.organizationMembers.get(userId);
-    if (existingMembership) {
-      throw new ConflictError('User already belongs to an existing Business Buyer organization.');
-    }
-
-    const orgId = `org_${Math.random().toString(36).substring(2, 9)}`;
-    const organization: BusinessBuyerOrganization = {
-      id: orgId,
-      companyName: validated.companyName,
-      businessType: validated.businessType,
-      tradeLicenseNumber: validated.tradeLicenseNumber,
-      binNumber: validated.binNumber || null,
-      tinNumber: validated.tinNumber || null,
-      creditLimitPoisha: 0, // Starts at 0 until credit review
-      status: 'PENDING_APPROVAL',
+    const created = await b2bCommerceService.registerOrganization(userId, validated);
+    return {
+      id: created.id,
+      companyName: created.companyName,
+      businessType: created.businessType as any,
+      tradeLicenseNumber: created.tradeLicenseNumber,
+      binNumber: created.binNumber,
+      tinNumber: created.tinNumber,
+      creditLimitPoisha: created.creditLimitPoisha,
+      status: created.status as any,
       membershipRole: 'ADMIN',
-      membersCount: 1,
-      createdAt: new Date().toISOString(),
+      membersCount: created.membersCount || 1,
+      createdAt: created.createdAt,
     };
-
-    this.organizationRecords.set(orgId, organization);
-    this.organizationMembers.set(userId, { orgId, role: 'ADMIN' });
-
-    await this.recordOutboxEvent('customer.business_org_registered', orgId, {
-      orgId,
-      userId,
-      companyName: validated.companyName,
-    });
-
-    return organization;
   }
 
   private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {

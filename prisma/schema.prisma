@@ -136,6 +136,7 @@ model User {
   sellerApplications     SellerApplication[]       @relation("SellerApplicationApplicant")
   applicationReviews     SellerApplicationReview[] @relation("SellerApplicationReviewer")
   couponRedemptions      CouponRedemption[]
+  buyerOrgMemberships    BuyerOrganizationMember[]
 
   @@index([status])
   @@index([deletedAt])
@@ -424,6 +425,8 @@ model Seller {
   priceLists          PriceList[]
   discountRules       DiscountRule[]
   couponRedemptions   CouponRedemption[]
+  b2bRfqs             B2BRfq[]
+  b2bQuotes           B2BQuote[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -1834,10 +1837,13 @@ model Cart {
   id         String    @id @default(uuid())
   userId     String?   @map("user_id") // Nullable for guest checkout sessions
   currency   String    @default("BDT")
-  status     String    @default("ACTIVE") // ACTIVE, ABANDONED, CONVERTED, MERGED
-  couponCode String?   @map("coupon_code")
-  notes      String?
-  version    Int       @default(1)
+  status           String    @default("ACTIVE") // ACTIVE, ABANDONED, CONVERTED, MERGED
+  couponCode       String?   @map("coupon_code")
+  notes            String?
+  isB2B            Boolean   @default(false) @map("is_b2b")
+  b2bQuoteId       String?   @map("b2b_quote_id")
+  purchaseOrderRef String?   @map("purchase_order_ref")
+  version          Int       @default(1)
   deletedAt  DateTime? @map("deleted_at")
   deletedBy  String?   @map("deleted_by")
   createdAt  DateTime  @default(now()) @map("created_at")
@@ -2717,3 +2723,218 @@ model OAuthAccount {
   @@index([email])
   @@map("oauth_accounts")
 }
+
+// ==============================================================================
+// 10. B2B BUYER ORGANIZATIONS, RFQS & NEGOTIATED COMMERCE (Milestone 124)
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 53. B2B Buyer Organization
+// ------------------------------------------------------------------------------
+/// Registered corporate entity or wholesale business buyer organization
+model BuyerOrganization {
+  id                 String    @id @default(uuid())
+  companyName        String    @map("company_name")
+  businessType       String    @map("business_type") // CORPORATION, LLC, PARTNERSHIP, SOLE_PROPRIETORSHIP
+  tradeLicenseNumber String?   @map("trade_license_number")
+  binNumber          String?   @map("bin_number")
+  tinNumber          String?   @map("tin_number")
+  status             String    @default("PENDING_APPROVAL") // PENDING_APPROVAL, APPROVED, REJECTED, SUSPENDED
+  creditStatus       String    @default("DISABLED") @map("credit_status") // DISABLED, PENDING_APPROVAL, APPROVED, SUSPENDED
+  creditLimitPoisha  BigInt    @default(0) @map("credit_limit_poisha")
+  creditTermsDays    Int       @default(0) @map("credit_terms_days") // 0 = Immediate, 15 = Net 15, 30 = Net 30
+  rewardsRuleVersion String    @default("b2b-rewards-v1.0") @map("rewards_rule_version")
+  earnsProductPoints Boolean   @default(false) @map("earns_product_points")
+  approvedAt         DateTime? @map("approved_at")
+  approvedBy         String?   @map("approved_by")
+  rejectionReason    String?   @map("rejection_reason")
+  version            Int       @default(1)
+  deletedAt          DateTime? @map("deleted_at")
+  deletedBy          String?   @map("deleted_by")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  members BuyerOrganizationMember[]
+  rfqs    B2BRfq[]
+  quotes  B2BQuote[]
+
+  @@index([status])
+  @@index([creditStatus])
+  @@index([deletedAt])
+  @@map("buyer_organizations")
+}
+
+// ------------------------------------------------------------------------------
+// 54. B2B Buyer Organization Member
+// ------------------------------------------------------------------------------
+/// Organization member with role-based access and purchasing authority
+model BuyerOrganizationMember {
+  id                  String            @id @default(uuid())
+  organizationId      String            @map("organization_id")
+  userId              String            @map("user_id")
+  role                String            @default("PURCHASER") // ADMIN, PURCHASER, APPROVER, VIEWER
+  spendingLimitPoisha BigInt            @default(0) @map("spending_limit_poisha") // 0 = requires approval
+  status              String            @default("ACTIVE") // ACTIVE, INVITED, SUSPENDED
+  version             Int               @default(1)
+  deletedAt           DateTime?         @map("deleted_at")
+  deletedBy           String?           @map("deleted_by")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+
+  organization        BuyerOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  rfqsRequested       B2BRfq[]
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+  @@map("buyer_organization_members")
+}
+
+// ------------------------------------------------------------------------------
+// 55. Request for Quote (RFQ)
+// ------------------------------------------------------------------------------
+/// Request for quote submitted by a B2B buyer organization
+model B2BRfq {
+  id                   String                  @id @default(uuid())
+  rfqNumber            String                  @unique @map("rfq_number") // e.g. RFQ-202610-0001
+  organizationId       String                  @map("organization_id")
+  requesterId          String                  @map("requester_id")
+  sellerId             String?                 @map("seller_id") // Optional targeted seller
+  title                String
+  status               String                  @default("SUBMITTED") // DRAFT, SUBMITTED, UNDER_REVIEW, QUOTED, ACCEPTED, REJECTED, EXPIRED, CANCELLED
+  purchaseOrderRef     String?                 @map("purchase_order_ref")
+  currency             String                  @default("BDT")
+  requiredDeliveryDate DateTime?               @map("required_delivery_date")
+  shippingAddress      String?                 @map("shipping_address")
+  notes                String?
+  expiresAt            DateTime                @map("expires_at")
+  submittedAt          DateTime                @default(now()) @map("submitted_at")
+  version              Int                     @default(1)
+  deletedAt            DateTime?               @map("deleted_at")
+  deletedBy            String?                 @map("deleted_by")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @updatedAt @map("updated_at")
+
+  organization         BuyerOrganization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requester            BuyerOrganizationMember @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  seller               Seller?                 @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  items                B2BRfqItem[]
+  quotes               B2BQuote[]
+
+  @@index([organizationId, status])
+  @@index([sellerId, status])
+  @@index([status, expiresAt])
+  @@index([deletedAt])
+  @@map("b2b_rfqs")
+}
+
+// ------------------------------------------------------------------------------
+// 56. RFQ Line Items
+// ------------------------------------------------------------------------------
+/// Line item within an RFQ with MOQ validation and target pricing
+model B2BRfqItem {
+  id                String  @id @default(uuid())
+  rfqId             String  @map("rfq_id")
+  productId         String  @map("product_id")
+  variantId         String? @map("variant_id")
+  productTitle      String  @map("product_title")
+  quantity          Int
+  targetPricePoisha BigInt? @map("target_price_poisha")
+  specifications    String?
+  minOrderQuantity  Int     @default(1) @map("min_order_quantity")
+
+  rfq B2BRfq @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+
+  @@index([rfqId])
+  @@map("b2b_rfq_items")
+}
+
+// ------------------------------------------------------------------------------
+// 57. B2B Negotiated Quote
+// ------------------------------------------------------------------------------
+/// Seller response or counter-offer with pricing tiers, tax, shipping, and payment terms
+model B2BQuote {
+  id              String            @id @default(uuid())
+  quoteNumber     String            @unique @map("quote_number") // e.g. QUO-202610-0001
+  rfqId           String            @map("rfq_id")
+  organizationId  String            @map("organization_id")
+  sellerId        String            @map("seller_id")
+  currentVersion  Int               @default(1) @map("current_version")
+  status          String            @default("PENDING_BUYER_REVIEW") // PENDING_BUYER_REVIEW, PENDING_INTERNAL_APPROVAL, ACCEPTED, REJECTED, EXPIRED, CONVERTED
+  currency        String            @default("BDT")
+  validUntil      DateTime          @map("valid_until")
+  poishaSubtotal  BigInt            @map("poisha_subtotal")
+  taxPoisha       BigInt            @default(0) @map("tax_poisha")
+  shippingPoisha  BigInt            @default(0) @map("shipping_poisha")
+  totalPoisha     BigInt            @map("total_poisha")
+  pointsAwarded   Int               @default(0) @map("points_awarded")
+  ruleVersion     String            @default("b2b-rewards-v1.0") @map("rule_version")
+  paymentTerms    String            @default("IMMEDIATE") @map("payment_terms") // IMMEDIATE, NET_15, NET_30, NET_60
+  convertedCartId String?           @map("converted_cart_id")
+  version         Int               @default(1)
+  deletedAt       DateTime?         @map("deleted_at")
+  deletedBy       String?           @map("deleted_by")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  organization    BuyerOrganization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rfq             B2BRfq            @relation(fields: [rfqId], references: [id], onDelete: Restrict)
+  seller          Seller            @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  items           B2BQuoteItem[]
+  versions        B2BQuoteVersion[]
+
+  @@index([organizationId, status])
+  @@index([sellerId, status])
+  @@index([rfqId])
+  @@index([validUntil])
+  @@index([deletedAt])
+  @@map("b2b_quotes")
+}
+
+// ------------------------------------------------------------------------------
+// 58. B2B Quote Line Items
+// ------------------------------------------------------------------------------
+/// Line item within a B2B quote with unit price and quantity break tier
+model B2BQuoteItem {
+  id                String   @id @default(uuid())
+  quoteId           String   @map("quote_id")
+  productId         String   @map("product_id")
+  variantId         String?  @map("variant_id")
+  productTitle      String   @map("product_title")
+  quantity          Int
+  unitPricePoisha   BigInt   @map("unit_price_poisha")
+  lineTotalPoisha   BigInt   @map("line_total_poisha")
+  quantityBreakTier String?  @map("quantity_break_tier")
+  leadTimeDays      Int?     @map("lead_time_days")
+
+  quote B2BQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@map("b2b_quote_items")
+}
+
+// ------------------------------------------------------------------------------
+// 59. B2B Quote Version History
+// ------------------------------------------------------------------------------
+/// Immutable negotiation snapshot and historical version tracking
+model B2BQuoteVersion {
+  id             String   @id @default(uuid())
+  quoteId        String   @map("quote_id")
+  versionNumber  Int      @map("version_number")
+  proposedBy     String   @map("proposed_by") // SELLER, BUYER
+  proposerUserId String   @map("proposer_user_id")
+  totalPoisha    BigInt   @map("total_poisha")
+  itemsSnapshot  Json     @map("items_snapshot")
+  paymentTerms   String   @map("payment_terms")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  quote B2BQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, versionNumber])
+  @@index([quoteId])
+  @@map("b2b_quote_versions")
+}
+

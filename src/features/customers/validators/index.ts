@@ -68,3 +68,5 @@ export const RegisterBusinessBuyerSchema = z.object({
 export type RegisterBusinessBuyerInput = z.infer<typeof RegisterBusinessBuyerSchema>;
 
 export * from './wishlist.validators';
+export * from './b2b.validators';
+
