@@ -137,6 +137,8 @@ model User {
   applicationReviews     SellerApplicationReview[] @relation("SellerApplicationReviewer")
   couponRedemptions      CouponRedemption[]
   buyerOrgMemberships    BuyerOrganizationMember[]
+  productReviews         ProductReview[]
+  productReviewVotes     ProductReviewVote[]
 
   @@index([status])
   @@index([deletedAt])
@@ -1283,6 +1285,7 @@ model Product {
   duplicateFingerprint ProductDuplicateFingerprint?
   priceListRules   PriceListRule[]
   priceHistory     PriceHistory[]
+  reviews          ProductReview[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -1333,6 +1336,7 @@ model ProductVariant {
   orderItems     OrderItem[]
   priceListRules PriceListRule[]
   priceHistory   PriceHistory[]
+  reviews        ProductReview[]
 
   @@index([productId])
   @@index([isActive])
@@ -2937,4 +2941,92 @@ model B2BQuoteVersion {
   @@index([quoteId])
   @@map("b2b_quote_versions")
 }
+
+// ==============================================================================
+// 11. CUSTOMER EXPERIENCE: VERIFIED REVIEWS, RATINGS & MEDIA (Milestone 125)
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 60. Product Customer Review
+// ------------------------------------------------------------------------------
+/// Customer product reviews with verified-purchase enforcement, 1-5 star ratings,
+/// media attachments, and official seller responses.
+model ProductReview {
+  id                  String               @id @default(uuid())
+  productId           String               @map("product_id")
+  variantId           String?              @map("variant_id")
+  userId              String               @map("user_id")
+  orderId             String?              @map("order_id")
+  orderItemId         String?              @map("order_item_id")
+  rating              Int // 1 to 5 stars
+  title               String?
+  comment             String
+  isVerifiedPurchase  Boolean              @default(true) @map("is_verified_purchase")
+  status              String               @default("APPROVED") // APPROVED, PENDING, REJECTED, FLAGGED
+  rejectionReason     String?              @map("rejection_reason")
+  helpfulVotesCount   Int                  @default(0) @map("helpful_votes_count")
+  unhelpfulVotesCount Int                  @default(0) @map("unhelpful_votes_count")
+  sellerResponse      String?              @map("seller_response")
+  sellerRespondedAt   DateTime?            @map("seller_responded_at")
+  sellerRespondedBy   String?              @map("seller_responded_by")
+  version             Int                  @default(1)
+  deletedAt           DateTime?            @map("deleted_at")
+  deletedBy           String?              @map("deleted_by")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+
+  product             Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  variant             ProductVariant?      @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  media               ProductReviewMedia[]
+  votes               ProductReviewVote[]
+
+  @@unique([userId, productId])
+  @@index([productId, status])
+  @@index([userId, status])
+  @@index([rating])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("product_reviews")
+}
+
+// ------------------------------------------------------------------------------
+// 61. Product Review Media Attachments
+// ------------------------------------------------------------------------------
+/// Uploaded user images and media showcasing unboxing or product verification
+model ProductReviewMedia {
+  id           String        @id @default(uuid())
+  reviewId     String        @map("review_id")
+  mediaType    String        @default("IMAGE") @map("media_type") // IMAGE, VIDEO
+  url          String
+  altText      String?       @map("alt_text")
+  displayOrder Int           @default(0) @map("display_order")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  review       ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+  @@map("product_review_media")
+}
+
+// ------------------------------------------------------------------------------
+// 62. Product Review Helpful Feedback Votes
+// ------------------------------------------------------------------------------
+/// Community votes assessing whether a review was helpful or unhelpful
+model ProductReviewVote {
+  id        String        @id @default(uuid())
+  reviewId  String        @map("review_id")
+  userId    String        @map("user_id")
+  isHelpful Boolean       @map("is_helpful")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  review    ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+  @@map("product_review_votes")
+}
+
 
