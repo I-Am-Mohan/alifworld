@@ -1351,6 +1351,57 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/search/degraded-mode': {
+      get: {
+        tags: ['Search & Discovery'],
+        summary: 'Get Search Degraded Mode Telemetry',
+        description: 'Retrieves current search telemetry metrics, failover query counters, and forced degraded mode status.',
+        responses: {
+          '200': {
+            description: 'Search failover telemetry returned successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Search & Discovery'],
+        summary: 'Configure Search Degraded Mode',
+        description: 'Admin control to force search degraded mode or reset circuit breaker state.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  forced: { type: 'boolean' },
+                  resetCircuit: { type: 'boolean' },
+                },
+                required: ['forced'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Search degraded mode configuration updated successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],
