@@ -85,6 +85,23 @@ export const CommitReservationSchema = z.object({
 
 export type CommitReservationInput = z.infer<typeof CommitReservationSchema>;
 
+export const CompensateInventorySchema = z.object({
+  warehouseId: z.string().min(4, 'Warehouse ID is required'),
+  variantId: z.string().min(4, 'Product Variant ID is required'),
+  quantity: z.number().int().min(1, 'Compensation quantity must be at least 1 unit'),
+  orderId: z.string().optional().nullable(),
+  reservationId: z.string().optional().nullable(),
+  reason: z.string().min(5, 'Mandatory audit reason required for compensating inventory operation'),
+});
+
+export type CompensateInventoryInput = z.infer<typeof CompensateInventorySchema>;
+
+export const ExpireStaleReservationsSchema = z.object({
+  cutoffDate: z.coerce.date().optional(),
+});
+
+export type ExpireStaleReservationsInput = z.infer<typeof ExpireStaleReservationsSchema>;
+
 export const AdjustStockSchema = z.object({
   stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
   movementType: z.enum([MovementType.ADJUST, MovementType.DAMAGE, MovementType.WRITE_OFF]),

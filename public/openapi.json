@@ -1259,6 +1259,186 @@
         }
       }
     },
+    "/api/v1/inventory/release": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Release Stock Reservation",
+        "description": "Idempotently releases an active checkout stock reservation, returning locked units to available stock balance.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reservationId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reservationId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock reservation released successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/commit": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Commit Stock Reservation",
+        "description": "Idempotently commits an active checkout stock reservation upon order placement, decrementing physical on-hand and reserved balances simultaneously.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reservationId": {
+                    "type": "string"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "reservationId",
+                  "orderId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock reservation committed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/expire-stale": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Expire Stale Reservations Sweep",
+        "description": "Automated worker trigger to sweep and expire stale active stock reservations whose TTL has passed.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cutoffDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stale reservation expiry sweep completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/compensate": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Compensating Inventory Operation",
+        "description": "Executes a compensating transaction (order cancellation, payment failure, RMA return) restoring inventory balances with audit log traceability.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "warehouseId": {
+                    "type": "string"
+                  },
+                  "variantId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "reservationId": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "warehouseId",
+                  "variantId",
+                  "quantity",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Compensating inventory transaction executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [

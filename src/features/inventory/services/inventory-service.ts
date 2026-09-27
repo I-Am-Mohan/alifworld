@@ -26,6 +26,7 @@ import {
   CommitReservationSchema,
   AdjustStockSchema,
   QuarantineStockSchema,
+  CompensateInventorySchema,
   ReceiveStockInput,
   ReserveStockInput,
   ReserveStockRawInput,
@@ -33,6 +34,7 @@ import {
   CommitReservationInput,
   AdjustStockInput,
   QuarantineStockInput,
+  CompensateInventoryInput,
 } from '../validators';
 import {
   StockBalanceModel,
@@ -230,6 +232,15 @@ export class InventoryService {
       throw new NotFoundError(`Stock reservation '${validated.reservationId}' not found.`);
     }
 
+    // Idempotent handling: If already released, return existing record and current balance
+    if (reservation.status === ReservationStatus.RELEASED) {
+      const currentBalance = await this.stockBalanceRepo.findById(reservation.stockBalanceId);
+      if (!currentBalance) {
+        throw new NotFoundError(`Stock balance '${reservation.stockBalanceId}' not found.`);
+      }
+      return { reservation, balance: currentBalance };
+    }
+
     if (reservation.status !== ReservationStatus.ACTIVE) {
       throw new ConflictError(`Cannot release reservation in '${reservation.status}' status.`);
     }
@@ -290,6 +301,15 @@ export class InventoryService {
     const reservation = await this.reservationRepo.findById(validated.reservationId);
     if (!reservation) {
       throw new NotFoundError(`Stock reservation '${validated.reservationId}' not found.`);
+    }
+
+    // Idempotent handling: If already committed, return existing record and current balance
+    if (reservation.status === ReservationStatus.COMMITTED) {
+      const currentBalance = await this.stockBalanceRepo.findById(reservation.stockBalanceId);
+      if (!currentBalance) {
+        throw new NotFoundError(`Stock balance '${reservation.stockBalanceId}' not found.`);
+      }
+      return { reservation, balance: currentBalance };
     }
 
     if (reservation.status !== ReservationStatus.ACTIVE) {
@@ -487,6 +507,75 @@ export class InventoryService {
       action: validated.action,
       quantity: validated.quantity,
       actorId,
+      reason: validated.reason,
+    });
+
+    return { balance: updatedBalance, movement };
+  }
+
+  /**
+   * Performs a compensating inventory operation (e.g. order cancelled post-commit, payment failed, RMA return).
+   * Restores on-hand/available stock balances with full audit ledger tracking.
+   */
+  public async compensateInventory(
+    input: CompensateInventoryInput,
+    actorId?: string
+  ): Promise<{ balance: StockBalanceModel; movement: StockMovementModel }> {
+    const validated = CompensateInventorySchema.parse(input);
+
+    const currentBalance = await this.stockBalanceRepo.findByWarehouseAndVariant(
+      validated.warehouseId,
+      validated.variantId
+    );
+
+    if (!currentBalance) {
+      throw new NotFoundError(
+        `Stock balance not found for warehouse '${validated.warehouseId}' and variant '${validated.variantId}'.`
+      );
+    }
+
+    let deltas: { onHandDelta?: number; reservedDelta?: number } = {
+      onHandDelta: validated.quantity,
+    };
+
+    // If reservation ID is provided, check if active and release instead of restoring physical onHand
+    if (validated.reservationId) {
+      const reservation = await this.reservationRepo.findById(validated.reservationId);
+      if (reservation && reservation.status === ReservationStatus.ACTIVE) {
+        deltas = { reservedDelta: -reservation.quantity };
+        await this.reservationRepo.release(reservation.id, reservation.version);
+      }
+    }
+
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      currentBalance.id,
+      currentBalance.version,
+      deltas
+    );
+
+    const movementType = deltas.onHandDelta ? MovementType.RETURN : MovementType.RELEASE;
+
+    const movement = await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType,
+      quantityDelta: validated.quantity,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: validated.orderId ? SourceType.ORDER_FULFILLMENT : SourceType.RETURN_RMA,
+      sourceId: validated.orderId ?? validated.reservationId ?? currentBalance.id,
+      actorId,
+      reason: validated.reason,
+    });
+
+    await this.recordOutboxEvent('inventory.stock_compensated', updatedBalance.id, {
+      warehouseId: validated.warehouseId,
+      variantId: validated.variantId,
+      quantity: validated.quantity,
+      orderId: validated.orderId,
+      reservationId: validated.reservationId,
       reason: validated.reason,
     });
 
