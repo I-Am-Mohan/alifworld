@@ -29,15 +29,33 @@ export async function GET(req: NextRequest) {
 
     const queryTerm = searchParams.get('q') || searchParams.get('query') || '';
 
+    // Multi-brand support: supports ?brand=A&brand=B or ?brands=A,B
+    const brandParams = searchParams.getAll('brand');
+    const brandsQuery = searchParams.get('brands');
+    const brands = brandParams.length > 0
+      ? brandParams
+      : brandsQuery
+      ? brandsQuery.split(',').map((b) => b.trim()).filter(Boolean)
+      : undefined;
+
+    const tagsQuery = searchParams.get('tags');
+    const tags = tagsQuery
+      ? tagsQuery.split(',').map((t) => t.trim()).filter(Boolean)
+      : undefined;
+
     const validatedInput = SearchQuerySchema.parse({
       query: queryTerm,
       locale: searchParams.get('locale') || undefined,
       categorySlug: searchParams.get('categorySlug') || undefined,
       brand: searchParams.get('brand') || undefined,
+      brands,
       sellerId: searchParams.get('sellerId') || undefined,
       minPricePoisha: searchParams.get('minPricePoisha') || undefined,
       maxPricePoisha: searchParams.get('maxPricePoisha') || undefined,
+      minRating: searchParams.get('minRating') || undefined,
+      minPoints: searchParams.get('minPoints') || undefined,
       inStockOnly: searchParams.get('inStockOnly') || undefined,
+      tags,
       sortBy: searchParams.get('sortBy') || undefined,
       page: searchParams.get('page') || undefined,
       limit: searchParams.get('limit') || undefined,

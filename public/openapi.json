@@ -2066,6 +2066,14 @@
             }
           },
           {
+            "name": "brands",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated brand filter"
+          },
+          {
             "name": "sellerId",
             "in": "query",
             "schema": {
@@ -2089,12 +2097,37 @@
             }
           },
           {
+            "name": "minRating",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
+          },
+          {
+            "name": "minPoints",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
             "name": "inStockOnly",
             "in": "query",
             "schema": {
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated tags filter"
           },
           {
             "name": "sortBy",
@@ -2106,7 +2139,8 @@
                 "price_asc",
                 "price_desc",
                 "newest",
-                "rating"
+                "rating",
+                "points_desc"
               ],
               "default": "relevance"
             }

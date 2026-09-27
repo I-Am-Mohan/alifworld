@@ -40,17 +40,22 @@ export type SearchSortOption =
   | 'price_asc'
   | 'price_desc'
   | 'newest'
-  | 'rating';
+  | 'rating'
+  | 'points_desc';
 
 export interface SearchQueryOptions {
   query: string;
   locale?: 'en-BD' | 'bn-BD';
   categorySlug?: string | null;
   brand?: string | null;
+  brands?: string[] | null;
   sellerId?: string | null;
   minPricePoisha?: number;
   maxPricePoisha?: number;
+  minRating?: number;
+  minPoints?: number;
   inStockOnly?: boolean;
+  tags?: string[] | null;
   sortBy?: SearchSortOption;
   page?: number;
   limit?: number;
@@ -59,6 +64,7 @@ export interface SearchQueryOptions {
 export interface SearchFacets {
   categories: Record<string, number>;
   brands: Record<string, number>;
+  ratings?: Record<string, number>;
   priceRanges?: {
     under500: number;
     from500to1000: number;

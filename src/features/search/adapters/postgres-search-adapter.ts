@@ -17,6 +17,63 @@ import {
   SearchFacets,
 } from '../types';
 
+function damerauLevenshteinDistance(s1: string, s2: string): number {
+  const m = s1.length;
+  const n = s2.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1, // deletion
+        dp[i][j - 1] + 1, // insertion
+        dp[i - 1][j - 1] + cost // substitution
+      );
+
+      // Transposition of adjacent characters (e.g. wlaton -> walton, xioami -> xiaomi)
+      if (i > 1 && j > 1 && s1[i - 1] === s2[j - 2] && s1[i - 2] === s2[j - 1]) {
+        dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+function isFuzzyMatch(queryTerm: string, targetText: string): boolean {
+  const lowerTarget = targetText.toLowerCase();
+  const lowerQuery = queryTerm.toLowerCase();
+
+  // Direct substring or inclusion
+  if (lowerTarget.includes(lowerQuery)) return true;
+
+  // Word-level tokenized matching with Damerau-Levenshtein typo tolerance
+  const targetWords = lowerTarget.split(/[\s,.-]+/);
+  const queryWords = lowerQuery.split(/[\s,.-]+/);
+
+  for (const qWord of queryWords) {
+    if (qWord.length < 3) continue;
+    // Allowed typos: 1 for words 4-6 chars, 2 for words >= 7 chars
+    const maxAllowedDist = qWord.length >= 7 ? 2 : qWord.length >= 4 ? 1 : 0;
+
+    for (const tWord of targetWords) {
+      if (tWord.length < 3) continue;
+      // Prefix matching
+      if (tWord.startsWith(qWord) || qWord.startsWith(tWord)) return true;
+
+      if (maxAllowedDist > 0) {
+        const dist = damerauLevenshteinDistance(qWord, tWord);
+        if (dist <= maxAllowedDist) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 export class PostgresSearchAdapter implements SearchServiceInterface {
   // Optional in-memory cache/store for test doubles or disconnected testing
   private memoryDocuments = new Map<string, SearchDocument>();
@@ -180,16 +237,17 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
   private searchMemoryDocuments(options: SearchQueryOptions, startTime: number): SearchResponse {
     let docs = Array.from(this.memoryDocuments.values());
 
-    const queryTerm = options.query?.trim().toLowerCase();
+    const queryTerm = options.query?.trim();
     if (queryTerm) {
       docs = docs.filter((d) => {
-        const titleMatch = d.title.toLowerCase().includes(queryTerm);
-        const titleBnMatch = d.titleBn?.toLowerCase().includes(queryTerm) ?? false;
-        const descMatch = d.description?.toLowerCase().includes(queryTerm) ?? false;
-        const tagMatch = d.tags.some((t) => t.toLowerCase().includes(queryTerm));
-        const brandMatch = d.brand?.toLowerCase().includes(queryTerm) ?? false;
-        const catMatch = d.categoryName?.toLowerCase().includes(queryTerm) ?? false;
-        return titleMatch || titleBnMatch || descMatch || tagMatch || brandMatch || catMatch;
+        const titleMatch = isFuzzyMatch(queryTerm, d.title);
+        const titleBnMatch = d.titleBn ? isFuzzyMatch(queryTerm, d.titleBn) : false;
+        const descMatch = d.description ? isFuzzyMatch(queryTerm, d.description) : false;
+        const descBnMatch = d.descriptionBn ? isFuzzyMatch(queryTerm, d.descriptionBn) : false;
+        const tagMatch = d.tags.some((t) => isFuzzyMatch(queryTerm, t));
+        const brandMatch = d.brand ? isFuzzyMatch(queryTerm, d.brand) : false;
+        const catMatch = d.categoryName ? isFuzzyMatch(queryTerm, d.categoryName) : false;
+        return titleMatch || titleBnMatch || descMatch || descBnMatch || tagMatch || brandMatch || catMatch;
       });
     }
 
@@ -197,7 +255,10 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
       docs = docs.filter((d) => d.categorySlug === options.categorySlug);
     }
 
-    if (options.brand) {
+    if (options.brands && options.brands.length > 0) {
+      const allowedBrands = new Set(options.brands.map((b) => b.toLowerCase()));
+      docs = docs.filter((d) => d.brand && allowedBrands.has(d.brand.toLowerCase()));
+    } else if (options.brand) {
       docs = docs.filter((d) => d.brand?.toLowerCase() === options.brand?.toLowerCase());
     }
 
@@ -213,6 +274,19 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
       docs = docs.filter((d) => d.maxPricePoisha <= options.maxPricePoisha!);
     }
 
+    if (options.minRating !== undefined) {
+      docs = docs.filter((d) => (d.rating ?? 0) >= options.minRating!);
+    }
+
+    if (options.minPoints !== undefined) {
+      docs = docs.filter((d) => d.productPointSnapshot >= options.minPoints!);
+    }
+
+    if (options.tags && options.tags.length > 0) {
+      const requiredTags = new Set(options.tags.map((t) => t.toLowerCase()));
+      docs = docs.filter((d) => d.tags.some((t) => requiredTags.has(t.toLowerCase())));
+    }
+
     if (options.inStockOnly) {
       docs = docs.filter((d) => d.inStock);
     }
@@ -223,6 +297,8 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
       docs.sort((a, b) => b.minPricePoisha - a.minPricePoisha);
     } else if (options.sortBy === 'rating') {
       docs.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+    } else if (options.sortBy === 'points_desc') {
+      docs.sort((a, b) => b.productPointSnapshot - a.productPointSnapshot);
     } else if (options.sortBy === 'newest') {
       docs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
@@ -289,6 +365,10 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
   private aggregateFacets(documents: SearchDocument[]): SearchFacets {
     const categories: Record<string, number> = {};
     const brands: Record<string, number> = {};
+    const ratings: Record<string, number> = {
+      '4_and_above': 0,
+      '3_and_above': 0,
+    };
 
     let under500 = 0;
     let from500to1000 = 0;
@@ -302,6 +382,12 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
       if (doc.brand) {
         brands[doc.brand] = (brands[doc.brand] || 0) + 1;
       }
+      if (doc.rating && doc.rating >= 4) {
+        ratings['4_and_above'] = (ratings['4_and_above'] || 0) + 1;
+      }
+      if (doc.rating && doc.rating >= 3) {
+        ratings['3_and_above'] = (ratings['3_and_above'] || 0) + 1;
+      }
 
       const bdtAmount = doc.minPricePoisha / 100;
       if (bdtAmount < 500) under500++;
@@ -313,6 +399,7 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
     return {
       categories,
       brands,
+      ratings,
       priceRanges: {
         under500,
         from500to1000,

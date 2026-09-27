@@ -14,6 +14,7 @@ export const SearchSortOptionsEnum = z.enum([
   'price_desc',
   'newest',
   'rating',
+  'points_desc',
 ]);
 
 export const SearchQuerySchema = z.object({
@@ -21,10 +22,14 @@ export const SearchQuerySchema = z.object({
   locale: z.enum(['en-BD', 'bn-BD']).default('en-BD'),
   categorySlug: z.string().optional().nullable(),
   brand: z.string().optional().nullable(),
+  brands: z.array(z.string()).optional().nullable(),
   sellerId: z.string().optional().nullable(),
   minPricePoisha: z.coerce.number().int().min(0).optional(),
   maxPricePoisha: z.coerce.number().int().min(0).optional(),
+  minRating: z.coerce.number().min(0).max(5).optional(),
+  minPoints: z.coerce.number().int().min(0).optional(),
   inStockOnly: z.coerce.boolean().default(false),
+  tags: z.array(z.string()).optional().nullable(),
   sortBy: SearchSortOptionsEnum.default('relevance'),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

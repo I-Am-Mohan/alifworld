@@ -66,7 +66,10 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
       filters.push(`categorySlug = "${options.categorySlug}"`);
     }
 
-    if (options.brand) {
+    if (options.brands && options.brands.length > 0) {
+      const brandList = options.brands.map((b) => `"${b}"`).join(', ');
+      filters.push(`brand IN [${brandList}]`);
+    } else if (options.brand) {
       filters.push(`brand = "${options.brand}"`);
     }
 
@@ -86,6 +89,14 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
       filters.push(`maxPricePoisha <= ${options.maxPricePoisha}`);
     }
 
+    if (options.minRating !== undefined) {
+      filters.push(`rating >= ${options.minRating}`);
+    }
+
+    if (options.minPoints !== undefined) {
+      filters.push(`productPointSnapshot >= ${options.minPoints}`);
+    }
+
     const sort: string[] = [];
     if (options.sortBy === 'price_asc') {
       sort.push('minPricePoisha:asc');
@@ -95,6 +106,8 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
       sort.push('createdAt:desc');
     } else if (options.sortBy === 'rating') {
       sort.push('rating:desc');
+    } else if (options.sortBy === 'points_desc') {
+      sort.push('productPointSnapshot:desc');
     }
 
     const searchPromise = this.client
@@ -219,6 +232,10 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
   private mapMeiliFacets(facetDistribution: any, hits: SearchDocument[]): SearchFacets {
     const categories: Record<string, number> = facetDistribution?.categoryName || {};
     const brands: Record<string, number> = facetDistribution?.brand || {};
+    const ratings: Record<string, number> = {
+      '4_and_above': 0,
+      '3_and_above': 0,
+    };
 
     let under500 = 0;
     let from500to1000 = 0;
@@ -226,6 +243,13 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
     let over5000 = 0;
 
     for (const h of hits) {
+      if (h.rating && h.rating >= 4) {
+        ratings['4_and_above'] = (ratings['4_and_above'] || 0) + 1;
+      }
+      if (h.rating && h.rating >= 3) {
+        ratings['3_and_above'] = (ratings['3_and_above'] || 0) + 1;
+      }
+
       const bdtAmount = h.minPricePoisha / 100;
       if (bdtAmount < 500) under500++;
       else if (bdtAmount <= 1000) from500to1000++;
@@ -236,6 +260,7 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
     return {
       categories,
       brands,
+      ratings,
       priceRanges: {
         under500,
         from500to1000,
