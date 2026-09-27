@@ -1282,6 +1282,71 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/search/index/rebuild': {
+      post: {
+        tags: ['Search & Discovery'],
+        summary: 'Rebuild Full Search Catalog Index',
+        description: 'Admin-only trigger to batch-extract and reindex all published products into search engines.',
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  batchSize: { type: 'integer', minimum: 1, maximum: 500, default: 50 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Full catalog search reindexing completed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/v1/search/index/sync': {
+      post: {
+        tags: ['Search & Discovery'],
+        summary: 'Incrementally Synchronize Product Search Index',
+        description: 'Synchronizes one or more products to the search index incrementally based on published/deleted state.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  productId: { type: 'string' },
+                  productIds: { type: 'array', items: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Product search index synchronized successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],

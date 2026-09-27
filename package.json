@@ -25,6 +25,7 @@
     "seed:geo": "bun run scripts/run-with-env.ts bun run scripts/seed-bangladesh-geo.ts",
     "db:studio": "bun run scripts/run-with-env.ts prisma studio",
     "worker": "bun run src/workers/index.ts",
+    "search:reindex": "bun run scripts/reindex-search-catalog.ts",
     "openapi": "bun run scripts/generate-openapi.ts",
     "ci:check": "bun run format:check && bun run lint && bun run typecheck && bun run test && bun run openapi && bun run build",
     "commitlint": "commitlint"
