@@ -19,6 +19,7 @@ export class InventoryPolicy {
     const isSeller =
       actor.roles.includes('SELLER') ||
       actor.roles.includes('SELLER_OWNER') ||
+      actor.roles.includes('SELLER_ADMIN') ||
       actor.roles.includes('SELLER_MANAGER') ||
       actor.roles.includes('SELLER_STAFF');
 
@@ -45,6 +46,7 @@ export class InventoryPolicy {
     const isSeller =
       actor.roles.includes('SELLER') ||
       actor.roles.includes('SELLER_OWNER') ||
+      actor.roles.includes('SELLER_ADMIN') ||
       actor.roles.includes('SELLER_MANAGER') ||
       actor.roles.includes('SELLER_STAFF');
 

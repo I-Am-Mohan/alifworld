@@ -166,7 +166,7 @@ export class InventoryService {
     }
 
     // 2. Atomic OCC Retry Loop for Concurrency Protection
-    const maxRetries = 3;
+    const maxRetries = 10;
     let attempt = 0;
     let updatedBalance: StockBalanceModel | null = null;
 
@@ -198,7 +198,9 @@ export class InventoryService {
         break; // Success! Break retry loop
       } catch (err) {
         if (err instanceof ConflictError && attempt < maxRetries) {
-          // Concurrency collision occurred; retry with fresh balance
+          // Concurrency collision occurred; exponential backoff with random jitter
+          const backoffMs = Math.min(100, Math.pow(2, attempt) * 4 + Math.random() * 15);
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
           continue;
         }
         throw err;
