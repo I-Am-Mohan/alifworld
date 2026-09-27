@@ -2652,6 +2652,64 @@
         }
       }
     },
+    "/api/v1/seo/metadata": {
+      "get": {
+        "tags": [
+          "SEO & Metadata"
+        ],
+        "summary": "Get Entity SEO Metadata and Schema.org JSON-LD",
+        "description": "Retrieves canonical URLs, localized hreflang links, OpenGraph/Twitter social cards, and Schema.org JSON-LD for products, categories, brands, collections, and sellers.",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "product",
+                "category",
+                "brand",
+                "seller",
+                "collection"
+              ]
+            }
+          },
+          {
+            "name": "slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en-BD",
+                "bn-BD"
+              ],
+              "default": "en-BD"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SEO metadata and JSON-LD returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
