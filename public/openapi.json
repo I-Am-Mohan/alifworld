@@ -7866,6 +7866,117 @@
       }
     },
     "/api/v1/customer/addresses/{id}": {
+      "get": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Get an authenticated customer address by ID",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "adr_..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address retrieved successfully"
+          },
+          "404": {
+            "description": "Address not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Update an authenticated customer address with OCC",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "adr_..."
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "version"
+                ],
+                "properties": {
+                  "version": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address updated successfully"
+          },
+          "409": {
+            "description": "Version conflict"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Set customer address as default",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "adr_..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address set as primary default"
+          },
+          "404": {
+            "description": "Address not found"
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Customer & Ownership"

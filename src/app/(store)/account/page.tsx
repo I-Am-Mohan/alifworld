@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function CustomerAccountPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'consent' | 'security' | 'organization'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'consent' | 'security' | 'organization'>('profile');
   const [locale, setLocale] = useState<'en-BD' | 'bn-BD'>('en-BD');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -18,6 +18,47 @@ export default function CustomerAccountPage() {
   const [phone] = useState('+8801711223344');
   const [preferredLang, setPreferredLang] = useState<'en-BD' | 'bn-BD'>('en-BD');
   const [profileVersion, setProfileVersion] = useState(1);
+
+  // Address Book states
+  const [addresses, setAddresses] = useState([
+    {
+      id: 'addr_01',
+      label: 'Home (বাসা)',
+      recipientName: 'Rahim Ahmed',
+      recipientPhone: '+8801711223344',
+      divisionCode: 'DHAKA',
+      district: 'Dhaka',
+      upazila: 'Gulshan / Banani',
+      addressLine: 'House 42, Road 11, Banani Block D',
+      postalCode: '1213',
+      isDefault: true,
+      version: 1,
+    },
+    {
+      id: 'addr_02',
+      label: 'Office (অফিস)',
+      recipientName: 'Rahim Ahmed',
+      recipientPhone: '+8801711223344',
+      divisionCode: 'DHAKA',
+      district: 'Dhaka',
+      upazila: 'Motijheel',
+      addressLine: 'City Centre, Level 14, Motijheel C/A',
+      postalCode: '1000',
+      isDefault: false,
+      version: 1,
+    },
+  ]);
+
+  const [showAddAddressModal, setShowAddAddressModal] = useState(false);
+  const [newLabel, setNewLabel] = useState('Home');
+  const [newRecipientName, setNewRecipientName] = useState('Rahim Ahmed');
+  const [newRecipientPhone, setNewRecipientPhone] = useState('+8801711223344');
+  const [newDivision, setNewDivision] = useState('DHAKA');
+  const [newDistrict, setNewDistrict] = useState('Dhaka');
+  const [newUpazila, setNewUpazila] = useState('Dhanmondi');
+  const [newAddressLine, setNewAddressLine] = useState('');
+  const [newPostalCode, setNewPostalCode] = useState('1209');
+  const [newIsDefault, setNewIsDefault] = useState(false);
 
   // Preference states
   const [emailMarketing, setEmailMarketing] = useState(false);
@@ -46,6 +87,50 @@ export default function CustomerAccountPage() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleSetDefaultAddress = (id: string) => {
+    setAddresses((prev) =>
+      prev.map((a) => ({
+        ...a,
+        isDefault: a.id === id,
+      }))
+    );
+    showToast(isBn ? 'ডিফল্ট ডেলিভারি ঠিকানা সেট করা হয়েছে।' : 'Default delivery address updated.');
+  };
+
+  const handleDeleteAddress = (id: string) => {
+    setAddresses((prev) => prev.filter((a) => a.id !== id));
+    showToast(isBn ? 'ঠিকানা অপসারিত হয়েছে।' : 'Delivery address removed.');
+  };
+
+  const handleAddAddressSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAddressLine.trim()) return;
+
+    const newAddr = {
+      id: `addr_${Date.now()}`,
+      label: newLabel,
+      recipientName: newRecipientName,
+      recipientPhone: newRecipientPhone,
+      divisionCode: newDivision,
+      district: newDistrict,
+      upazila: newUpazila,
+      addressLine: newAddressLine,
+      postalCode: newPostalCode,
+      isDefault: newIsDefault,
+      version: 1,
+    };
+
+    if (newIsDefault) {
+      setAddresses((prev) => [newAddr, ...prev.map((a) => ({ ...a, isDefault: false }))]);
+    } else {
+      setAddresses((prev) => [...prev, newAddr]);
+    }
+
+    setShowAddAddressModal(false);
+    setNewAddressLine('');
+    showToast(isBn ? 'নতুন ডেলিভারি ঠিকানা যুক্ত করা হয়েছে।' : 'New delivery address added successfully.');
   };
 
   const handleProfileSubmit = (e: React.FormEvent) => {
@@ -172,10 +257,11 @@ export default function CustomerAccountPage() {
         <div className="flex border-b border-slate-200 space-x-6 text-xs font-bold overflow-x-auto">
           {[
             { key: 'profile', label: isBn ? 'প্রোফাইল' : 'Profile Settings' },
+            { key: 'addresses', label: isBn ? 'ঠিকানা খাতা' : 'Address Book' },
             { key: 'preferences', label: isBn ? 'বিজ্ঞপ্তি পছন্দ' : 'Notification Preferences' },
             { key: 'consent', label: isBn ? 'সম্মতি ও গোপনীয়তা' : 'Consent & Privacy' },
             { key: 'security', label: isBn ? 'অ্যাকাউন্ট নিরাপত্তা' : 'Account Security' },
-            { key: 'organization', label: isBn ? 'বিজনে বায়ার (B2B)' : 'Business Buyer (B2B)' },
+            { key: 'organization', label: isBn ? 'বিজনেস বায়ার (B2B)' : 'Business Buyer (B2B)' },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -195,7 +281,7 @@ export default function CustomerAccountPage() {
         {activeTab === 'profile' && (
           <Card className="border border-slate-200 bg-white p-6 max-w-2xl space-y-6">
             <h3 className="text-sm font-black text-slate-900">
-              {isBn ? 'ব্যক্তিগত তথ্য আপডেট করুন' : 'Personal Information'}
+              {isBn ? 'ব্যক্তিগত তথ্য ���পডেট করুন' : 'Personal Information'}
             </h3>
             <form onSubmit={handleProfileSubmit} className="space-y-4 text-xs">
               <div>
@@ -256,6 +342,207 @@ export default function CustomerAccountPage() {
               </div>
             </form>
           </Card>
+        )}
+
+        {/* Tab 2: Address Book */}
+        {activeTab === 'addresses' && (
+          <div className="space-y-6 max-w-4xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-black text-slate-900">
+                  {isBn ? 'সংরক্ষিত ডেলিভারি ঠিকানাসমূহ' : 'Saved Delivery Addresses'}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {isBn
+                    ? 'চেকআউট ও দ্রুত অর্ডারের জন্য আপনার বাংলাদেশ ডেলিভারি ঠিকানা পরিচালনা করুন।'
+                    : 'Manage your verified Bangladesh delivery addresses for fast checkout.'}
+                </p>
+              </div>
+
+              <Button
+                onClick={() => setShowAddAddressModal(true)}
+                className="bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-xs"
+              >
+                + {isBn ? 'নতুন ঠিকানা যোগ করুন' : 'Add New Address'}
+              </Button>
+            </div>
+
+            {/* Modal for adding address */}
+            {showAddAddressModal && (
+              <Card className="border border-[#FF6A00]/40 bg-orange-50/20 p-6 space-y-4">
+                <h4 className="text-sm font-black text-slate-900">
+                  {isBn ? 'নতুন বাংলাদেশ ডেলিভারি ঠিকানা যোগ করুন' : 'Add New Bangladesh Delivery Address'}
+                </h4>
+                <form onSubmit={handleAddAddressSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Address Label</label>
+                      <input
+                        type="text"
+                        value={newLabel}
+                        onChange={(e) => setNewLabel(e.target.value)}
+                        placeholder="Home, Office, etc."
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Recipient Name</label>
+                      <input
+                        type="text"
+                        value={newRecipientName}
+                        onChange={(e) => setNewRecipientName(e.target.value)}
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Recipient Phone (+880)</label>
+                      <input
+                        type="text"
+                        value={newRecipientPhone}
+                        onChange={(e) => setNewRecipientPhone(e.target.value)}
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white font-mono"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Division</label>
+                      <select
+                        value={newDivision}
+                        onChange={(e) => setNewDivision(e.target.value)}
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                      >
+                        <option value="DHAKA">Dhaka (ঢাকা)</option>
+                        <option value="CHITTAGONG">Chittagong (চট্টগ্রাম)</option>
+                        <option value="RAJSHAHI">Rajshahi (রাজশাহী)</option>
+                        <option value="KHULNA">Khulna (খুলনা)</option>
+                        <option value="BARISAL">Barisal (বরিশাল)</option>
+                        <option value="SYLHET">Sylhet (সিলেট)</option>
+                        <option value="RANGPUR">Rangpur (রংপুর)</option>
+                        <option value="MYMENSINGH">Mymensingh (ময়মনসিংহ)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">District</label>
+                      <input
+                        type="text"
+                        value={newDistrict}
+                        onChange={(e) => setNewDistrict(e.target.value)}
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Upazila / Thana</label>
+                      <input
+                        type="text"
+                        value={newUpazila}
+                        onChange={(e) => setNewUpazila(e.target.value)}
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">Postal Code (4-digits)</label>
+                      <input
+                        type="text"
+                        value={newPostalCode}
+                        onChange={(e) => setNewPostalCode(e.target.value)}
+                        maxLength={4}
+                        className="w-full p-2 border border-slate-300 rounded-lg bg-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Street Address Line</label>
+                    <input
+                      type="text"
+                      value={newAddressLine}
+                      onChange={(e) => setNewAddressLine(e.target.value)}
+                      placeholder="House / Holding, Road number, Sector / Area"
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                      required
+                    />
+                  </div>
+
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newIsDefault}
+                      onChange={(e) => setNewIsDefault(e.target.checked)}
+                      className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
+                    />
+                    <span className="text-xs font-semibold text-slate-700">
+                      Set as default delivery address
+                    </span>
+                  </label>
+
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setShowAddAddressModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="bg-[#FF6A00] text-white font-bold">
+                      Save Address
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+            )}
+
+            {/* Address Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {addresses.map((addr) => (
+                <Card
+                  key={addr.id}
+                  className={`p-5 bg-white border transition-shadow space-y-3 ${
+                    addr.isDefault ? 'border-[#FF6A00] shadow-sm' : 'border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-black text-xs text-slate-900">{addr.label}</span>
+                      {addr.isDefault && (
+                        <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                          ✓ Default Address
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center space-x-1">
+                      {!addr.isDefault && (
+                        <button
+                          onClick={() => handleSetDefaultAddress(addr.id)}
+                          className="text-[11px] font-bold text-[#FF6A00] hover:underline px-2 py-1"
+                        >
+                          Make Default
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDeleteAddress(addr.id)}
+                        className="text-[11px] font-bold text-red-500 hover:text-red-700 px-2 py-1"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="text-xs space-y-1 text-slate-600">
+                    <div className="font-bold text-slate-800">
+                      {addr.recipientName} • <span className="font-mono">{addr.recipientPhone}</span>
+                    </div>
+                    <div>{addr.addressLine}</div>
+                    <div>
+                      {addr.upazila ? `${addr.upazila}, ` : ''}{addr.district} - {addr.postalCode}, {addr.divisionCode}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Tab 2: Communication Preferences */}

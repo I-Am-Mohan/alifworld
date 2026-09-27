@@ -9,6 +9,10 @@ export class CustomerAddressService {
     return this.repository.listByUser(userId);
   }
 
+  async getById(userId: string, id: string) {
+    return this.repository.findById(userId, id);
+  }
+
   async create(userId: string, rawInput: CustomerAddressInput) {
     const input = validateAddressHierarchy(rawInput);
     const address = await this.repository.create(userId, input);
@@ -24,6 +28,41 @@ export class CustomerAddressService {
           upazilaId: address.upazilaId,
           isDefault: address.isDefault,
         },
+      },
+    });
+    return address;
+  }
+
+  async update(
+    userId: string,
+    id: string,
+    expectedVersion: number,
+    rawInput: Partial<CustomerAddressInput>
+  ) {
+    const address = await this.repository.update(userId, id, expectedVersion, rawInput);
+    await (prisma as any).auditLog.create({
+      data: {
+        actorId: userId,
+        action: 'CUSTOMER_ADDRESS_UPDATE',
+        resource: 'UserAddress',
+        resourceId: id,
+        metadata: {
+          version: address.version,
+          isDefault: address.isDefault,
+        },
+      },
+    });
+    return address;
+  }
+
+  async setDefault(userId: string, id: string) {
+    const address = await this.repository.setDefault(userId, id);
+    await (prisma as any).auditLog.create({
+      data: {
+        actorId: userId,
+        action: 'CUSTOMER_ADDRESS_SET_DEFAULT',
+        resource: 'UserAddress',
+        resourceId: id,
       },
     });
     return address;
