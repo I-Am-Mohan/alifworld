@@ -2991,6 +2991,369 @@
         }
       }
     },
+    "/api/v1/customer/wishlists": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "List Customer Wishlists",
+        "description": "Retrieves all wishlists belonging to the authenticated customer.",
+        "responses": {
+          "200": {
+            "description": "Customer wishlists returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Create Customer Wishlist",
+        "description": "Creates a new custom wishlist for saving products.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "PRIVATE",
+                      "PUBLIC",
+                      "SHARED_LINK"
+                    ],
+                    "default": "PRIVATE"
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Wishlist created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/wishlists/{id}": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Get Customer Wishlist by ID",
+        "description": "Retrieves a single customer wishlist verifying self-ownership.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wishlist retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Update Customer Wishlist",
+        "description": "Updates wishlist title, description, or visibility.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "PRIVATE",
+                      "PUBLIC",
+                      "SHARED_LINK"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Wishlist updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Delete Custom Wishlist",
+        "description": "Deletes a custom customer wishlist. (Default wishlist cannot be deleted).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wishlist deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/wishlists/{id}/items": {
+      "post": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Add Item to Wishlist",
+        "description": "Adds a product variant item to a customer wishlist with price and point snapshots.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "variantId": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "productId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item added to wishlist successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/wishlists/{id}/items/{itemId}": {
+      "delete": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Remove Item from Wishlist",
+        "description": "Removes a specific item from a customer wishlist.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item removed from wishlist successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/wishlists/{id}/share": {
+      "post": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Generate or Revoke Wishlist Share Link",
+        "description": "Creates a unique cryptographic share token or revokes public sharing.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "GENERATE",
+                      "REVOKE"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Share link generated or revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/wishlists/shared/{token}": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "View Shared Wishlist",
+        "description": "Public endpoint to view a shared customer wishlist. Redacts all customer PII.",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shared wishlist view returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [

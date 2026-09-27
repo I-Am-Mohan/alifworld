@@ -64,3 +64,5 @@ export interface BusinessBuyerOrganization {
   membersCount: number;
   createdAt: string;
 }
+
+export * from './wishlist.types';
