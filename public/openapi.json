@@ -2558,6 +2558,49 @@
         }
       }
     },
+    "/api/v1/catalog/products/{slug}": {
+      "get": {
+        "tags": [
+          "Catalog & Products"
+        ],
+        "summary": "Get Localized Product Details",
+        "description": "Retrieves comprehensive product details, variant selection matrix, available inventory, and JSON-LD structured data. Supports permanent redirect instructions for historical slugs.",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "en-BD",
+                "bn-BD"
+              ],
+              "default": "en-BD"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details or redirect recommendation returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
