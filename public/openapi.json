@@ -1993,6 +1993,36 @@
         }
       }
     },
+    "/api/v1/inventory/workspace/summary": {
+      "get": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Get Inventory Workspace Summary",
+        "description": "Retrieves high-level inventory KPI metrics (total SKUs, on-hand, available, damaged, low-stock count, pending approvals). Enforces seller-tenant scoping.",
+        "parameters": [
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory workspace summary metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [

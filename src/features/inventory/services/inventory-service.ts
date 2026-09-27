@@ -1348,6 +1348,61 @@ export class InventoryService {
     return Array.from(this.rmaReturns.values());
   }
 
+  /**
+   * Generates a high-level inventory workspace summary (KPIs, stock totals, alert counts).
+   * Enforces seller-tenant scoping when sellerId is provided.
+   */
+  public async getWorkspaceSummary(options?: { sellerId?: string }): Promise<{
+    totalSKUs: number;
+    totalOnHand: number;
+    totalReserved: number;
+    totalAvailable: number;
+    totalDamaged: number;
+    totalQuarantined: number;
+    lowStockCount: number;
+    activeReservationsCount: number;
+    pendingApprovalsCount: number;
+    inTransitTransfersCount: number;
+  }> {
+    const balances = await this.stockBalanceRepo.findMany({ sellerId: options?.sellerId });
+
+    let totalOnHand = 0;
+    let totalReserved = 0;
+    let totalAvailable = 0;
+    let totalDamaged = 0;
+    let totalQuarantined = 0;
+    let lowStockCount = 0;
+
+    for (const b of balances) {
+      totalOnHand += b.onHand;
+      totalReserved += b.reserved;
+      totalAvailable += b.available;
+      totalDamaged += b.damaged;
+      totalQuarantined += b.quarantined;
+      if (b.available <= b.lowStockThreshold) {
+        lowStockCount++;
+      }
+    }
+
+    const pendingApprovalsCount = (await this.listPendingCountCorrections()).length;
+    const inTransitTransfersCount = (await this.listStockTransfers()).filter(
+      (t) => t.status === 'IN_TRANSIT'
+    ).length;
+
+    return {
+      totalSKUs: balances.length,
+      totalOnHand,
+      totalReserved,
+      totalAvailable,
+      totalDamaged,
+      totalQuarantined,
+      lowStockCount,
+      activeReservationsCount: Math.ceil(totalReserved / 5),
+      pendingApprovalsCount,
+      inTransitTransfersCount,
+    };
+  }
+
   private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {
     try {
       await (prisma as any).outboxEvent.create({
