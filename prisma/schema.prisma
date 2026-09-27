@@ -139,6 +139,10 @@ model User {
   buyerOrgMemberships    BuyerOrganizationMember[]
   productReviews         ProductReview[]
   productReviewVotes     ProductReviewVote[]
+  productQuestions       ProductQuestion[]
+  productAnswers         ProductAnswer[]
+  productQuestionVotes   ProductQuestionVote[]
+  productAnswerVotes     ProductAnswerVote[]
 
   @@index([status])
   @@index([deletedAt])
@@ -429,6 +433,7 @@ model Seller {
   couponRedemptions   CouponRedemption[]
   b2bRfqs             B2BRfq[]
   b2bQuotes           B2BQuote[]
+  productAnswers      ProductAnswer[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -1286,6 +1291,7 @@ model Product {
   priceListRules   PriceListRule[]
   priceHistory     PriceHistory[]
   reviews          ProductReview[]
+  questions        ProductQuestion[]
 
   @@index([sellerId])
   @@index([categoryId])
@@ -3028,5 +3034,112 @@ model ProductReviewVote {
   @@index([userId])
   @@map("product_review_votes")
 }
+
+// ==============================================================================
+// 12. CUSTOMER EXPERIENCE: PRE-SALE PRODUCT QUESTIONS & ANSWERS (Milestone 126)
+// ==============================================================================
+
+// ------------------------------------------------------------------------------
+// 63. Product Customer Question
+// ------------------------------------------------------------------------------
+/// Pre-sale customer inquiries on products (sizing, warranty, compatibility, delivery)
+model ProductQuestion {
+  id              String                @id @default(uuid())
+  productId       String                @map("product_id")
+  userId          String                @map("user_id")
+  question        String
+  status          String                @default("APPROVED") // APPROVED, PENDING, REJECTED, FLAGGED
+  rejectionReason String?               @map("rejection_reason")
+  isAnswered      Boolean               @default(false) @map("is_answered")
+  upvotesCount    Int                   @default(0) @map("upvotes_count")
+  version         Int                   @default(1)
+  deletedAt       DateTime?             @map("deleted_at")
+  deletedBy       String?               @map("deleted_by")
+  createdAt       DateTime              @default(now()) @map("created_at")
+  updatedAt       DateTime              @updatedAt @map("updated_at")
+
+  product         Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  answers         ProductAnswer[]
+  votes           ProductQuestionVote[]
+
+  @@index([productId, status, isAnswered])
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("product_questions")
+}
+
+// ------------------------------------------------------------------------------
+// 64. Product Answer
+// ------------------------------------------------------------------------------
+/// Official seller answers and verified responses to pre-sale customer questions
+model ProductAnswer {
+  id               String              @id @default(uuid())
+  questionId       String              @map("question_id")
+  sellerId         String?             @map("seller_id")
+  userId           String              @map("user_id")
+  answer           String
+  isOfficialSeller Boolean             @default(true) @map("is_official_seller")
+  status           String              @default("APPROVED") // APPROVED, PENDING, REJECTED, FLAGGED
+  rejectionReason  String?             @map("rejection_reason")
+  upvotesCount     Int                 @default(0) @map("upvotes_count")
+  version          Int                 @default(1)
+  deletedAt        DateTime?           @map("deleted_at")
+  deletedBy        String?             @map("deleted_by")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  question         ProductQuestion     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  seller           Seller?             @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  user             User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  votes            ProductAnswerVote[]
+
+  @@index([questionId, status])
+  @@index([sellerId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("product_answers")
+}
+
+// ------------------------------------------------------------------------------
+// 65. Product Question Upvotes
+// ------------------------------------------------------------------------------
+/// Community upvotes assessing question relevance and customer interest
+model ProductQuestionVote {
+  id         String          @id @default(uuid())
+  questionId String          @map("question_id")
+  userId     String          @map("user_id")
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  question   ProductQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, userId])
+  @@index([questionId])
+  @@index([userId])
+  @@map("product_question_votes")
+}
+
+// ------------------------------------------------------------------------------
+// 66. Product Answer Upvotes
+// ------------------------------------------------------------------------------
+/// Community upvotes assessing answer helpfulness
+model ProductAnswerVote {
+  id        String        @id @default(uuid())
+  answerId  String        @map("answer_id")
+  userId    String        @map("user_id")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  answer    ProductAnswer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([answerId, userId])
+  @@index([answerId])
+  @@index([userId])
+  @@map("product_answer_votes")
+}
+
 
 
