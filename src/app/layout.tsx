@@ -53,6 +53,12 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="light">
       <body className="antialiased bg-[#FAF9F6] text-slate-900 selection:bg-brand-orange selection:text-white min-h-screen">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#FF6A00] focus:text-white focus:rounded-lg focus:font-bold focus:shadow-lg focus:outline-none"
+        >
+          {locale === 'bn-BD' ? 'মূল বিষয়বস্তুতে যান' : 'Skip to main content'}
+        </a>
         <I18nProvider initialLocale={locale}>
           <AuthWrapper>{children}</AuthWrapper>
         </I18nProvider>

@@ -72,7 +72,7 @@ export default function PublicSellerStorefrontPage() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
         {loading ? (
           <div className="p-20 text-center text-xs text-slate-500 font-medium">
             Loading merchant storefront...

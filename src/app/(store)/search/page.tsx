@@ -244,7 +244,7 @@ export default function StorefrontSearchPage() {
       </header>
 
       {/* Main Layout: Sidebar Filters + Product Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 flex flex-col md:flex-row gap-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 flex flex-col md:flex-row gap-8">
         {/* Faceted Filters Sidebar */}
         <aside className="w-full md:w-64 shrink-0 space-y-6">
           <div className="flex items-center justify-between">

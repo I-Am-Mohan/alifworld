@@ -111,7 +111,7 @@ export default function ProductDetailPage() {
       </header>
 
       {/* Main PDP Layout */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
         {/* Breadcrumb Navigation */}
         {product?.breadcrumbs && (
           <nav aria-label="Breadcrumbs" className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
