@@ -1549,6 +1549,30 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/sellers/{slug}/storefront': {
+      get: {
+        tags: ['Seller Operations'],
+        summary: 'Get Public Seller Storefront',
+        description: 'Retrieves public seller store profile, business policies, and catalog products strictly scoped to the seller ID.',
+        parameters: [
+          { name: 'slug', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'categorySlug', in: 'query', schema: { type: 'string' } },
+          { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['relevance', 'price_asc', 'price_desc', 'points_desc'] } },
+        ],
+        responses: {
+          '200': {
+            description: 'Public seller store profile and catalog',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/ApiSuccessEnvelope',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/v1/auth/register': {
       post: {
         tags: ['Authentication'],
