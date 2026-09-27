@@ -123,6 +123,36 @@ export interface StockMovementModel {
   createdAt: Date;
 }
 
+export interface StockTransferRecord {
+  id: string;
+  fromWarehouseId: string;
+  toWarehouseId: string;
+  variantId: string;
+  quantity: number;
+  status: 'IN_TRANSIT' | 'COMPLETED' | 'CANCELLED';
+  reason?: string | null;
+  initiatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface StockCountCorrectionRecord {
+  id: string;
+  countSessionId: string;
+  stockBalanceId: string;
+  currentOnHand: number;
+  countedQuantity: number;
+  variance: number;
+  reason: string;
+  requiresApproval: boolean;
+  status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+  submittedBy: string;
+  approvedBy?: string | null;
+  rejectionReason?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 /**
  * Pure calculation helper enforcing the core inventory invariant:
  * Available = onHand - reserved - damaged - quarantined

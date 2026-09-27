@@ -1568,6 +1568,251 @@
         }
       }
     },
+    "/api/v1/inventory/transfers": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Initiate Inter-Warehouse Stock Transfer",
+        "description": "Initiates a stock transfer between source and destination warehouses, setting state to IN_TRANSIT.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fromWarehouseId": {
+                    "type": "string"
+                  },
+                  "toWarehouseId": {
+                    "type": "string"
+                  },
+                  "variantId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "fromWarehouseId",
+                  "toWarehouseId",
+                  "variantId",
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stock transfer initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/transfers/receive": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Receive Inter-Warehouse Stock Transfer",
+        "description": "Receives an in-transit stock transfer at destination warehouse, setting state to COMPLETED.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transferId": {
+                    "type": "string"
+                  },
+                  "receivedQuantity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "transferId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Stock transfer received successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/counts": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Initiate Physical Inventory Count Session",
+        "description": "Initiates a physical inventory count audit session for warehouse stock reconciliation.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "warehouseId": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "warehouseId",
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Physical inventory count session initiated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/counts/corrections/submit": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Submit Physical Count Variance Correction",
+        "description": "Submits a physical count variance. Flags for Maker-Checker Dual Approval if variance > 10 units.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "countSessionId": {
+                    "type": "string"
+                  },
+                  "stockBalanceId": {
+                    "type": "string"
+                  },
+                  "countedQuantity": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "countSessionId",
+                  "stockBalanceId",
+                  "countedQuantity",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Count variance submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/inventory/counts/corrections/approve": {
+      "post": {
+        "tags": [
+          "Inventory & Warehousing"
+        ],
+        "summary": "Maker-Checker Approval of Inventory Correction",
+        "description": "Maker-Checker Dual Approval for high-variance inventory count corrections. Enforces Gate-05 Maker-Checker invariant.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "correctionId": {
+                    "type": "string"
+                  },
+                  "approved": {
+                    "type": "boolean"
+                  },
+                  "rejectionReason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "correctionId",
+                  "approved"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Maker-Checker approval action recorded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [

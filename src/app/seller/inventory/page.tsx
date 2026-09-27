@@ -274,6 +274,12 @@ export default function SellerInventoryPage() {
 
           <div className="flex items-center space-x-3">
             <Link
+              href="/seller/inventory/transfers"
+              className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>⇄ Transfers & Counts</span>
+            </Link>
+            <Link
               href="/seller/inventory/low-stock"
               className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
             >

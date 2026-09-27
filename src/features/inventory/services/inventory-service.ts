@@ -28,6 +28,11 @@ import {
   QuarantineStockSchema,
   CompensateInventorySchema,
   UpdateStockThresholdsSchema,
+  CreateStockTransferSchema,
+  ReceiveStockTransferSchema,
+  CreateStockCountSchema,
+  SubmitStockCountCorrectionSchema,
+  ApproveStockCountCorrectionSchema,
   ReceiveStockInput,
   ReserveStockInput,
   ReserveStockRawInput,
@@ -37,17 +42,27 @@ import {
   QuarantineStockInput,
   CompensateInventoryInput,
   UpdateStockThresholdsInput,
+  CreateStockTransferInput,
+  ReceiveStockTransferInput,
+  CreateStockCountInput,
+  SubmitStockCountCorrectionInput,
+  ApproveStockCountCorrectionInput,
 } from '../validators';
 import {
   StockBalanceModel,
   StockReservationModel,
   StockMovementModel,
+  StockTransferRecord,
+  StockCountCorrectionRecord,
   MovementType,
   ReservationStatus,
   SourceType,
 } from '../types';
 
 export class InventoryService {
+  private transfers = new Map<string, StockTransferRecord>();
+  private countCorrections = new Map<string, StockCountCorrectionRecord>();
+
   constructor(
     private readonly stockBalanceRepo: StockBalanceRepository = new StockBalanceRepository(),
     private readonly reservationRepo: StockReservationRepository = new StockReservationRepository(),
@@ -756,6 +771,354 @@ export class InventoryService {
     limit?: number;
   }) {
     return this.movementRepo.listPaginated(options);
+  }
+
+  /**
+   * Initiates an inter-warehouse stock transfer (from source warehouse to destination warehouse).
+   * Atomically deducts stock from source warehouse and sets transfer state to IN_TRANSIT.
+   */
+  public async transferStock(
+    input: CreateStockTransferInput,
+    actorId: string
+  ): Promise<{ transfer: StockTransferRecord; sourceBalance: StockBalanceModel }> {
+    const validated = CreateStockTransferSchema.parse(input);
+
+    if (validated.fromWarehouseId === validated.toWarehouseId) {
+      throw new ValidationError('Source and destination warehouses cannot be the same facility.');
+    }
+
+    const sourceBalance = await this.stockBalanceRepo.findByWarehouseAndVariant(
+      validated.fromWarehouseId,
+      validated.variantId
+    );
+
+    if (!sourceBalance) {
+      throw new NotFoundError(
+        `Source stock balance not found for warehouse '${validated.fromWarehouseId}' and variant '${validated.variantId}'.`
+      );
+    }
+
+    if (sourceBalance.available < validated.quantity) {
+      throw new ConflictError(
+        `Insufficient available stock for transfer. Requested: ${validated.quantity}, Available: ${sourceBalance.available}.`
+      );
+    }
+
+    // Atomically deduct stock from source warehouse
+    const updatedSourceBalance = await this.stockBalanceRepo.atomicUpdate(
+      sourceBalance.id,
+      sourceBalance.version,
+      { onHandDelta: -validated.quantity }
+    );
+
+    // Record transfer departure movement
+    await this.movementRepo.record({
+      stockBalanceId: updatedSourceBalance.id,
+      warehouseId: updatedSourceBalance.warehouseId,
+      variantId: updatedSourceBalance.variantId,
+      movementType: MovementType.ADJUST,
+      quantityDelta: -validated.quantity,
+      onHandAfter: updatedSourceBalance.onHand,
+      reservedAfter: updatedSourceBalance.reserved,
+      availableAfter: updatedSourceBalance.available,
+      sourceType: SourceType.AUDIT_ADJUSTMENT,
+      sourceId: updatedSourceBalance.id,
+      actorId,
+      reason: validated.reason ?? `Inter-warehouse transfer to ${validated.toWarehouseId}`,
+    });
+
+    const transferId = generatePrefixedId(ENTITY_PREFIXES.STOCK_BALANCE).replace('stb_', 'trf_');
+    const transferRecord: StockTransferRecord = {
+      id: transferId,
+      fromWarehouseId: validated.fromWarehouseId,
+      toWarehouseId: validated.toWarehouseId,
+      variantId: validated.variantId,
+      quantity: validated.quantity,
+      status: 'IN_TRANSIT',
+      reason: validated.reason,
+      initiatedBy: actorId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.transfers.set(transferId, transferRecord);
+
+    await this.recordOutboxEvent('inventory.transfer_initiated', transferId, {
+      transferId,
+      fromWarehouseId: validated.fromWarehouseId,
+      toWarehouseId: validated.toWarehouseId,
+      variantId: validated.variantId,
+      quantity: validated.quantity,
+      initiatedBy: actorId,
+    });
+
+    return { transfer: transferRecord, sourceBalance: updatedSourceBalance };
+  }
+
+  /**
+   * Receives an in-transit inter-warehouse stock transfer at destination warehouse.
+   * Atomically increments destination stock balance and sets transfer status to COMPLETED.
+   */
+  public async receiveStockTransfer(
+    input: ReceiveStockTransferInput,
+    actorId: string
+  ): Promise<{ transfer: StockTransferRecord; destBalance: StockBalanceModel }> {
+    const validated = ReceiveStockTransferSchema.parse(input);
+
+    const transfer = this.transfers.get(validated.transferId);
+    if (!transfer) {
+      throw new NotFoundError(`Stock transfer '${validated.transferId}' not found.`);
+    }
+
+    if (transfer.status !== 'IN_TRANSIT') {
+      throw new ConflictError(`Cannot receive stock transfer in '${transfer.status}' status.`);
+    }
+
+    const destBalance = await this.stockBalanceRepo.getOrCreate(
+      transfer.toWarehouseId,
+      transfer.variantId
+    );
+
+    const updatedDestBalance = await this.stockBalanceRepo.atomicUpdate(
+      destBalance.id,
+      destBalance.version,
+      { onHandDelta: transfer.quantity }
+    );
+
+    await this.movementRepo.record({
+      stockBalanceId: updatedDestBalance.id,
+      warehouseId: updatedDestBalance.warehouseId,
+      variantId: updatedDestBalance.variantId,
+      movementType: MovementType.RECEIVE,
+      quantityDelta: transfer.quantity,
+      onHandAfter: updatedDestBalance.onHand,
+      reservedAfter: updatedDestBalance.reserved,
+      availableAfter: updatedDestBalance.available,
+      sourceType: SourceType.PURCHASE_ORDER,
+      sourceId: transfer.id,
+      actorId,
+      reason: validated.notes ?? `Inter-warehouse transfer received from ${transfer.fromWarehouseId}`,
+    });
+
+    const completedTransfer: StockTransferRecord = {
+      ...transfer,
+      status: 'COMPLETED',
+      updatedAt: new Date(),
+    };
+
+    this.transfers.set(transfer.id, completedTransfer);
+
+    await this.recordOutboxEvent('inventory.transfer_completed', transfer.id, {
+      transferId: transfer.id,
+      destWarehouseId: transfer.toWarehouseId,
+      quantity: transfer.quantity,
+      receivedBy: actorId,
+    });
+
+    return { transfer: completedTransfer, destBalance: updatedDestBalance };
+  }
+
+  /**
+   * Initiates a physical inventory count session for audit reconciliation.
+   */
+  public async initiateStockCountSession(
+    input: CreateStockCountInput,
+    actorId: string
+  ): Promise<{ sessionId: string; warehouseId: string; title: string; createdAt: string }> {
+    const validated = CreateStockCountSchema.parse(input);
+    const sessionId = `cnt_${Math.random().toString(36).substring(2, 9)}`;
+
+    await this.recordOutboxEvent('inventory.stock_count_initiated', sessionId, {
+      sessionId,
+      warehouseId: validated.warehouseId,
+      title: validated.title,
+      initiatedBy: actorId,
+    });
+
+    return {
+      sessionId,
+      warehouseId: validated.warehouseId,
+      title: validated.title,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Submits a physical count variance correction.
+   * If variance > 10 units, requires Maker-Checker Dual Approval from Admin.
+   */
+  public async submitStockCountCorrection(
+    input: SubmitStockCountCorrectionInput,
+    actorId: string
+  ): Promise<{ correction: StockCountCorrectionRecord; balance?: StockBalanceModel }> {
+    const validated = SubmitStockCountCorrectionSchema.parse(input);
+
+    const stockBalance = await this.stockBalanceRepo.findById(validated.stockBalanceId);
+    if (!stockBalance) {
+      throw new NotFoundError(`Stock balance '${validated.stockBalanceId}' not found.`);
+    }
+
+    const variance = validated.countedQuantity - stockBalance.onHand;
+    const correctionId = `cor_${Math.random().toString(36).substring(2, 9)}`;
+    const requiresApproval = Math.abs(variance) > 10;
+
+    if (requiresApproval) {
+      const correctionRecord: StockCountCorrectionRecord = {
+        id: correctionId,
+        countSessionId: validated.countSessionId,
+        stockBalanceId: validated.stockBalanceId,
+        currentOnHand: stockBalance.onHand,
+        countedQuantity: validated.countedQuantity,
+        variance,
+        reason: validated.reason,
+        requiresApproval: true,
+        status: 'PENDING_APPROVAL',
+        submittedBy: actorId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      this.countCorrections.set(correctionId, correctionRecord);
+
+      await this.recordOutboxEvent('inventory.stock_count_correction_flagged', correctionId, {
+        correctionId,
+        variance,
+        submittedBy: actorId,
+      });
+
+      return { correction: correctionRecord };
+    }
+
+    // Auto-approve small variances (<= 10 units)
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      stockBalance.id,
+      stockBalance.version,
+      { onHandDelta: variance }
+    );
+
+    await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType: MovementType.ADJUST,
+      quantityDelta: variance,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: SourceType.AUDIT_ADJUSTMENT,
+      sourceId: correctionId,
+      actorId,
+      reason: validated.reason,
+    });
+
+    const autoApprovedCorrection: StockCountCorrectionRecord = {
+      id: correctionId,
+      countSessionId: validated.countSessionId,
+      stockBalanceId: validated.stockBalanceId,
+      currentOnHand: stockBalance.onHand,
+      countedQuantity: validated.countedQuantity,
+      variance,
+      reason: validated.reason,
+      requiresApproval: false,
+      status: 'APPROVED',
+      submittedBy: actorId,
+      approvedBy: 'SYSTEM_AUTO',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    this.countCorrections.set(correctionId, autoApprovedCorrection);
+
+    return { correction: autoApprovedCorrection, balance: updatedBalance };
+  }
+
+  /**
+   * Maker-Checker Approval for high-variance inventory count corrections.
+   * Enforces Gate-05 Maker-Checker dual authorization invariant: approver cannot be submitter (actorId !== correction.submittedBy).
+   */
+  public async approveStockCountCorrection(
+    input: ApproveStockCountCorrectionInput,
+    actorId: string
+  ): Promise<{ correction: StockCountCorrectionRecord; balance?: StockBalanceModel }> {
+    const validated = ApproveStockCountCorrectionSchema.parse(input);
+
+    const correction = this.countCorrections.get(validated.correctionId);
+    if (!correction) {
+      throw new NotFoundError(`Stock count correction '${validated.correctionId}' not found.`);
+    }
+
+    if (correction.status !== 'PENDING_APPROVAL') {
+      throw new ConflictError(`Cannot approve correction in '${correction.status}' status.`);
+    }
+
+    // Maker-Checker dual authorization security check
+    if (actorId === correction.submittedBy) {
+      throw new ConflictError(
+        'Maker-Checker Dual Authorization Rule Violation: The submitter (maker) cannot approve their own inventory correction adjustment.'
+      );
+    }
+
+    if (!validated.approved) {
+      const rejectedCorrection: StockCountCorrectionRecord = {
+        ...correction,
+        status: 'REJECTED',
+        rejectionReason: validated.rejectionReason ?? 'Rejected by reviewer',
+        updatedAt: new Date(),
+      };
+      this.countCorrections.set(correction.id, rejectedCorrection);
+      return { correction: rejectedCorrection };
+    }
+
+    const stockBalance = await this.stockBalanceRepo.findById(correction.stockBalanceId);
+    if (!stockBalance) {
+      throw new NotFoundError(`Stock balance '${correction.stockBalanceId}' not found.`);
+    }
+
+    const updatedBalance = await this.stockBalanceRepo.atomicUpdate(
+      stockBalance.id,
+      stockBalance.version,
+      { onHandDelta: correction.variance }
+    );
+
+    await this.movementRepo.record({
+      stockBalanceId: updatedBalance.id,
+      warehouseId: updatedBalance.warehouseId,
+      variantId: updatedBalance.variantId,
+      movementType: MovementType.ADJUST,
+      quantityDelta: correction.variance,
+      onHandAfter: updatedBalance.onHand,
+      reservedAfter: updatedBalance.reserved,
+      availableAfter: updatedBalance.available,
+      sourceType: SourceType.AUDIT_ADJUSTMENT,
+      sourceId: correction.id,
+      actorId,
+      reason: `Maker-Checker Approved Audit Correction: ${correction.reason}`,
+    });
+
+    const approvedCorrection: StockCountCorrectionRecord = {
+      ...correction,
+      status: 'APPROVED',
+      approvedBy: actorId,
+      updatedAt: new Date(),
+    };
+
+    this.countCorrections.set(correction.id, approvedCorrection);
+
+    await this.recordOutboxEvent('inventory.stock_count_correction_approved', correction.id, {
+      correctionId: correction.id,
+      approvedBy: actorId,
+      variance: correction.variance,
+    });
+
+    return { correction: approvedCorrection, balance: updatedBalance };
+  }
+
+  public async listPendingCountCorrections(): Promise<StockCountCorrectionRecord[]> {
+    return Array.from(this.countCorrections.values()).filter((c) => c.status === 'PENDING_APPROVAL');
+  }
+
+  public async listStockTransfers(): Promise<StockTransferRecord[]> {
+    return Array.from(this.transfers.values());
   }
 
   private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {

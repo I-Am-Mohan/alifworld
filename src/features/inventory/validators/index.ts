@@ -171,3 +171,46 @@ export const QueryLowStockAlertsSchema = z.object({
 });
 
 export type QueryLowStockAlertsInput = z.infer<typeof QueryLowStockAlertsSchema>;
+
+export const CreateStockTransferSchema = z.object({
+  fromWarehouseId: z.string().min(4, 'Source warehouse ID is required'),
+  toWarehouseId: z.string().min(4, 'Destination warehouse ID is required'),
+  variantId: z.string().min(4, 'Product Variant ID is required'),
+  quantity: z.number().int().min(1, 'Transfer quantity must be at least 1 unit'),
+  reason: z.string().max(255).optional().nullable(),
+});
+
+export type CreateStockTransferInput = z.infer<typeof CreateStockTransferSchema>;
+
+export const ReceiveStockTransferSchema = z.object({
+  transferId: z.string().min(4, 'Transfer ID is required'),
+  receivedQuantity: z.number().int().min(1).optional(),
+  notes: z.string().max(255).optional().nullable(),
+});
+
+export type ReceiveStockTransferInput = z.infer<typeof ReceiveStockTransferSchema>;
+
+export const CreateStockCountSchema = z.object({
+  warehouseId: z.string().min(4, 'Warehouse ID is required'),
+  title: z.string().min(3, 'Audit title must be at least 3 characters'),
+  notes: z.string().max(255).optional().nullable(),
+});
+
+export type CreateStockCountInput = z.infer<typeof CreateStockCountSchema>;
+
+export const SubmitStockCountCorrectionSchema = z.object({
+  countSessionId: z.string().min(4, 'Count session ID is required'),
+  stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
+  countedQuantity: z.number().int().min(0, 'Counted quantity must be non-negative'),
+  reason: z.string().min(5, 'Mandatory audit justification required for count variance correction'),
+});
+
+export type SubmitStockCountCorrectionInput = z.infer<typeof SubmitStockCountCorrectionSchema>;
+
+export const ApproveStockCountCorrectionSchema = z.object({
+  correctionId: z.string().min(4, 'Correction ID is required'),
+  approved: z.boolean(),
+  rejectionReason: z.string().max(255).optional().nullable(),
+});
+
+export type ApproveStockCountCorrectionInput = z.infer<typeof ApproveStockCountCorrectionSchema>;
