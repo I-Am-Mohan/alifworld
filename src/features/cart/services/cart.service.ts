@@ -25,6 +25,10 @@ import {
   SellerCartGroupDTO,
   CartRevalidationResultDTO,
   MergeCartResultDTO,
+  PriceChangeDetail,
+  StockAdjustmentDetail,
+  CouponValidationDetail,
+  SellerIssueDetail,
 } from '../types/cart.types';
 import { AddCartItemInput } from '../validators/cart.validators';
 
@@ -530,29 +534,153 @@ export class CartService {
   }
 
   /**
-   * Revalidates cart items against current catalog pricing and available stock.
+   * Applies a coupon or discount code to the active cart.
+   * Validates active dates, minimum spend, and seller restrictions.
    */
-  public async revalidateCart(
+  public async applyCoupon(
+    couponCode: string,
+    userId?: string,
+    guestCartToken?: string
+  ): Promise<CartRevalidationResultDTO> {
+    const codeUpper = couponCode.trim().toUpperCase();
+    const { cart } = await this.getOrCreateActiveCart(userId, guestCartToken);
+
+    // Query discount rule
+    const rule = await (this.db as any).discountRule.findFirst({
+      where: { code: codeUpper, deletedAt: null },
+    });
+
+    if (!rule) {
+      throw new ValidationError(`Coupon code '${codeUpper}' is invalid or expired.`);
+    }
+
+    const now = new Date();
+    if (rule.status !== 'ACTIVE') {
+      throw new ValidationError(`Coupon code '${codeUpper}' is not active.`);
+    }
+
+    if (now < rule.startsAt) {
+      throw new ValidationError(`Coupon code '${codeUpper}' is not yet effective.`);
+    }
+
+    if (rule.endsAt && now > rule.endsAt) {
+      throw new ValidationError(`Coupon code '${codeUpper}' has expired.`);
+    }
+
+    const currentSubtotal = (cart.items || []).reduce(
+      (sum: number, i: any) => sum + Number(i.pricePoisha) * i.quantity,
+      0
+    );
+
+    const minSubtotal = Number(rule.minOrderSubtotalPoisha || 0);
+    if (currentSubtotal < minSubtotal) {
+      throw new ValidationError(
+        `Minimum order subtotal requirement of ${this.formatBdt(minSubtotal)} not met.`
+      );
+    }
+
+    if (rule.sellerId) {
+      const hasSellerItem = (cart.items || []).some((i: any) => i.sellerId === rule.sellerId);
+      if (!hasSellerItem) {
+        throw new ValidationError(
+          `Coupon '${codeUpper}' is restricted to items from a specific seller not present in your cart.`
+        );
+      }
+    }
+
+    // Attach coupon code to cart
+    await (this.db as any).cart.update({
+      where: { id: cart.id },
+      data: {
+        couponCode: rule.code,
+        version: { increment: 1 },
+      },
+    });
+
+    return this.revalidateCart(userId, guestCartToken);
+  }
+
+  /**
+   * Removes any applied coupon from the active cart.
+   */
+  public async removeCoupon(
     userId?: string,
     guestCartToken?: string
   ): Promise<CartRevalidationResultDTO> {
     const { cart } = await this.getOrCreateActiveCart(userId, guestCartToken);
+
+    await (this.db as any).cart.update({
+      where: { id: cart.id },
+      data: {
+        couponCode: null,
+        version: { increment: 1 },
+      },
+    });
+
+    return this.revalidateCart(userId, guestCartToken);
+  }
+
+  /**
+   * Comprehensive Multi-Dimensional Cart Revalidation Engine:
+   * 1. Stock balances & available warehouse inventory
+   * 2. Price drift & BDT minor unit re-snapshotting
+   * 3. Product Point loyalty token re-snapshotting
+   * 4. Coupon rules, expiration, spend thresholds & limits
+   * 5. Seller storefront status (verification, suspension, vacation mode, MOV)
+   * 6. B2B negotiated quote expiration and price locks
+   * 7. Multi-vendor seller fulfillment package partitioning
+   */
+  public async revalidateCart(
+    userId?: string,
+    guestCartToken?: string,
+    customerDivision: string = 'DHAKA'
+  ): Promise<CartRevalidationResultDTO> {
+    const { cart } = await this.getOrCreateActiveCart(userId, guestCartToken);
     const warnings: string[] = [];
+    const priceChanges: PriceChangeDetail[] = [];
+    const stockAdjustments: StockAdjustmentDetail[] = [];
+    const sellerIssues: SellerIssueDetail[] = [];
     let priceChangesCount = 0;
     let outOfStockCount = 0;
+    let isReadyForCheckout = true;
 
+    // 1. Revalidate Line Items (Stock, Price, Points)
     for (const item of cart.items || []) {
       const variant = await (this.db as any).productVariant.findFirst({
         where: { id: item.variantId, deletedAt: null },
         include: {
-          product: { select: { title: true, status: true, deletedAt: true, productPoint: true } },
+          product: {
+            select: {
+              id: true,
+              title: true,
+              status: true,
+              deletedAt: true,
+              productPoint: true,
+              sellerId: true,
+            },
+          },
           stockBalances: { where: { deletedAt: null } },
         },
       });
 
-      if (!variant || variant.deletedAt || variant.product?.status !== 'PUBLISHED') {
-        warnings.push(`Item '${item.variant?.product?.title || 'Product'}' is no longer available.`);
+      if (!variant || variant.deletedAt || variant.product?.status !== 'PUBLISHED' || variant.product?.deletedAt) {
+        const title = variant?.product?.title || item.variant?.product?.title || 'Product Item';
+        warnings.push(`Item '${title}' is no longer published or available in the storefront.`);
         outOfStockCount++;
+        isReadyForCheckout = false;
+
+        stockAdjustments.push({
+          variantId: item.variantId,
+          productTitle: title,
+          requestedQuantity: item.quantity,
+          availableStock: 0,
+          adjustedQuantity: 0,
+        });
+
+        await (this.db as any).cartItem.update({
+          where: { id: item.id },
+          data: { deletedAt: new Date(), version: { increment: 1 } },
+        });
         continue;
       }
 
@@ -562,15 +690,36 @@ export class CartService {
         0
       );
 
-      // Check stock
+      // Check stock availability
       if (variant.stockBalances?.length > 0 && availableStock < item.quantity) {
         outOfStockCount++;
         if (availableStock === 0) {
           warnings.push(`'${variant.product.title}' is currently out of stock.`);
+          isReadyForCheckout = false;
+          stockAdjustments.push({
+            variantId: item.variantId,
+            productTitle: variant.product.title,
+            requestedQuantity: item.quantity,
+            availableStock: 0,
+            adjustedQuantity: 0,
+          });
+
+          await (this.db as any).cartItem.update({
+            where: { id: item.id },
+            data: { deletedAt: new Date(), version: { increment: 1 } },
+          });
         } else {
           warnings.push(
             `Only ${availableStock} units of '${variant.product.title}' remain available. Cart quantity adjusted.`
           );
+          stockAdjustments.push({
+            variantId: item.variantId,
+            productTitle: variant.product.title,
+            requestedQuantity: item.quantity,
+            availableStock,
+            adjustedQuantity: availableStock,
+          });
+
           await (this.db as any).cartItem.update({
             where: { id: item.id },
             data: { quantity: availableStock, version: { increment: 1 } },
@@ -578,14 +727,26 @@ export class CartService {
         }
       }
 
-      // Check price change
-      if (BigInt(variant.pricePoisha) !== BigInt(item.pricePoisha)) {
+      // Check price change (unless locked by B2B negotiated quote)
+      if (!cart.isB2B && BigInt(variant.pricePoisha) !== BigInt(item.pricePoisha)) {
         priceChangesCount++;
-        const oldPriceBdt = this.formatBdt(item.pricePoisha);
-        const newPriceBdt = this.formatBdt(variant.pricePoisha);
+        const oldPricePoisha = Number(item.pricePoisha);
+        const newPricePoisha = Number(variant.pricePoisha);
+        const oldPriceBdt = this.formatBdt(oldPricePoisha);
+        const newPriceBdt = this.formatBdt(newPricePoisha);
+
         warnings.push(
           `Price for '${variant.product.title}' updated from ${oldPriceBdt} to ${newPriceBdt}.`
         );
+
+        priceChanges.push({
+          variantId: item.variantId,
+          productTitle: variant.product.title,
+          oldPricePoisha,
+          newPricePoisha,
+          oldPriceBdtFormatted: oldPriceBdt,
+          newPriceBdtFormatted: newPriceBdt,
+        });
 
         await (this.db as any).cartItem.update({
           where: { id: item.id },
@@ -598,12 +759,154 @@ export class CartService {
       }
     }
 
+    // 2. Revalidate Seller Storefront Status & Vacation Mode
+    const distinctSellerIds: string[] = Array.from(
+      new Set((cart.items || []).map((i: any) => i.sellerId))
+    );
+
+    for (const sellerId of distinctSellerIds) {
+      const seller = await (this.db as any).seller.findFirst({
+        where: { id: sellerId },
+        include: {
+          settings: true,
+          operationalDefaults: true,
+        },
+      });
+
+      const sellerName = seller?.businessName || 'Verified Merchant';
+
+      if (!seller || seller.deletedAt || seller.status !== 'VERIFIED') {
+        const statusMsg = seller?.status === 'SUSPENDED' ? 'suspended' : 'unavailable';
+        const msg = `${sellerName} is currently ${statusMsg} and cannot fulfill orders at this time.`;
+        warnings.push(msg);
+        sellerIssues.push({
+          sellerId,
+          sellerName,
+          issue: seller?.status === 'SUSPENDED' ? 'SUSPENDED' : 'DELETED',
+          message: msg,
+        });
+        isReadyForCheckout = false;
+      } else if (seller.settings?.vacationMode) {
+        const msg = `${sellerName} is currently on vacation: ${
+          seller.settings.vacationMessage || 'Orders will be accepted when store reopens.'
+        }`;
+        warnings.push(msg);
+        sellerIssues.push({
+          sellerId,
+          sellerName,
+          issue: 'VACATION',
+          message: msg,
+        });
+        isReadyForCheckout = false;
+      }
+    }
+
+    // 3. Revalidate Applied Coupon & Discounts
+    let couponStatus: CouponValidationDetail = {
+      applied: false,
+      couponCode: null,
+      discountPoisha: 0,
+      discountBdtFormatted: '৳0.00',
+      reason: null,
+    };
+
+    if (cart.couponCode) {
+      const rule = await (this.db as any).discountRule.findFirst({
+        where: { code: cart.couponCode.toUpperCase(), deletedAt: null },
+      });
+
+      const now = new Date();
+      let couponInvalidReason: string | null = null;
+
+      if (!rule || rule.status !== 'ACTIVE') {
+        couponInvalidReason = `Coupon '${cart.couponCode}' is no longer active.`;
+      } else if (now < rule.startsAt) {
+        couponInvalidReason = `Coupon '${cart.couponCode}' is not yet active.`;
+      } else if (rule.endsAt && now > rule.endsAt) {
+        couponInvalidReason = `Coupon '${cart.couponCode}' has expired.`;
+      } else {
+        const currentSubtotal = (cart.items || []).reduce(
+          (sum: number, i: any) => sum + Number(i.pricePoisha) * i.quantity,
+          0
+        );
+        const minSubtotal = Number(rule.minOrderSubtotalPoisha || 0);
+        if (currentSubtotal < minSubtotal) {
+          couponInvalidReason = `Minimum subtotal requirement of ${this.formatBdt(
+            minSubtotal
+          )} for coupon '${cart.couponCode}' is no longer met.`;
+        }
+      }
+
+      if (couponInvalidReason) {
+        warnings.push(couponInvalidReason);
+        await (this.db as any).cart.update({
+          where: { id: cart.id },
+          data: { couponCode: null, version: { increment: 1 } },
+        });
+        couponStatus = {
+          applied: false,
+          couponCode: null,
+          discountPoisha: 0,
+          discountBdtFormatted: '৳0.00',
+          reason: couponInvalidReason,
+        };
+      } else if (rule) {
+        // Compute discount
+        const currentSubtotal = (cart.items || []).reduce(
+          (sum: number, i: any) => sum + Number(i.pricePoisha) * i.quantity,
+          0
+        );
+        let discountPoisha = 0;
+        if (rule.discountType === 'PERCENTAGE') {
+          discountPoisha = Math.floor((currentSubtotal * Number(rule.discountValue)) / 100);
+          if (rule.maxDiscountPoisha) {
+            discountPoisha = Math.min(discountPoisha, Number(rule.maxDiscountPoisha));
+          }
+        } else if (rule.discountType === 'FIXED_AMOUNT') {
+          discountPoisha = Math.min(Number(rule.discountValue), currentSubtotal);
+        }
+
+        couponStatus = {
+          applied: true,
+          couponCode: rule.code,
+          discountPoisha,
+          discountBdtFormatted: this.formatBdt(discountPoisha),
+          reason: null,
+        };
+      }
+    }
+
+    // 4. Revalidate B2B Negotiated Quote Expiry
+    if (cart.isB2B && cart.b2bQuoteId) {
+      const quote = await (this.db as any).b2bQuote.findFirst({
+        where: { id: cart.b2bQuoteId, deletedAt: null },
+      });
+
+      if (!quote || new Date() > new Date(quote.validUntil)) {
+        const msg = 'B2B negotiated quote has expired and pricing must be re-negotiated.';
+        warnings.push(msg);
+        isReadyForCheckout = false;
+      }
+    }
+
     const updatedCart = await this.getCart(userId, guestCartToken);
+    const groupedCart = await this.groupCartBySeller(updatedCart, customerDivision);
+
+    if (updatedCart.items.length === 0) {
+      isReadyForCheckout = false;
+    }
+
     return {
       cart: updatedCart,
-      hasChanges: priceChangesCount > 0 || outOfStockCount > 0,
+      groupedCart,
+      hasChanges: priceChangesCount > 0 || outOfStockCount > 0 || warnings.length > 0,
+      isReadyForCheckout: isReadyForCheckout && groupedCart.isReadyForCheckout,
       priceChangesCount,
       outOfStockCount,
+      priceChanges,
+      stockAdjustments,
+      couponStatus,
+      sellerIssues,
       warnings,
     };
   }

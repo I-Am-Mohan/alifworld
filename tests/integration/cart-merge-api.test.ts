@@ -111,8 +111,19 @@ describe('Milestone 127: Cart & Safe Merge REST API Integration Tests', () => {
     spyOn(cartService, 'revalidateCart').mockResolvedValue({
       cart: mockCart,
       hasChanges: false,
+      isReadyForCheckout: true,
       priceChangesCount: 0,
       outOfStockCount: 0,
+      priceChanges: [],
+      stockAdjustments: [],
+      couponStatus: {
+        applied: false,
+        couponCode: null,
+        discountPoisha: 0,
+        discountBdtFormatted: '৳0.00',
+        reason: null,
+      },
+      sellerIssues: [],
       warnings: [],
     });
   });

@@ -6119,6 +6119,90 @@
         }
       }
     },
+    "/api/v1/cart/coupons": {
+      "post": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Apply Coupon to Cart",
+        "description": "Applies a promotional discount or coupon code to the active cart, validating minimum spend, validity period, and seller restrictions.",
+        "parameters": [
+          {
+            "name": "x-guest-cart-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "couponCode": {
+                    "type": "string"
+                  },
+                  "guestCartToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "couponCode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Coupon applied and cart revalidated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Coupon invalid, expired, or requirements not met"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Customer & Ownership"
+        ],
+        "summary": "Remove Coupon from Cart",
+        "description": "Removes any active coupon from the cart and recalculates totals.",
+        "parameters": [
+          {
+            "name": "x-guest-cart-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Coupon removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cart/merge": {
       "post": {
         "tags": [

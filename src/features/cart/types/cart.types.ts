@@ -47,6 +47,8 @@ export interface CartDTO {
   itemsCount: number;
   subtotalPoisha: number;
   subtotalBdtFormatted: string;
+  discountPoisha?: number;
+  discountBdtFormatted?: string;
   totalProductPoints: number;
   warnings?: string[];
   version: number;
@@ -54,11 +56,49 @@ export interface CartDTO {
   updatedAt: string;
 }
 
+export interface PriceChangeDetail {
+  variantId: string;
+  productTitle: string;
+  oldPricePoisha: number;
+  newPricePoisha: number;
+  oldPriceBdtFormatted: string;
+  newPriceBdtFormatted: string;
+}
+
+export interface StockAdjustmentDetail {
+  variantId: string;
+  productTitle: string;
+  requestedQuantity: number;
+  availableStock: number;
+  adjustedQuantity: number;
+}
+
+export interface CouponValidationDetail {
+  applied: boolean;
+  couponCode: string | null;
+  discountPoisha: number;
+  discountBdtFormatted: string;
+  reason: string | null;
+}
+
+export interface SellerIssueDetail {
+  sellerId: string;
+  sellerName: string;
+  issue: 'SUSPENDED' | 'RESTRICTED' | 'VACATION' | 'MIN_ORDER_NOT_MET' | 'DELETED';
+  message: string;
+}
+
 export interface CartRevalidationResultDTO {
   cart: CartDTO;
+  groupedCart?: CartGroupedDTO;
   hasChanges: boolean;
+  isReadyForCheckout: boolean;
   priceChangesCount: number;
   outOfStockCount: number;
+  priceChanges: PriceChangeDetail[];
+  stockAdjustments: StockAdjustmentDetail[];
+  couponStatus: CouponValidationDetail;
+  sellerIssues: SellerIssueDetail[];
   warnings: string[];
 }
 

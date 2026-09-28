@@ -133,6 +133,12 @@ class MockPrismaCartDb {
     },
   };
 
+  public seller = {
+    findFirst: async ({ where }: any) => {
+      return this.sellers.find((s) => s.id === where.id && !s.deletedAt) || null;
+    },
+  };
+
   public outboxEvent = {
     create: async ({ data }: any) => {
       this.outboxEvents.push(data);

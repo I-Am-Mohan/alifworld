@@ -22,6 +22,7 @@ import {
   User,
   CheckCircle2,
   Store,
+  Tag,
 } from 'lucide-react';
 
 interface CartItem {
@@ -55,6 +56,16 @@ export default function CartPage() {
   const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
   const [orderCreated, setOrderCreated] = useState<string | null>(null);
 
+  // Milestone 129: Coupons & Multi-Dimensional Revalidation State
+  const [couponInput, setCouponInput] = useState<string>('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    discountPoisha: bigint;
+  } | null>(null);
+  const [revalidationWarnings, setRevalidationWarnings] = useState<string[]>([]);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState<boolean>(false);
+  const [isRevalidating, setIsRevalidating] = useState<boolean>(false);
+
   const loadCart = async () => {
     setIsLoading(true);
     try {
@@ -76,6 +87,15 @@ export default function CartPage() {
       }
 
       setCartId(body.data?.id ?? null);
+      if (body.data?.couponCode) {
+        setAppliedCoupon({
+          code: body.data.couponCode,
+          discountPoisha: BigInt(body.data.discountPoisha || 0),
+        });
+      } else {
+        setAppliedCoupon(null);
+      }
+
       setItems((body.data?.items ?? []).map((item: any) => ({
         id: item.id,
         sellerId: item.sellerId,
@@ -155,7 +175,9 @@ export default function CartPage() {
   }, [items, division]);
 
   const totalShippingFeePoisha = sellerPackages.reduce((acc, p) => acc + p.shippingFee, 0n);
-  const estimatedGrandTotalPoisha = subtotalPoisha + totalShippingFeePoisha;
+  const discountPoisha = appliedCoupon?.discountPoisha ?? 0n;
+  const estimatedGrandTotalPoisha =
+    (subtotalPoisha > discountPoisha ? subtotalPoisha - discountPoisha : 0n) + totalShippingFeePoisha;
 
   // Discrete Product Points (STRICT: independent integer loyalty units)
   const totalProductPoints = items.reduce(
@@ -164,6 +186,116 @@ export default function CartPage() {
   );
 
   const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
+
+  const handleApplyCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!couponInput.trim()) return;
+    setIsApplyingCoupon(true);
+    setError(null);
+    try {
+      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (guestToken) {
+        headers['x-guest-cart-token'] = guestToken;
+      }
+
+      const response = await csrfFetch('/api/v1/cart/coupons', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          couponCode: couponInput.trim(),
+          guestCartToken: guestToken || undefined,
+        }),
+      });
+
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.error?.message || 'Unable to apply coupon.');
+      }
+
+      if (body.data?.couponStatus?.applied) {
+        setAppliedCoupon({
+          code: body.data.couponStatus.couponCode,
+          discountPoisha: BigInt(body.data.couponStatus.discountPoisha),
+        });
+        setCouponInput('');
+      }
+
+      if (body.data?.warnings?.length > 0) {
+        setRevalidationWarnings(body.data.warnings);
+      } else {
+        setRevalidationWarnings([]);
+      }
+
+      await loadCart();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Coupon validation failed');
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setIsApplyingCoupon(true);
+    try {
+      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const headers: Record<string, string> = {};
+      if (guestToken) {
+        headers['x-guest-cart-token'] = guestToken;
+      }
+
+      const response = await csrfFetch('/api/v1/cart/coupons', {
+        method: 'DELETE',
+        headers,
+      });
+
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.error?.message || 'Unable to remove coupon.');
+      }
+
+      setAppliedCoupon(null);
+      await loadCart();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to remove coupon');
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRevalidateCart = async () => {
+    setIsRevalidating(true);
+    setError(null);
+    try {
+      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const headers: Record<string, string> = {};
+      if (guestToken) {
+        headers['x-guest-cart-token'] = guestToken;
+      }
+
+      const response = await csrfFetch('/api/v1/cart/revalidate', {
+        method: 'POST',
+        headers,
+      });
+
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.error?.message || 'Cart revalidation failed');
+      }
+
+      if (body.data?.warnings?.length > 0) {
+        setRevalidationWarnings(body.data.warnings);
+      } else {
+        setRevalidationWarnings([]);
+      }
+
+      await loadCart();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Revalidation failed');
+    } finally {
+      setIsRevalidating(false);
+    }
+  };
 
   const updateQuantity = async (id: string, delta: number) => {
     const item = items.find((entry) => entry.id === id);
@@ -300,6 +432,21 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column: Cart Items & Shipping Address Form */}
             <div className="lg:col-span-7 space-y-6">
+              {/* Revalidation Warnings Banner */}
+              {revalidationWarnings.length > 0 && (
+                <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 text-xs text-amber-900 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-700" />
+                    Cart Revalidation Notices
+                  </div>
+                  <ul className="list-disc pl-5 space-y-0.5 text-amber-800">
+                    {revalidationWarnings.map((w, idx) => (
+                      <li key={idx}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {!user && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-4">
                   <div className="space-y-0.5 text-xs">
@@ -544,6 +691,13 @@ export default function CartPage() {
                     <span className="font-semibold text-gray-900">{formatBdt(subtotalPoisha)}</span>
                   </div>
 
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-emerald-700 font-semibold">
+                      <span>Promo Discount ({appliedCoupon.code})</span>
+                      <span>-{formatBdt(appliedCoupon.discountPoisha)}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-gray-600">
                     <span className="flex items-center gap-1.5">
                       <Truck className="w-4 h-4 text-gray-400" />
@@ -564,6 +718,57 @@ export default function CartPage() {
                       {formatBdt(estimatedGrandTotalPoisha)}
                     </span>
                   </div>
+                </div>
+
+                {/* Coupon Code Input */}
+                <div className="pt-2 border-t border-gray-100 space-y-2">
+                  <div className="text-xs font-bold text-gray-700">Promo / Coupon Code</div>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="font-bold text-emerald-900">{appliedCoupon.code}</span>
+                        <span className="text-emerald-700">({formatBdt(appliedCoupon.discountPoisha)} off)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        disabled={isApplyingCoupon}
+                        className="text-xs font-bold text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder="e.g. WELCOME10"
+                        className="flex-1 px-3 py-1.5 text-xs uppercase font-mono border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1B5E20] focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isApplyingCoupon || !couponInput.trim()}
+                        className="px-3 py-1.5 bg-[#1B5E20] hover:bg-[#154a19] text-white font-bold text-xs rounded-xl transition-colors disabled:opacity-50"
+                      >
+                        {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+                {/* Revalidate Cart Button */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleRevalidateCart}
+                    disabled={isRevalidating}
+                    className="text-[11px] text-gray-500 hover:text-[#1B5E20] font-semibold underline flex items-center gap-1"
+                  >
+                    {isRevalidating ? 'Checking live stock & prices...' : '⟳ Recheck live prices & inventory'}
+                  </button>
                 </div>
 
                 {/* Independent Product Points Reward Box */}
