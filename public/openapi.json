@@ -6754,6 +6754,176 @@
         }
       }
     },
+    "/api/v1/shipping/serviceability": {
+      "post": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "Check Address Delivery Serviceability",
+        "description": "Evaluates delivery serviceability, courier options, shipping fees, delivery timelines, and Cash on Delivery (COD) eligibility for a Bangladesh address.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "division": {
+                    "type": "string",
+                    "enum": [
+                      "DHAKA",
+                      "CHITTAGONG",
+                      "RAJSHAHI",
+                      "KHULNA",
+                      "BARISAL",
+                      "SYLHET",
+                      "RANGPUR",
+                      "MYMENSINGH"
+                    ]
+                  },
+                  "district": {
+                    "type": "string"
+                  },
+                  "upazila": {
+                    "type": "string"
+                  },
+                  "postalCode": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "orderSubtotalPoisha": {
+                    "type": "integer"
+                  },
+                  "isB2B": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "division",
+                  "district",
+                  "address"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Delivery serviceability evaluated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed on address fields"
+          }
+        }
+      }
+    },
+    "/api/v1/shipping/geo/divisions": {
+      "get": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "List Bangladesh Divisions",
+        "description": "Retrieves the 8 official administrative divisions of Bangladesh with English and Bengali metadata.",
+        "responses": {
+          "200": {
+            "description": "Divisions list returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shipping/geo/districts": {
+      "get": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "List Bangladesh Districts",
+        "description": "Retrieves Bangladesh districts, optionally filtered by administrative division.",
+        "parameters": [
+          {
+            "name": "divisionCode",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DHAKA",
+                "CHITTAGONG",
+                "RAJSHAHI",
+                "KHULNA",
+                "BARISAL",
+                "SYLHET",
+                "RANGPUR",
+                "MYMENSINGH"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Districts list returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/shipping/geo/upazilas": {
+      "get": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "List Bangladesh Upazilas & Thanas",
+        "description": "Retrieves upazilas and thanas, optionally filtered by district ID or district name.",
+        "parameters": [
+          {
+            "name": "districtId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "districtName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upazilas list returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orders": {
       "get": {
         "tags": [

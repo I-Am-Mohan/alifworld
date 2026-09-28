@@ -620,12 +620,33 @@ export default function CartPage() {
                 ))}
               </div>
 
-              {/* Delivery Address Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
-                  <MapPin className="w-5 h-5 text-[#1B5E20]" />
-                  Shipping Destination (Bangladesh)
-                </h2>
+              {/* Delivery Address & Serviceability Card */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-[#1B5E20]" />
+                    Shipping Destination & Serviceability (Bangladesh)
+                  </h2>
+                  <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-2 py-0.5 rounded-full">
+                    {division === 'DHAKA' ? '⚡ 1-2 Days Metro Delivery' : '🚚 2-4 Days Nationwide'}
+                  </span>
+                </div>
+
+                {/* Serviceability & COD Notice */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900">
+                      Zone: {division === 'DHAKA' ? 'Metro Dhaka & Suburbs' : `${division} Division (Major City / Upazila)`}
+                    </span>
+                    <span className="text-emerald-700 font-bold">
+                      {subtotalPoisha > 5000000n ? '⚠️ Prepayment Required (> ৳50,000)' : '✓ COD Available'}
+                    </span>
+                  </div>
+                  <div className="text-slate-500 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
+                    <span>Couriers: <strong className="text-slate-700">Pathao Express • Steadfast • RedX</strong></span>
+                    <span>Tracking: <strong className="text-slate-700">Real-Time SMS & Push</strong></span>
+                  </div>
+                </div>
 
                 <form id="checkout-form" onSubmit={handleCheckout} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
