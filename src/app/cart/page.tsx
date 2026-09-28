@@ -58,20 +58,34 @@ export default function CartPage() {
   const loadCart = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/v1/cart', { cache: 'no-store' });
+      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const headers: Record<string, string> = {};
+      if (guestToken) {
+        headers['x-guest-cart-token'] = guestToken;
+      }
+
+      const response = await fetch('/api/v1/cart', {
+        cache: 'no-store',
+        headers,
+      });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error?.message || 'Unable to load your cart');
+
+      if (body.data?.isGuest && body.data?.guestCartToken && typeof window !== 'undefined') {
+        localStorage.setItem('alifworld_guest_cart_token', body.data.guestCartToken);
+      }
+
       setCartId(body.data?.id ?? null);
       setItems((body.data?.items ?? []).map((item: any) => ({
         id: item.id,
         sellerId: item.sellerId,
-        sellerName: item.seller?.businessName ?? '',
-        productTitle: item.variant?.product?.title ?? '',
-        variantTitle: item.variant?.title ?? '',
-        sku: item.variant?.sku ?? '',
-        imageUrl: item.variant?.imageUrl ?? undefined,
+        sellerName: item.sellerName || item.seller?.businessName || '',
+        productTitle: item.productTitle || item.variant?.product?.title || '',
+        variantTitle: item.variantTitle || item.variant?.title || '',
+        sku: item.sku || item.variant?.sku || '',
+        imageUrl: item.imageUrl || item.variant?.imageUrl || undefined,
         pricePoisha: BigInt(item.pricePoisha),
-        productPoint: item.productPoint,
+        productPoint: item.productPoint || 0,
         quantity: item.quantity,
       })));
       setError(null);
@@ -84,8 +98,25 @@ export default function CartPage() {
 
   useEffect(() => {
     if (isLoadingUser) return;
-    if (user) void loadCart();
-    else setIsLoading(false);
+    const init = async () => {
+      if (user && typeof window !== 'undefined') {
+        const guestToken = localStorage.getItem('alifworld_guest_cart_token');
+        if (guestToken) {
+          try {
+            await csrfFetch('/api/v1/cart/merge', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ guestCartToken: guestToken }),
+            });
+            localStorage.removeItem('alifworld_guest_cart_token');
+          } catch (err) {
+            console.warn('Auto merge error:', err);
+          }
+        }
+      }
+      await loadCart();
+    };
+    void init();
   }, [user, isLoadingUser]);
 
   // Math in integer poisha (1 BDT = 100 poisha)
@@ -187,11 +218,6 @@ export default function CartPage() {
         {error && <div role="alert" className="mb-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error} <button type="button" onClick={() => void loadCart()} className="underline">Retry loading cart</button></div>}
         {(isLoadingUser || isLoading) ? (
           <p role="status">Loading cart...</p>
-        ) : !user ? (
-          <div className="py-16 text-center space-y-4">
-            <h1 className="text-xl font-bold">Sign in to view your cart</h1>
-            <button type="button" onClick={() => openAuthModal('login')} className="px-5 py-2 bg-[#1B5E20] text-white">Sign in</button>
-          </div>
         ) : orderCreated ? (
           <div className="max-w-2xl mx-auto bg-white border border-green-200 rounded-2xl p-8 text-center shadow-sm">
             <div className="w-16 h-16 bg-green-100 text-[#1B5E20] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -242,6 +268,24 @@ export default function CartPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left Column: Cart Items & Shipping Address Form */}
             <div className="lg:col-span-7 space-y-6">
+              {!user && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+                  <div className="space-y-0.5 text-xs">
+                    <div className="font-bold text-amber-900">Guest Shopping Cart</div>
+                    <div className="text-amber-700">
+                      Sign in to permanently save your items, earn Product Points, and access corporate B2B pricing.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openAuthModal('login')}
+                    className="px-3.5 py-1.5 bg-[#1B5E20] hover:bg-[#154a19] text-white font-bold text-xs rounded-xl whitespace-nowrap transition-colors"
+                  >
+                    Sign In to Merge
+                  </button>
+                </div>
+              )}
+
               {/* Cart Items Card */}
               <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between pb-4 border-b border-gray-100">

@@ -1,98 +1,141 @@
 /**
  * Customer Shopping Cart API Route
  * 
- * Enforces customer self-ownership at the cart boundary.
+ * Supports both authenticated users and guest shopping carts with token isolation.
  * 
- * Invariants: ADR-0003, ADR-0027, Milestone 047
+ * Invariants: ADR-0003, ADR-0027, Milestone 127
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest, defaultObjectAuthzService } from '@/shared/authz';
-import { CartRepository } from '@/repositories/cart.repository';
-import { AddCartItemSchema } from '@/validators/order.validator';
-import { serializeBigInt } from '@/shared/utils/currency';
-import { AppError, ValidationError } from '@/shared/errors/app-error';
+import { authenticateRequest } from '@/shared/authz';
+import { cartService } from '@/features/cart/services/cart.service';
+import { AddCartItemSchema } from '@/features/cart/validators/cart.validators';
+import { errorResponse } from '@/shared/api/error-response';
+import { ValidationError } from '@/shared/errors/app-error';
 
 export const dynamic = 'force-dynamic';
 
-const cartRepo = new CartRepository();
-
-export async function POST(req: NextRequest) {
+function extractActorOrGuest(req: NextRequest): {
+  userId?: string;
+  guestCartToken?: string;
+} {
+  let userId: string | undefined;
   try {
     const actor = authenticateRequest(req);
+    userId = actor.userId;
+  } catch {
+    // Guest request
+  }
+
+  const guestCartToken =
+    req.headers.get('x-guest-cart-token') ||
+    req.cookies.get('alifworld_guest_cart')?.value ||
+    new URL(req.url).searchParams.get('guestCartToken') ||
+    undefined;
+
+  return { userId, guestCartToken };
+}
+
+/**
+ * GET /api/v1/cart
+ * Retrieves the active shopping cart for an authenticated customer or guest session.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const { userId, guestCartToken } = extractActorOrGuest(req);
+
+    const cart = await cartService.getCart(userId, guestCartToken);
+
+    const response = NextResponse.json(
+      {
+        success: true,
+        data: cart,
+      },
+      { status: 200 }
+    );
+
+    if (cart.isGuest && cart.guestCartToken) {
+      response.headers.set('x-guest-cart-token', cart.guestCartToken);
+      response.cookies.set('alifworld_guest_cart', cart.guestCartToken, {
+        path: '/',
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+        httpOnly: false,
+        sameSite: 'lax',
+      });
+    }
+
+    return response;
+  } catch (error) {
+    return errorResponse(req, error);
+  }
+}
+
+/**
+ * POST /api/v1/cart
+ * Adds an item to the active user or guest cart.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const { userId, guestCartToken } = extractActorOrGuest(req);
+
     let payload: unknown;
     try {
       payload = await req.json();
     } catch {
       throw new ValidationError('Invalid JSON body');
     }
-    const parsed = AddCartItemSchema.safeParse(payload);
-    if (!parsed.success) {
-      throw new ValidationError('Invalid cart item', { issues: parsed.error.flatten() });
-    }
-    const result = await cartRepo.addPublishedVariant(actor.userId, parsed.data.variantId, parsed.data.quantity);
-    return NextResponse.json({ success: true, data: serializeBigInt(result) }, { status: 201 });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return NextResponse.json(error.toJSON(), { status: error.statusCode });
-    }
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Unable to add cart item' } },
-      { status: 500 }
+
+    const validatedInput = AddCartItemSchema.parse(payload);
+
+    const result = await cartService.addItem(
+      validatedInput,
+      userId,
+      guestCartToken || validatedInput.guestCartToken || undefined
     );
+
+    const response = NextResponse.json(
+      {
+        success: true,
+        data: result.cart,
+      },
+      { status: 201 }
+    );
+
+    if (result.guestCartToken) {
+      response.headers.set('x-guest-cart-token', result.guestCartToken);
+      response.cookies.set('alifworld_guest_cart', result.guestCartToken, {
+        path: '/',
+        maxAge: 30 * 24 * 60 * 60,
+        httpOnly: false,
+        sameSite: 'lax',
+      });
+    }
+
+    return response;
+  } catch (error) {
+    return errorResponse(req, error);
   }
 }
 
 /**
- * GET /api/v1/cart
- * Retrieves the authenticated customer's active shopping cart.
+ * DELETE /api/v1/cart
+ * Clears all items from the active shopping cart.
  */
-export async function GET(req: NextRequest) {
+export async function DELETE(req: NextRequest) {
   try {
-    const actor = authenticateRequest(req);
+    const { userId, guestCartToken } = extractActorOrGuest(req);
 
-    // Fetch active cart strictly scoped to authenticated user
-    const cart = await cartRepo.findActiveCartByUserId(actor.userId);
-
-    if (cart) {
-      // Assert object ownership
-      cartRepo.assertCartOwnership(cart, actor);
-    }
+    const cart = await cartService.clearCart(userId, guestCartToken);
 
     return NextResponse.json(
       {
         success: true,
-        data: cart ? {
-          id: cart.id,
-          userId: cart.userId,
-          currency: cart.currency,
-          status: cart.status,
-          items: cart.items.map((item: any) => ({
-            id: item.id,
-            sellerId: item.sellerId,
-            seller: { businessName: item.seller?.businessName },
-            variantId: item.variantId,
-            variant: {
-              sku: item.variant?.sku,
-              title: item.variant?.title,
-              imageUrl: item.variant?.imageUrl,
-              product: { title: item.variant?.product?.title },
-            },
-            pricePoisha: item.pricePoisha.toString(),
-            productPoint: item.productPoint,
-            quantity: item.quantity,
-          })),
-        } : { id: null, items: [], status: 'ACTIVE', currency: 'BDT' },
+        data: cart,
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    if (error instanceof AppError) {
-      return NextResponse.json(error.toJSON(), { status: error.statusCode });
-    }
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: error.message } },
-      { status: 500 }
-    );
+  } catch (error) {
+    return errorResponse(req, error);
   }
 }
+

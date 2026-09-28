@@ -3494,43 +3494,140 @@ export const openApiSpec = {
       get: {
         tags: ['Customer & Ownership'],
         summary: 'Get Active Shopping Cart',
-        description: 'Retrieves the authenticated customer\'s own shopping cart, enforcing strict self-ownership.',
-        security: [{ BearerAuth: [] }],
+        description: 'Retrieves the authenticated customer\'s own shopping cart or ephemeral guest cart by token.',
+        parameters: [{ name: 'x-guest-cart-token', in: 'header', required: false, schema: { type: 'string' } }],
         responses: {
           '200': {
             description: 'Shopping cart retrieved',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
           },
-          '401': { description: 'Authentication required' },
         },
       },
       post: {
         tags: ['Customer & Ownership'],
         summary: 'Add Published Variant to Cart',
-        description: 'Price and Product Points come from the active published BDT variant on the server.',
-        security: [{ BearerAuth: [] }],
-        requestBody: { required: true, content: { 'application/json': { schema: {
-          type: 'object', properties: { variantId: { type: 'string' }, quantity: { type: 'integer', minimum: 1 } },
-          required: ['variantId', 'quantity'], additionalProperties: false,
-        } } } },
-        responses: { '201': { description: 'Cart item added' }, '401': { description: 'Authentication required' }, '404': { description: 'Variant unavailable' }, '422': { description: 'Invalid quantity' } },
+        description: 'Price and Product Points come from the active published BDT variant on the server with inventory validation.',
+        parameters: [{ name: 'x-guest-cart-token', in: 'header', required: false, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  variantId: { type: 'string' },
+                  quantity: { type: 'integer', minimum: 1 },
+                  guestCartToken: { type: 'string' },
+                },
+                required: ['variantId', 'quantity'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Cart item added successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '404': { description: 'Variant unavailable' },
+          '422': { description: 'Invalid quantity or stock exceeded' },
+        },
+      },
+      delete: {
+        tags: ['Customer & Ownership'],
+        summary: 'Clear Active Shopping Cart',
+        description: 'Soft-deletes all line items from the active cart.',
+        responses: {
+          '200': {
+            description: 'Cart cleared successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
       },
     },
     '/api/v1/cart/items/{itemId}': {
       patch: {
-        tags: ['Customer & Ownership'], summary: 'Update Owned Cart Item Quantity',
-        security: [{ BearerAuth: [] }],
-        parameters: [{ name: 'itemId', in: 'path', required: true, schema: { type: 'string' } }],
-        requestBody: { required: true, content: { 'application/json': { schema: {
-          type: 'object', properties: { quantity: { type: 'integer', minimum: 0 } }, required: ['quantity'], additionalProperties: false,
-        } } } },
-        responses: { '200': { description: 'Quantity updated' }, '401': { description: 'Authentication required' }, '409': { description: 'Cart no longer editable' } },
+        tags: ['Customer & Ownership'],
+        summary: 'Update Cart Item Quantity',
+        description: 'Updates quantity with live stock limit validation. Setting quantity to 0 removes item.',
+        parameters: [
+          { name: 'itemId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'x-guest-cart-token', in: 'header', required: false, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { quantity: { type: 'integer', minimum: 0 } },
+                required: ['quantity'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Quantity updated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '404': { description: 'Item not found' },
+          '422': { description: 'Stock limit exceeded' },
+        },
       },
       delete: {
-        tags: ['Customer & Ownership'], summary: 'Remove Owned Cart Item',
-        security: [{ BearerAuth: [] }],
-        parameters: [{ name: 'itemId', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Item removed' }, '401': { description: 'Authentication required' }, '409': { description: 'Cart no longer editable' } },
+        tags: ['Customer & Ownership'],
+        summary: 'Remove Cart Item',
+        description: 'Soft-deletes line item from active cart.',
+        parameters: [
+          { name: 'itemId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'x-guest-cart-token', in: 'header', required: false, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Item removed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/cart/merge': {
+      post: {
+        tags: ['Customer & Ownership'],
+        summary: 'Merge Guest Cart to Authenticated Cart',
+        description: 'Safely merges an ephemeral guest cart into the logged-in customer cart. Deduplicates variants, caps quantities at available stock, re-snapshots live catalog prices and Product Points, and marks guest cart as MERGED.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { guestCartToken: { type: 'string' } },
+                required: ['guestCartToken'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Guest cart merged successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+        },
+      },
+    },
+    '/api/v1/cart/revalidate': {
+      post: {
+        tags: ['Customer & Ownership'],
+        summary: 'Revalidate Cart Pricing & Inventory',
+        description: 'Revalidates live catalog prices, Product Points, and inventory levels against snapshots in the cart.',
+        responses: {
+          '200': {
+            description: 'Cart revalidated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
       },
     },
     '/api/v1/cart/checkout': {
