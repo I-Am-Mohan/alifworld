@@ -21,6 +21,8 @@ import {
 import {
   CartDTO,
   CartItemDTO,
+  CartGroupedDTO,
+  SellerCartGroupDTO,
   CartRevalidationResultDTO,
   MergeCartResultDTO,
 } from '../types/cart.types';
@@ -603,6 +605,173 @@ export class CartService {
       priceChangesCount,
       outOfStockCount,
       warnings,
+    };
+  }
+
+  /**
+   * Retrieves cart contents partitioned into seller fulfillment packages with shipping & delivery constraints.
+   */
+  public async getGroupedCart(
+    userId?: string,
+    guestCartToken?: string,
+    customerDivision: string = 'DHAKA'
+  ): Promise<CartGroupedDTO> {
+    const cart = await this.getCart(userId, guestCartToken);
+    return this.groupCartBySeller(cart, customerDivision);
+  }
+
+  /**
+   * Partitions cart items into distinct multi-vendor seller fulfillment packages.
+   * Calculates per-seller shipping fee, free shipping progress, delivery timelines, and order constraints.
+   */
+  public async groupCartBySeller(
+    cart: CartDTO,
+    customerDivision: string = 'DHAKA'
+  ): Promise<CartGroupedDTO> {
+    const sellerMap = new Map<string, CartItemDTO[]>();
+
+    for (const item of cart.items) {
+      const existing = sellerMap.get(item.sellerId) || [];
+      existing.push(item);
+      sellerMap.set(item.sellerId, existing);
+    }
+
+    const sellerGroups: SellerCartGroupDTO[] = [];
+    const globalWarnings: string[] = [];
+    let totalShippingFeePoisha = 0;
+    let isReadyForCheckout = true;
+    let packageIdx = 1;
+
+    for (const [sellerId, items] of sellerMap.entries()) {
+      const seller = await (this.db as any).seller.findFirst({
+        where: { id: sellerId, deletedAt: null },
+        include: {
+          settings: true,
+          operationalDefaults: true,
+        },
+      });
+
+      const sellerName = items[0]?.sellerName || seller?.businessName || 'Verified Merchant';
+      const sellerSlug = items[0]?.sellerSlug || seller?.slug;
+      const sellerStatus = seller?.status || 'VERIFIED';
+
+      const subtotalPoisha = items.reduce((sum, i) => sum + i.subtotalPoisha, 0);
+      const totalProductPoints = items.reduce((sum, i) => sum + i.totalProductPoints, 0);
+      const itemsCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
+      // Constraints calculation
+      const minOrderPoisha = 0; // standard 0 or custom MOV
+      const isMinOrderSatisfied = minOrderPoisha <= 0 || subtotalPoisha >= minOrderPoisha;
+
+      const freeShippingThresholdPoisha = 200000; // ৳2,000.00 standard free shipping threshold
+      const qualifiesForFreeShipping = subtotalPoisha >= freeShippingThresholdPoisha;
+      const amountNeededForFreeShippingPoisha = Math.max(0, freeShippingThresholdPoisha - subtotalPoisha);
+
+      // Shipping fee in poisha: 6000 (৳60) inside Dhaka, 12000 (৳120) outside Dhaka
+      const isInsideDhaka = customerDivision.toUpperCase().includes('DHAKA');
+      let baseShippingFeePoisha = isInsideDhaka ? 6000 : 12000;
+      if (qualifiesForFreeShipping) {
+        baseShippingFeePoisha = 0;
+      }
+
+      totalShippingFeePoisha += baseShippingFeePoisha;
+
+      const handlingDays = seller?.operationalDefaults?.defaultHandlingDays || 2;
+      const transitDaysMin = isInsideDhaka ? 1 : 2;
+      const transitDaysMax = isInsideDhaka ? 3 : 5;
+
+      const groupWarnings: string[] = [];
+
+      // Check seller vacation mode
+      if (seller?.settings?.vacationMode) {
+        groupWarnings.push(
+          `${sellerName} is currently on vacation: ${seller.settings.vacationMessage || 'Orders will be processed after return.'}`
+        );
+        isReadyForCheckout = false;
+      }
+
+      // Check minimum order value
+      if (!isMinOrderSatisfied) {
+        groupWarnings.push(
+          `Minimum order value for ${sellerName} is ${this.formatBdt(minOrderPoisha)}.`
+        );
+        isReadyForCheckout = false;
+      }
+
+      const totalPoisha = subtotalPoisha + baseShippingFeePoisha;
+
+      sellerGroups.push({
+        sellerId,
+        sellerName,
+        sellerSlug,
+        sellerStatus,
+        packageNumber: packageIdx++,
+        items,
+        itemsCount,
+        subtotalPoisha,
+        subtotalBdtFormatted: this.formatBdt(subtotalPoisha),
+        shippingFeePoisha: baseShippingFeePoisha,
+        shippingFeeBdtFormatted: this.formatBdt(baseShippingFeePoisha),
+        totalPoisha,
+        totalBdtFormatted: this.formatBdt(totalPoisha),
+        totalProductPoints,
+        constraints: {
+          minOrderPoisha: minOrderPoisha > 0 ? minOrderPoisha : null,
+          minOrderBdtFormatted: minOrderPoisha > 0 ? this.formatBdt(minOrderPoisha) : null,
+          isMinOrderSatisfied,
+          freeShippingThresholdPoisha,
+          freeShippingThresholdBdtFormatted: this.formatBdt(freeShippingThresholdPoisha),
+          qualifiesForFreeShipping,
+          amountNeededForFreeShippingPoisha,
+          amountNeededForFreeShippingBdtFormatted:
+            amountNeededForFreeShippingPoisha > 0
+              ? this.formatBdt(amountNeededForFreeShippingPoisha)
+              : null,
+          shippingMode: seller?.operationalDefaults?.shippingMode || 'PLATFORM',
+          defaultHandlingDays: handlingDays,
+          estimatedDeliveryMinDays: handlingDays + transitDaysMin,
+          estimatedDeliveryMaxDays: handlingDays + transitDaysMax,
+          vacationMode: Boolean(seller?.settings?.vacationMode),
+          vacationMessage: seller?.settings?.vacationMessage || null,
+          warnings: groupWarnings,
+        },
+      });
+
+      if (groupWarnings.length > 0) {
+        globalWarnings.push(...groupWarnings);
+      }
+    }
+
+    const totalSubtotalPoisha = cart.subtotalPoisha;
+    const grandTotalPoisha = totalSubtotalPoisha + totalShippingFeePoisha;
+
+    return {
+      id: cart.id,
+      userId: cart.userId,
+      isGuest: cart.isGuest,
+      guestCartToken: cart.guestCartToken,
+      currency: 'BDT',
+      status: cart.status,
+      couponCode: cart.couponCode,
+      notes: cart.notes,
+      isB2B: cart.isB2B,
+      b2bQuoteId: cart.b2bQuoteId,
+      purchaseOrderRef: cart.purchaseOrderRef,
+      sellerGroups,
+      sellerGroupsCount: sellerGroups.length,
+      totalItemsCount: cart.itemsCount,
+      totalSubtotalPoisha,
+      totalSubtotalBdtFormatted: this.formatBdt(totalSubtotalPoisha),
+      totalShippingFeePoisha,
+      totalShippingFeeBdtFormatted: this.formatBdt(totalShippingFeePoisha),
+      grandTotalPoisha,
+      grandTotalBdtFormatted: this.formatBdt(grandTotalPoisha),
+      totalProductPoints: cart.totalProductPoints,
+      isReadyForCheckout: isReadyForCheckout && cart.items.length > 0,
+      warnings: globalWarnings,
+      version: cart.version,
+      createdAt: cart.createdAt,
+      updatedAt: cart.updatedAt,
     };
   }
 

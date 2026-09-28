@@ -125,6 +125,38 @@ export default function CartPage() {
     BigInt(0)
   );
 
+  // Group items by seller
+  const sellerPackages = React.useMemo(() => {
+    const map = new Map<string, CartItem[]>();
+    for (const item of items) {
+      const existing = map.get(item.sellerId) || [];
+      existing.push(item);
+      map.set(item.sellerId, existing);
+    }
+    return Array.from(map.entries()).map(([sellerId, pkgItems], idx) => {
+      const sellerSubtotal = pkgItems.reduce(
+        (sum, i) => sum + i.pricePoisha * BigInt(i.quantity),
+        0n
+      );
+      const isDhaka = division === 'DHAKA';
+      const qualifiesFree = sellerSubtotal >= 200000n; // ৳2,000 free shipping
+      const shippingFee = qualifiesFree ? 0n : isDhaka ? 6000n : 12000n;
+      return {
+        sellerId,
+        sellerName: pkgItems[0].sellerName || 'Verified Merchant',
+        packageNumber: idx + 1,
+        items: pkgItems,
+        subtotal: sellerSubtotal,
+        qualifiesFree,
+        shippingFee,
+        neededForFree: qualifiesFree ? 0n : 200000n - sellerSubtotal,
+      };
+    });
+  }, [items, division]);
+
+  const totalShippingFeePoisha = sellerPackages.reduce((acc, p) => acc + p.shippingFee, 0n);
+  const estimatedGrandTotalPoisha = subtotalPoisha + totalShippingFeePoisha;
+
   // Discrete Product Points (STRICT: independent integer loyalty units)
   const totalProductPoints = items.reduce(
     (acc, item) => acc + item.productPoint * item.quantity,
@@ -286,80 +318,131 @@ export default function CartPage() {
                 </div>
               )}
 
-              {/* Cart Items Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              {/* Multi-Vendor Seller Fulfillment Packages */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                  <h2 className="text-base font-extrabold text-gray-900 flex items-center gap-2">
                     <ShoppingBag className="w-5 h-5 text-[#1B5E20]" />
                     Review Cart ({items.length} {items.length === 1 ? 'item' : 'items'})
                   </h2>
                   <span className="text-xs text-gray-500 font-medium">
-                    Multi-Vendor Tenancy Scoped
+                    {sellerPackages.length} {sellerPackages.length === 1 ? 'Seller Package' : 'Seller Packages'}
                   </span>
                 </div>
 
-                <div className="divide-y divide-gray-100">
-                  {items.map((item) => (
-                    <div key={item.id} className="py-4 flex gap-4 items-start">
-                      {item.imageUrl ? <Image unoptimized src={item.imageUrl} alt={item.productTitle} width={80} height={80} className="w-20 h-20 object-cover rounded-xl border border-gray-100 flex-shrink-0" /> : <span className="w-20 h-20 bg-gray-100 flex items-center justify-center" aria-hidden="true"><ShoppingBag /></span>}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                {sellerPackages.map((pkg) => (
+                  <div key={pkg.sellerId} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    {/* Package Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 bg-slate-100 text-slate-800 text-xs font-extrabold rounded-lg">
+                          Package {pkg.packageNumber} of {sellerPackages.length}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-gray-900">
                           <Store className="w-3.5 h-3.5 text-[#1B5E20]" />
-                          <span className="font-semibold text-gray-700">{item.sellerName}</span>
-                        </div>
-                        <h3 className="text-sm font-semibold text-gray-900 truncate">
-                          {item.productTitle}
-                        </h3>
-                        <p className="text-xs text-gray-500 mb-2">Variant: {item.variantTitle}</p>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-bold text-[#1B5E20]">
-                            {formatBdt(item.pricePoisha)}
-                          </span>
-                          <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-600" />
-                            +{item.productPoint * item.quantity} PP
-                          </span>
+                          <span>{pkg.sellerName}</span>
                         </div>
                       </div>
 
-                      {/* Quantity Modifier */}
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.id, -1)}
-                            disabled={busyItem === item.id}
-                            className="p-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-l-lg transition-colors"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <span className="px-3 text-xs font-bold text-gray-800">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.id, 1)}
-                            disabled={busyItem === item.id}
-                            className="p-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-r-lg transition-colors"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          disabled={busyItem === item.id}
-                          className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Remove
-                        </button>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-500">Delivery:</span>
+                        <span className="font-semibold text-gray-800">
+                          {pkg.qualifiesFree ? (
+                            <span className="text-emerald-700 font-bold">FREE Delivery</span>
+                          ) : (
+                            formatBdt(pkg.shippingFee)
+                          )}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* Free shipping progress bar */}
+                    {!pkg.qualifiesFree && pkg.neededForFree > 0n && (
+                      <div className="p-2.5 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs text-emerald-900 flex items-center justify-between gap-2">
+                        <span>
+                          Add <strong>{formatBdt(pkg.neededForFree)}</strong> more from this seller for <strong>FREE Delivery</strong>!
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider whitespace-nowrap">
+                          Threshold: ৳2,000
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Package Items */}
+                    <div className="divide-y divide-gray-100">
+                      {pkg.items.map((item) => (
+                        <div key={item.id} className="py-4 flex gap-4 items-start first:pt-0 last:pb-0">
+                          {item.imageUrl ? (
+                            <Image
+                              unoptimized
+                              src={item.imageUrl}
+                              alt={item.productTitle}
+                              width={80}
+                              height={80}
+                              className="w-20 h-20 object-cover rounded-xl border border-gray-100 flex-shrink-0"
+                            />
+                          ) : (
+                            <span className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400" aria-hidden="true">
+                              <ShoppingBag className="w-6 h-6" />
+                            </span>
+                          )}
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-gray-900 truncate">
+                              {item.productTitle}
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-2">Variant: {item.variantTitle}</p>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-bold text-[#1B5E20]">
+                                {formatBdt(item.pricePoisha)}
+                              </span>
+                              <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-amber-600" />
+                                +{item.productPoint * item.quantity} PP
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Quantity Modifier */}
+                          <div className="flex flex-col items-end gap-2">
+                            <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50">
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.id, -1)}
+                                disabled={busyItem === item.id}
+                                className="p-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-l-lg transition-colors"
+                                aria-label="Decrease quantity"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="px-3 text-xs font-bold text-gray-800">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.id, 1)}
+                                disabled={busyItem === item.id}
+                                className="p-1 text-gray-600 hover:text-black hover:bg-gray-100 rounded-r-lg transition-colors"
+                                aria-label="Increase quantity"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.id)}
+                              disabled={busyItem === item.id}
+                              className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Delivery Address Card */}
@@ -457,25 +540,29 @@ export default function CartPage() {
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
+                    <span>Items Subtotal</span>
                     <span className="font-semibold text-gray-900">{formatBdt(subtotalPoisha)}</span>
                   </div>
 
                   <div className="flex justify-between text-gray-600">
                     <span className="flex items-center gap-1.5">
                       <Truck className="w-4 h-4 text-gray-400" />
-                      Courier Fulfillment ({division})
+                      Delivery ({sellerPackages.length} {sellerPackages.length === 1 ? 'Package' : 'Packages'})
                     </span>
-                    <span className="font-semibold text-gray-900">Calculated at checkout</span>
-                  </div>
-
-                  <div className="flex justify-between text-gray-600">
-                    <span>Tax</span>
-                    <span className="font-semibold text-gray-900">Calculated at checkout</span>
+                    <span className="font-semibold text-gray-900">
+                      {totalShippingFeePoisha === 0n ? (
+                        <span className="text-emerald-700 font-bold">FREE</span>
+                      ) : (
+                        formatBdt(totalShippingFeePoisha)
+                      )}
+                    </span>
                   </div>
 
                   <div className="pt-3 border-t border-gray-100 flex justify-between items-baseline">
-                    <span className="text-base font-bold text-gray-900">Final total available after checkout</span>
+                    <span className="text-base font-bold text-gray-900">Estimated Total</span>
+                    <span className="text-xl font-black text-gray-900">
+                      {formatBdt(estimatedGrandTotalPoisha)}
+                    </span>
                   </div>
                 </div>
 

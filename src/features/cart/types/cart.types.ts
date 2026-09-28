@@ -68,3 +68,68 @@ export interface MergeCartResultDTO {
   mergedItemsCount: number;
   warnings: string[];
 }
+
+export interface SellerFulfillmentConstraintsDTO {
+  minOrderPoisha?: number | null;
+  minOrderBdtFormatted?: string | null;
+  isMinOrderSatisfied: boolean;
+  freeShippingThresholdPoisha?: number | null;
+  freeShippingThresholdBdtFormatted?: string | null;
+  qualifiesForFreeShipping: boolean;
+  amountNeededForFreeShippingPoisha: number;
+  amountNeededForFreeShippingBdtFormatted?: string | null;
+  shippingMode: 'PLATFORM' | 'SELF_DELIVERY' | string;
+  defaultHandlingDays: number;
+  estimatedDeliveryMinDays: number;
+  estimatedDeliveryMaxDays: number;
+  vacationMode: boolean;
+  vacationMessage?: string | null;
+  warnings: string[];
+}
+
+export interface SellerCartGroupDTO {
+  sellerId: string;
+  sellerName: string;
+  sellerSlug?: string;
+  sellerStatus: string;
+  packageNumber: number; // e.g. 1 (Package 1 of 2)
+  items: CartItemDTO[];
+  itemsCount: number;
+  subtotalPoisha: number;
+  subtotalBdtFormatted: string;
+  shippingFeePoisha: number;
+  shippingFeeBdtFormatted: string;
+  totalPoisha: number;
+  totalBdtFormatted: string;
+  totalProductPoints: number;
+  constraints: SellerFulfillmentConstraintsDTO;
+}
+
+export interface CartGroupedDTO {
+  id: string;
+  userId: string | null;
+  isGuest: boolean;
+  guestCartToken?: string | null;
+  currency: 'BDT';
+  status: string;
+  couponCode: string | null;
+  notes: string | null;
+  isB2B: boolean;
+  b2bQuoteId: string | null;
+  purchaseOrderRef: string | null;
+  sellerGroups: SellerCartGroupDTO[];
+  sellerGroupsCount: number;
+  totalItemsCount: number;
+  totalSubtotalPoisha: number;
+  totalSubtotalBdtFormatted: string;
+  totalShippingFeePoisha: number;
+  totalShippingFeeBdtFormatted: string;
+  grandTotalPoisha: number;
+  grandTotalBdtFormatted: string;
+  totalProductPoints: number;
+  isReadyForCheckout: boolean;
+  warnings: string[];
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -3591,6 +3591,23 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/cart/grouped': {
+      get: {
+        tags: ['Customer & Ownership'],
+        summary: 'Get Multi-Vendor Grouped Cart',
+        description: 'Retrieves active cart partitioned into distinct seller fulfillment packages with calculated shipping fees, free shipping progress, lead times, and fulfillment constraints.',
+        parameters: [
+          { name: 'x-guest-cart-token', in: 'header', required: false, schema: { type: 'string' } },
+          { name: 'division', in: 'query', required: false, schema: { type: 'string', default: 'DHAKA' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Grouped cart packages returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
     '/api/v1/cart/merge': {
       post: {
         tags: ['Customer & Ownership'],
