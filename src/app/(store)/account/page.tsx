@@ -8,9 +8,39 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function CustomerAccountPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'preferences' | 'consent' | 'security' | 'organization'>('profile');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'profile' | 'addresses' | 'preferences' | 'consent' | 'security' | 'organization'>('overview');
   const [locale, setLocale] = useState<'en-BD' | 'bn-BD'>('en-BD');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Orders State & Shortcuts
+  const [orders, setOrders] = useState([
+    {
+      id: 'ord_202610_01',
+      orderNumber: 'ORD-202610-8819',
+      status: 'IN_TRANSIT',
+      totalBdtFormatted: '৳18,500.00',
+      itemsCount: 1,
+      createdAt: '2026-10-14',
+      firstItemTitle: 'Walton Primo S8 Pro (8GB/128GB)',
+      sellerName: 'Walton Official Flagship Store',
+      courierProvider: 'Pathao Courier',
+      trackingNumber: 'PTH-88992211',
+      pointsEarned: 150,
+    },
+    {
+      id: 'ord_202609_02',
+      orderNumber: 'ORD-202609-4412',
+      status: 'DELIVERED',
+      totalBdtFormatted: '৳6,500.00',
+      itemsCount: 2,
+      createdAt: '2026-09-22',
+      firstItemTitle: 'Apex Leather Oxford Formal Shoe',
+      sellerName: 'Apex Footwear Flagship',
+      courierProvider: 'Steadfast Courier',
+      trackingNumber: 'STF-44129988',
+      pointsEarned: 50,
+    },
+  ]);
 
   // Profile form states
   const [name, setName] = useState('Rahim Ahmed');
@@ -60,11 +90,12 @@ export default function CustomerAccountPage() {
   const [newPostalCode, setNewPostalCode] = useState('1209');
   const [newIsDefault, setNewIsDefault] = useState(false);
 
-  // Preference states
+  // Granular Notification Channel Matrix states (Milestone 130)
+  const [smsOrderStatus, setSmsOrderStatus] = useState(true);
+  const [pushDeliveryAlerts, setPushDeliveryAlerts] = useState(true);
   const [emailMarketing, setEmailMarketing] = useState(false);
-  const [smsMarketing, setSmsMarketing] = useState(false);
-  const [orderStatusUpdates, setOrderStatusUpdates] = useState(true);
-  const [promotionalPush, setPromotionalPush] = useState(false);
+  const [smsRestock, setSmsRestock] = useState(true);
+  const [pushPriceDrops, setPushPriceDrops] = useState(true);
 
   // Consent states
   const [termsAccepted, setTermsAccepted] = useState(true);
@@ -87,6 +118,14 @@ export default function CustomerAccountPage() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleReorder = (orderNumber: string) => {
+    showToast(
+      isBn
+        ? `অর্ডার #${orderNumber}-এর পণ্যসমূহ আপনার কার্টে যুক্ত করা হয়েছে!`
+        : `Items from #${orderNumber} added to your active cart!`
+    );
   };
 
   const handleSetDefaultAddress = (id: string) => {
@@ -256,6 +295,8 @@ export default function CustomerAccountPage() {
         {/* Tab Navigation */}
         <div className="flex border-b border-slate-200 space-x-6 text-xs font-bold overflow-x-auto">
           {[
+            { key: 'overview', label: isBn ? 'ড্যাশবোর্ড' : 'Overview' },
+            { key: 'orders', label: isBn ? 'অর্ডারসমূহ' : 'Orders & Tracking' },
             { key: 'profile', label: isBn ? 'প্রোফাইল' : 'Profile Settings' },
             { key: 'addresses', label: isBn ? 'ঠিকানা খাতা' : 'Address Book' },
             { key: 'preferences', label: isBn ? 'বিজ্ঞপ্তি পছন্দ' : 'Notification Preferences' },
@@ -276,6 +317,189 @@ export default function CustomerAccountPage() {
             </button>
           ))}
         </div>
+
+        {/* Tab 0: Overview Dashboard */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            {/* Quick Metrics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Card className="p-5 border border-slate-200 bg-white space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  {isBn ? 'সক্রিয় অর্ডার' : 'Active Orders'}
+                </span>
+                <div className="text-2xl font-black text-slate-900">
+                  {orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length}
+                </div>
+                <span className="text-[10px] text-blue-600 font-semibold">1 in transit</span>
+              </Card>
+
+              <Card className="p-5 border border-slate-200 bg-white space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  {isBn ? 'লয়্যালটি পয়েন্ট' : 'Product Points'}
+                </span>
+                <div className="text-2xl font-black text-amber-500">450 PP</div>
+                <span className="text-[10px] text-slate-400 font-medium">Rank: Silver Club</span>
+              </Card>
+
+              <Card className="p-5 border border-slate-200 bg-white space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  {isBn ? 'সংরক্ষিত ঠিকানা' : 'Saved Addresses'}
+                </span>
+                <div className="text-2xl font-black text-slate-900">{addresses.length}</div>
+                <span className="text-[10px] text-emerald-600 font-semibold">Dhaka Primary</span>
+              </Card>
+
+              <Card className="p-5 border border-slate-200 bg-white space-y-1">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  {isBn ? 'উইশলিস্ট আইটেম' : 'Wishlist Saved'}
+                </span>
+                <div className="text-2xl font-black text-slate-900">8</div>
+                <Link href="/wishlist" className="text-[10px] text-[#FF6A00] font-bold hover:underline">
+                  View Favorites →
+                </Link>
+              </Card>
+            </div>
+
+            {/* Recent Orders with 1-Click Shortcuts */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    {isBn ? 'সাম্প্রতিক অর্ডারসমূহ ও শর্টকাট' : 'Recent Orders & Quick Shortcuts'}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Track shipments in real-time or quickly reorder previous favorites.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  className="text-xs font-bold text-[#FF6A00] hover:underline"
+                >
+                  {isBn ? 'সকল অর্ডার দেখুন →' : 'View All Orders →'}
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {orders.slice(0, 2).map((order) => (
+                  <Card key={order.id} className="p-5 border border-slate-200 bg-white space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-slate-800">
+                          {order.orderNumber}
+                        </span>
+                        <Badge
+                          className={`text-[10px] font-bold ${
+                            order.status === 'DELIVERED'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-blue-100 text-blue-800 border-blue-300'
+                          }`}
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <div className="text-xs font-black text-slate-900">{order.totalBdtFormatted}</div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-0.5 text-xs text-slate-600">
+                        <div className="font-bold text-slate-900">{order.firstItemTitle}</div>
+                        <div>
+                          Merchant: <span className="text-slate-800 font-semibold">{order.sellerName}</span> •{' '}
+                          Courier: <span className="font-mono">{order.courierProvider} ({order.trackingNumber})</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => handleReorder(order.orderNumber)}
+                          className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs"
+                        >
+                          🔄 {isBn ? 'পুনরায় অর্ডার করুন' : 'Reorder Again'}
+                        </Button>
+                        <Link
+                          href={`/orders/${order.orderNumber}`}
+                          className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          {isBn ? 'ট্র্যাকিং' : 'Track'}
+                        </Link>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 1: Orders History & Shortcuts */}
+        {activeTab === 'orders' && (
+          <div className="space-y-4 max-w-4xl">
+            <div>
+              <h3 className="text-sm font-black text-slate-900">
+                {isBn ? 'আপনার অর্ডার ইতিহাস' : 'Order History & Status Tracking'}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Review complete order line items, courier consignment IDs, and 1-click reorder shortcuts.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <Card key={order.id} className="p-6 border border-slate-200 bg-white space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-[#FF6A00]">{order.orderNumber}</span>
+                        <Badge
+                          className={`text-[10px] font-bold ${
+                            order.status === 'DELIVERED'
+                              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                              : 'bg-blue-100 text-blue-800 border-blue-300'
+                          }`}
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Placed on {order.createdAt} • Store: <strong className="text-slate-700">{order.sellerName}</strong>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-sm font-black text-slate-900">{order.totalBdtFormatted}</div>
+                      <div className="text-[10px] text-amber-700 font-bold">+{order.pointsEarned} Product Points</div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+                    <div className="space-y-1 text-slate-600">
+                      <div>Item: <strong className="text-slate-800">{order.firstItemTitle}</strong></div>
+                      <div>
+                        Courier: <strong>{order.courierProvider}</strong> • Tracking No:{' '}
+                        <strong className="font-mono text-blue-800">{order.trackingNumber}</strong>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleReorder(order.orderNumber)}
+                        className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs"
+                      >
+                        🔄 {isBn ? 'পুনরায় অর্ডার' : 'Reorder'}
+                      </Button>
+                      <Link
+                        href={`/orders/${order.orderNumber}`}
+                        className="px-3 py-1.5 border border-slate-200 rounded-lg font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        {isBn ? 'ইনভয়েস / ট্র্যাকিং' : 'Invoice / Track'}
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tab 1: Profile Settings */}
         {activeTab === 'profile' && (
@@ -545,61 +769,109 @@ export default function CustomerAccountPage() {
           </div>
         )}
 
-        {/* Tab 2: Communication Preferences */}
+        {/* Tab 5: Communication & Notification Preferences Matrix */}
         {activeTab === 'preferences' && (
           <Card className="border border-slate-200 bg-white p-6 max-w-2xl space-y-6">
-            <h3 className="text-sm font-black text-slate-900">
-              {isBn ? 'বিজ্ঞপ্তি ও বিপণন পছন্দসমূহ' : 'Notification & Marketing Preferences'}
-            </h3>
+            <div>
+              <h3 className="text-sm font-black text-slate-900">
+                {isBn ? 'বিজ্ঞপ্তি ও বিপণন পছন্দসমূহ' : 'Notification & Marketing Preferences Matrix'}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Customize how and when you receive order updates, delivery tracking, and promotional alerts.
+              </p>
+            </div>
+
             <form onSubmit={handlePreferencesSubmit} className="space-y-4 text-xs">
-              <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
+              {/* Mandatory Security Alerts */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                 <div>
-                  <div className="font-bold text-slate-800">Email Marketing & Deals</div>
-                  <div className="text-[11px] text-slate-500">Receive weekly deals, discounts, and exclusive offers via email.</div>
+                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>🔒 Account Security & Login Alerts</span>
+                    <Badge className="bg-slate-200 text-slate-700 text-[9px] font-bold">Mandatory</Badge>
+                  </div>
+                  <div className="text-[11px] text-slate-500">
+                    Critical password changes, login OTPs, and security alerts across SMS and Email. Cannot be disabled.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={true}
+                  disabled
+                  className="rounded text-slate-400 w-4 h-4 cursor-not-allowed"
+                />
+              </div>
+
+              <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
+                <div>
+                  <div className="font-bold text-slate-800">📱 SMS Order Status Updates</div>
+                  <div className="text-[11px] text-slate-500">
+                    Real-time SMS alerts when your order is confirmed, dispatched, and delivered.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={smsOrderStatus}
+                  onChange={(e) => setSmsOrderStatus(e.target.checked)}
+                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
+                <div>
+                  <div className="font-bold text-slate-800">🚚 Push Delivery & Rider Tracking</div>
+                  <div className="text-[11px] text-slate-500">
+                    Instant app and web notifications when rider is out for delivery with tracking link.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={pushDeliveryAlerts}
+                  onChange={(e) => setPushDeliveryAlerts(e.target.checked)}
+                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
+                <div>
+                  <div className="font-bold text-slate-800">🏷️ Wishlist Price Drop Alerts</div>
+                  <div className="text-[11px] text-slate-500">
+                    Instant alerts when items saved in your wishlist drop in price.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={pushPriceDrops}
+                  onChange={(e) => setPushPriceDrops(e.target.checked)}
+                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
+                <div>
+                  <div className="font-bold text-slate-800">📦 Back in Stock SMS Alerts</div>
+                  <div className="text-[11px] text-slate-500">
+                    Receive an SMS alert when out-of-stock items become available for purchase.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={smsRestock}
+                  onChange={(e) => setSmsRestock(e.target.checked)}
+                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
+                <div>
+                  <div className="font-bold text-slate-800">✉️ Weekly Promotional Emails</div>
+                  <div className="text-[11px] text-slate-500">
+                    Receive weekly deals, discounts, and exclusive offers via email.
+                  </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={emailMarketing}
                   onChange={(e) => setEmailMarketing(e.target.checked)}
-                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
-                <div>
-                  <div className="font-bold text-slate-800">SMS Marketing Broadcasts</div>
-                  <div className="text-[11px] text-slate-500">Receive flash sales notifications on your verified mobile phone.</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={smsMarketing}
-                  onChange={(e) => setSmsMarketing(e.target.checked)}
-                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
-                <div>
-                  <div className="font-bold text-slate-800">Order & Delivery Status Alerts</div>
-                  <div className="text-[11px] text-slate-500">Real-time updates when orders are confirmed, dispatched, and delivered.</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={orderStatusUpdates}
-                  onChange={(e) => setOrderStatusUpdates(e.target.checked)}
-                  className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:bg-slate-50/50 cursor-pointer">
-                <div>
-                  <div className="font-bold text-slate-800">Promotional Push Notifications</div>
-                  <div className="text-[11px] text-slate-500">Web and app push notifications for cart reminders and price drops.</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={promotionalPush}
-                  onChange={(e) => setPromotionalPush(e.target.checked)}
                   className="rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
                 />
               </label>

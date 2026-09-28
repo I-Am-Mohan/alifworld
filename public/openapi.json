@@ -5782,6 +5782,329 @@
         }
       }
     },
+    "/api/v1/customer/dashboard": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Get Customer Dashboard Overview",
+        "description": "Aggregates profile greeting, active and completed order counts, Product Points, Customer Club rank, wallet balances, default address, and recent notification alerts.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer dashboard overview returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/api/v1/customer/orders": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "List Customer Orders",
+        "description": "Retrieves paginated parent orders belonging to authenticated customer with item snapshots, status history, and tracking links.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "PROCESSING",
+                "IN_TRANSIT",
+                "DELIVERED",
+                "CANCELLED",
+                "RETURNED"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer orders retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/orders/{id}/reorder": {
+      "post": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Reorder Past Order Items",
+        "description": "Order Shortcut: Quickly re-adds all items from a past order into the active cart with live price and stock validation.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Items reordered into cart successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/notifications/preferences": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Get Notification Preferences Matrix",
+        "description": "Retrieves granular notification preferences across SMS, Email, Push, and WhatsApp with mandatory security flags.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification preferences matrix returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Update Notification Preferences Matrix",
+        "description": "Updates notification channel preferences while strictly preserving mandatory security alert requirements.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "preferences": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "channel": {
+                          "type": "string",
+                          "enum": [
+                            "EMAIL",
+                            "SMS",
+                            "PUSH",
+                            "WHATSAPP"
+                          ]
+                        },
+                        "eventType": {
+                          "type": "string",
+                          "enum": [
+                            "ORDER_STATUS_CHANGES",
+                            "DELIVERY_DISPATCH_ALERTS",
+                            "PRICE_DROP_ALERTS",
+                            "RESTOCK_ALERTS",
+                            "MARKETING_PROMOTIONS",
+                            "SECURITY_ALERTS"
+                          ]
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "channel",
+                        "eventType",
+                        "enabled"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "preferences"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notification preferences updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/notifications": {
+      "get": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "List Customer Notifications",
+        "description": "Retrieves recent notification deliveries for the authenticated customer.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications list returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/notifications/{id}/read": {
+      "patch": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Mark Notification as Read",
+        "description": "Updates notification status to READ.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customer/notifications/read-all": {
+      "post": {
+        "tags": [
+          "Customer Experience"
+        ],
+        "summary": "Mark All Notifications Read",
+        "description": "Marks all unread customer notifications as read.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/customer/profile": {
       "get": {
         "tags": [

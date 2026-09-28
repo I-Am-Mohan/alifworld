@@ -69,4 +69,6 @@ export type RegisterBusinessBuyerInput = z.infer<typeof RegisterBusinessBuyerSch
 
 export * from './wishlist.validators';
 export * from './b2b.validators';
+export * from './dashboard.validators';
+
 
