@@ -3835,9 +3835,9 @@ export const openApiSpec = {
     },
     '/api/v1/cart/checkout': {
       post: {
-        tags: ['Customer & Ownership'],
-        summary: 'Checkout Cart with Ownership Check',
-        description: 'Executes checkout for the customer\'s owned cart. Prevents checking out carts belonging to another user.',
+        tags: ['Checkout & Shipping'],
+        summary: 'Checkout Cart with Ownership & Idempotency Check',
+        description: 'Executes authoritative server-side checkout for the customer\'s owned cart with multi-vendor seller fulfillment group partitioning and B2B quote pricing locks. Requires Idempotency-Key header.',
         security: [{ BearerAuth: [] }],
         parameters: [{ name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', minLength: 8, maxLength: 128 } }],
         requestBody: {
@@ -3849,6 +3849,7 @@ export const openApiSpec = {
                 properties: {
                   cartId: { type: 'string', example: 'crt_12345' },
                   checkout: { type: 'object' },
+                  couponCode: { type: 'string' },
                 },
                 required: ['cartId', 'checkout'],
               },
@@ -3857,13 +3858,54 @@ export const openApiSpec = {
         },
         responses: {
           '201': {
-            description: 'Order created',
+            description: 'Order created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '200': {
+            description: 'Idempotent replay: previously committed order returned',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
           },
           '401': { description: 'Authentication required' },
           '403': { description: 'Forbidden: Cart ownership violation' },
           '409': { description: 'Cart changed or request conflicts with an existing checkout' },
-          '422': { description: 'Invalid checkout or missing Idempotency-Key' },
+          '422': { description: 'Invalid checkout parameters or missing Idempotency-Key' },
+        },
+      },
+    },
+    '/api/v1/checkout': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Unified Mobile & Web Checkout Pipeline',
+        description: 'Authoritative checkout pipeline endpoint for mobile and web applications.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'Idempotency-Key', in: 'header', required: true, schema: { type: 'string', minLength: 8, maxLength: 128 } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  cartId: { type: 'string' },
+                  checkout: { type: 'object' },
+                  couponCode: { type: 'string' },
+                },
+                required: ['cartId', 'checkout'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Order created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '200': {
+            description: 'Idempotent replay: previously committed order returned',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '422': { description: 'Validation failed or missing Idempotency-Key' },
         },
       },
     },

@@ -53,6 +53,8 @@ export default function CartPage() {
   const [phone, setPhone] = useState<string>('');
   const [district, setDistrict] = useState<string>('');
   const [address, setAddress] = useState<string>('');
+  const [purchaseOrderRef, setPurchaseOrderRef] = useState<string>('');
+  const [isB2BCart, setIsB2BCart] = useState<boolean>(false);
   const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
   const [orderCreated, setOrderCreated] = useState<string | null>(null);
 
@@ -87,6 +89,10 @@ export default function CartPage() {
       }
 
       setCartId(body.data?.id ?? null);
+      setIsB2BCart(Boolean(body.data?.isB2B));
+      if (body.data?.purchaseOrderRef) {
+        setPurchaseOrderRef(body.data.purchaseOrderRef);
+      }
       if (body.data?.couponCode) {
         setAppliedCoupon({
           code: body.data.couponCode,
@@ -337,8 +343,14 @@ export default function CartPage() {
     if (!cartId) return;
     setIsCheckingOut(true);
     setError(null);
-    const checkout = { shippingName: recipientName, shippingPhone: phone, shippingDivision: division,
-      shippingDistrict: district, shippingAddress: address };
+    const checkout = {
+      shippingName: recipientName,
+      shippingPhone: phone,
+      shippingDivision: division,
+      shippingDistrict: district,
+      shippingAddress: address,
+      purchaseOrderRef: purchaseOrderRef || undefined,
+    };
     const fingerprint = JSON.stringify([cartId, checkout]);
     if (checkoutAttempt.current?.fingerprint !== fingerprint) {
       checkoutAttempt.current = { fingerprint, key: crypto.randomUUID() };
@@ -444,6 +456,22 @@ export default function CartPage() {
                       <li key={idx}>{w}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {isB2BCart && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-900 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold flex items-center gap-1.5 text-blue-900">
+                      🏢 B2B Negotiated Order (Locked Pricing)
+                    </span>
+                    <span className="px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-bold">
+                      Corporate Quote
+                    </span>
+                  </div>
+                  <div className="text-blue-700">
+                    Pricing and quantities are locked directly from your approved B2B negotiation quote.
+                  </div>
                 </div>
               )}
 
@@ -674,6 +702,21 @@ export default function CartPage() {
                       placeholder="House, Road, Area, Landmark"
                     />
                   </div>
+
+                  {isB2BCart && (
+                    <div>
+                      <label className="block text-xs font-semibold text-blue-900 mb-1">
+                        Corporate Purchase Order (PO) Reference
+                      </label>
+                      <input
+                        type="text"
+                        value={purchaseOrderRef}
+                        onChange={(e) => setPurchaseOrderRef(e.target.value)}
+                        placeholder="e.g. PO-2026-OCT-099"
+                        className="w-full px-3 py-2 text-sm font-mono border border-blue-200 bg-blue-50/50 rounded-xl focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                      />
+                    </div>
+                  )}
                 </form>
               </div>
             </div>

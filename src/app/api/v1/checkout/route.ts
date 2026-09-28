@@ -1,12 +1,3 @@
-/**
- * Customer Cart Checkout API Route
- * 
- * Enforces strict object-level cart ownership, idempotency key replay safety,
- * server-side recomputation, and multi-vendor seller fulfillment group partitioning.
- * 
- * Invariants: ADR-0003, ADR-0010, ADR-0022, ADR-0027, Milestone 131
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/shared/authz';
 import { checkoutOrchestratorService } from '@/features/checkout';
@@ -20,8 +11,8 @@ import { ValidationError } from '@/shared/errors/app-error';
 export const dynamic = 'force-dynamic';
 
 /**
- * POST /api/v1/cart/checkout
- * Performs atomic checkout for the customer's owned cart.
+ * POST /api/v1/checkout
+ * Authoritative checkout pipeline endpoint for mobile and web applications.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -43,7 +34,6 @@ export async function POST(req: NextRequest) {
 
     const parseResult = CartCheckoutPayloadSchema.parse(body);
 
-    // Execute authoritative idempotent checkout transaction
     const order = await checkoutOrchestratorService.executeCheckout(actor.userId, {
       cartId: parseResult.cartId,
       checkout: parseResult.checkout,
@@ -64,4 +54,3 @@ export async function POST(req: NextRequest) {
     return errorResponse(req, error);
   }
 }
-
