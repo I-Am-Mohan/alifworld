@@ -365,15 +365,22 @@ export class DeliveryServiceabilityService {
     return this.getFallbackUpazilas(districtName);
   }
 
-  private determineDeliveryZone(
-    division: BangladeshDivisionCode,
+  public determineDeliveryZone(
+    division: BangladeshDivisionCode | string,
     district: string,
     upazila?: string | null
   ): DeliveryZone {
-    const distUpper = district.toUpperCase();
+    const divUpper = (division || '').toUpperCase();
+    const normalizedDiv =
+      divUpper === 'CHATTOGRAM'
+        ? 'CHITTAGONG'
+        : divUpper === 'BARISHAL'
+        ? 'BARISAL'
+        : divUpper;
+    const distUpper = (district || '').toUpperCase();
     const upzUpper = (upazila || '').toUpperCase();
 
-    if (division === 'DHAKA') {
+    if (normalizedDiv === 'DHAKA') {
       if (distUpper === 'DHAKA') {
         if (upzUpper && METRO_DHAKA_THANAS.has(upzUpper)) {
           return 'METRO_DHAKA';

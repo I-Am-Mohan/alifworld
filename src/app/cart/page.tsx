@@ -632,19 +632,23 @@ export default function CartPage() {
                   </span>
                 </div>
 
-                {/* Serviceability & COD Notice */}
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
+                {/* Serviceability, Shipping Promise & Rate Abstraction Notice */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-900">
-                      Zone: {division === 'DHAKA' ? 'Metro Dhaka & Suburbs' : `${division} Division (Major City / Upazila)`}
+                      Zone: {division === 'DHAKA' ? 'Metro Dhaka (Fast Track)' : `${division} Division (Nationwide Transit)`}
                     </span>
                     <span className="text-emerald-700 font-bold">
                       {subtotalPoisha > 5000000n ? '⚠️ Prepayment Required (> ৳50,000)' : '✓ COD Available'}
                     </span>
                   </div>
+                  <div className="text-slate-600 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
+                    <span>Base Rate: <strong className="text-slate-800">{division === 'DHAKA' ? '৳60.00' : '৳120.00'}</strong> (Free over ৳2,000/seller)</span>
+                    <span>Order Cutoff: <strong className="text-slate-800">2:00 PM (Asia/Dhaka)</strong></span>
+                  </div>
                   <div className="text-slate-500 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
-                    <span>Couriers: <strong className="text-slate-700">Pathao Express • Steadfast • RedX</strong></span>
-                    <span>Tracking: <strong className="text-slate-700">Real-Time SMS & Push</strong></span>
+                    <span>Couriers: <strong className="text-slate-700">Pathao Express • Steadfast • RedX • AlifExpress Fleet</strong></span>
+                    <span>Promise SLA: <strong className="text-slate-700">{division === 'DHAKA' ? '1-2 Business Days' : '2-4 Business Days'} (Excl. Friday)</strong></span>
                   </div>
                 </div>
 

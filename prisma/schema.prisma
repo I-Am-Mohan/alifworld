@@ -434,6 +434,7 @@ model Seller {
   b2bRfqs             B2BRfq[]
   b2bQuotes           B2BQuote[]
   productAnswers      ProductAnswer[]
+  shippingRateRules   ShippingRateRule[]
 
   @@index([ownerUserId])
   @@index([status])
@@ -2133,6 +2134,54 @@ model ShipmentEvent {
 
   @@index([shipmentId, occurredAt])
   @@map("shipment_events")
+}
+
+// ------------------------------------------------------------------------------
+// 31b. Shipping Rate Rules & Promise Policies
+// ------------------------------------------------------------------------------
+/// Versioned shipping rate calculation rules and delivery promise configurations
+model ShippingRateRule {
+  id                          String    @id @default(uuid())
+  code                        String    @unique
+  name                        String
+  nameBn                      String?   @map("name_bn")
+  description                 String?
+  shippingMethod              String    @default("STANDARD") @map("shipping_method") // STANDARD, EXPRESS, SAME_DAY, NEXT_DAY, HEAVY_FREIGHT
+  originZone                  String    @default("ANY") @map("origin_zone") // METRO_DHAKA, DHAKA_SUBURBS, MAJOR_CITIES, REMOTE_UPAZILA, ANY
+  destinationZone             String    @default("ANY") @map("destination_zone") // METRO_DHAKA, DHAKA_SUBURBS, MAJOR_CITIES, REMOTE_UPAZILA, ANY
+  sellerId                    String?   @map("seller_id") // null = Platform-wide rule, or seller override
+  courierProvider             String?   @map("courier_provider") // null / ANY or specific courier (PATHAO, STEADFAST, etc.)
+  baseRatePoisha              BigInt    @default(6000) @map("base_rate_poisha") // e.g. 6000 = ৳60.00
+  baseWeightGrams             Int       @default(1000) @map("base_weight_grams") // Base weight included in base rate (e.g. 1000g)
+  incrementalWeightGrams      Int       @default(1000) @map("incremental_weight_grams") // Incremental weight unit (e.g. 1000g)
+  incrementalRatePoisha       BigInt    @default(2000) @map("incremental_rate_poisha") // Surcharge per incremental weight block (e.g. ৳20)
+  freeShippingThresholdPoisha BigInt?   @map("free_shipping_threshold_poisha") // Minimum seller subtotal for free shipping (e.g. ৳2,000)
+  handlingDays                Int       @default(1) @map("handling_days") // Handling / processing time in business days
+  transitDaysMin              Int       @default(1) @map("transit_days_min") // Minimum transit days
+  transitDaysMax              Int       @default(3) @map("transit_days_max") // Maximum transit days
+  cutoffTime                  String    @default("14:00") @map("cutoff_time") // Daily cutoff time in Asia/Dhaka (HH:mm)
+  isCodAllowed                Boolean   @default(true) @map("is_cod_allowed")
+  maxCodAmountPoisha          BigInt    @default(5000000) @map("max_cod_amount_poisha") // ৳50,000 maximum COD threshold
+  fragileSurchargePoisha      BigInt    @default(0) @map("fragile_surcharge_poisha")
+  heavySurchargePoisha        BigInt    @default(0) @map("heavy_surcharge_poisha")
+  priority                    Int       @default(0) // Higher priority matches first
+  isDefault                   Boolean   @default(false) @map("is_default")
+  status                      String    @default("ACTIVE") // ACTIVE, INACTIVE, ARCHIVED
+  ruleVersion                 String    @default("v1.0.0") @map("rule_version")
+  metadata                    Json?
+  version                     Int       @default(1)
+  deletedAt                   DateTime? @map("deleted_at")
+  deletedBy                   String?   @map("deleted_by")
+  createdAt                   DateTime  @default(now()) @map("created_at")
+  updatedAt                   DateTime  @updatedAt @map("updated_at")
+
+  seller                      Seller?   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId, status])
+  @@index([shippingMethod, destinationZone])
+  @@index([status, priority])
+  @@index([deletedAt])
+  @@map("shipping_rate_rules")
 }
 
 // ------------------------------------------------------------------------------

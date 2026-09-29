@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, spyOn } from 'bun:test';
 import * as authzModule from '@/shared/authz';
 import { POST as cartCheckoutRoute } from '@/app/api/v1/cart/checkout/route';
 import { POST as mobileCheckoutRoute } from '@/app/api/v1/checkout/route';
@@ -6,6 +6,9 @@ import { checkoutOrchestratorService } from '@/features/checkout';
 import { NextRequest } from 'next/server';
 
 describe('Milestone 131: Checkout Orchestration REST API Integration Tests', () => {
+  let authSpy: any;
+  let checkoutSpy: any;
+
   const customerActor = {
     userId: 'usr_customer_01',
     roles: ['CUSTOMER'],
@@ -37,9 +40,14 @@ describe('Milestone 131: Checkout Orchestration REST API Integration Tests', () 
   };
 
   beforeEach(() => {
-    spyOn(authzModule, 'authenticateRequest').mockReturnValue(customerActor as any);
+    authSpy = spyOn(authzModule, 'authenticateRequest').mockReturnValue(customerActor as any);
 
-    spyOn(checkoutOrchestratorService, 'executeCheckout').mockResolvedValue(mockCheckoutResult as any);
+    checkoutSpy = spyOn(checkoutOrchestratorService, 'executeCheckout').mockResolvedValue(mockCheckoutResult as any);
+  });
+
+  afterEach(() => {
+    authSpy?.mockRestore();
+    checkoutSpy?.mockRestore();
   });
 
   it('POST /api/v1/cart/checkout creates order with Idempotency-Key header', async () => {

@@ -3989,6 +3989,221 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/shipping/rates/quote': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Calculate Multi-Vendor Shipping Rates & Promises',
+        description: 'Calculates authoritative multi-vendor shipping rate quotes, package weight tiers, free delivery qualifications, and delivery promise windows in Asia/Dhaka.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  address: {
+                    type: 'object',
+                    properties: {
+                      division: { type: 'string' },
+                      district: { type: 'string' },
+                      upazila: { type: 'string' },
+                      postalCode: { type: 'string' },
+                      streetAddress: { type: 'string' },
+                    },
+                    required: ['division', 'district'],
+                  },
+                  cartId: { type: 'string' },
+                  items: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        variantId: { type: 'string' },
+                        productTitle: { type: 'string' },
+                        quantity: { type: 'integer' },
+                        weightGrams: { type: 'integer' },
+                        lengthMm: { type: 'integer' },
+                        widthMm: { type: 'integer' },
+                        heightMm: { type: 'integer' },
+                        shippingClass: { type: 'string' },
+                        unitPricePoisha: { type: 'integer' },
+                        sellerId: { type: 'string' },
+                      },
+                      required: ['variantId', 'productTitle', 'quantity', 'unitPricePoisha', 'sellerId'],
+                    },
+                  },
+                  shippingMethod: { type: 'string', enum: ['STANDARD', 'EXPRESS', 'SAME_DAY', 'NEXT_DAY', 'HEAVY_FREIGHT'], default: 'STANDARD' },
+                },
+                required: ['address'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Multi-vendor shipping quote and delivery promises returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Validation failed on address or items' },
+        },
+      },
+    },
+    '/api/v1/shipping/promise': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Evaluate Delivery Promise Timeline',
+        description: 'Evaluates delivery promise timeline, business calendar boundaries (excluding Friday), and daily order cutoff times in Asia/Dhaka.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  destinationDivision: { type: 'string' },
+                  destinationDistrict: { type: 'string' },
+                  destinationUpazila: { type: 'string' },
+                  originDivision: { type: 'string', default: 'DHAKA' },
+                  originDistrict: { type: 'string', default: 'Dhaka' },
+                  sellerId: { type: 'string' },
+                  shippingMethod: { type: 'string', enum: ['STANDARD', 'EXPRESS', 'SAME_DAY', 'NEXT_DAY', 'HEAVY_FREIGHT'], default: 'STANDARD' },
+                  asOfDate: { type: 'string', format: 'date-time' },
+                },
+                required: ['destinationDivision', 'destinationDistrict'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Delivery promise snapshot evaluated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Validation failed on input parameters' },
+        },
+      },
+    },
+    '/api/v1/admin/shipping/rules': {
+      get: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'List Versioned Shipping Rate Rules',
+        description: 'Admin lists shipping rate rules with pagination and filters.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'sellerId', in: 'query', schema: { type: 'string' } },
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'ARCHIVED'] } },
+          { name: 'shippingMethod', in: 'query', schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Shipping rate rules list returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+      post: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Create Versioned Shipping Rate Rule',
+        description: 'Admin creates a new versioned shipping rate rule with zone matrix, weight brackets, and delivery promises.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  code: { type: 'string' },
+                  name: { type: 'string' },
+                  nameBn: { type: 'string' },
+                  description: { type: 'string' },
+                  shippingMethod: { type: 'string', enum: ['STANDARD', 'EXPRESS', 'SAME_DAY', 'NEXT_DAY', 'HEAVY_FREIGHT'], default: 'STANDARD' },
+                  originZone: { type: 'string', default: 'ANY' },
+                  destinationZone: { type: 'string', default: 'ANY' },
+                  sellerId: { type: 'string' },
+                  courierProvider: { type: 'string' },
+                  baseRatePoisha: { type: 'integer' },
+                  baseWeightGrams: { type: 'integer', default: 1000 },
+                  incrementalWeightGrams: { type: 'integer', default: 1000 },
+                  incrementalRatePoisha: { type: 'integer', default: 2000 },
+                  freeShippingThresholdPoisha: { type: 'integer' },
+                  handlingDays: { type: 'integer', default: 1 },
+                  transitDaysMin: { type: 'integer', default: 1 },
+                  transitDaysMax: { type: 'integer', default: 3 },
+                  cutoffTime: { type: 'string', default: '14:00' },
+                  isCodAllowed: { type: 'boolean', default: true },
+                  maxCodAmountPoisha: { type: 'integer', default: 5000000 },
+                  priority: { type: 'integer', default: 0 },
+                  status: { type: 'string', enum: ['ACTIVE', 'INACTIVE', 'ARCHIVED'], default: 'ACTIVE' },
+                  ruleVersion: { type: 'string', default: 'v1.0.0' },
+                },
+                required: ['code', 'name', 'baseRatePoisha'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Shipping rate rule created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/admin/shipping/rules/{id}': {
+      get: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Get Shipping Rate Rule Details',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Shipping rate rule details',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Rule not found' },
+        },
+      },
+      patch: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Update Shipping Rate Rule',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Shipping rate rule updated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Rule not found' },
+        },
+      },
+      delete: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Soft Delete Shipping Rate Rule',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Shipping rate rule archived successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Rule not found' },
+        },
+      },
+    },
     '/api/v1/orders': {
       get: {
         tags: ['Order'],

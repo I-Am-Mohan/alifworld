@@ -30,6 +30,7 @@ import {
   CheckoutSellerGroupDTO,
   CheckoutOrderItemSnapshotDTO,
 } from '../types/checkout.types';
+import { shippingRateService, ShippingItemInput } from '@/features/shipping';
 
 const SHIPPING_RATES_POISHA = {
   DHAKA_INSIDE: BigInt(6000), // ৳60.00 inside Dhaka division
@@ -124,7 +125,7 @@ export class CheckoutOrchestratorService {
     }
 
     // 3. Handle B2B Negotiated Quote Validation
-    let isB2BOrder = Boolean(cart.isB2B);
+    const isB2BOrder = Boolean(cart.isB2B);
     let b2bQuote: any = null;
 
     if (isB2BOrder && cart.b2bQuoteId) {
@@ -154,6 +155,38 @@ export class CheckoutOrchestratorService {
     const baseShippingRate = isInsideDhaka
       ? SHIPPING_RATES_POISHA.DHAKA_INSIDE
       : SHIPPING_RATES_POISHA.DHAKA_OUTSIDE;
+
+    // Build items payload for authoritative shipping rate & delivery promise engine
+    const shippingItems: ShippingItemInput[] = cart.items.map((item: any) => ({
+      variantId: item.variantId,
+      productTitle: item.variant?.product?.title || 'Unknown Product',
+      quantity: item.quantity,
+      weightGrams: item.variant?.weightGrams ?? item.variant?.product?.weightGrams ?? 250,
+      lengthMm: item.variant?.product?.lengthMm ?? null,
+      widthMm: item.variant?.product?.widthMm ?? null,
+      heightMm: item.variant?.product?.heightMm ?? null,
+      shippingClass: item.variant?.product?.shippingClass ?? 'STANDARD',
+      requiresShipping: item.variant?.product?.requiresShipping ?? true,
+      unitPricePoisha: BigInt(isB2BOrder ? item.pricePoisha : item.variant?.pricePoisha || 0),
+      sellerId: item.sellerId,
+    }));
+
+    let shippingQuote: any = null;
+    try {
+      shippingQuote = await shippingRateService.calculateOrderShippingQuote({
+        address: {
+          division: checkout.shippingDivision,
+          district: checkout.shippingDistrict,
+          upazila: checkout.shippingUpazila,
+          postalCode: checkout.shippingPostalCode,
+          streetAddress: checkout.shippingAddress,
+        },
+        items: shippingItems,
+        shippingMethod: 'STANDARD',
+      });
+    } catch {
+      // Fallback if shipping quote service encountered unhandled exception
+    }
 
     const sellerGroups: CheckoutSellerGroupDTO[] = [];
     let orderSubtotalPoisha = 0n;
@@ -244,9 +277,23 @@ export class CheckoutOrchestratorService {
         });
       }
 
-      // Per-seller shipping fee calculation (with free delivery threshold qualification)
+      // Per-seller shipping fee calculation via authoritative shipping rate engine
+      const sellerQuote = shippingQuote?.sellerQuotes?.find(
+        (sq: any) => sq.sellerId === sellerId
+      );
+
       const qualifiesForFreeShipping = groupSubtotalPoisha >= FREE_SHIPPING_THRESHOLD_POISHA;
-      const groupShippingFeePoisha = qualifiesForFreeShipping ? 0n : baseShippingRate;
+      const groupShippingFeePoisha = sellerQuote
+        ? BigInt(sellerQuote.activeRate.finalRatePoisha)
+        : qualifiesForFreeShipping
+        ? 0n
+        : baseShippingRate;
+
+      const courierProvider =
+        sellerQuote?.activeRate?.courierProvider || (isInsideDhaka ? 'IN_HOUSE' : 'STEADFAST');
+      const estimatedDelivery = sellerQuote?.activeRate?.deliveryPromise?.maxEstimatedDate
+        ? new Date(sellerQuote.activeRate.deliveryPromise.maxEstimatedDate)
+        : null;
 
       const groupTotalPoisha = groupSubtotalPoisha + groupShippingFeePoisha + groupTaxPoisha;
 
@@ -271,6 +318,8 @@ export class CheckoutOrchestratorService {
         sellerCommissionPoisha: groupCommissionPoisha,
         sellerPayoutPoisha: groupPayoutPoisha,
         totalProductPoints: groupProductPoints,
+        courierProvider,
+        estimatedDelivery,
         items: groupItems,
       });
 
@@ -329,7 +378,7 @@ export class CheckoutOrchestratorService {
           shippingPostalCode: checkout.shippingPostalCode || null,
           billingAddress: checkout.billingAddress || null,
           customerNotes: checkout.customerNotes || null,
-          ruleVersion: b2bQuote?.rewardsRuleVersion || 'v1.0.0',
+          ruleVersion: b2bQuote?.rewardsRuleVersion || shippingQuote?.appliedRuleVersion || 'v1.0.0',
           version: 1,
         },
       });
@@ -356,6 +405,8 @@ export class CheckoutOrchestratorService {
             sellerCommissionPoisha: group.sellerCommissionPoisha,
             sellerPayoutPoisha: group.sellerPayoutPoisha,
             totalProductPoints: group.totalProductPoints,
+            courierProvider: group.courierProvider || null,
+            estimatedDelivery: group.estimatedDelivery || null,
             version: 1,
           },
         });

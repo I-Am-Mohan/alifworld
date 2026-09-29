@@ -58,6 +58,8 @@ export interface CheckoutSellerGroupDTO {
   sellerCommissionPoisha: bigint;
   sellerPayoutPoisha: bigint;
   totalProductPoints: number;
+  courierProvider?: string | null;
+  estimatedDelivery?: Date | null;
   items: CheckoutOrderItemSnapshotDTO[];
 }
 
