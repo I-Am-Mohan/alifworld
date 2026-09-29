@@ -451,7 +451,7 @@ export class OrderRepository extends BaseRepository {
   async findFulfillmentGroupByIdAndSeller(groupId: string, sellerId: string) {
     return this.executeSafe(async () => {
       const sfg = await (this.db as any).sellerFulfillmentGroup.findFirst({
-        where: this.whereNotDeleted({ id: groupId }),
+        where: this.whereNotDeleted({ id: groupId, sellerId }),
         include: {
           order: true,
           items: { where: { deletedAt: null } },
@@ -463,10 +463,16 @@ export class OrderRepository extends BaseRepository {
       });
 
       if (!sfg) {
+        const existsAnywhere = await (this.db as any).sellerFulfillmentGroup.findFirst({
+          where: this.whereNotDeleted({ id: groupId }),
+          select: { id: true, sellerId: true },
+        });
+        if (existsAnywhere) {
+          assertSellerScope(existsAnywhere.sellerId, sellerId);
+        }
         throw new NotFoundError(`Fulfillment group '${groupId}' not found`);
       }
 
-      assertSellerScope(sfg.sellerId, sellerId);
       return sfg;
     }, 'OrderRepository.findFulfillmentGroupByIdAndSeller');
   }

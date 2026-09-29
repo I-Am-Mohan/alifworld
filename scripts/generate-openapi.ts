@@ -4576,6 +4576,168 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/seller/fulfillment-groups': {
+      get: {
+        tags: ['Seller Fulfillment', 'Checkout & Shipping'],
+        summary: 'List Merchant Scoped Fulfillment Groups',
+        description: 'Multi-tenant scoped query returning fulfillment groups belonging exclusively to the authenticated merchant with query-level sellerId enforcement.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['PENDING', 'ACCEPTED', 'PACKING', 'READY_FOR_PICKUP', 'HANDED_OVER_TO_COURIER', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'REJECTED'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'List of seller fulfillment groups returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant access violation' },
+        },
+      },
+    },
+    '/api/v1/seller/fulfillment-groups/{id}': {
+      get: {
+        tags: ['Seller Fulfillment', 'Checkout & Shipping'],
+        summary: 'Get Seller Fulfillment Group Details',
+        description: 'Retrieves single fulfillment group details with strict sellerId query-level scoping.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Fulfillment group details returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant access violation' },
+          '404': { description: 'Fulfillment group not found' },
+        },
+      },
+    },
+    '/api/v1/seller/fulfillment-groups/{id}/status': {
+      patch: {
+        tags: ['Seller Fulfillment', 'Checkout & Shipping'],
+        summary: 'Transition Fulfillment Group Lifecycle Status',
+        description: 'Transitions fulfillment group along state machine (ACCEPTED, PACKING, READY_FOR_PICKUP, CANCELLED, REJECTED) within merchant tenant boundaries.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string', enum: ['ACCEPTED', 'PACKING', 'READY_FOR_PICKUP', 'CANCELLED', 'REJECTED'] },
+                  reason: { type: 'string' },
+                },
+                required: ['status'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Status transitioned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant access violation' },
+          '409': { description: 'Invalid status transition' },
+        },
+      },
+    },
+    '/api/v1/seller/fulfillment-groups/{id}/dispatch': {
+      post: {
+        tags: ['Seller Fulfillment', 'Checkout & Shipping'],
+        summary: 'Dispatch Fulfillment Group to Courier',
+        description: 'Creates a consignment with chosen courier (Pathao, Steadfast, RedX, Paperfly, In-House) and advances status to HANDED_OVER_TO_COURIER.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  courierProvider: { type: 'string', enum: ['PATHAO', 'STEADFAST', 'REDX', 'PAPERFLY', 'IN_HOUSE'] },
+                  weightGrams: { type: 'integer' },
+                  specialInstructions: { type: 'string' },
+                },
+                required: ['courierProvider'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Dispatched to courier successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant access violation' },
+        },
+      },
+    },
+    '/api/v1/seller/fulfillment-groups/{id}/manifest': {
+      get: {
+        tags: ['Seller Fulfillment', 'Checkout & Shipping'],
+        summary: 'Get Warehouse Packing Slip & Manifest',
+        description: 'Retrieves printable packing slip and parcel manifest data for merchant warehouse operations.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Packing slip manifest returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant access violation' },
+        },
+      },
+    },
+    '/api/v1/admin/fulfillment-groups': {
+      get: {
+        tags: ['Admin', 'Seller Fulfillment'],
+        summary: 'List All Fulfillment Groups Across Sellers',
+        description: 'Platform administrator lists fulfillment groups across all merchant tenants with filtering and pagination.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'sellerId', in: 'query', schema: { type: 'string' } },
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Fulfillment groups list returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin authority required' },
+        },
+      },
+    },
+    '/api/v1/admin/fulfillment-groups/{id}': {
+      get: {
+        tags: ['Admin', 'Seller Fulfillment'],
+        summary: 'Admin Inspect Fulfillment Group',
+        description: 'Platform administrator retrieves single fulfillment group details across any merchant tenant.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Fulfillment group details returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin authority required' },
+          '404': { description: 'Fulfillment group not found' },
+        },
+      },
+    },
     '/api/v1/payments': {
       post: {
         tags: ['Payments & Settlements'],
