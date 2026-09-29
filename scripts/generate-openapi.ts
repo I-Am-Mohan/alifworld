@@ -3479,6 +3479,59 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/customer/orders/{id}': {
+      get: {
+        tags: ['Customer Experience', 'Order'],
+        summary: 'Get Customer Parent Order Detail',
+        description: 'Retrieves a single unified parent order view for the authenticated customer. Enforces self-ownership; cross-customer access returns 403.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string', example: 'ord_12345' }, description: 'Order ID or orderNumber (ORD-YYYYMMDD-XXXX)' },
+        ],
+        responses: {
+          '200': {
+            description: 'Customer parent order with fulfillment packages, status timeline, and self-service actions',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '403': { description: 'Ownership violation — order belongs to another customer' },
+          '404': { description: 'Order not found' },
+        },
+      },
+    },
+    '/api/v1/customer/orders/{id}/cancel': {
+      post: {
+        tags: ['Customer Experience', 'Order'],
+        summary: 'Cancel Customer Order (Self-Service)',
+        description: 'Cancels a parent order if all seller fulfillment groups are still in PENDING or ACCEPTED status. Appends audit trail entry.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['reason'],
+                properties: {
+                  reason: { type: 'string', minLength: 3, maxLength: 500, example: 'Found a better price elsewhere' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Order cancelled successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '403': { description: 'Ownership violation' },
+          '404': { description: 'Order not found' },
+          '422': { description: 'Validation failed or order not eligible for cancellation' },
+        },
+      },
+    },
     '/api/v1/customer/orders/{id}/reorder': {
       post: {
         tags: ['Customer Experience'],
@@ -5081,10 +5134,17 @@ export const openApiSpec = {
     },
     '/api/v1/seller/orders': {
       get: {
-        tags: ['Order'],
+        tags: ['Order', 'Seller Fulfillment'],
         summary: 'List Seller Fulfillment Groups',
-        description: 'Multi-tenant scoped query returning fulfillment groups and packing items exclusively belonging to the authenticated merchant.',
+        description: 'Multi-tenant scoped query returning fulfillment groups and packing items exclusively belonging to the authenticated merchant. Supports status, date range, and pagination filters.',
         security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string' }, description: 'Filter by fulfillment group status' },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 50 } },
+          { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date-time' } },
+        ],
         responses: {
           '200': {
             description: 'List of seller fulfillment groups',
@@ -5094,6 +5154,30 @@ export const openApiSpec = {
               },
             },
           },
+          '403': { description: 'Seller authority required' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}': {
+      get: {
+        tags: ['Order', 'Seller Fulfillment'],
+        summary: 'Get Seller Fulfillment Order Detail',
+        description: 'Retrieves single fulfillment order with strict query-level tenant scoping. Cross-tenant access returns 403 TENANT_VIOLATION. Phone numbers are masked. Commission and payout are read-only.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'groupId', in: 'path', required: true, schema: { type: 'string' }, description: 'Fulfillment group ID or group number' },
+        ],
+        responses: {
+          '200': {
+            description: 'Seller fulfillment order details with financial breakdown, masked delivery contact, and logistics',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' },
+              },
+            },
+          },
+          '403': { description: 'Tenant violation — fulfillment group belongs to another seller' },
+          '404': { description: 'Fulfillment order not found' },
         },
       },
     },

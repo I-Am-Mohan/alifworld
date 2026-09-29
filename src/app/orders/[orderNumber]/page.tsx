@@ -18,6 +18,7 @@ import {
   Phone,
   Calendar,
   ShieldAlert,
+  FileText,
 } from 'lucide-react';
 
 export default function OrderTrackingPage() {
@@ -25,14 +26,63 @@ export default function OrderTrackingPage() {
   const params = useParams();
   const orderNumber = (params?.orderNumber as string) || 'ORD-20260922-0001';
 
-  // Demo order data matching seeded order
-  const order = {
+  const [liveOrder, setLiveOrder] = React.useState<any | null>(null);
+  const [isCancelling, setIsCancelling] = React.useState<boolean>(false);
+  const [cancelError, setCancelError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function fetchLiveOrder() {
+      try {
+        const res = await fetch(`/api/v1/customer/orders/${encodeURIComponent(orderNumber)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data && isMounted) {
+            setLiveOrder(json.data);
+          }
+        }
+      } catch {
+        // Fallback to static display
+      }
+    }
+    void fetchLiveOrder();
+    return () => {
+      isMounted = false;
+    };
+  }, [orderNumber]);
+
+  const handleCancelOrder = async () => {
+    const reason = prompt('Please provide a reason for cancelling this order:');
+    if (!reason || !reason.trim()) return;
+
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/v1/customer/orders/${encodeURIComponent(orderNumber)}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error?.message || 'Failed to cancel order.');
+      }
+      setLiveOrder(json.data);
+    } catch (err: any) {
+      setCancelError(err.message || 'Cancellation failed.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  // Demo order data matching seeded order (used when live order is not yet loaded)
+  const order = liveOrder || {
     orderNumber,
     status: 'PROCESSING',
     paymentStatus: 'PAID',
     createdAt: '2026-09-22T10:30:00.000Z',
     customerName: 'Tanvir Ahmed',
-    customerPhone: '+8801700112233',
+    customerPhone: '+88017****2233',
     shippingDivision: 'DHAKA',
     shippingDistrict: 'Dhaka (Gulshan-2)',
     shippingAddress: 'House 42, Road 11, Block D, Gulshan-2, Dhaka-1212',
@@ -192,10 +242,45 @@ export default function OrderTrackingPage() {
               Pending Return Inspection Window
             </span>
           </div>
-        </div>
+          {/* Customer Self-Service Actions */}
+          <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/api/v1/checkout/tax-breakdown/${encodeURIComponent(order.orderNumber)}`}
+                target="_blank"
+                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <FileText className="w-3.5 h-3.5 text-gray-500" />
+                NBR Mushak-6.3 Invoice
+              </Link>
+              <Link
+                href="/cart"
+                className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-[#1B5E20] text-xs font-bold rounded-lg border border-green-200 transition-colors"
+              >
+                Reorder Items
+              </Link>
+            </div>
+
+            {(order.selfServiceActions?.canCancel ?? order.status === 'PENDING_PAYMENT') && (
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                disabled={isCancelling}
+                className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-lg border border-red-200 transition-colors disabled:opacity-50"
+              >
+                {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+              </button>
+            )}
+          </div>
+
+          {cancelError && (
+            <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200">
+              {cancelError}
+            </div>
+          )}        </div>
 
         {/* Multi-Vendor Seller Fulfillment Groups */}
-        {order.fulfillmentGroups.map((group) => (
+        {order.fulfillmentGroups.map((group: any) => (
           <div
             key={group.id}
             className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-6"
@@ -226,7 +311,7 @@ export default function OrderTrackingPage() {
 
             {/* Item List */}
             <div className="space-y-4">
-              {group.items.map((item) => (
+              {group.items.map((item: any) => (
                 <div key={item.id} className="flex items-center gap-4">
                   <img
                     src={item.imageUrl}
@@ -278,7 +363,7 @@ export default function OrderTrackingPage() {
 
                 {/* Timeline */}
                 <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-green-200">
-                  {group.shipment.events.map((event, idx) => (
+                  {group.shipment.events.map((event: any, idx: number) => (
                     <div key={event.id} className="relative">
                       <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#1B5E20] border-2 border-white" />
                       <div className="flex items-baseline justify-between gap-2">
@@ -306,7 +391,7 @@ export default function OrderTrackingPage() {
           </h2>
 
           <div className="space-y-3">
-            {order.statusHistory.map((entry) => (
+            {order.statusHistory.map((entry: any) => (
               <div
                 key={entry.id}
                 className="flex items-start justify-between text-xs p-3 bg-gray-50 rounded-xl border border-gray-100"
