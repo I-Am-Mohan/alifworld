@@ -31,6 +31,7 @@ import {
   CheckoutOrderItemSnapshotDTO,
 } from '../types/checkout.types';
 import { shippingRateService, ShippingItemInput } from '@/features/shipping';
+import { codFraudRiskService } from './cod-fraud-risk.service';
 
 const SHIPPING_RATES_POISHA = {
   DHAKA_INSIDE: BigInt(6000), // ৳60.00 inside Dhaka division
@@ -400,6 +401,42 @@ export class CheckoutOrchestratorService {
       orderSubtotalPoisha > orderDiscountPoisha
         ? orderSubtotalPoisha - orderDiscountPoisha + orderShippingFeePoisha + orderTaxPoisha
         : orderShippingFeePoisha + orderTaxPoisha;
+
+    // 4c. Cash on Delivery (COD) Fraud-Risk Gating & Prepayment Enforcement
+    if (checkout.paymentMethod === 'COD') {
+      const hasDigital = cart.items.some((i: any) => i.variant?.product?.isPhysical === false);
+      const codEvaluation = await codFraudRiskService.evaluateCodEligibility(
+        {
+          recipientPhone: checkout.shippingPhone,
+          orderSubtotalPoisha: Number(orderSubtotalPoisha),
+          division: checkout.shippingDivision,
+          district: checkout.shippingDistrict,
+          upazila: checkout.shippingUpazila || undefined,
+          hasDigitalItems: hasDigital,
+          cartId: cart.id,
+        },
+        customerId
+      );
+
+      if (!codEvaluation.isEligible) {
+        throw new ValidationError(
+          codEvaluation.warnings[0] ||
+            'Order is not eligible for Cash on Delivery. Digital prepayment required.',
+          {
+            riskLevel: codEvaluation.riskLevel,
+            riskScore: codEvaluation.riskScore,
+            factors: codEvaluation.factors,
+          }
+        );
+      }
+
+      if (codEvaluation.requiresOtpVerification && !checkout.codVerificationToken) {
+        throw new ValidationError(
+          'Phone verification via SMS OTP is required before Cash on Delivery order placement.',
+          { code: 'COD_OTP_REQUIRED', requiresOtp: true }
+        );
+      }
+    }
 
     // 5. Atomic Checkout Transaction
     const orderId = generatePrefixedId(ENTITY_PREFIXES.ORDER);

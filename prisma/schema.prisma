@@ -2185,6 +2185,26 @@ model ShippingRateRule {
 }
 
 // ------------------------------------------------------------------------------
+// 31c. Cash on Delivery (COD) Fraud Blacklist & Risk Controls
+// ------------------------------------------------------------------------------
+/// Blacklisted phone numbers, email addresses, or device fingerprints for COD fraud prevention
+model CodFraudBlacklist {
+  id          String    @id @default(uuid())
+  type        String    // PHONE, EMAIL, IP_ADDRESS, DEVICE_FINGERPRINT
+  identifier  String    // e.g. +8801712345678, 192.168.1.1
+  reason      String
+  severity    String    @default("BLOCK") // BLOCK, OTP_REQUIRED, FLAG
+  addedBy     String?   @map("added_by")
+  expiresAt   DateTime? @map("expires_at") // null = permanent
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([type, identifier])
+  @@index([type, identifier])
+  @@map("cod_fraud_blacklists")
+}
+
+// ------------------------------------------------------------------------------
 // 32. Customer Payment Transaction
 // ------------------------------------------------------------------------------
 /// Inward customer payment transaction executed through digital gateway or COD

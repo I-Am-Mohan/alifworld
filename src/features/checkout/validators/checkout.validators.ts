@@ -31,6 +31,8 @@ export const CheckoutShippingAddressSchema = z.object({
   billingAddress: z.string().max(500).optional().nullable(),
   customerNotes: z.string().max(500).optional().nullable(),
   purchaseOrderRef: z.string().max(100).optional().nullable(),
+  paymentMethod: z.string().max(50).optional().nullable(),
+  codVerificationToken: z.string().max(100).optional().nullable(),
 });
 
 export const CartCheckoutPayloadSchema = z.object({

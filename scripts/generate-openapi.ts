@@ -3979,6 +3979,214 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/checkout/cod/evaluate': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Evaluate Cash on Delivery (COD) Eligibility & Risk',
+        description: 'Evaluates multi-factor COD fraud risk (RTO rate, order velocity, value ceilings, and blacklists) and determines if SMS OTP or digital prepayment is required.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  recipientPhone: { type: 'string' },
+                  orderSubtotalPoisha: { type: 'integer' },
+                  division: { type: 'string' },
+                  district: { type: 'string' },
+                  upazila: { type: 'string' },
+                  hasDigitalItems: { type: 'boolean', default: false },
+                  cartId: { type: 'string' },
+                },
+                required: ['recipientPhone', 'orderSubtotalPoisha', 'division', 'district'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'COD eligibility and risk evaluation returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/checkout/cod/send-otp': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Send COD Verification SMS OTP',
+        description: 'Dispatches a 6-digit numeric SMS verification OTP code to the recipient phone number.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { recipientPhone: { type: 'string' } },
+                required: ['recipientPhone'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Verification code sent successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Invalid phone number format' },
+          '429': { description: 'Cooldown period active' },
+        },
+      },
+    },
+    '/api/v1/checkout/cod/verify-otp': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Verify COD Phone SMS OTP',
+        description: 'Verifies recipient phone OTP and issues single-use checkout verification token.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  recipientPhone: { type: 'string' },
+                  otp: { type: 'string', example: '482915' },
+                },
+                required: ['recipientPhone', 'otp'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Phone verified successfully; single-use token issued',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Invalid or expired OTP' },
+        },
+      },
+    },
+    '/api/v1/admin/checkout/cod/policy': {
+      get: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Get COD Risk Policy Thresholds',
+        description: 'Admin retrieves current COD policy limits (hard ceiling, OTP threshold, max pending orders).',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'COD policy configuration',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+      put: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Update COD Risk Policy Thresholds',
+        description: 'Admin updates versioned COD limits and risk policy configuration.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  maxCodOrderValuePoisha: { type: 'integer' },
+                  otpThresholdPoisha: { type: 'integer' },
+                  maxActivePendingCodOrders: { type: 'integer' },
+                  maxAllowedRtoRatePercent: { type: 'integer' },
+                  isPhoneVerificationRequiredForNewUsers: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'COD policy updated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/v1/admin/checkout/cod/blacklist': {
+      get: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'List Fraud Blacklisted Identifiers',
+        description: 'Admin lists blacklisted phone numbers, emails, and IPs.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'type', in: 'query', schema: { type: 'string', enum: ['PHONE', 'EMAIL', 'IP_ADDRESS', 'DEVICE_FINGERPRINT'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+        ],
+        responses: {
+          '200': {
+            description: 'Blacklist entries list',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+      post: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Add Identifier to Fraud Blacklist',
+        description: 'Admin adds or updates an identifier on the fraud blacklist.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', enum: ['PHONE', 'EMAIL', 'IP_ADDRESS', 'DEVICE_FINGERPRINT'] },
+                  identifier: { type: 'string' },
+                  reason: { type: 'string' },
+                  severity: { type: 'string', enum: ['BLOCK', 'OTP_REQUIRED', 'FLAG'], default: 'BLOCK' },
+                  expiresAt: { type: 'string', format: 'date-time' },
+                },
+                required: ['type', 'identifier', 'reason'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Blacklist entry created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+      delete: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Remove Identifier from Fraud Blacklist',
+        description: 'Admin removes an identifier from the fraud blacklist.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'type', in: 'query', required: true, schema: { type: 'string' } },
+          { name: 'identifier', in: 'query', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Blacklist entry removed',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
     '/api/v1/shipping/serviceability': {
       post: {
         tags: ['Checkout & Shipping'],

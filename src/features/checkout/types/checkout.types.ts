@@ -18,6 +18,8 @@ export interface CheckoutShippingAddressDTO {
   billingAddress?: string | null;
   customerNotes?: string | null;
   purchaseOrderRef?: string | null;
+  paymentMethod?: string | null;
+  codVerificationToken?: string | null;
 }
 
 export interface CheckoutExecutionInput {
