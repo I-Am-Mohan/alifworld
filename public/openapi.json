@@ -6897,6 +6897,195 @@
         }
       }
     },
+    "/api/v1/checkout/payment-methods": {
+      "get": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "Discover Payment Methods (Query Params)",
+        "description": "Discovers available payment methods (bKash, Nagad, SSLCommerz, COD, Customer Wallet) and fee breakdowns based on order total and platform.",
+        "parameters": [
+          {
+            "name": "orderTotalPoisha",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cartId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientPlatform",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "WEB",
+                "ANDROID",
+                "IOS",
+                "FLUTTER"
+              ],
+              "default": "WEB"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available payment methods and recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "Discover Payment Methods (JSON Payload)",
+        "description": "Discovers available payment methods based on comprehensive checkout context (including address and digital goods).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orderTotalPoisha": {
+                    "type": "integer"
+                  },
+                  "cartId": {
+                    "type": "string"
+                  },
+                  "shippingAddress": {
+                    "type": "object",
+                    "properties": {
+                      "division": {
+                        "type": "string"
+                      },
+                      "district": {
+                        "type": "string"
+                      },
+                      "upazila": {
+                        "type": "string"
+                      },
+                      "recipientPhone": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "hasDigitalItems": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "clientPlatform": {
+                    "type": "string",
+                    "enum": [
+                      "WEB",
+                      "ANDROID",
+                      "IOS",
+                      "FLUTTER"
+                    ],
+                    "default": "WEB"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Available payment methods and recommendations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/checkout/payment-methods/select": {
+      "post": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "Select Payment Method for Checkout",
+        "description": "Validates payment method selection, computes processing fees, and returns gateway redirect URL or doorstep instructions.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "paymentMethod": {
+                    "type": "string",
+                    "enum": [
+                      "BKASH",
+                      "NAGAD",
+                      "UPAY",
+                      "ROCKET",
+                      "SSLCOMMERZ",
+                      "COD",
+                      "CUSTOMER_WALLET"
+                    ]
+                  },
+                  "cartId": {
+                    "type": "string"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "codVerificationToken": {
+                    "type": "string"
+                  },
+                  "walletType": {
+                    "type": "string",
+                    "enum": [
+                      "MAIN",
+                      "SHOPPING"
+                    ],
+                    "default": "MAIN"
+                  },
+                  "clientReturnUrl": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "paymentMethod"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment method selected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid payment method or validation error"
+          }
+        }
+      }
+    },
     "/api/v1/checkout/cod/evaluate": {
       "post": {
         "tags": [

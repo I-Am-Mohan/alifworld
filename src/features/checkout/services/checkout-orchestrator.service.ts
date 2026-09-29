@@ -460,15 +460,40 @@ export class CheckoutOrchestratorService {
         throw new ConflictError('Cart was modified concurrently or is no longer available for checkout.');
       }
 
-      // 5b. Create parent order
+      // 5b. Customer Wallet Balance Payment Processing (if selected)
+      let orderPaymentStatus = 'UNPAID';
+      let orderInitialStatus = 'PENDING_PAYMENT';
+
+      if (checkout.paymentMethod === 'CUSTOMER_WALLET') {
+        const wallet = await tx.wallet.findFirst({
+          where: { userId: customerId, type: 'MAIN', status: 'ACTIVE' },
+        });
+
+        if (!wallet || wallet.availablePoisha < orderTotalPoisha) {
+          throw new ValidationError('Insufficient AlifWorld wallet balance to complete checkout.');
+        }
+
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            availablePoisha: { decrement: orderTotalPoisha },
+            version: { increment: 1 },
+          },
+        });
+
+        orderPaymentStatus = 'PAID';
+        orderInitialStatus = 'PROCESSING';
+      }
+
+      // 5c. Create parent order
       const order = await tx.order.create({
         data: {
           id: orderId,
           orderNumber,
           customerId,
           currency: 'BDT',
-          status: 'PENDING_PAYMENT',
-          paymentStatus: 'UNPAID',
+          status: orderInitialStatus,
+          paymentStatus: orderPaymentStatus,
           fulfillmentStatus: 'UNFULFILLED',
           subtotalPoisha: orderSubtotalPoisha,
           discountPoisha: orderDiscountPoisha,
@@ -580,12 +605,35 @@ export class CheckoutOrchestratorService {
         data: {
           id: generatePrefixedId(ENTITY_PREFIXES.ORDER_STATUS_HISTORY),
           orderId: order.id,
-          status: 'PENDING_PAYMENT',
+          status: orderInitialStatus,
           reason: 'Order placed by customer checkout orchestration',
           actorId: customerId,
           actorRole: 'CUSTOMER',
         },
       });
+
+      // 5f. Create Initial Payment Record
+      const paymentProvider = checkout.paymentMethod || 'COD';
+      const isPaid = orderPaymentStatus === 'PAID';
+
+      if (tx.payment) {
+        await tx.payment.create({
+          data: {
+            id: generateId(ID_PREFIXES.PAYMENT),
+            orderId: order.id,
+            customerId,
+            paymentNumber: `PAY-${dateStamp}-${requestHash.slice(0, 8)}`,
+            gatewayProvider: paymentProvider,
+            status: isPaid ? 'CAPTURED' : 'PENDING',
+            amountPoisha: orderTotalPoisha,
+            currency: 'BDT',
+            feePoisha: 0n,
+            idempotencyKey: `pay_${idempotencyKey}`,
+            capturedAt: isPaid ? new Date() : null,
+            authorizedAt: isPaid ? new Date() : null,
+          },
+        });
+      }
 
       // 5e. Emit Outbox Event
       await tx.outboxEvent.create({

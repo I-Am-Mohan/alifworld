@@ -106,6 +106,24 @@ class MockPrismaCheckoutDb {
     },
   };
 
+  public payment = {
+    create: async ({ data }: any) => ({ ...data, createdAt: new Date() }),
+  };
+
+  public wallet = {
+    findFirst: async ({ where }: any) => null,
+    update: async ({ where, data }: any) => ({ ...where, ...data }),
+  };
+
+  public couponRedemption = {
+    create: async ({ data }: any) => ({ ...data, createdAt: new Date() }),
+  };
+
+  public discountRule = {
+    findFirst: async ({ where }: any) => null,
+    update: async ({ where, data }: any) => ({ ...where, ...data }),
+  };
+
   public $transaction = async (callback: any) => {
     return callback(this);
   };
