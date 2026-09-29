@@ -16,6 +16,7 @@ export const WORKER_QUEUES = {
   REWARD_DISTRIBUTION: 'reward_distribution',
   AUDIT_LOGS: 'audit_logs',
   CATALOG_IMPORT_EXPORT: 'catalog_import_export',
+  CHECKOUT_RECOVERY: 'checkout_recovery',
 } as const;
 
 export type WorkerQueueName = (typeof WORKER_QUEUES)[keyof typeof WORKER_QUEUES];

@@ -1860,8 +1860,9 @@ model Cart {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  user  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  items CartItem[]
+  user       User?                       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items      CartItem[]
+  recoveries AbandonedCheckoutRecovery[]
 
   @@index([userId, status])
   @@index([status, createdAt])
@@ -1896,6 +1897,37 @@ model CartItem {
   @@index([sellerId])
   @@index([deletedAt])
   @@map("cart_items")
+}
+
+// ------------------------------------------------------------------------------
+// 25b. Abandoned Checkout Recovery
+// ------------------------------------------------------------------------------
+/// Abandoned checkout sessions with recovery tokens, discount incentives, and recovery tracking
+model AbandonedCheckoutRecovery {
+  id                  String    @id @default(uuid())
+  cartId              String    @map("cart_id")
+  recoveryToken       String    @unique @map("recovery_token")
+  customerId          String?   @map("customer_id")
+  recipientEmail      String?   @map("recipient_email")
+  recipientPhone      String?   @map("recipient_phone")
+  savedAddress        Json?     @map("saved_address")
+  totalPoisha         BigInt    @default(0) @map("total_poisha")
+  itemCount           Int       @default(0) @map("item_count")
+  incentiveCouponCode String?   @map("incentive_coupon_code")
+  recoveryStatus      String    @default("ABANDONED") // ABANDONED, NOTIFIED, RECOVERED, EXPIRED
+  notifiedAt          DateTime? @map("notified_at")
+  recoveredAt         DateTime? @map("recovered_at")
+  recoveredOrderId    String?   @map("recovered_order_id")
+  expiresAt           DateTime  @map("expires_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  @@index([cartId])
+  @@index([recoveryStatus, createdAt])
+  @@index([expiresAt])
+  @@map("abandoned_checkout_recoveries")
 }
 
 // ------------------------------------------------------------------------------

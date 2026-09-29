@@ -4092,6 +4092,91 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/checkout/abandoned': {
+      get: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'List Abandoned Checkouts',
+        description: 'Admin lists abandoned cart sessions with filters (status, minTotalPoisha, date range) and pagination.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['ABANDONED', 'NOTIFIED', 'RECOVERED', 'EXPIRED'] } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+          { name: 'minTotalPoisha', in: 'query', schema: { type: 'integer' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Abandoned checkouts list returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/v1/checkout/abandoned/{id}': {
+      get: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Get Abandoned Checkout Details',
+        description: 'Admin retrieves detailed abandoned checkout session by ID.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Abandoned checkout session details',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+          '404': { description: 'Abandoned checkout not found' },
+        },
+      },
+    },
+    '/api/v1/checkout/abandoned/{id}/recover': {
+      post: {
+        tags: ['Admin', 'Checkout & Shipping'],
+        summary: 'Trigger Recovery Notification',
+        description: 'Admin dispatches recovery notification (email/SMS) with optional promotional coupon.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  incentiveCouponCode: { type: 'string' },
+                  channel: { type: 'string', enum: ['EMAIL', 'SMS', 'BOTH'], default: 'BOTH' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Recovery notification dispatched successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Admin access required' },
+        },
+      },
+    },
+    '/api/v1/cart/recover/{token}': {
+      get: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Restore Abandoned Cart via Recovery Link',
+        description: 'Restores an abandoned cart from a recovery token, performing live server-side stock and price revalidation.',
+        parameters: [{ name: 'token', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Cart restored and revalidated successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '404': { description: 'Invalid recovery token or link expired' },
+        },
+      },
+    },
     '/api/v1/checkout/payment-methods': {
       get: {
         tags: ['Checkout & Shipping'],
