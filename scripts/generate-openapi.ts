@@ -3961,6 +3961,119 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/checkout/review': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Compile Final Pre-Placement Order Review',
+        description: 'Compiles final order review with multi-seller package grouping, discrete Product Points, payment readiness, regulatory consents, and cryptographic review fingerprint.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  cartId: { type: 'string' },
+                  recipient: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      phone: { type: 'string' },
+                      division: { type: 'string' },
+                      district: { type: 'string' },
+                      upazila: { type: 'string' },
+                      address: { type: 'string' },
+                      postalCode: { type: 'string' },
+                    },
+                    required: ['name', 'phone', 'division', 'district', 'address'],
+                  },
+                  paymentMethod: { type: 'string', default: 'COD' },
+                  couponCode: { type: 'string' },
+                  codVerificationToken: { type: 'string' },
+                },
+                required: ['cartId', 'recipient'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Order review and consent declaration returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/checkout/place-order': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Place Order Atomically with Consumer Consent',
+        description: 'Commits atomic place-order transaction with explicit terms consent, idempotency protection, multi-seller partitioning, and append-only status history.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'Idempotency-Key', in: 'header', schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  cartId: { type: 'string' },
+                  reviewFingerprint: { type: 'string' },
+                  recipient: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      phone: { type: 'string' },
+                      division: { type: 'string' },
+                      district: { type: 'string' },
+                      upazila: { type: 'string' },
+                      address: { type: 'string' },
+                      postalCode: { type: 'string' },
+                    },
+                    required: ['name', 'phone', 'division', 'district', 'address'],
+                  },
+                  paymentMethod: { type: 'string' },
+                  codVerificationToken: { type: 'string' },
+                  couponCode: { type: 'string' },
+                  consent: {
+                    type: 'object',
+                    properties: {
+                      termsAccepted: { type: 'boolean' },
+                      termsVersion: { type: 'string' },
+                      privacyAccepted: { type: 'boolean' },
+                      privacyVersion: { type: 'string' },
+                      returnPolicyAccepted: { type: 'boolean' },
+                      returnPolicyVersion: { type: 'string' },
+                      codAgreementAccepted: { type: 'boolean' },
+                      marketingConsent: { type: 'boolean' },
+                    },
+                    required: ['termsAccepted', 'termsVersion', 'privacyAccepted', 'privacyVersion', 'returnPolicyAccepted', 'returnPolicyVersion'],
+                  },
+                  idempotencyKey: { type: 'string' },
+                },
+                required: ['cartId', 'recipient', 'paymentMethod', 'consent'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Order placed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '200': {
+            description: 'Idempotent replay: previously placed order returned',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '422': { description: 'Validation failed or consent refused' },
+        },
+      },
+    },
     '/api/v1/checkout/tax-breakdown/{orderId}': {
       get: {
         tags: ['Checkout & Shipping'],

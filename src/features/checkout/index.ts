@@ -15,3 +15,9 @@ export * from './validators/cod-risk.validators';
 export * from './repositories/cod-risk.repository';
 export * from './services/cod-fraud-risk.service';
 
+// Final Order Review, Consent, and Place-Order Transaction (Milestone 139)
+export * from './types/order-review.types';
+export * from './validators/order-review.validators';
+export * from './services/final-order-review.service';
+export * from './services/place-order-transaction.service';
+

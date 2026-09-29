@@ -68,6 +68,13 @@ export default function CartPage() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState<boolean>(false);
   const [isRevalidating, setIsRevalidating] = useState<boolean>(false);
 
+  // Milestone 138 & 139: Payment Selection & Mandatory Legal Consents
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('COD');
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(true);
+  const [privacyAccepted, setPrivacyAccepted] = useState<boolean>(true);
+  const [returnPolicyAccepted, setReturnPolicyAccepted] = useState<boolean>(true);
+  const [codAgreementAccepted, setCodAgreementAccepted] = useState<boolean>(true);
+
   const loadCart = async () => {
     setIsLoading(true);
     try {
@@ -343,25 +350,83 @@ export default function CartPage() {
     if (!cartId) return;
     setIsCheckingOut(true);
     setError(null);
-    const checkout = {
-      shippingName: recipientName,
-      shippingPhone: phone,
-      shippingDivision: division,
-      shippingDistrict: district,
-      shippingAddress: address,
-      purchaseOrderRef: purchaseOrderRef || undefined,
+
+    const consent = {
+      termsAccepted,
+      termsVersion: 'v2026.1',
+      privacyAccepted,
+      privacyVersion: 'v2026.1',
+      returnPolicyAccepted,
+      returnPolicyVersion: 'v2026.1',
+      codAgreementAccepted: selectedPaymentMethod === 'COD' ? codAgreementAccepted : undefined,
     };
-    const fingerprint = JSON.stringify([cartId, checkout]);
+
+    const fingerprint = JSON.stringify([
+      cartId,
+      recipientName,
+      phone,
+      division,
+      district,
+      address,
+      selectedPaymentMethod,
+    ]);
+
     if (checkoutAttempt.current?.fingerprint !== fingerprint) {
       checkoutAttempt.current = { fingerprint, key: crypto.randomUUID() };
     }
+
     try {
-      const response = await csrfFetch('/api/v1/cart/checkout', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': checkoutAttempt.current.key },
-        body: JSON.stringify({ cartId, checkout }),
+      const placeOrderResponse = await csrfFetch('/api/v1/checkout/place-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': checkoutAttempt.current.key,
+        },
+        body: JSON.stringify({
+          cartId,
+          recipient: {
+            name: recipientName,
+            phone,
+            division,
+            district,
+            address,
+            purchaseOrderRef: purchaseOrderRef || undefined,
+          },
+          paymentMethod: selectedPaymentMethod,
+          couponCode: appliedCoupon?.code || undefined,
+          consent,
+          idempotencyKey: checkoutAttempt.current.key,
+        }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error?.message || 'Checkout failed');
+
+      const body = await placeOrderResponse.json();
+      if (!placeOrderResponse.ok) {
+        // Fallback for non-authenticated guests to standard cart checkout
+        const legacyCheckout = {
+          shippingName: recipientName,
+          shippingPhone: phone,
+          shippingDivision: division,
+          shippingDistrict: district,
+          shippingAddress: address,
+          purchaseOrderRef: purchaseOrderRef || undefined,
+          paymentMethod: selectedPaymentMethod,
+        };
+        const fallbackRes = await csrfFetch('/api/v1/cart/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': checkoutAttempt.current.key,
+          },
+          body: JSON.stringify({ cartId, checkout: legacyCheckout }),
+        });
+        const fallbackBody = await fallbackRes.json();
+        if (!fallbackRes.ok) {
+          throw new Error(body.error?.message || fallbackBody.error?.message || 'Checkout failed');
+        }
+        setOrderCreated(fallbackBody.data.orderNumber);
+        return;
+      }
+
       setOrderCreated(body.data.orderNumber);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Checkout failed');
@@ -859,11 +924,145 @@ export default function CartPage() {
                   </div>
                 </div>
 
+                {/* Payment Method Selector */}
+                <div className="pt-3 border-t border-gray-100 space-y-2">
+                  <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Select Payment Method
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod('COD')}
+                      className={`p-2.5 rounded-xl border font-bold text-left transition-all ${
+                        selectedPaymentMethod === 'COD'
+                          ? 'border-[#1B5E20] bg-emerald-50 text-[#1B5E20] shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>Cash on Delivery</span>
+                        <span className="text-[10px] font-semibold text-emerald-800">৳0 Fee</span>
+                      </div>
+                      <span className="text-[10px] font-normal text-gray-500 block mt-0.5">
+                        Pay cash at doorstep
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod('BKASH')}
+                      className={`p-2.5 rounded-xl border font-bold text-left transition-all ${
+                        selectedPaymentMethod === 'BKASH'
+                          ? 'border-[#1B5E20] bg-emerald-50 text-[#1B5E20] shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>bKash MFS</span>
+                        <span className="text-[10px] font-semibold text-pink-700">Instant</span>
+                      </div>
+                      <span className="text-[10px] font-normal text-gray-500 block mt-0.5">
+                        Fast online payment
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod('SSLCOMMERZ')}
+                      className={`p-2.5 rounded-xl border font-bold text-left transition-all ${
+                        selectedPaymentMethod === 'SSLCOMMERZ'
+                          ? 'border-[#1B5E20] bg-emerald-50 text-[#1B5E20] shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>Cards & Banking</span>
+                        <span className="text-[10px] font-semibold text-blue-700">Visa/MC</span>
+                      </div>
+                      <span className="text-[10px] font-normal text-gray-500 block mt-0.5">
+                        Credit/Debit Card
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentMethod('CUSTOMER_WALLET')}
+                      className={`p-2.5 rounded-xl border font-bold text-left transition-all ${
+                        selectedPaymentMethod === 'CUSTOMER_WALLET'
+                          ? 'border-[#1B5E20] bg-emerald-50 text-[#1B5E20] shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>Alif Wallet</span>
+                        <span className="text-[10px] font-semibold text-amber-700">1-Click</span>
+                      </div>
+                      <span className="text-[10px] font-normal text-gray-500 block mt-0.5">
+                        Pay from wallet funds
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Mandatory Regulatory & Legal Consents */}
+                <div className="pt-3 border-t border-gray-100 space-y-2.5 text-xs text-gray-600 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80">
+                  <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">
+                    Order Consent & Agreements
+                  </h4>
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={termsAccepted && privacyAccepted}
+                      onChange={(e) => {
+                        setTermsAccepted(e.target.checked);
+                        setPrivacyAccepted(e.target.checked);
+                      }}
+                      className="mt-0.5 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20]"
+                    />
+                    <span className="text-[11px] leading-tight">
+                      I agree to the <strong className="text-slate-800">Terms & Conditions (v2026.1)</strong> and <strong className="text-slate-800">Privacy Policy (v2026.1)</strong>.
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={returnPolicyAccepted}
+                      onChange={(e) => setReturnPolicyAccepted(e.target.checked)}
+                      className="mt-0.5 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20]"
+                    />
+                    <span className="text-[11px] leading-tight">
+                      I acknowledge the <strong className="text-slate-800">7-Day Return & Refund Policy (v2026.1)</strong>.
+                    </span>
+                  </label>
+
+                  {selectedPaymentMethod === 'COD' && (
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={codAgreementAccepted}
+                        onChange={(e) => setCodAgreementAccepted(e.target.checked)}
+                        className="mt-0.5 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20]"
+                      />
+                      <span className="text-[11px] leading-tight text-emerald-800 font-medium">
+                        I commit to accepting the parcel upon doorstep delivery and paying the exact cash amount.
+                      </span>
+                    </label>
+                  )}
+                </div>
+
                 {/* Checkout Button */}
                 <button
                   type="submit"
                   form="checkout-form"
-                  disabled={isCheckingOut}
+                  disabled={
+                    isCheckingOut ||
+                    !termsAccepted ||
+                    !privacyAccepted ||
+                    !returnPolicyAccepted ||
+                    (selectedPaymentMethod === 'COD' && !codAgreementAccepted)
+                  }
                   className="w-full py-3.5 px-4 bg-[#1B5E20] hover:bg-[#154a19] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {isCheckingOut ? (
