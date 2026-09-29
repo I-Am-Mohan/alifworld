@@ -4083,6 +4083,171 @@ export const openApiSpec = {
         },
       },
     },
+    '/api/v1/shipping/couriers': {
+      get: {
+        tags: ['Checkout & Shipping'],
+        summary: 'List Registered Bangladesh Couriers',
+        description: 'Lists all registered Bangladesh couriers (Pathao, Steadfast, RedX, Paperfly, In-House), supported zones, and COD limits.',
+        responses: {
+          '200': {
+            description: 'Couriers list returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+        },
+      },
+    },
+    '/api/v1/shipping/consignments': {
+      get: {
+        tags: ['Checkout & Shipping'],
+        summary: 'List Scoped Consignments & Shipments',
+        description: 'Lists parcel shipments and courier consignments scoped to the caller tenant.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+          { name: 'courierProvider', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'Shipments list returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+        },
+      },
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Create Courier Consignment & Dispatch Shipment',
+        description: 'Dispatches a fulfillment package to a Bangladesh courier, normalizes recipient phone to +880, and generates tracking credentials.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  fulfillmentGroupId: { type: 'string' },
+                  courierProvider: { type: 'string', enum: ['PATHAO', 'STEADFAST', 'REDX', 'PAPERFLY', 'IN_HOUSE'] },
+                  recipientName: { type: 'string' },
+                  recipientPhone: { type: 'string' },
+                  deliveryAddress: { type: 'string' },
+                  division: { type: 'string' },
+                  district: { type: 'string' },
+                  upazila: { type: 'string' },
+                  itemDescription: { type: 'string' },
+                  totalWeightGrams: { type: 'integer', default: 500 },
+                  codAmountPoisha: { type: 'integer', default: 0 },
+                  isPrepaid: { type: 'boolean', default: false },
+                },
+                required: ['fulfillmentGroupId', 'courierProvider', 'recipientName', 'recipientPhone', 'deliveryAddress', 'division', 'district'],
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Consignment created successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/shipping/consignments/{consignmentId}/cancel': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Cancel Courier Consignment',
+        description: 'Cancels an unpicked courier consignment before pickup.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'consignmentId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { reason: { type: 'string' } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Consignment cancelled successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '404': { description: 'Consignment not found' },
+        },
+      },
+    },
+    '/api/v1/shipping/track/{trackingNumber}': {
+      get: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Track Shipment Package Timeline',
+        description: 'Public tracking endpoint returning chronological logistics events with customer PII phone masking.',
+        parameters: [{ name: 'trackingNumber', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Tracking timeline returned successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '404': { description: 'Shipment not found' },
+        },
+      },
+    },
+    '/api/v1/shipping/in-house/verify-delivery': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Verify In-House Doorstep Delivery via OTP',
+        description: 'Verifies customer doorstep delivery using a secure 6-digit OTP code.',
+        security: [{ BearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  shipmentId: { type: 'string' },
+                  otpCode: { type: 'string' },
+                  riderId: { type: 'string' },
+                  deliveryNotes: { type: 'string' },
+                  recipientSignedName: { type: 'string' },
+                  proofOfDeliveryPhotoUrl: { type: 'string' },
+                },
+                required: ['shipmentId', 'otpCode', 'riderId'],
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Doorstep delivery confirmed and verified',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '401': { description: 'Authentication required' },
+          '422': { description: 'Invalid OTP code' },
+        },
+      },
+    },
+    '/api/v1/shipping/webhooks/{courier}': {
+      post: {
+        tags: ['Checkout & Shipping'],
+        summary: 'Ingest Courier Status Webhook Callback',
+        description: 'Receives and processes asynchronous webhook callbacks from courier partners (Pathao, Steadfast, RedX, Paperfly).',
+        parameters: [{ name: 'courier', in: 'path', required: true, schema: { type: 'string', enum: ['pathao', 'steadfast', 'redx', 'paperfly'] } }],
+        responses: {
+          '200': {
+            description: 'Webhook processed successfully',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } } },
+          },
+          '422': { description: 'Invalid webhook payload or courier' },
+        },
+      },
+    },
     '/api/v1/admin/shipping/rules': {
       get: {
         tags: ['Admin', 'Checkout & Shipping'],
