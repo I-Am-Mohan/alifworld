@@ -6754,6 +6754,149 @@
         }
       }
     },
+    "/api/v1/checkout/quote": {
+      "post": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "Calculate Authoritative Checkout Quote & Taxes",
+        "description": "Calculates authoritative server-side checkout totals including price verification, NBR Mushak-6.3 VAT, coupon discounts, shipping rates, and discrete Product Points.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cartId": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "variantId": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "variantId",
+                        "quantity"
+                      ]
+                    }
+                  },
+                  "shippingAddress": {
+                    "type": "object",
+                    "properties": {
+                      "division": {
+                        "type": "string"
+                      },
+                      "district": {
+                        "type": "string"
+                      },
+                      "upazila": {
+                        "type": "string"
+                      },
+                      "postalCode": {
+                        "type": "string"
+                      },
+                      "streetAddress": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "division",
+                      "district"
+                    ]
+                  },
+                  "couponCode": {
+                    "type": "string"
+                  },
+                  "shippingMethod": {
+                    "type": "string",
+                    "enum": [
+                      "STANDARD",
+                      "EXPRESS",
+                      "SAME_DAY",
+                      "NEXT_DAY",
+                      "HEAVY_FREIGHT"
+                    ],
+                    "default": "STANDARD"
+                  }
+                },
+                "required": [
+                  "shippingAddress"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Checkout quote and itemized calculation breakdown returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
+    "/api/v1/checkout/tax-breakdown/{orderId}": {
+      "get": {
+        "tags": [
+          "Checkout & Shipping"
+        ],
+        "summary": "Get Order NBR Mushak-6.3 Tax Breakdown",
+        "description": "Returns authoritative NBR Mushak-6.3 VAT breakdown and rate summaries for an order.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tax breakdown returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Ownership authorization required"
+          },
+          "404": {
+            "description": "Order not found"
+          }
+        }
+      }
+    },
     "/api/v1/shipping/serviceability": {
       "post": {
         "tags": [

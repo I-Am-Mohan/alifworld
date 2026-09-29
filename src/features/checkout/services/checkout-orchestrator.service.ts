@@ -329,7 +329,77 @@ export class CheckoutOrchestratorService {
       orderTotalProductPoints += groupProductPoints;
     }
 
-    const orderTotalPoisha = orderSubtotalPoisha + orderShippingFeePoisha + orderTaxPoisha;
+    // 4b. Authoritative Server-Side Coupon & Discount Calculation
+    const couponCodeToApply = input.couponCode || cart.appliedCouponCode || null;
+    let appliedCoupon: any = null;
+    let orderDiscountPoisha = 0n;
+    let orderSellerDiscountPoisha = 0n;
+    let orderPlatformDiscountPoisha = 0n;
+
+    if (couponCodeToApply) {
+      const codeUpper = couponCodeToApply.trim().toUpperCase();
+      const now = new Date();
+
+      const discountRule = await (this.db as any).discountRule.findFirst({
+        where: { code: codeUpper, deletedAt: null },
+      });
+
+      if (discountRule) {
+        if (discountRule.status !== 'ACTIVE') {
+          throw new ValidationError(`Coupon '${codeUpper}' is inactive.`);
+        }
+        if (now < new Date(discountRule.startsAt)) {
+          throw new ValidationError(`Coupon '${codeUpper}' is not yet active.`);
+        }
+        if (discountRule.endsAt && now > new Date(discountRule.endsAt)) {
+          throw new ValidationError(`Coupon '${codeUpper}' has expired.`);
+        }
+        if (orderSubtotalPoisha < BigInt(discountRule.minOrderSubtotalPoisha || 0)) {
+          throw new ValidationError(
+            `Minimum order subtotal requirement of ৳${(Number(discountRule.minOrderSubtotalPoisha) / 100).toFixed(2)} not met.`
+          );
+        }
+        if (discountRule.usageLimit && (discountRule.usageCount || 0) >= discountRule.usageLimit) {
+          throw new ValidationError(`Coupon '${codeUpper}' usage limit has been reached.`);
+        }
+
+        let discPoisha = 0n;
+        if (discountRule.discountType === 'PERCENTAGE') {
+          const pct = BigInt(Math.round(Number(discountRule.discountValue || 0) * 100));
+          discPoisha = (orderSubtotalPoisha * pct) / 10000n;
+        } else {
+          discPoisha = BigInt(Math.round(Number(discountRule.discountValue || 0) * 100));
+        }
+
+        if (discountRule.maxDiscountPoisha && discPoisha > BigInt(discountRule.maxDiscountPoisha)) {
+          discPoisha = BigInt(discountRule.maxDiscountPoisha);
+        }
+
+        const sellerSharePct = BigInt(Math.round(Number(discountRule.sellerSharePercent ?? 0)));
+        const sellerDisc = (discPoisha * sellerSharePct) / 100n;
+        const platformDisc = discPoisha - sellerDisc;
+
+        orderDiscountPoisha = discPoisha;
+        orderSellerDiscountPoisha = sellerDisc;
+        orderPlatformDiscountPoisha = platformDisc;
+
+        appliedCoupon = {
+          couponCode: codeUpper,
+          discountRuleId: discountRule.id,
+          promotionId: null,
+          sellerId: discountRule.sellerId || null,
+          discountAmountPoisha: discPoisha,
+          sellerDiscountPoisha: sellerDisc,
+          platformDiscountPoisha: platformDisc,
+          ruleVersion: discountRule.ruleVersion || 'v1.0.0',
+        };
+      }
+    }
+
+    const orderTotalPoisha =
+      orderSubtotalPoisha > orderDiscountPoisha
+        ? orderSubtotalPoisha - orderDiscountPoisha + orderShippingFeePoisha + orderTaxPoisha
+        : orderShippingFeePoisha + orderTaxPoisha;
 
     // 5. Atomic Checkout Transaction
     const orderId = generatePrefixedId(ENTITY_PREFIXES.ORDER);
@@ -364,7 +434,9 @@ export class CheckoutOrchestratorService {
           paymentStatus: 'UNPAID',
           fulfillmentStatus: 'UNFULFILLED',
           subtotalPoisha: orderSubtotalPoisha,
-          discountPoisha: 0n,
+          discountPoisha: orderDiscountPoisha,
+          sellerDiscountPoisha: orderSellerDiscountPoisha,
+          platformDiscountPoisha: orderPlatformDiscountPoisha,
           shippingFeePoisha: orderShippingFeePoisha,
           taxPoisha: orderTaxPoisha,
           totalPoisha: orderTotalPoisha,
@@ -440,7 +512,33 @@ export class CheckoutOrchestratorService {
         }
       }
 
-      // 5d. Create initial status history
+      // 5d. Record committed coupon redemption transactionally
+      if (appliedCoupon) {
+        await tx.couponRedemption.create({
+          data: {
+            id: crypto.randomUUID(),
+            couponCode: appliedCoupon.couponCode,
+            discountRuleId: appliedCoupon.discountRuleId || null,
+            promotionId: appliedCoupon.promotionId || null,
+            customerId,
+            orderId: order.id,
+            sellerId: appliedCoupon.sellerId || null,
+            discountAmountPoisha: appliedCoupon.discountAmountPoisha,
+            status: 'COMMITTED',
+            committedAt: new Date(),
+            ruleVersion: appliedCoupon.ruleVersion,
+          },
+        });
+
+        if (appliedCoupon.discountRuleId) {
+          await tx.discountRule.update({
+            where: { id: appliedCoupon.discountRuleId },
+            data: { usageCount: { increment: 1 } },
+          });
+        }
+      }
+
+      // 5e. Create initial status history
       await tx.orderStatusHistory.create({
         data: {
           id: generatePrefixedId(ENTITY_PREFIXES.ORDER_STATUS_HISTORY),
