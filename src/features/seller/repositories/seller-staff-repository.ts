@@ -1,8 +1,8 @@
 /**
  * AlifWorld Seller Staff Repository
- * 
+ *
  * Manages seller staff delegations with strict tenant scoping.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0006, ADR-0022, ADR-0024
  */
@@ -40,7 +40,10 @@ export class SellerStaffRepository extends BaseRepository {
   /**
    * Finds an active staff assignment for a specific user and seller.
    */
-  public async findBySellerAndUser(sellerId: string, userId: string): Promise<SellerStaffModel | null> {
+  public async findBySellerAndUser(
+    sellerId: string,
+    userId: string
+  ): Promise<SellerStaffModel | null> {
     return this.executeSafe(async () => {
       const staff = await (this.db as any).sellerStaff.findFirst({
         where: this.whereSellerScope(sellerId, { userId }),
@@ -104,7 +107,10 @@ export class SellerStaffRepository extends BaseRepository {
 
       const existing = await this.findBySellerAndUser(sellerId, userId);
       if (!existing) {
-        throw new NotFoundError(`Staff member not found for seller '${sellerId}'`, { sellerId, userId });
+        throw new NotFoundError(`Staff member not found for seller '${sellerId}'`, {
+          sellerId,
+          userId,
+        });
       }
 
       assertSellerScope(existing.sellerId, sellerId);
@@ -125,10 +131,26 @@ export class SellerStaffRepository extends BaseRepository {
     const take = Math.min(Math.max(limit, 1), 100);
     const where = { resource: 'SellerStaff', metadata: { path: ['sellerId'], equals: sellerId } };
     const [items, total] = await Promise.all([
-      (this.db as any).auditLog.findMany({ where, skip, take, orderBy: { createdAt: 'desc' }, select: { id: true, actorId: true, action: true, resourceId: true, metadata: true, createdAt: true } }),
+      (this.db as any).auditLog.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          actorId: true,
+          action: true,
+          resourceId: true,
+          metadata: true,
+          createdAt: true,
+        },
+      }),
       (this.db as any).auditLog.count({ where }),
     ]);
-    return { items, pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) || 1 } };
+    return {
+      items,
+      pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) || 1 },
+    };
   }
 
   /**

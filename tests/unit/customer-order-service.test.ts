@@ -146,7 +146,7 @@ describe('Milestone 141: Customer Parent Order Service Unit Tests', () => {
       ];
 
       for (const status of requiredStatuses) {
-        const labels = ORDER_STATUS_LABELS[status];
+        const labels = (ORDER_STATUS_LABELS as Record<string, { en: string; bn: string }>)[status];
         expect(labels).toBeDefined();
         expect(labels.en).toBeTruthy();
         expect(labels.bn).toBeTruthy();
@@ -166,7 +166,9 @@ describe('Milestone 141: Customer Parent Order Service Unit Tests', () => {
       ];
 
       for (const status of requiredPayStatuses) {
-        const labels = PAYMENT_STATUS_LABELS[status];
+        const labels = (PAYMENT_STATUS_LABELS as Record<string, { en: string; bn: string }>)[
+          status
+        ];
         expect(labels).toBeDefined();
         expect(labels.en).toBeTruthy();
         expect(labels.bn).toBeTruthy();
@@ -245,16 +247,11 @@ describe('Milestone 141: Customer Parent Order Service Unit Tests', () => {
   // ─── 7. Self-Service Action Evaluation Logic ───
   describe('7. Self-Service Action Evaluation Logic', () => {
     // These simulate the same logic as mapToCustomerOrderDTO()
-    function evaluateCanCancel(
-      orderStatus: string,
-      fulfillmentGroupStatuses: string[]
-    ): boolean {
+    function evaluateCanCancel(orderStatus: string, fulfillmentGroupStatuses: string[]): boolean {
       return (
         orderStatus === 'PENDING_PAYMENT' ||
         (orderStatus === 'PROCESSING' &&
-          fulfillmentGroupStatuses.every(
-            (s) => s === 'PENDING' || s === 'ACCEPTED'
-          ))
+          fulfillmentGroupStatuses.every((s) => s === 'PENDING' || s === 'ACCEPTED'))
       );
     }
 
@@ -275,9 +272,7 @@ describe('Milestone 141: Customer Parent Order Service Unit Tests', () => {
     });
 
     it('denies cancellation when any group HANDED_OVER_TO_COURIER', () => {
-      expect(
-        evaluateCanCancel('PROCESSING', ['PENDING', 'HANDED_OVER_TO_COURIER'])
-      ).toBe(false);
+      expect(evaluateCanCancel('PROCESSING', ['PENDING', 'HANDED_OVER_TO_COURIER'])).toBe(false);
     });
 
     it('denies cancellation when order is CONFIRMED', () => {

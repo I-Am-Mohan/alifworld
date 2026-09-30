@@ -14,11 +14,7 @@
  */
 
 import { prisma } from '@/shared/database/prisma';
-import {
-  ValidationError,
-  NotFoundError,
-  ConflictError,
-} from '@/shared/errors/app-error';
+import { ValidationError, NotFoundError, ConflictError } from '@/shared/errors/app-error';
 import {
   PaymentDiscoveryContext,
   PaymentDiscoveryResultDTO,
@@ -121,15 +117,16 @@ export class PaymentMethodDiscoveryService {
             message: codStatus.unavailableReasonEn || 'Cash on Delivery is available.',
           }
         : null,
-      walletStatus: walletStatusItem?.userWalletBalancePoisha !== null &&
+      walletStatus:
+        walletStatusItem?.userWalletBalancePoisha !== null &&
         walletStatusItem?.userWalletBalancePoisha !== undefined
-        ? {
-            hasWallet: true,
-            availablePoisha: walletStatusItem.userWalletBalancePoisha,
-            availableBdtFormatted: walletStatusItem.userWalletBalanceBdtFormatted || '৳0.00',
-            canCoverFullOrder: Boolean(walletStatusItem.hasSufficientWalletBalance),
-          }
-        : null,
+          ? {
+              hasWallet: true,
+              availablePoisha: walletStatusItem.userWalletBalancePoisha,
+              availableBdtFormatted: walletStatusItem.userWalletBalanceBdtFormatted || '৳0.00',
+              canCoverFullOrder: Boolean(walletStatusItem.hasSufficientWalletBalance),
+            }
+          : null,
       discoveredAt: new Date().toISOString(),
     };
   }
@@ -171,8 +168,7 @@ export class PaymentMethodDiscoveryService {
 
     // Check specific requirements by gateway
     let requiresAction = false;
-    let actionType: 'REDIRECT' | 'POPUP' | 'OTP_CHALLENGE' | 'INSTANT_SETTLEMENT' | 'NONE' =
-      'NONE';
+    let actionType: 'REDIRECT' | 'POPUP' | 'OTP_CHALLENGE' | 'INSTANT_SETTLEMENT' | 'NONE' = 'NONE';
     let redirectUrl: string | null = null;
     let instructionsEn = 'Payment method selected successfully.';
     let instructionsBn = 'পেমেন্ট মেথড সফলভাবে নির্বাচন করা হয়েছ���।';
@@ -237,8 +233,9 @@ export class PaymentMethodDiscoveryService {
 
     // Deduplication key from provider (e.g. trxID, event_id, payment_id)
     const externalEventId =
-      String(data.trxID || data.transaction_id || data.tran_id || data.paymentID || data.id || '') ||
-      null;
+      String(
+        data.trxID || data.transaction_id || data.tran_id || data.paymentID || data.id || ''
+      ) || null;
 
     // Check if event was already processed (Deduplication Guard)
     if (externalEventId) {

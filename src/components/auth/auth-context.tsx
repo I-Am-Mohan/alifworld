@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, X } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
@@ -41,11 +48,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function subscribeAuthParam(callback: () => void) {
+  window.addEventListener('popstate', callback);
+  return () => window.removeEventListener('popstate', callback);
+}
+
+function getInitialAuthParam(): AuthMode | null {
+  if (typeof window === 'undefined') return null;
+  const param = new URLSearchParams(window.location.search).get('auth');
+  return param === 'login' || param === 'register' ? param : null;
+}
+
+function getServerAuthParam(): AuthMode | null {
+  return null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t } = useI18n();
-  const [isOpen, setIsOpen] = useState(false);
-  const [mode, setMode] = useState<AuthMode>('login');
+  const urlAuth = useSyncExternalStore(subscribeAuthParam, getInitialAuthParam, getServerAuthParam);
+  const [modalOpen, setModalOpen] = useState<boolean | null>(null);
+  const [modalMode, setModalMode] = useState<AuthMode | null>(null);
+  const isOpen = modalOpen !== null ? modalOpen : Boolean(urlAuth);
+  const mode = modalMode !== null ? modalMode : urlAuth || 'login';
+
   const [user, setUser] = useState<UserSessionState | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [securityAlert, setSecurityAlert] = useState<string | null>(null);
@@ -67,65 +93,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSecurityAlert(null);
   };
 
-  const refreshUser = async () => {
-    try {
-      setIsLoadingUser(true);
-      let res = await fetch('/api/v1/auth/me');
+  const performRefresh = useCallback(() => {
+    return fetch('/api/v1/auth/me')
+      .then(async (res) => {
+        if (res.status === 401) {
+          const refreshRes = await csrfFetch('/api/v1/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
 
-      // If unauthorized (access token expired), attempt silent refresh using token family
-      if (res.status === 401) {
-        const refreshRes = await csrfFetch('/api/v1/auth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        if (refreshRes.ok) {
-          // Tokens rotated successfully, retry me endpoint with new cookie
-          res = await fetch('/api/v1/auth/me');
-        } else {
+          if (refreshRes.ok) {
+            return fetch('/api/v1/auth/me');
+          }
           const refreshErr = await refreshRes.json().catch(() => null);
           if (refreshErr?.error?.code === 'REFRESH_TOKEN_REUSE_DETECTED') {
             setUser(null);
             setSecurityAlert(t('auth.securityAlertBreach'));
+            return null;
+          }
+        }
+        return res;
+      })
+      .then(async (res) => {
+        if (res && res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data?.success && data.data) {
+            setUser(data.data);
             return;
           }
         }
-      }
+        setUser(null);
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => {
+        setIsLoadingUser(false);
+      });
+  }, [t]);
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.data) {
-          setUser(data.data);
-          return;
-        }
-      }
-      setUser(null);
-    } catch {
-      setUser(null);
-    } finally {
-      setIsLoadingUser(false);
-    }
-  };
+  const refreshUser = useCallback(async () => {
+    setIsLoadingUser(true);
+    await performRefresh();
+  }, [performRefresh]);
 
   useEffect(() => {
-    refreshUser();
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const authParam = params.get('auth');
-      if (authParam === 'login' || authParam === 'register') {
-        setMode(authParam);
-        setIsOpen(true);
-      }
-    }
-  }, []);
+    void performRefresh();
+  }, [performRefresh]);
 
   const openAuthModal = (initialMode: AuthMode = 'login') => {
-    setMode(initialMode);
-    setIsOpen(true);
+    setModalMode(initialMode);
+    setModalOpen(true);
   };
 
   const closeAuthModal = () => {
-    setIsOpen(false);
+    setModalOpen(false);
     if (typeof window !== 'undefined' && window.location.search.includes('auth=')) {
       const url = new URL(window.location.href);
       url.searchParams.delete('auth');
@@ -133,9 +155,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setMode = (newMode: AuthMode) => {
+    setModalMode(newMode);
+  };
+
   const loginSuccess = (userData: UserSessionState) => {
     setUser(userData);
-    setIsOpen(false);
+    setModalOpen(false);
     setSecurityAlert(null);
   };
 
@@ -234,4 +260,3 @@ export function useAuthModal() {
   }
   return context;
 }
-

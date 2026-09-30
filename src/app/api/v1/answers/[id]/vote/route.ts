@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/answers/[id]/vote
  * Toggles an upvote on an answer.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;

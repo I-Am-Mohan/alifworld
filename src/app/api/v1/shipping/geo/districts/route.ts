@@ -12,13 +12,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const query = GeoDistrictsQuerySchema.parse(
-      Object.fromEntries(searchParams.entries())
-    );
+    const query = GeoDistrictsQuerySchema.parse(Object.fromEntries(searchParams.entries()));
 
-    const districts = await deliveryServiceabilityService.listDistricts(
-      query.divisionCode
-    );
+    const districts = await deliveryServiceabilityService.listDistricts(query.divisionCode);
 
     return NextResponse.json(
       {

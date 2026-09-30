@@ -15,8 +15,7 @@ class MockPrismaProductDb {
           (where.OR &&
             where.OR.some(
               (clause: any) =>
-                (clause.slug && p.slug === clause.slug) ||
-                (clause.id && p.id === clause.id)
+                (clause.slug && p.slug === clause.slug) || (clause.id && p.id === clause.id)
             ));
         const matchesDeleted = where.deletedAt === null ? p.deletedAt === null : true;
         return matchesIdentifier && matchesDeleted;

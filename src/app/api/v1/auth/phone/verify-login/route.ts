@@ -12,10 +12,10 @@ const policies = getRateLimitPolicies();
 
 /**
  * POST /api/v1/auth/phone/verify-login
- * 
+ *
  * Verifies the 6-digit OTP code sent to the phone, validates attempts,
  * and issues active session tokens with cookies for Web browsers.
- * 
+ *
  * Throttled to 5 verification attempts per 15 minutes.
  */
 export async function POST(req: NextRequest) {
@@ -41,11 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Enforce rate limiting on verification attempts
-    const rateLimitResult = await assertRateLimit(
-      req,
-      policies.AUTH_PHONE_VERIFY,
-      phone
-    );
+    const rateLimitResult = await assertRateLimit(req, policies.AUTH_PHONE_VERIFY, phone);
 
     const result = await phoneAuthService.verifyLoginOtp(phone, code, clientType, {
       ipAddress: reqMeta.ipAddress,

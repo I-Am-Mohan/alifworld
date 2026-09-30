@@ -25,6 +25,12 @@ describe('Localized catalog and CMS content (Milestone 053)', () => {
       translations: [{ locale: 'bn-BD', title: 'আমাদের সম্পর্কে', body: { blocks: [] } }],
     });
     expect(parsed.success).toBe(true);
-    expect(CreateCmsContentSchema.safeParse({ contentType: 'page', slug: 'Invalid Slug', translations: [] }).success).toBe(false);
+    expect(
+      CreateCmsContentSchema.safeParse({
+        contentType: 'page',
+        slug: 'Invalid Slug',
+        translations: [],
+      }).success
+    ).toBe(false);
   });
 });

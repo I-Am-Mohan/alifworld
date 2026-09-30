@@ -1,8 +1,8 @@
 /**
  * REST API Route Handler: /api/v1/rider/assignments
- * 
+ *
  * Manages atomic delivery assignment acceptance and double-assignment prevention.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 046
  */
 
@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
-        { success: false, error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' } },
+        {
+          success: false,
+          error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' },
+        },
         { status: 400 }
       );
     }

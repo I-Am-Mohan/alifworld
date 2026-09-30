@@ -20,7 +20,9 @@ export default function CategoryLandingPage() {
   const [sortBy, setSortBy] = useState<string>('relevance');
 
   useEffect(() => {
-    fetch(`/api/v1/catalog/landing/category/${slug}?sortBy=${sortBy}${selectedBrand ? `&brand=${selectedBrand}` : ''}`)
+    fetch(
+      `/api/v1/catalog/landing/category/${slug}?sortBy=${sortBy}${selectedBrand ? `&brand=${selectedBrand}` : ''}`
+    )
       .then((res) => (res.ok ? res.json() : null))
       .then((body) => {
         if (body?.data) {
@@ -71,16 +73,26 @@ export default function CategoryLandingPage() {
       </header>
 
       {/* Main Container */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6"
+      >
         {/* Breadcrumb Hierarchy */}
         {landingData?.breadcrumbs && (
-          <nav aria-label="Breadcrumbs" className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+          <nav
+            aria-label="Breadcrumbs"
+            className="flex items-center space-x-2 text-xs text-slate-500 font-medium"
+          >
             {landingData.breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={crumb.href || idx}>
                 {idx > 0 && <span>/</span>}
                 <Link
                   href={crumb.href || '/'}
-                  className={idx === landingData.breadcrumbs.length - 1 ? 'font-bold text-slate-900' : 'hover:underline'}
+                  className={
+                    idx === landingData.breadcrumbs.length - 1
+                      ? 'font-bold text-slate-900'
+                      : 'hover:underline'
+                  }
                 >
                   {crumb.label}
                 </Link>
@@ -96,17 +108,18 @@ export default function CategoryLandingPage() {
               {isBn ? 'অফিসিয়াল ডিপার্টমেন্ট' : 'Official Department'}
             </Badge>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
-              {isBn && landingData?.category.nameBn ? landingData.category.nameBn : landingData?.category.name || slug}
+              {isBn && landingData?.category.nameBn
+                ? landingData.category.nameBn
+                : landingData?.category.name || slug}
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-              {landingData?.category.description || 'Explore authentic verified products with doorstep delivery across Bangladesh.'}
+              {landingData?.category.description ||
+                'Explore authentic verified products with doorstep delivery across Bangladesh.'}
             </p>
           </div>
 
           <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl text-center shrink-0 border border-white/10">
-            <div className="text-2xl font-black text-amber-400">
-              {landingData?.totalHits || 0}
-            </div>
+            <div className="text-2xl font-black text-amber-400">{landingData?.totalHits || 0}</div>
             <div className="text-[11px] text-slate-300 uppercase font-bold tracking-wider">
               {isBn ? 'পণ্য উপলভ্য' : 'Products Available'}
             </div>
@@ -141,7 +154,9 @@ export default function CategoryLandingPage() {
             <button
               onClick={() => setSelectedBrand(null)}
               className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
-                selectedBrand === null ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                selectedBrand === null
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
               All
@@ -152,7 +167,9 @@ export default function CategoryLandingPage() {
                   key={brandName}
                   onClick={() => setSelectedBrand(selectedBrand === brandName ? null : brandName)}
                   className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
-                    selectedBrand === brandName ? 'bg-[#FF6A00] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    selectedBrand === brandName
+                      ? 'bg-[#FF6A00] text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   {brandName} ({landingData.facets?.brands[brandName]})
@@ -169,9 +186,15 @@ export default function CategoryLandingPage() {
               className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-800 text-xs focus:ring-1 focus:ring-[#FF6A00]"
             >
               <option value="relevance">{isBn ? 'প্রাসঙ্গিকতা' : 'Most Relevant'}</option>
-              <option value="price_asc">{isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}</option>
-              <option value="price_desc">{isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}</option>
-              <option value="points_desc">{isBn ? 'সর্বোচ্চ পয়েন্ট' : 'Highest Reward Points'}</option>
+              <option value="price_asc">
+                {isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}
+              </option>
+              <option value="price_desc">
+                {isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}
+              </option>
+              <option value="points_desc">
+                {isBn ? 'সর্বোচ্চ পয়েন্ট' : 'Highest Reward Points'}
+              </option>
             </select>
           </div>
         </div>
@@ -188,7 +211,9 @@ export default function CategoryLandingPage() {
               {isBn ? 'এই ক্যাটাগরিতে কোনো পণ্য নেই' : 'No products available in this category'}
             </h3>
             <p className="text-xs text-slate-500">
-              {isBn ? 'অন্যান্য ক্যাটাগর��� অনুসন্ধান করুন।' : 'Check back soon or explore other departments.'}
+              {isBn
+                ? 'অন্যান্য ক্যাটাগর��� অনুসন্ধান করুন।'
+                : 'Check back soon or explore other departments.'}
             </p>
           </div>
         ) : (

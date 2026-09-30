@@ -7,7 +7,10 @@ import {
   getCatalogLeafKeys,
   validateLaunchCatalogs,
 } from '@/i18n/translations';
-import { getCatalogPlaceholders, validateCatalogPair } from '@/i18n/translations/catalog-validation';
+import {
+  getCatalogPlaceholders,
+  validateCatalogPair,
+} from '@/i18n/translations/catalog-validation';
 
 describe('English and Bangla translation catalogs (Milestone 052)', () => {
   it('declares the two canonical launch catalogs', () => {
@@ -26,10 +29,14 @@ describe('English and Bangla translation catalogs (Milestone 052)', () => {
 
     for (const key of englishKeys) {
       const englishValue = key.split('.').reduce<unknown>((value, segment) => {
-        return value && typeof value === 'object' ? (value as Record<string, unknown>)[segment] : undefined;
+        return value && typeof value === 'object'
+          ? (value as Record<string, unknown>)[segment]
+          : undefined;
       }, en);
       const banglaValue = key.split('.').reduce<unknown>((value, segment) => {
-        return value && typeof value === 'object' ? (value as Record<string, unknown>)[segment] : undefined;
+        return value && typeof value === 'object'
+          ? (value as Record<string, unknown>)[segment]
+          : undefined;
       }, bn);
 
       expect(typeof englishValue).toBe('string');

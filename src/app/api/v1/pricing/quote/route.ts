@@ -29,7 +29,9 @@ export async function POST(req: NextRequest) {
       lineItems: result.lineItems.map((item) => ({
         ...item,
         unitPricePoisha: item.unitPricePoisha.toString(),
-        compareAtPricePoisha: item.compareAtPricePoisha ? item.compareAtPricePoisha.toString() : null,
+        compareAtPricePoisha: item.compareAtPricePoisha
+          ? item.compareAtPricePoisha.toString()
+          : null,
         costPricePoisha: item.costPricePoisha ? item.costPricePoisha.toString() : null,
         minPricePoisha: item.minPricePoisha ? item.minPricePoisha.toString() : null,
         baseTotalPoisha: item.baseTotalPoisha.toString(),
@@ -47,7 +49,8 @@ export async function POST(req: NextRequest) {
         subtotalBasePoisha: result.totals.subtotalBasePoisha.toString(),
         totalDiscountPoisha: result.totals.totalDiscountPoisha.toString(),
         sellerFundedTotalDiscountPoisha: result.totals.sellerFundedTotalDiscountPoisha.toString(),
-        platformFundedTotalDiscountPoisha: result.totals.platformFundedTotalDiscountPoisha.toString(),
+        platformFundedTotalDiscountPoisha:
+          result.totals.platformFundedTotalDiscountPoisha.toString(),
         netSubtotalPoisha: result.totals.netSubtotalPoisha.toString(),
         totalTaxPoisha: result.totals.totalTaxPoisha.toString(),
         shippingFeePoisha: result.totals.shippingFeePoisha.toString(),

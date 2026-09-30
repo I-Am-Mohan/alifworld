@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { csrfFetch } from '@/shared/security/csrf-client';
 
 export default function SellerStaffPage() {
@@ -21,31 +28,76 @@ export default function SellerStaffPage() {
   const [staffMembers, setStaffMembers] = useState<any[]>([]);
   const [activity, setActivity] = useState<any[]>([]);
 
-  const loadStaff = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/v1/seller/staff');
-      const json = await response.json().catch(() => null);
-      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to load staff.');
-      setStaffMembers((json.data || []).map((record: any) => ({ ...record, name: record.user?.name || record.userId, email: record.user?.email || '—', phone: record.user?.phone || '—', role: record.roleCode, title: record.roleCode, isOwner: record.roleCode === 'SELLER_OWNER', status: record.deletedAt ? 'REMOVED' : 'ACTIVE', permissions: record.permissions || [], joinedAt: record.createdAt }))); 
-      const activityResponse = await fetch('/api/v1/seller/staff/activity');
-      const activityJson = await activityResponse.json().catch(() => null);
-      if (activityResponse.ok && activityJson?.success) setActivity(activityJson.data.items || []);
-    } catch (err: any) {
-      setError(err.message || 'Unable to load staff.');
-    } finally { setLoading(false); }
+  const loadStaff = useCallback((signal?: AbortSignal) => {
+    return fetch('/api/v1/seller/staff', { signal })
+      .then(async (response) => {
+        const json = await response.json().catch(() => null);
+        if (!response.ok || !json?.success)
+          throw new Error(json?.error?.message || 'Unable to load staff.');
+        setStaffMembers(
+          (json.data || []).map((record: any) => ({
+            ...record,
+            name: record.user?.name || record.userId,
+            email: record.user?.email || '—',
+            phone: record.user?.phone || '—',
+            role: record.roleCode,
+            title: record.roleCode,
+            isOwner: record.roleCode === 'SELLER_OWNER',
+            status: record.deletedAt ? 'REMOVED' : 'ACTIVE',
+            permissions: record.permissions || [],
+            joinedAt: record.createdAt,
+          }))
+        );
+        return fetch('/api/v1/seller/staff/activity', { signal });
+      })
+      .then(async (activityResponse) => {
+        if (!activityResponse) return;
+        const activityJson = await activityResponse.json().catch(() => null);
+        if (activityResponse.ok && activityJson?.success)
+          setActivity(activityJson.data.items || []);
+        setError(null);
+      })
+      .catch((err: any) => {
+        if (signal?.aborted) return;
+        setError(err.message || 'Unable to load staff.');
+      })
+      .finally(() => {
+        if (!signal?.aborted) setLoading(false);
+      });
   }, []);
 
-  useEffect(() => { void loadStaff(); }, [loadStaff]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadStaff(controller.signal);
+    return () => controller.abort();
+  }, [loadStaff]);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await csrfFetch('/api/v1/seller/staff', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: inviteEmail, name: inviteName, phone: invitePhone || undefined, roleCode: inviteRole, permissions: [] }) });
+      const response = await csrfFetch('/api/v1/seller/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inviteEmail,
+          name: inviteName,
+          phone: invitePhone || undefined,
+          roleCode: inviteRole,
+          permissions: [],
+        }),
+      });
       const json = await response.json().catch(() => null);
-      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to invite staff.');
-      setShowInviteModal(false); setInviteName(''); setInviteEmail(''); setInvitePhone(''); setInviteSuccess('Invitation successfully created.'); await loadStaff();
-    } catch (err: any) { setError(err.message || 'Unable to invite staff.'); }
+      if (!response.ok || !json?.success)
+        throw new Error(json?.error?.message || 'Unable to invite staff.');
+      setShowInviteModal(false);
+      setInviteName('');
+      setInviteEmail('');
+      setInvitePhone('');
+      setInviteSuccess('Invitation successfully created.');
+      await loadStaff();
+    } catch (err: any) {
+      setError(err.message || 'Unable to invite staff.');
+    }
   };
 
   return (
@@ -91,15 +143,26 @@ export default function SellerStaffPage() {
             <span>{inviteSuccess}</span>
           </div>
         )}
-        {error && <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">{error}</div>}
-        {loading && <div className="p-4 rounded-xl border border-slate-200 bg-white text-xs text-slate-500">Loading staff and activity…</div>}
+        {error && (
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">
+            {error}
+          </div>
+        )}
+        {loading && (
+          <div className="p-4 rounded-xl border border-slate-200 bg-white text-xs text-slate-500">
+            Loading staff and activity…
+          </div>
+        )}
 
         {/* Info Banner */}
         <div className="p-4 rounded-xl border border-orange-200 bg-orange-50/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-sm font-bold text-slate-900">Multi-Tenant Scoped Staff Delegation</h2>
+            <h2 className="text-sm font-bold text-slate-900">
+              Multi-Tenant Scoped Staff Delegation
+            </h2>
             <p className="text-xs text-slate-600 mt-0.5">
-              Staff members inherit operational capabilities (product drafting, order packing, courier handoff) scoped exclusively to your merchant store.
+              Staff members inherit operational capabilities (product drafting, order packing,
+              courier handoff) scoped exclusively to your merchant store.
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-[#EA580C] bg-white border border-orange-200 px-3 py-1 rounded-full">
@@ -111,7 +174,9 @@ export default function SellerStaffPage() {
         <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
           <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-bold text-slate-900">Authorized Store Staff ({staffMembers.length})</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-900">
+                Authorized Store Staff ({staffMembers.length})
+              </CardTitle>
               <p className="text-xs text-slate-500 mt-0.5">
                 Manage access delegations and assigned operational roles
               </p>
@@ -121,24 +186,41 @@ export default function SellerStaffPage() {
             <Table>
               <TableHeader className="bg-slate-50 border-b border-slate-200">
                 <TableRow>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Staff Member &amp; Contact</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    Staff Member &amp; Contact
+                  </TableHead>
                   <TableHead className="text-[11px] text-slate-600 uppercase">Store Role</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Assigned Permissions</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Joined Date</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    Assigned Permissions
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                    Joined Date
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {staffMembers.map((member) => (
-                  <TableRow key={member.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                  <TableRow
+                    key={member.id}
+                    className="border-b border-slate-100 hover:bg-slate-50/80"
+                  >
                     <TableCell>
                       <div className="font-bold text-xs text-slate-900">{member.name}</div>
                       <div className="text-[11px] text-slate-500">{member.email}</div>
-                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">{member.phone}</div>
+                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                        {member.phone}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-xs font-semibold text-slate-800">{member.title}</div>
-                      <Badge variant={member.isOwner ? 'orange' : 'blue'} size="sm" className="mt-1">
+                      <Badge
+                        variant={member.isOwner ? 'orange' : 'blue'}
+                        size="sm"
+                        className="mt-1"
+                      >
                         {member.role}
                       </Badge>
                     </TableCell>
@@ -160,10 +242,7 @@ export default function SellerStaffPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge
-                        variant={member.status === 'ACTIVE' ? 'success' : 'warning'}
-                        size="sm"
-                      >
+                      <Badge variant={member.status === 'ACTIVE' ? 'success' : 'warning'} size="sm">
                         {member.status}
                       </Badge>
                     </TableCell>
@@ -178,8 +257,28 @@ export default function SellerStaffPage() {
         </Card>
 
         <Card className="border-slate-200 bg-white shadow-sm">
-          <CardHeader><CardTitle className="text-sm font-bold text-slate-900">Recent staff activity</CardTitle></CardHeader>
-          <div className="divide-y divide-slate-100">{activity.length === 0 ? <p className="p-5 text-xs text-slate-500">No staff activity recorded.</p> : activity.map((entry) => <div key={entry.id} className="flex items-center justify-between gap-3 px-5 py-3 text-xs"><span className="font-semibold text-slate-700">{entry.action}</span><span className="text-slate-500">{new Date(entry.createdAt).toLocaleString()}</span></div>)}</div>
+          <CardHeader>
+            <CardTitle className="text-sm font-bold text-slate-900">
+              Recent staff activity
+            </CardTitle>
+          </CardHeader>
+          <div className="divide-y divide-slate-100">
+            {activity.length === 0 ? (
+              <p className="p-5 text-xs text-slate-500">No staff activity recorded.</p>
+            ) : (
+              activity.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between gap-3 px-5 py-3 text-xs"
+                >
+                  <span className="font-semibold text-slate-700">{entry.action}</span>
+                  <span className="text-slate-500">
+                    {new Date(entry.createdAt).toLocaleString()}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
       </main>
 
@@ -244,7 +343,9 @@ export default function SellerStaffPage() {
                   className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
                 >
                   <option value="SELLER_STAFF">Store Staff (Drafting &amp; Order Packing)</option>
-                  <option value="SELLER_MANAGER">Store Manager (Full Catalog &amp; Courier Management)</option>
+                  <option value="SELLER_MANAGER">
+                    Store Manager (Full Catalog &amp; Courier Management)
+                  </option>
                 </select>
               </div>
 

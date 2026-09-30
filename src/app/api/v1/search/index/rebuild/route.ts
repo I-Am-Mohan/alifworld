@@ -25,7 +25,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (actor && !actor.roles.includes('ADMIN') && !actor.roles.includes('SUPER_ADMIN')) {
-      throw new AuthorizationError('Only platform administrators can trigger full search catalog rebuild.');
+      throw new AuthorizationError(
+        'Only platform administrators can trigger full search catalog rebuild.'
+      );
     }
 
     let body = {};

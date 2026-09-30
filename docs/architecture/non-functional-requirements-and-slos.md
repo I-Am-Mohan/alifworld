@@ -5,7 +5,7 @@
 **Milestone Reference**: [Milestone 004](../../AlifWorld-300-Milestones/004-non-functional-requirements-capacity-assumptions-and-slos.md)  
 **Timezone Reference**: `Asia/Dhaka` (UTC+06:00)  
 **Currency Standard**: BDT integer poisha  
-**Status**: Authoritative & Accepted  
+**Status**: Authoritative & Accepted
 
 ---
 
@@ -21,16 +21,16 @@ AlifWorld is architected to support high-velocity retail commerce and high-frequ
 
 ### 1.1 Workload Sizing Specifications
 
-| Dimension | Baseline Launch | Year-1 Steady State | Flash Sale / Peak Campaign | Architecture Strategy |
-|:---|:---:|:---:|:---:|:---|
-| **Registered Customers** | 250,000 | 2,000,000 | 5,000,000+ | Normalized PostgreSQL schema; partition user sessions in Redis |
-| **Active Sellers** | 2,500 | 15,000 | 50,000 | Tenant-scoped data partitioning via `seller_id` indexes |
-| **Active SKUs** | 100,000 | 1,000,000 | 5,000,000 | Meilisearch primary search index; PostgreSQL GIN fallback |
-| **Search Queries (QPS)** | 500 QPS | 2,500 QPS | 10,000+ QPS | Edge caching + Redis query cache + Meilisearch cluster |
-| **Peak Checkout / Orders** | 10 orders/sec | 100 orders/sec | 500 orders/sec | Atomic Redis reservations + PostgreSQL row lock checkout |
-| **Ledger Postings / Month** | 2,500,000 | 25,000,000 | 100,000,000 | Immutable append-only ledger; monthly table partitioning |
-| **Rider GPS Telemetry** | 1,000 pings/sec | 5,000 pings/sec | 15,000 pings/sec | Ingestion into Redis GEO/Streams; rate-limited writeback |
-| **Media Assets (S3)** | 2 TB (500k files) | 20 TB (5M files) | 100 TB (25M files) | S3-compatible storage + CDN edge caching + WebP/AVIF |
+| Dimension                   |  Baseline Launch  | Year-1 Steady State | Flash Sale / Peak Campaign | Architecture Strategy                                          |
+| :-------------------------- | :---------------: | :-----------------: | :------------------------: | :------------------------------------------------------------- |
+| **Registered Customers**    |      250,000      |      2,000,000      |         5,000,000+         | Normalized PostgreSQL schema; partition user sessions in Redis |
+| **Active Sellers**          |       2,500       |       15,000        |           50,000           | Tenant-scoped data partitioning via `seller_id` indexes        |
+| **Active SKUs**             |      100,000      |      1,000,000      |         5,000,000          | Meilisearch primary search index; PostgreSQL GIN fallback      |
+| **Search Queries (QPS)**    |      500 QPS      |      2,500 QPS      |        10,000+ QPS         | Edge caching + Redis query cache + Meilisearch cluster         |
+| **Peak Checkout / Orders**  |   10 orders/sec   |   100 orders/sec    |       500 orders/sec       | Atomic Redis reservations + PostgreSQL row lock checkout       |
+| **Ledger Postings / Month** |     2,500,000     |     25,000,000      |        100,000,000         | Immutable append-only ledger; monthly table partitioning       |
+| **Rider GPS Telemetry**     |  1,000 pings/sec  |   5,000 pings/sec   |      15,000 pings/sec      | Ingestion into Redis GEO/Streams; rate-limited writeback       |
+| **Media Assets (S3)**       | 2 TB (500k files) |  20 TB (5M files)   |     100 TB (25M files)     | S3-compatible storage + CDN edge caching + WebP/AVIF           |
 
 ---
 
@@ -40,13 +40,13 @@ All production operations are held to concrete Service Level Indicators (SLIs) a
 
 ### 2.1 Availability Objectives
 
-| Service Tier | Target Availability (SLO) | Monthly Allowed Downtime | SLI Measurement Method |
-|:---|:---:|:---:|:---|
-| **Customer Storefront & Browse** | **99.90%** | 43.8 minutes | Synthetic uptime probes from Dhaka, Singapore, and Mumbai |
-| **REST APIs (`/app/api/v1`)** | **99.95%** | 21.9 minutes | Ratio of successful HTTP responses (non-5xx) to total requests |
-| **Checkout & Payment Intents** | **99.99%** | 4.38 minutes | Percentage of successful checkout orchestrations without 500 errors |
-| **Double-Entry Wallet Ledger** | **100.00%** | 0 minutes (Zero Loss) | Daily cryptographic balancing verification (`Sum(Debit) == Sum(Credit)`) |
-| **Background Queue Processors** | **99.90%** | 43.8 minutes | BullMQ job completion rate without dead-letter exhaustion |
+| Service Tier                     | Target Availability (SLO) | Monthly Allowed Downtime | SLI Measurement Method                                                   |
+| :------------------------------- | :-----------------------: | :----------------------: | :----------------------------------------------------------------------- |
+| **Customer Storefront & Browse** |        **99.90%**         |       43.8 minutes       | Synthetic uptime probes from Dhaka, Singapore, and Mumbai                |
+| **REST APIs (`/app/api/v1`)**    |        **99.95%**         |       21.9 minutes       | Ratio of successful HTTP responses (non-5xx) to total requests           |
+| **Checkout & Payment Intents**   |        **99.99%**         |       4.38 minutes       | Percentage of successful checkout orchestrations without 500 errors      |
+| **Double-Entry Wallet Ledger**   |        **100.00%**        |  0 minutes (Zero Loss)   | Daily cryptographic balancing verification (`Sum(Debit) == Sum(Credit)`) |
+| **Background Queue Processors**  |        **99.90%**         |       43.8 minutes       | BullMQ job completion rate without dead-letter exhaustion                |
 
 ---
 
@@ -65,16 +65,16 @@ To deliver instant experiences over variable Bangladesh mobile networks (3G/4G/5
 
 ### 3.1 Endpoint Latency Budgets (Server Execution Time)
 
-| Operation Type | p50 Latency | p95 Latency | p99 Latency | Max Timeout | Strategy |
-|:---|:---:|:---:|:---:|:---:|:---|
-| **Cached Storefront Page (SSR)** | < 30ms | < 80ms | < 150ms | 1,500ms | Incremental Static Regeneration (ISR) + Redis |
-| **Search Query (Meilisearch)** | < 25ms | < 60ms | < 120ms | 800ms | Distributed Meilisearch + In-Memory Filters |
-| **Search Query (Postgres Fallback)** | < 60ms | < 150ms | < 300ms | 1,500ms | GIN Trigram & Full-Text Indexes |
-| **Cart Revalidation Mutation** | < 40ms | < 90ms | < 180ms | 1,000ms | Multi-key Redis query + batch stock read |
-| **Atomic Checkout Reservation** | < 80ms | < 200ms | < 400ms | 2,500ms | Atomic Redis lock + isolated Prisma transaction |
-| **Payment Gateway Webhook Handling** | < 50ms | < 120ms | < 250ms | 2,000ms | Validate HMAC, append outbox event, return 200 OK |
-| **Ledger Posting Transaction** | < 30ms | < 70ms | < 150ms | 1,000ms | Append-only balanced transaction |
-| **Asynchronous Job Dispatch** | < 10ms | < 25ms | < 50ms | 500ms | Redis-backed BullMQ enqueue |
+| Operation Type                       | p50 Latency | p95 Latency | p99 Latency | Max Timeout | Strategy                                          |
+| :----------------------------------- | :---------: | :---------: | :---------: | :---------: | :------------------------------------------------ |
+| **Cached Storefront Page (SSR)**     |   < 30ms    |   < 80ms    |   < 150ms   |   1,500ms   | Incremental Static Regeneration (ISR) + Redis     |
+| **Search Query (Meilisearch)**       |   < 25ms    |   < 60ms    |   < 120ms   |    800ms    | Distributed Meilisearch + In-Memory Filters       |
+| **Search Query (Postgres Fallback)** |   < 60ms    |   < 150ms   |   < 300ms   |   1,500ms   | GIN Trigram & Full-Text Indexes                   |
+| **Cart Revalidation Mutation**       |   < 40ms    |   < 90ms    |   < 180ms   |   1,000ms   | Multi-key Redis query + batch stock read          |
+| **Atomic Checkout Reservation**      |   < 80ms    |   < 200ms   |   < 400ms   |   2,500ms   | Atomic Redis lock + isolated Prisma transaction   |
+| **Payment Gateway Webhook Handling** |   < 50ms    |   < 120ms   |   < 250ms   |   2,000ms   | Validate HMAC, append outbox event, return 200 OK |
+| **Ledger Posting Transaction**       |   < 30ms    |   < 70ms    |   < 150ms   |   1,000ms   | Append-only balanced transaction                  |
+| **Asynchronous Job Dispatch**        |   < 10ms    |   < 25ms    |   < 50ms    |    500ms    | Redis-backed BullMQ enqueue                       |
 
 ---
 

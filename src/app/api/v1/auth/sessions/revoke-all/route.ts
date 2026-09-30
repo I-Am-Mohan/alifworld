@@ -9,11 +9,11 @@ const authTokenService = new AuthTokenService();
 
 /**
  * POST /api/v1/auth/sessions/revoke-all
- * 
+ *
  * Globally terminates ALL active sessions and devices for the authenticated user,
  * increments the user's global `tokenVersion` (invalidating all outstanding JWTs),
  * clears authentication cookies, and requires re-authentication everywhere.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031
  */
 export async function POST(req: NextRequest) {

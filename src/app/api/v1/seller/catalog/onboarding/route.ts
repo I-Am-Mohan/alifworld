@@ -7,6 +7,21 @@ export const dynamic = 'force-dynamic';
 const service = new CatalogOnboardingService();
 
 export async function GET(req: NextRequest) {
-  try { const actor = authenticateRequest(req); if (!actor.sellerId) return NextResponse.json({ success: false, error: { code: 'SELLER_SCOPE_REQUIRED', message: 'Seller scope is required.' } }, { status: 422 }); return NextResponse.json({ success: true, data: await service.getSellerOnboarding(actor.userId, actor.sellerId) }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load seller onboarding progress'); }
+  try {
+    const actor = authenticateRequest(req);
+    if (!actor.sellerId)
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: 'SELLER_SCOPE_REQUIRED', message: 'Seller scope is required.' },
+        },
+        { status: 422 }
+      );
+    return NextResponse.json({
+      success: true,
+      data: await service.getSellerOnboarding(actor.userId, actor.sellerId),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load seller onboarding progress');
+  }
 }

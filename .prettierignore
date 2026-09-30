@@ -6,6 +6,9 @@ build/
 dist/
 coverage/
 
+# Next.js auto-generated types
+next-env.d.ts
+
 # Lockfiles
 bun.lockb
 package-lock.json

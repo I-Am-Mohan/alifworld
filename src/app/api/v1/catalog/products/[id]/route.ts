@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * and JSON-LD structured data by product slug or product ID.
  * Supports permanent redirect instructions for historical slugs.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const { searchParams } = new URL(req.url);

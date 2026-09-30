@@ -26,7 +26,7 @@ export interface ProductVersionRecordContext {
 export class ProductVersionHistoryService {
   constructor(
     private readonly repository: ProductVersionHistoryRepository = new ProductVersionHistoryRepository(),
-    private readonly roles: UserRoleAssignmentRepository = new UserRoleAssignmentRepository(),
+    private readonly roles: UserRoleAssignmentRepository = new UserRoleAssignmentRepository()
   ) {}
 
   public async list(actor: ProductVersionActor, productId: string): Promise<any[]> {
@@ -41,7 +41,10 @@ export class ProductVersionHistoryService {
     return history;
   }
 
-  public async record(productId: string, context: ProductVersionRecordContext): Promise<any | null> {
+  public async record(
+    productId: string,
+    context: ProductVersionRecordContext
+  ): Promise<any | null> {
     try {
       const product = await this.loadSnapshotProduct(productId);
       const snapshot = redactSensitiveData(this.toSnapshot(product));
@@ -58,16 +61,22 @@ export class ProductVersionHistoryService {
       });
     } catch (error) {
       // Version history is observability metadata; preserve the primary catalog mutation if its read-side projection is unavailable.
-      console.error('Product version history recording failed', { productId, action: context.action, error });
+      console.error('Product version history recording failed', {
+        productId,
+        action: context.action,
+        error,
+      });
       return null;
     }
   }
 
   private async requireVisibleProduct(actor: ProductVersionActor, productId: string): Promise<any> {
     const product = await this.repository.requireProduct(productId);
-    const isAdmin = actor.roles?.includes(SystemRoleCode.ADMIN) || actor.roles?.includes(SystemRoleCode.SUPER_ADMIN)
-      || await this.roles.hasRole(actor.userId, SystemRoleCode.ADMIN)
-      || await this.roles.hasRole(actor.userId, SystemRoleCode.SUPER_ADMIN);
+    const isAdmin =
+      actor.roles?.includes(SystemRoleCode.ADMIN) ||
+      actor.roles?.includes(SystemRoleCode.SUPER_ADMIN) ||
+      (await this.roles.hasRole(actor.userId, SystemRoleCode.ADMIN)) ||
+      (await this.roles.hasRole(actor.userId, SystemRoleCode.SUPER_ADMIN));
     if (isAdmin) return product;
 
     const seller = await (prisma as any).seller.findFirst({
@@ -75,7 +84,11 @@ export class ProductVersionHistoryService {
       select: { ownerUserId: true },
     });
     const isOwner = seller?.ownerUserId === actor.userId;
-    const isStaff = await this.roles.hasRole(actor.userId, SystemRoleCode.SELLER_STAFF, product.sellerId);
+    const isStaff = await this.roles.hasRole(
+      actor.userId,
+      SystemRoleCode.SELLER_STAFF,
+      product.sellerId
+    );
     if (!isOwner && !isStaff && actor.sellerId !== product.sellerId) {
       throw new AuthorizationError('You are not authorized to view this product version history.');
     }
@@ -87,8 +100,11 @@ export class ProductVersionHistoryService {
       where: { id: productId, deletedAt: null },
       include: {
         variants: { where: { deletedAt: null }, orderBy: { displayOrder: 'asc' } },
-        media: { where: { deletedAt: null }, orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }] },
-        optionSets: { where: { deletedAt: null }, orderBy: { displayOrder: 'asc' } },
+        media: {
+          where: { deletedAt: null },
+          orderBy: [{ isPrimary: 'desc' }, { displayOrder: 'asc' }],
+        },
+        optionSets: { orderBy: { displayOrder: 'asc' } },
       },
     });
     if (!product) throw new NotFoundError(`Product '${productId}' not found.`);
@@ -108,7 +124,8 @@ export class ProductVersionHistoryService {
       descriptionBn: product.descriptionBn,
       status: product.status,
       basePricePoisha: String(product.basePricePoisha),
-      compareAtPricePoisha: product.compareAtPricePoisha == null ? null : String(product.compareAtPricePoisha),
+      compareAtPricePoisha:
+        product.compareAtPricePoisha == null ? null : String(product.compareAtPricePoisha),
       currency: product.currency,
       productPoint: product.productPoint,
       sku: product.sku,
@@ -129,7 +146,8 @@ export class ProductVersionHistoryService {
         sku: variant.sku,
         title: variant.title,
         pricePoisha: String(variant.pricePoisha),
-        compareAtPricePoisha: variant.compareAtPricePoisha == null ? null : String(variant.compareAtPricePoisha),
+        compareAtPricePoisha:
+          variant.compareAtPricePoisha == null ? null : String(variant.compareAtPricePoisha),
         productPoint: variant.productPoint,
         barcode: variant.barcode,
         weightGrams: variant.weightGrams,

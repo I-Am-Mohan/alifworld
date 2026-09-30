@@ -1,9 +1,9 @@
 /**
  * Payment, Refund, Commission & Settlement Validators
- * 
+ *
  * Defines runtime Zod validation schemas for gateway payments, webhooks,
  * item-level refunds, periodic settlements, and merchant payout disbursals.
- * 
+ *
  * Reference: docs/architecture/payments-refunds-commissions-settlements-and-payouts.md
  */
 

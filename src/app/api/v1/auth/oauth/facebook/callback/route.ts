@@ -9,7 +9,7 @@ const oauthService = new OAuthService();
 
 /**
  * GET /api/v1/auth/oauth/facebook/callback
- * 
+ *
  * Handles browser redirect callback from Facebook OAuth 2.0.
  * Exchanges code for tokens, verifies state anti-CSRF token, links/creates user,
  * establishes session, issues HttpOnly cookies, and redirects to returnUrl.

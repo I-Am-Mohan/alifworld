@@ -1,3 +1,4 @@
+import { orderTransitionService } from '../state-machines/order-transition.service';
 /**
  * Customer Parent Order Domain Service
  *
@@ -32,31 +33,11 @@ import {
   OrderStatusTimelineEventDTO,
   CustomerSelfServiceActionsDTO,
 } from '../types/order.types';
-import {
-  QueryCustomerOrdersInput,
-  CancelOrderInput,
-} from '../validators/order.validators';
+import { QueryCustomerOrdersInput, CancelOrderInput } from '../validators/order.validators';
+import { ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS } from '../state-machines/order-state-machine';
 
-export const ORDER_STATUS_LABELS: Record<string, { en: string; bn: string }> = {
-  PENDING_PAYMENT: { en: 'Pending Payment', bn: 'পেমেন্টের অপেক্ষায়' },
-  PROCESSING: { en: 'Processing', bn: 'প্রক্রিয়াধীন' },
-  CONFIRMED: { en: 'Confirmed', bn: 'নিশ্চিত করা হয়েছে' },
-  PARTIALLY_SHIPPED: { en: 'Partially Dispatched', bn: 'আংশিক পাঠানো হয়েছে' },
-  SHIPPED: { en: 'Dispatched in Transit', bn: 'শিপমেন্ট পরিবহনরত' },
-  DELIVERED: { en: 'Delivered', bn: 'ডেলিভারি সম্পন্ন' },
-  COMPLETED: { en: 'Completed', bn: 'সম্পূর্ণ' },
-  CANCELLED: { en: 'Cancelled', bn: 'বাতিল' },
-  REFUNDED: { en: 'Refunded', bn: 'রিফান্ড করা হয়েছে' },
-};
-
-export const PAYMENT_STATUS_LABELS: Record<string, { en: string; bn: string }> = {
-  UNPAID: { en: 'Unpaid / COD Due', bn: 'বকেয়া / ক্যাশ অন ডেলিভারি' },
-  AUTHORIZED: { en: 'Authorized', bn: 'অনুমোদিত' },
-  PAID: { en: 'Paid in Full', bn: 'পরিশোধিত' },
-  PARTIALLY_REFUNDED: { en: 'Partially Refunded', bn: 'আংশিক রিফান্ড' },
-  REFUNDED: { en: 'Refunded', bn: 'রিফান্ড সম্পন্ন' },
-  FAILED: { en: 'Payment Failed', bn: 'পেমেন্ট ব্যর্থ' },
-};
+// Re-export labels for backward compatibility
+export { ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS };
 
 export class CustomerOrderService {
   private db = prisma;
@@ -108,7 +89,7 @@ export class CustomerOrderService {
           },
         },
         statusHistory: { orderBy: { createdAt: 'asc' } },
-        payments: { where: { deletedAt: null } },
+        payments: true,
       },
     });
 
@@ -118,9 +99,12 @@ export class CustomerOrderService {
 
     // Strict Customer Ownership Verification
     if (order.customerId !== customerId) {
-      throw new AuthorizationError('You do not have permission to view orders belonging to another customer.', {
-        code: 'OWNERSHIP_VIOLATION',
-      });
+      throw new AuthorizationError(
+        'You do not have permission to view orders belonging to another customer.',
+        {
+          code: 'OWNERSHIP_VIOLATION',
+        }
+      );
     }
 
     return this.mapToCustomerOrderDTO(order);
@@ -160,7 +144,7 @@ export class CustomerOrderService {
             },
           },
           statusHistory: { orderBy: { createdAt: 'asc' } },
-          payments: { where: { deletedAt: null } },
+          payments: true,
         },
       }),
       (this.db as any).order.count({ where }),
@@ -180,88 +164,19 @@ export class CustomerOrderService {
   public async cancelCustomerOrder(
     orderId: string,
     customerId: string,
-    input: CancelOrderInput
+    input: CancelOrderInput,
+    idempotencyKey?: string
   ): Promise<CustomerParentOrderDTO> {
     const order = await this.getCustomerOrder(orderId, customerId);
-
-    if (!order.selfServiceActions.canCancel) {
-      throw new ValidationError(
-        order.selfServiceActions.cancelRestrictionReasonEn ||
-          'This order cannot be cancelled as merchant packaging or courier dispatch is already underway.'
-      );
-    }
-
-    const cancelledAt = new Date();
-
-    await (this.db as any).$transaction(async (tx: any) => {
-      // 1. Update parent order status
-      await tx.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'CANCELLED',
-          cancelReason: input.reason,
-          cancelledAt,
-          version: { increment: 1 },
-        },
-      });
-
-      // 2. Cancel all pending/accepted seller fulfillment groups
-      await tx.sellerFulfillmentGroup.updateMany({
-        where: {
-          orderId: order.id,
-          status: { in: ['PENDING', 'ACCEPTED', 'PACKING'] },
-          deletedAt: null,
-        },
-        data: {
-          status: 'CANCELLED',
-          version: { increment: 1 },
-        },
-      });
-
-      // 3. Append to order status history
-      await tx.orderStatusHistory.create({
-        data: {
-          id: generatePrefixedId(ENTITY_PREFIXES.ORDER_STATUS_HISTORY),
-          orderId: order.id,
-          fromStatus: order.status,
-          toStatus: 'CANCELLED',
-          reason: `Customer cancelled order: ${input.reason}`,
-          actorId: customerId,
-          actorRole: 'CUSTOMER',
-        },
-      });
-
-      // 4. Emit Outbox Event
-      await tx.outboxEvent.create({
-        data: {
-          id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX),
-          eventType: 'order.cancelled',
-          aggregateType: 'ORDER',
-          aggregateId: order.id,
-          payload: {
-            orderId: order.id,
-            orderNumber: order.orderNumber,
-            customerId,
-            reason: input.reason,
-            cancelledAt: cancelledAt.toISOString(),
-          },
-        },
-      });
-    });
-
-    await auditService.logBusinessEvent({
-      action: 'ORDER_CANCELLED',
-      resource: 'ORDER',
-      resourceId: order.id,
+    await orderTransitionService.transitionOrderStatus({
+      orderId: order.id,
+      nextStatus: 'CANCELLED',
       actorId: customerId,
       actorRole: 'CUSTOMER',
-      metadata: {
-        orderNumber: order.orderNumber,
-        reason: input.reason,
-      },
+      reason: input.reason,
+      idempotencyKey,
     });
-
-    return this.getCustomerOrder(order.id, customerId);
+    return this.getCustomerOrder(orderId, customerId);
   }
 
   private mapToCustomerOrderDTO(record: any): CustomerParentOrderDTO {
@@ -332,7 +247,7 @@ export class CustomerOrderService {
         const groupTax = Number(g.taxPoisha || 0);
         const groupTot = Number(g.totalPoisha || 0);
 
-        const statusLabels = ORDER_STATUS_LABELS[g.status] || {
+        const statusLabels = ORDER_STATUS_LABELS[g.status as keyof typeof ORDER_STATUS_LABELS] || {
           en: g.status,
           bn: g.status,
         };
@@ -361,7 +276,9 @@ export class CustomerOrderService {
           trackingNumber,
           consignmentId: g.consignmentId || g.shipments?.[0]?.consignmentId || null,
           trackingUrl,
-          estimatedDelivery: g.estimatedDelivery ? new Date(g.estimatedDelivery).toISOString() : null,
+          estimatedDelivery: g.estimatedDelivery
+            ? new Date(g.estimatedDelivery).toISOString()
+            : null,
           items: pkgItems,
         };
       }
@@ -369,9 +286,15 @@ export class CustomerOrderService {
 
     const allItems: OrderLineItemSnapshotDTO[] = packages.flatMap((p) => p.items);
 
-    const timeline: OrderStatusTimelineEventDTO[] = (record.statusHistory || []).map(
-      (h: any) => {
-        const labels = ORDER_STATUS_LABELS[h.toStatus] || {
+    const timeline: OrderStatusTimelineEventDTO[] = (record.statusHistory || [])
+      .filter(
+        (history: any) =>
+          history.metadata?.kind !== 'transition_receipt' &&
+          !history.metadata?.fulfillmentGroupId &&
+          !history.metadata?.orderItemId
+      )
+      .map((h: any) => {
+        const labels = ORDER_STATUS_LABELS[h.toStatus as keyof typeof ORDER_STATUS_LABELS] || {
           en: h.toStatus,
           bn: h.toStatus,
         };
@@ -385,8 +308,7 @@ export class CustomerOrderService {
           reason: h.reason || null,
           occurredAt: h.createdAt?.toISOString?.() || new Date(h.createdAt).toISOString(),
         };
-      }
-    );
+      });
 
     const payments = (record.payments || []).map((p: any) => ({
       id: p.id,
@@ -398,10 +320,16 @@ export class CustomerOrderService {
       capturedAt: p.capturedAt ? new Date(p.capturedAt).toISOString() : null,
     }));
 
-    const statusEn = ORDER_STATUS_LABELS[record.status]?.en || record.status;
-    const statusBn = ORDER_STATUS_LABELS[record.status]?.bn || record.status;
-    const payStatusEn = PAYMENT_STATUS_LABELS[record.paymentStatus]?.en || record.paymentStatus;
-    const payStatusBn = PAYMENT_STATUS_LABELS[record.paymentStatus]?.bn || record.paymentStatus;
+    const statusEn =
+      ORDER_STATUS_LABELS[record.status as keyof typeof ORDER_STATUS_LABELS]?.en || record.status;
+    const statusBn =
+      ORDER_STATUS_LABELS[record.status as keyof typeof ORDER_STATUS_LABELS]?.bn || record.status;
+    const payStatusEn =
+      PAYMENT_STATUS_LABELS[record.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]?.en ||
+      record.paymentStatus;
+    const payStatusBn =
+      PAYMENT_STATUS_LABELS[record.paymentStatus as keyof typeof PAYMENT_STATUS_LABELS]?.bn ||
+      record.paymentStatus;
 
     return {
       id: record.id,

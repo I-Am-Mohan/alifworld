@@ -1,11 +1,7 @@
 import { describe, expect, it, beforeEach, spyOn } from 'bun:test';
 import { CheckoutOrchestratorService } from '@/features/checkout/services/checkout-orchestrator.service';
 import { auditService } from '@/shared/audit';
-import {
-  ValidationError,
-  AuthorizationError,
-  ConflictError,
-} from '@/shared/errors/app-error';
+import { ValidationError, AuthorizationError, ConflictError } from '@/shared/errors/app-error';
 
 class MockPrismaCheckoutDb {
   public carts: any[] = [];

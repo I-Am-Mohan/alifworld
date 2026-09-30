@@ -75,7 +75,6 @@ describe('Milestone 094: Authoritative Discount Rule Engine Calculations', () =>
   });
 
   describe('FIXED_AMOUNT Discount Rules', () => {
-
     it('calculates fixed amount discount in integer poisha', () => {
       const rule: DiscountRuleDescriptor = {
         id: 'rule-fixed-150',

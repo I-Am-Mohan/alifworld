@@ -25,22 +25,24 @@ describe('Payments & Settlements Architecture (Milestone 028)', () => {
 
     it('conserves exact poisha across gross subtotal, shipping, VAT, commission, and net seller payout', () => {
       const grossSubtotal = BigInt(2199000); // ৳21,990.00
-      const shippingFee = BigInt(6000);      // ৳60.00
-      const taxVat = BigInt(329850);         // ৳3,298.50 (15%)
-      const commission = BigInt(109950);     // ৳1,099.50 (5%)
+      const shippingFee = BigInt(6000); // ৳60.00
+      const taxVat = BigInt(329850); // ৳3,298.50 (15%)
+      const commission = BigInt(109950); // ৳1,099.50 (5%)
       const refundDeduction = BigInt(0);
 
       const netPayoutPoisha = grossSubtotal + shippingFee + taxVat - commission - refundDeduction;
 
       // Expected net payout: 2,199,000 + 6,000 + 329,850 - 109,950 = 2,424,900 poisha (৳24,249.00)
       expect(netPayoutPoisha).toBe(BigInt(2424900));
-      expect(grossSubtotal + shippingFee + taxVat - commission - refundDeduction).toBe(netPayoutPoisha);
+      expect(grossSubtotal + shippingFee + taxVat - commission - refundDeduction).toBe(
+        netPayoutPoisha
+      );
     });
 
     it('enforces exact sum conservation when item-level partial refund occurs', () => {
       const capturedPayment = BigInt(2534850);
-      const refund1 = BigInt(299000);  // ৳2,990.00
-      const refund2 = BigInt(500000);  // ৳5,000.00
+      const refund1 = BigInt(299000); // ৳2,990.00
+      const refund2 = BigInt(500000); // ৳5,000.00
 
       const remainingBalance = capturedPayment - (refund1 + refund2);
       expect(remainingBalance).toBe(BigInt(1735850));

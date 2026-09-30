@@ -4,7 +4,7 @@
 **Date**: 2026-09-22  
 **Deciders**: AlifWorld Architecture & DevOps Team  
 **Milestone Reference**: [Milestone 019](../../AlifWorld-300-Milestones/019-create-local-development-infrastructure-profiles.md)  
-**Supporting Specification**: [Local Development Infrastructure Profiles Specification](../architecture/local-development-infrastructure-profiles.md)  
+**Supporting Specification**: [Local Development Infrastructure Profiles Specification](../architecture/local-development-infrastructure-profiles.md)
 
 ---
 
@@ -34,10 +34,12 @@ A formal Architecture Decision Record is required to standardize this infrastruc
 The AlifWorld engineering architecture formally adopts the **Docker Compose Infrastructure Profiles Standard**:
 
 ### 1. Multi-Profile Docker Compose Architecture (`docker-compose.yml`)
+
 - `core` profile: PostgreSQL 16 Alpine and Redis 7 Alpine.
 - `full` profile: PostgreSQL 16, Redis 7, MinIO S3, MinIO Setup, Meilisearch, and Mailpit.
 
 ### 2. Service Specifications & Exact Credential Mapping
+
 - **PostgreSQL**: `POSTGRES_USER=alifworld`, `POSTGRES_PASSWORD=alifworld_local_secret`, `POSTGRES_DB=alifworld_dev`, Port `5432:5432`.
 - **Redis**: Port `6379:6379`, `--appendonly yes`.
 - **MinIO**: Ports `9000:9000`, `9001:9001`, `MINIO_ROOT_USER=minioadmin`, `MINIO_ROOT_PASSWORD=minioadmin`.
@@ -46,6 +48,7 @@ The AlifWorld engineering architecture formally adopts the **Docker Compose Infr
 - **Mailpit**: Ports `1025:1025` (SMTP), `8025:8025` (Web UI).
 
 ### 3. Lifecycle Automation in `package.json`
+
 - `bun run infra:up`: Starts full profile in background.
 - `bun run infra:core`: Starts lightweight core profile.
 - `bun run infra:down`: Stops infrastructure.
@@ -57,10 +60,12 @@ The AlifWorld engineering architecture formally adopts the **Docker Compose Infr
 ## Consequences
 
 ### Positive:
+
 - Single-command developer setup (`bun run infra:up` or `bun run infra:core`).
 - Eliminates configuration bugs and port mismatch between code and local databases.
 - Automates S3 bucket creation and health monitoring.
 - Verified by automated unit tests in `tests/unit/infrastructure-profiles.test.ts`.
 
 ### Negative:
+
 - Local development requires Docker and Docker Compose installed on developer workstations.

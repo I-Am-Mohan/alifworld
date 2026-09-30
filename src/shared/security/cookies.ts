@@ -1,9 +1,9 @@
 /**
  * AlifWorld Standardized Cookie Security Policies & Helpers
- * 
+ *
  * Enforces OWASP-compliant security attributes: HttpOnly, Secure (HTTPS),
  * SameSite scoping, path isolation, and clean session clearing.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, OWASP ASVS v4.0, Milestone 048
  */
 
@@ -90,10 +90,7 @@ export function getStandardCookieOptions(
 /**
  * Generates an expired cookie option object to invalidate a specific cookie on the client.
  */
-export function buildClearCookieOptions(
-  name: string,
-  path: string = '/'
-): CookieSecurityOptions {
+export function buildClearCookieOptions(name: string, path: string = '/'): CookieSecurityOptions {
   return {
     name,
     value: '',
@@ -108,9 +105,9 @@ export function buildClearCookieOptions(
 /**
  * Invalidate all AlifWorld authentication and session cookies on a response object.
  */
-export function clearAllSecurityCookies(
-  response: { cookies: { set: (options: any) => void } }
-): void {
+export function clearAllSecurityCookies(response: {
+  cookies: { set: (options: any) => void };
+}): void {
   response.cookies.set(buildClearCookieOptions(COOKIE_NAMES.ACCESS_TOKEN, '/'));
   response.cookies.set(buildClearCookieOptions(COOKIE_NAMES.REFRESH_TOKEN, '/api/v1/auth'));
   response.cookies.set(buildClearCookieOptions(COOKIE_NAMES.SESSION_ID, '/'));

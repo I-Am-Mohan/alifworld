@@ -48,11 +48,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedInput = InviteBuyerMemberSchema.parse(body);
 
-    const member = await b2bCommerceService.inviteMember(
-      org.id,
-      actor.userId,
-      validatedInput
-    );
+    const member = await b2bCommerceService.inviteMember(org.id, actor.userId, validatedInput);
 
     return NextResponse.json(
       {

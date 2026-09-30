@@ -4,7 +4,7 @@
 **Milestone Reference**: [Milestone 001](../../AlifWorld-300-Milestones/001-project-charter-source-authority-and-ai-execution-protocol.md)  
 **Total Milestones**: 300  
 **Total Phases**: 30  
-**Status**: Active Execution (Phase 01 Active, Milestone 001 Completed)  
+**Status**: Active Execution (Phase 01 Active, Milestone 001 Completed)
 
 ---
 
@@ -25,39 +25,42 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 
 ## Complete Phase & Milestone Index
 
-### Phase 01: Governance and Architecture (Milestones 001–010) — *(Completed)*
-*Phase Objective: Turn all supplied documents into a controlled, testable source of truth before code implementation.*
+### Phase 01: Governance and Architecture (Milestones 001–010) — _(Completed)_
 
-- **001**: Project charter, source authority, and AI execution protocol *(Completed)*
-- **002**: Source-document reconciliation and decision log *(Completed)*
-- **003**: Scope boundaries and modular domain map *(Completed)*
-- **004**: Non-functional requirements, capacity assumptions, and SLOs *(Completed)*
-- **005**: Domain glossary and ubiquitous language *(Completed)*
-- **006**: Single-application modular-monolith architecture decisions *(Completed)*
-- **007**: Milestone dependency graph and incremental delivery workflow *(Completed)*
-- **008**: Risk register and compliance approval gates *(Completed)*
-- **009**: Environment, branching, and release strategy *(Completed)*
-- **010**: Definition-of-done and requirements traceability matrix *(Completed)*
+_Phase Objective: Turn all supplied documents into a controlled, testable source of truth before code implementation._
 
-### Phase 02: Repository and Tooling (Milestones 011–020) — *(Completed)*
-*Phase Objective: Build a deterministic, reproducible local developer experience and baseline CI pipeline.*
+- **001**: Project charter, source authority, and AI execution protocol _(Completed)_
+- **002**: Source-document reconciliation and decision log _(Completed)_
+- **003**: Scope boundaries and modular domain map _(Completed)_
+- **004**: Non-functional requirements, capacity assumptions, and SLOs _(Completed)_
+- **005**: Domain glossary and ubiquitous language _(Completed)_
+- **006**: Single-application modular-monolith architecture decisions _(Completed)_
+- **007**: Milestone dependency graph and incremental delivery workflow _(Completed)_
+- **008**: Risk register and compliance approval gates _(Completed)_
+- **009**: Environment, branching, and release strategy _(Completed)_
+- **010**: Definition-of-done and requirements traceability matrix _(Completed)_
 
-- **011**: Inspect the existing repository and preserve useful work *(Completed)*
-- **012**: Initialize the Next.js TypeScript application with Bun *(Completed)*
-- **013**: Establish directory structure and module boundaries *(Completed)*
-- **014**: Create the AlifWorld design system and brand tokens (incorporating `colors.md` and `logo.png`) *(Completed)*
-- **015**: Configure linting, formatting, type checking, and commit quality *(Completed)*
-- **016**: Implement typed environment validation and secret boundaries *(Completed)*
-- **017**: Implement the required Bun command contract *(Completed)*
-- **018**: Establish unit, integration, and end-to-end test frameworks *(Completed)*
-- **019**: Create local development infrastructure profiles (Postgres, Redis, Meilisearch) *(Completed)*
-- **020**: Build the baseline continuous-integration quality gate *(Completed)*
+### Phase 02: Repository and Tooling (Milestones 011–020) — _(Completed)_
+
+_Phase Objective: Build a deterministic, reproducible local developer experience and baseline CI pipeline._
+
+- **011**: Inspect the existing repository and preserve useful work _(Completed)_
+- **012**: Initialize the Next.js TypeScript application with Bun _(Completed)_
+- **013**: Establish directory structure and module boundaries _(Completed)_
+- **014**: Create the AlifWorld design system and brand tokens (incorporating `colors.md` and `logo.png`) _(Completed)_
+- **015**: Configure linting, formatting, type checking, and commit quality _(Completed)_
+- **016**: Implement typed environment validation and secret boundaries _(Completed)_
+- **017**: Implement the required Bun command contract _(Completed)_
+- **018**: Establish unit, integration, and end-to-end test frameworks _(Completed)_
+- **019**: Create local development infrastructure profiles (Postgres, Redis, Meilisearch) _(Completed)_
+- **020**: Build the baseline continuous-integration quality gate _(Completed)_
 
 ### Phase 03: Data Architecture (Milestones 021–030)
-*Phase Objective: Establish normalized PostgreSQL schemas, constraints, indexes, and migrations via Prisma.*
 
-- **021**: Configure PostgreSQL and Prisma foundations *(Completed)*
-- **022**: Standardize identifiers, timestamps, lifecycle fields, and deletion policy *(Completed)*
+_Phase Objective: Establish normalized PostgreSQL schemas, constraints, indexes, and migrations via Prisma._
+
+- **021**: Configure PostgreSQL and Prisma foundations _(Completed)_
+- **022**: Standardize identifiers, timestamps, lifecycle fields, and deletion policy _(Completed)_
 - **023**: Model users, roles, permissions, and role assignments
 - **024**: Model sellers, seller staff, KYC documents, and store settings
 - **025**: Model catalog taxonomy, products, variants, and media
@@ -68,7 +71,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **030**: Create migration, seed, and database-dictionary workflows
 
 ### Phase 04: Identity and Authentication (Milestones 031–040)
-*Phase Objective: Secure, breach-resilient user identity, sessions, OTP, and token lifecycle.*
+
+_Phase Objective: Secure, breach-resilient user identity, sessions, OTP, and token lifecycle._
 
 - **031**: Define authentication architecture and token policy
 - **032**: Implement customer email and password registration
@@ -82,7 +86,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **040**: Complete authentication audits, rate limits, and integration tests
 
 ### Phase 05: Authorization, Security, and Tenancy (Milestones 041–050)
-*Phase Objective: Server-side RBAC, seller tenant isolation, CSRF/CORS, and audit logging.*
+
+_Phase Objective: Server-side RBAC, seller tenant isolation, CSRF/CORS, and audit logging._
 
 - **041**: Seed roles and granular permissions
 - **042**: Build the server-side authorization policy engine
@@ -96,7 +101,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **050**: Complete the authorization and tenancy security test matrix
 
 ### Phase 06: Bangladesh Localization (Milestones 051–060)
-*Phase Objective: Full dual-language (`en-BD` and `bn-BD`), BDT formatting, and Asia/Dhaka time handling.*
+
+_Phase Objective: Full dual-language (`en-BD` and `bn-BD`), BDT formatting, and Asia/Dhaka time handling._
 
 - **051**: Establish locale routing and internationalization architecture
 - **052**: Create English and Bangla translation catalogs
@@ -110,7 +116,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **060**: Complete localization fallback, translation-admin, and QA tooling
 
 ### Phase 07: Seller Lifecycle (Milestones 061–070)
-*Phase Objective: Seller onboarding, KYC verification, store branding, and staff management.*
+
+_Phase Objective: Seller onboarding, KYC verification, store branding, and staff management._
 
 - **061**: Build the seller application workflow
 - **062**: Implement secure seller KYC and document uploads
@@ -124,7 +131,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **070**: Complete seller lifecycle audits and acceptance tests
 
 ### Phase 08: Catalog Foundations (Milestones 071–080)
-*Phase Objective: Hierarchical categories, approved brands, attributes, and catalog moderation.*
+
+_Phase Objective: Hierarchical categories, approved brands, attributes, and catalog moderation._
 
 - **071**: Implement hierarchical categories
 - **072**: Implement brands and brand approval
@@ -138,7 +146,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **080**: Complete catalog APIs, Admin UI, Seller UI, and tests
 
 ### Phase 09: Products and Media (Milestones 081–090)
-*Phase Objective: Product creation, variant matrices, mandatory Product Points, and S3 media.*
+
+_Phase Objective: Product creation, variant matrices, mandatory Product Points, and S3 media._
 
 - **081**: Implement product draft creation and editing
 - **082**: Implement variant combination generation and validation
@@ -152,7 +161,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **090**: Complete product CRUD across API, Seller UI, Admin UI, and tests
 
 ### Phase 10: Pricing, Tax, and Promotions (Milestones 091–100)
-*Phase Objective: Authoritative server-side pricing engine, VAT, discounts, coupons, and promotions.*
+
+_Phase Objective: Authoritative server-side pricing engine, VAT, discounts, coupons, and promotions._
 
 - **091**: Define BDT pricing and immutable price snapshots
 - **092**: Implement compare-at, cost, minimum, and channel pricing
@@ -166,7 +176,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **100**: Complete pricing, rounding, boundary, and property-based tests
 
 ### Phase 11: Inventory and Warehousing (Milestones 101–110)
-*Phase Objective: Multi-warehouse stock tracking, concurrency-safe reservations, and audit ledger.*
+
+_Phase Objective: Multi-warehouse stock tracking, concurrency-safe reservations, and audit ledger._
 
 - **101**: Implement warehouses and fulfillment locations
 - **102**: Implement on-hand, reserved, available, damaged, and quarantine balances
@@ -180,7 +191,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **110**: Complete overselling, race-condition, and inventory reconciliation tests
 
 ### Phase 12: Search, Discovery, SEO, and Storefront (Milestones 111–120)
-*Phase Objective: Meilisearch integration with PostgreSQL fallback, CMS homepage, and SEO.*
+
+_Phase Objective: Meilisearch integration with PostgreSQL fallback, CMS homepage, and SEO._
 
 - **111**: Create the Meilisearch-independent search abstraction
 - **112**: Build initial indexing and incremental search-index jobs
@@ -194,7 +206,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **120**: Complete sitemaps, robots, accessibility, and storefront performance
 
 ### Phase 13: Customer Experience (Milestones 121–130)
-*Phase Objective: Customer accounts, address books, wishlists, reviews, Q&A, and shopping carts.*
+
+_Phase Objective: Customer accounts, address books, wishlists, reviews, Q&A, and shopping carts._
 
 - **121**: Build customer profiles, preferences, consent, and account security
 - **122**: Build the customer address book
@@ -208,7 +221,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **130**: Build customer dashboards, order shortcuts, and notification preferences
 
 ### Phase 14: Checkout and Shipping (Milestones 131–140)
-*Phase Objective: Multi-seller checkout orchestration, Bangladesh courier adapters, and COD controls.*
+
+_Phase Objective: Multi-seller checkout orchestration, Bangladesh courier adapters, and COD controls._
 
 - **131**: Build idempotent checkout orchestration
 - **132**: Implement address validation and delivery serviceability
@@ -222,7 +236,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **140**: Implement abandoned-checkout recovery and checkout acceptance tests
 
 ### Phase 15: Orders, Fulfillment, Returns, and Refunds (Milestones 141–150)
-*Phase Objective: Order state machines, seller fulfillment, tracking, returns, RMA, and refunds.*
+
+_Phase Objective: Order state machines, seller fulfillment, tracking, returns, RMA, and refunds._
 
 - **141**: Create parent customer orders and seller fulfillment orders
 - **142**: Implement explicit order and fulfillment state machines
@@ -236,7 +251,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **150**: Build disputes, support linkage, and order reporting
 
 ### Phase 16: Payments and Seller Finance (Milestones 151–160)
-*Phase Objective: Bangladesh gateways (bKash/Nagad/Upay), COD, webhooks, and seller settlement.*
+
+_Phase Objective: Bangladesh gateways (bKash/Nagad/Upay), COD, webhooks, and seller settlement._
 
 - **151**: Define the payment-provider interface and capability matrix
 - **152**: Implement the Cash on Delivery provider
@@ -250,7 +266,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **160**: Complete financial reconciliation and payment integration tests
 
 ### Phase 17: Wallet Ledger (Milestones 161–170)
-*Phase Objective: Double-entry immutable financial ledger, typed wallet accounts, and transfers.*
+
+_Phase Objective: Double-entry immutable financial ledger, typed wallet accounts, and transfers._
 
 - **161**: Design the immutable double-entry wallet ledger
 - **162**: Create wallet accounts and typed wallet purposes
@@ -264,7 +281,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **170**: Complete wallet reconciliation, invariants, and audit tests
 
 ### Phase 18: Product Points Engine (Milestones 171–180)
-*Phase Objective: Mandatory seller-defined points, order snapshotting, and point event ledger.*
+
+_Phase Objective: Mandatory seller-defined points, order snapshotting, and point event ledger._
 
 - **171**: Define Product Point terminology, units, and invariants
 - **172**: Enforce mandatory seller-defined Product Points on sellable products
@@ -278,7 +296,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **180**: Build Point reconciliation, replay, and integrity diagnostics
 
 ### Phase 19: Customer Rewards and Ranks (Milestones 181–190)
-*Phase Objective: Customer cashback, referrals, 50-20-15-5-10 split, Star clubs, and rank bonuses.*
+
+_Phase Objective: Customer cashback, referrals, 50-20-15-5-10 split, Star clubs, and rank bonuses._
 
 - **181**: Implement configurable Customer cashback with a 10 percent reference rate
 - **182**: Implement referrals and the configurable 5 percent reference bonus
@@ -292,7 +311,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **190**: Build Customer reward dashboards, statements, reversals, and tests
 
 ### Phase 20: Seller Rewards, Levels, and Leaderboards (Milestones 191–200)
-*Phase Objective: Seller sales/point ledgers, Seller Clubs, 70-15-5-10 split, and seller badges.*
+
+_Phase Objective: Seller sales/point ledgers, Seller Clubs, 70-15-5-10 split, and seller badges._
 
 - **191**: Implement Seller Total Sales and Total Point ledgers
 - **192**: Configure Seller Club periods, tiers, and reference thresholds
@@ -306,7 +326,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **200**: Build Seller reward reports, reconciliation, and acceptance tests
 
 ### Phase 21: Regional Distribution and Commissions (Milestones 201–210)
-*Phase Objective: Bangladesh geographic hierarchy, division/district/upazila commissions, and charity ledger.*
+
+_Phase Objective: Bangladesh geographic hierarchy, division/district/upazila commissions, and charity ledger._
 
 - **201**: Define the eligible profit and reward-pool configuration contract
 - **202**: Implement period schedules, cutoffs, closing, and late-event handling
@@ -320,7 +341,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **210**: Build the Distribution Admin dashboard and end-to-end reconciliation
 
 ### Phase 22: Lottery, Ads, Packages, and Affiliate Programs (Milestones 211–220)
-*Phase Objective: Good-Luck lottery behind legal gate, ad campaigns, packages, and affiliate commissions.*
+
+_Phase Objective: Good-Luck lottery behind legal gate, ad campaigns, packages, and affiliate commissions._
 
 - **211**: Design the Good-Luck lottery with a legal feature gate
 - **212**: Build lottery campaigns, ticket sales, and Good-Luck Wallet debits
@@ -334,7 +356,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **220**: Model marketing ranks and cash rewards behind compliance controls
 
 ### Phase 23: Rider and Delivery (Milestones 221–230)
-*Phase Objective: Rider onboarding, task dispatch, OTP proof-of-delivery, and rider earnings.*
+
+_Phase Objective: Rider onboarding, task dispatch, OTP proof-of-delivery, and rider earnings._
 
 - **221**: Build Rider application, KYC, and approval
 - **222**: Implement Rider authentication, profile, and availability status
@@ -348,7 +371,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **230**: Complete Rider Flutter APIs, notifications, and end-to-end tests
 
 ### Phase 24: Admin, CMS, Support, and Analytics (Milestones 231–240)
-*Phase Objective: High-contrast professional admin shell, moderation, CMS, tickets, and KPI analytics.*
+
+_Phase Objective: High-contrast professional admin shell, moderation, CMS, tickets, and KPI analytics._
 
 - **231**: Build the professional Admin shell and dashboard navigation
 - **232**: Build reusable tables, filters, sorting, bulk actions, and exports
@@ -362,7 +386,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **240**: Build settings, feature flags, maintenance mode, and configuration history
 
 ### Phase 25: Notifications, Jobs, and Realtime Events (Milestones 241–250)
-*Phase Objective: BullMQ queue architecture, multi-channel notifications (Email, SMS, Push), and outbox.*
+
+_Phase Objective: BullMQ queue architecture, multi-channel notifications (Email, SMS, Push), and outbox._
 
 - **241**: Define notification events, templates, preferences, and localization
 - **242**: Implement queued transactional email delivery
@@ -376,7 +401,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **250**: Implement transactional outbox, realtime events, and outbound webhooks
 
 ### Phase 26: REST API, OpenAPI, and Flutter Contracts (Milestones 251–260)
-*Phase Objective: Standardized v1 API pipeline, Zod schemas, OpenAPI specs, and Flutter contracts.*
+
+_Phase Objective: Standardized v1 API pipeline, Zod schemas, OpenAPI specs, and Flutter contracts._
 
 - **251**: Standardize API envelopes, errors, request IDs, and status codes
 - **252**: Build the reusable v1 Route Handler execution pipeline
@@ -390,7 +416,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **260**: Generate typed clients and enforce Flutter-compatible API evolution
 
 ### Phase 27: Caching, Performance, Scale, and Resilience (Milestones 261–270)
-*Phase Objective: Redis caching, rate limits, distributed locks, database query tuning, and DR.*
+
+_Phase Objective: Redis caching, rate limits, distributed locks, database query tuning, and DR._
 
 - **261**: Build the Redis connection, namespace, and cache abstraction
 - **262**: Define cache keys, TTLs, tags, invalidation, and stampede protection
@@ -404,7 +431,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **270**: Implement backup, restore, retention, and disaster-recovery architecture
 
 ### Phase 28: Testing, Security, Compliance, and Quality (Milestones 271–280)
-*Phase Objective: Unit/integration/E2E test suites, security auditing, privacy compliance, and UAT.*
+
+_Phase Objective: Unit/integration/E2E test suites, security auditing, privacy compliance, and UAT._
 
 - **271**: Build deterministic test factories, fixtures, clocks, and provider fakes
 - **272**: Complete unit tests for pricing, Points, rewards, commissions, and inventory
@@ -418,7 +446,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **280**: Run UAT against the approved business configuration matrix
 
 ### Phase 29: DevOps, Deployment, and Observability (Milestones 281–290)
-*Phase Objective: Production Docker containerization, CI/CD pipelines, structured logs, and monitoring.*
+
+_Phase Objective: Production Docker containerization, CI/CD pipelines, structured logs, and monitoring._
 
 - **281**: Build the production multi-stage Docker image
 - **282**: Build Docker Compose and external-infrastructure profiles
@@ -432,7 +461,8 @@ Phase 26-30: Mobile REST APIs, Scale/Resilience, Comprehensive QA, DevOps/CI, an
 - **290**: Implement release, canary, rollback, and versioning procedures
 
 ### Phase 30: Launch, Handover, and Continuous Improvement (Milestones 291–300)
-*Phase Objective: Initial data seeds, operational playbooks, soft launch in Bangladesh, and handover.*
+
+_Phase Objective: Initial data seeds, operational playbooks, soft launch in Bangladesh, and handover._
 
 - **291**: Seed initial roles, permissions, and the forced-change Admin account
 - **292**: Seed the reference reward configuration without hard-coding behavior

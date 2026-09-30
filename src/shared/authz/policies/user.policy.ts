@@ -1,9 +1,9 @@
 /**
  * AlifWorld User Account Authorization Policy
- * 
+ *
  * Governs read, write, suspension, and deletion operations on User profiles.
  * Enforces self-ownership, admin delegation, and privilege escalation barriers.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0023, Milestone 042
  */
 
@@ -22,8 +22,15 @@ export class UserPolicy implements IPolicy {
 
     // 1. Target Privilege Escalation Defense:
     // Only a SUPER_ADMIN can modify, suspend, or delete another SUPER_ADMIN or ADMIN
-    const targetIsAdmin = targetRoles.includes(SystemRoleCode.SUPER_ADMIN) || targetRoles.includes(SystemRoleCode.ADMIN);
-    if (targetIsAdmin && !isSuperAdmin && !isSelf && (action === 'update' || action === 'suspend' || action === 'delete')) {
+    const targetIsAdmin =
+      targetRoles.includes(SystemRoleCode.SUPER_ADMIN) ||
+      targetRoles.includes(SystemRoleCode.ADMIN);
+    if (
+      targetIsAdmin &&
+      !isSuperAdmin &&
+      !isSelf &&
+      (action === 'update' || action === 'suspend' || action === 'delete')
+    ) {
       return {
         granted: false,
         code: 'PRIVILEGE_ESCALATION',
@@ -38,7 +45,12 @@ export class UserPolicy implements IPolicy {
       case 'users:read': {
         // Self-read or users:read permission
         if (isSelf || isSuperAdmin || actor.permissions.includes('users:read')) {
-          return { granted: true, code: 'GRANTED', reason: 'User is authorized to read this profile.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'User is authorized to read this profile.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -52,7 +64,12 @@ export class UserPolicy implements IPolicy {
       case 'users:write': {
         // Self-update or users:write permission
         if (isSelf || isSuperAdmin || actor.permissions.includes('users:write')) {
-          return { granted: true, code: 'GRANTED', reason: 'User is authorized to update this profile.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'User is authorized to update this profile.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -73,7 +90,12 @@ export class UserPolicy implements IPolicy {
           };
         }
         if (isSuperAdmin || actor.permissions.includes('users:suspend')) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to suspend user accounts.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Authorized to suspend user accounts.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -89,12 +111,18 @@ export class UserPolicy implements IPolicy {
           return {
             granted: false,
             code: 'FORBIDDEN',
-            reason: 'Cannot soft-delete your own active account directly through administrative endpoints.',
+            reason:
+              'Cannot soft-delete your own active account directly through administrative endpoints.',
             policyName: this.name,
           };
         }
         if (isSuperAdmin) {
-          return { granted: true, code: 'GRANTED', reason: 'Super Administrator authorized to soft-delete user accounts.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Super Administrator authorized to soft-delete user accounts.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,

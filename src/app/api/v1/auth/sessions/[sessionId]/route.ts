@@ -9,10 +9,10 @@ const authTokenService = new AuthTokenService();
 
 /**
  * DELETE /api/v1/auth/sessions/:sessionId
- * 
+ *
  * Revokes a specific authenticated session/device belonging to the caller.
  * If the revoked session is the caller's current session, clears auth cookies as well.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031
  */
 export async function DELETE(

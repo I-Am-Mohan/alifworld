@@ -11,6 +11,7 @@ This specification implements **ADR-0026**, **ADR-0003**, **ADR-0021**, and **AD
 ## 2. Core Invariants & Mathematical Guarantees
 
 ### Invariant 1: Authoritative Available Stock
+
 Available stock is **strictly computed server-side** by the domain engine and never accepted as a client-supplied payload:
 
 $$\text{Available} = \max(0, \text{OnHand} - \text{Reserved} - \text{Damaged} - \text{Quarantined})$$
@@ -21,9 +22,11 @@ $$\text{Available} = \max(0, \text{OnHand} - \text{Reserved} - \text{Damaged} - 
 - $\text{Quarantined}$: Units held pending quality control inspection or RMA returns.
 
 ### Invariant 2: Optimistic Concurrency Control (OCC)
+
 All state-modifying inventory balance mutations verify the monotonic integer `version` field. When two concurrent requests target the same balance record (such as racing checkout reservations on the final remaining unit), exactly one transaction increments `version` and commits; the competing transaction detects the version mismatch and is rejected with a 409 `ConflictError`.
 
 ### Invariant 3: Append-Only Immutable Movement Ledger
+
 Every inventory state transition (intake, reservation, release, order fulfillment commitment, damage write-off, return) writes an immutable record to `StockMovementLedger`. Movement ledger records are strictly `IMMUTABLE` under AlifWorld's lifecycle policy (`docs/architecture/identifiers-lifecycle-and-deletion-policy.md`) and are never updated or deleted.
 
 ---
@@ -144,6 +147,7 @@ stateDiagram-v2
 ## 5. Concurrency Race Guarantee Proof
 
 ### Scenario: Two Buyers Competing for the Last Available Unit
+
 - Initial state:
   - `onHand = 1`, `reserved = 0`, `damaged = 0`, `quarantined = 0`
   - $\text{Available} = 1 - 0 = 1$

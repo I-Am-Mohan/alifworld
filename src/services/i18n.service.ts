@@ -1,12 +1,12 @@
 /**
  * AlifWorld Dynamic Internationalization & Language Management Service
- * 
+ *
  * Supports:
  * - Dynamic addition of new platform languages (e.g. Arabic, Hindi, Urdu)
  * - Administrative setting of system-wide default language
  * - Status activation/deactivation of languages
  * - Dynamic language list retrieval with 1-lang / 2-lang / 3+-lang rule evaluation
- * 
+ *
  * Invariants: ADR-0022, ADR-0030
  */
 

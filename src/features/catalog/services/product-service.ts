@@ -1,9 +1,9 @@
 /**
  * AlifWorld Product Catalog Domain Service
- * 
+ *
  * Orchestrates merchant product lifecycle, tenant isolation, price/points integrity,
  * variant matrices, media galleries, publication readiness checks, and slug SEO redirects.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0001, ADR-0003, ADR-0005, ADR-0016, ADR-0022, ADR-0025
  */
@@ -14,7 +14,12 @@ import { ProductMediaRepository } from '../repositories/product-media-repository
 import { CategoryRepository } from '../repositories/category-repository';
 import { SellerRepository } from '@/features/seller/repositories/seller-repository';
 import { UserRoleAssignmentRepository } from '@/features/identity/repositories/user-role-assignment-repository';
-import { ConflictError, NotFoundError, AuthorizationError, ValidationError } from '@/shared/errors/app-error';
+import {
+  ConflictError,
+  NotFoundError,
+  AuthorizationError,
+  ValidationError,
+} from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
 import { ProductModel, ProductStatus } from '../types';
 import { CreateProductInput, UpdateProductInput } from '../validators';
@@ -37,12 +42,17 @@ export class ProductService {
   /**
    * Registers a new product draft scoped to a merchant tenant.
    */
-  public async createProduct(actorUserId: string, input: CreateProductInput): Promise<ProductModel> {
+  public async createProduct(
+    actorUserId: string,
+    input: CreateProductInput
+  ): Promise<ProductModel> {
     await this.assertSellerTenantAccess(actorUserId, input.sellerId);
 
     if (input.currency !== 'BDT') throw new ValidationError('Product currency must be BDT.');
-    if (!Number.isSafeInteger(input.basePricePoisha) || input.basePricePoisha <= 0) throw new ValidationError('Product price must be a positive integer number of poisha.');
-    if (!Number.isSafeInteger(input.productPoint) || input.productPoint < 0) throw new ValidationError('Seller-defined Product Point must be a non-negative integer.');
+    if (!Number.isSafeInteger(input.basePricePoisha) || input.basePricePoisha <= 0)
+      throw new ValidationError('Product price must be a positive integer number of poisha.');
+    if (!Number.isSafeInteger(input.productPoint) || input.productPoint < 0)
+      throw new ValidationError('Seller-defined Product Point must be a non-negative integer.');
 
     // Verify category exists and is active
     const category = await this.categoryRepo.findById(input.categoryId);
@@ -50,20 +60,34 @@ export class ProductService {
       throw new ValidationError(`Category with id '${input.categoryId}' is invalid or inactive.`);
     }
     if (input.brandId) {
-      const brand = await (prisma as any).brand.findFirst({ where: { id: input.brandId, deletedAt: null } });
-      if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED') throw new ValidationError('Product brand must be active and approved.');
+      const brand = await (prisma as any).brand.findFirst({
+        where: { id: input.brandId, deletedAt: null },
+      });
+      if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED')
+        throw new ValidationError('Product brand must be active and approved.');
     }
-    if (input.compareAtPricePoisha !== undefined && input.compareAtPricePoisha !== null && input.compareAtPricePoisha < input.basePricePoisha) {
-      throw new ValidationError('Compare-at price must be greater than or equal to the base price.');
+    if (
+      input.compareAtPricePoisha !== undefined &&
+      input.compareAtPricePoisha !== null &&
+      input.compareAtPricePoisha < input.basePricePoisha
+    ) {
+      throw new ValidationError(
+        'Compare-at price must be greater than or equal to the base price.'
+      );
     }
 
     // Check slug uniqueness
     const existingSlug = await this.productRepo.findBySlug(input.slug);
     if (existingSlug.product) {
-      throw new ConflictError(`Product slug '${input.slug}' is already taken. Please choose another title or URL handle.`);
+      throw new ConflictError(
+        `Product slug '${input.slug}' is already taken. Please choose another title or URL handle.`
+      );
     }
 
-    await this.identifierPolicy.assertAvailable({ sku: input.sku || undefined, barcode: input.barcode || undefined });
+    await this.identifierPolicy.assertAvailable({
+      sku: input.sku || undefined,
+      barcode: input.barcode || undefined,
+    });
 
     // Create root product record
     const product = await this.productRepo.create({
@@ -139,7 +163,10 @@ export class ProductService {
       },
     });
 
-    await this.versionHistory.record(product.id, { action: 'PRODUCT_CREATED', actorId: actorUserId });
+    await this.versionHistory.record(product.id, {
+      action: 'PRODUCT_CREATED',
+      actorId: actorUserId,
+    });
     return (await this.productRepo.findById(product.id))!;
   }
 
@@ -160,27 +187,49 @@ export class ProductService {
     await this.assertSellerTenantAccess(actorUserId, existing.sellerId);
 
     if (input.variants !== undefined || input.media !== undefined) {
-      throw new ValidationError('Product variants and media must be managed through their dedicated APIs.');
+      throw new ValidationError(
+        'Product variants and media must be managed through their dedicated APIs.'
+      );
     }
     if (input.compareAtPricePoisha !== undefined && input.compareAtPricePoisha !== null) {
       const basePrice = input.basePricePoisha ?? existing.basePricePoisha;
-      if (input.compareAtPricePoisha < basePrice) throw new ValidationError('Compare-at price must be greater than or equal to the base price.');
+      if (input.compareAtPricePoisha < basePrice)
+        throw new ValidationError(
+          'Compare-at price must be greater than or equal to the base price.'
+        );
     }
 
     if (input.categoryId) {
       const category = await this.categoryRepo.findById(input.categoryId);
-      if (!category || !category.isActive) throw new ValidationError('Product must use an active category.');
+      if (!category || !category.isActive)
+        throw new ValidationError('Product must use an active category.');
     }
     if (input.brandId) {
-      const brand = await (prisma as any).brand.findFirst({ where: { id: input.brandId, deletedAt: null } });
-      if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED') throw new ValidationError('Product brand must be active and approved.');
+      const brand = await (prisma as any).brand.findFirst({
+        where: { id: input.brandId, deletedAt: null },
+      });
+      if (!brand || !brand.isActive || brand.approvalStatus !== 'APPROVED')
+        throw new ValidationError('Product brand must be active and approved.');
     }
-    if (input.currency && input.currency !== 'BDT') throw new ValidationError('Product currency must be BDT.');
-    if (input.basePricePoisha !== undefined && (!Number.isSafeInteger(input.basePricePoisha) || input.basePricePoisha <= 0)) throw new ValidationError('Product price must be a positive integer number of poisha.');
-    if (input.productPoint !== undefined && (!Number.isSafeInteger(input.productPoint) || input.productPoint < 0)) throw new ValidationError('Seller-defined Product Point must be a non-negative integer.');
+    if (input.currency && input.currency !== 'BDT')
+      throw new ValidationError('Product currency must be BDT.');
+    if (
+      input.basePricePoisha !== undefined &&
+      (!Number.isSafeInteger(input.basePricePoisha) || input.basePricePoisha <= 0)
+    )
+      throw new ValidationError('Product price must be a positive integer number of poisha.');
+    if (
+      input.productPoint !== undefined &&
+      (!Number.isSafeInteger(input.productPoint) || input.productPoint < 0)
+    )
+      throw new ValidationError('Seller-defined Product Point must be a non-negative integer.');
 
     if (input.sku !== undefined || input.barcode !== undefined) {
-      await this.identifierPolicy.assertAvailable({ sku: input.sku || undefined, barcode: input.barcode || undefined, excludeProductId: id });
+      await this.identifierPolicy.assertAvailable({
+        sku: input.sku || undefined,
+        barcode: input.barcode || undefined,
+        excludeProductId: id,
+      });
     }
 
     // Handle slug change: record slug history for 301 redirects
@@ -223,7 +272,10 @@ export class ProductService {
       },
     });
 
-    await this.versionHistory.record(updated.id, { action: 'PRODUCT_UPDATED', actorId: actorUserId });
+    await this.versionHistory.record(updated.id, {
+      action: 'PRODUCT_UPDATED',
+      actorId: actorUserId,
+    });
     return updated;
   }
 
@@ -259,7 +311,9 @@ export class ProductService {
 
     // Publication Readiness Checklist:
     if (!product.category || !product.category.isActive) {
-      throw new ValidationError('Publication failed: Product must be assigned to an active category.');
+      throw new ValidationError(
+        'Publication failed: Product must be assigned to an active category.'
+      );
     }
 
     if (product.currency !== 'BDT') {
@@ -271,12 +325,16 @@ export class ProductService {
     }
 
     if (product.productPoint < 0) {
-      throw new ValidationError('Publication failed: Product Point must be a non-negative integer.');
+      throw new ValidationError(
+        'Publication failed: Product Point must be a non-negative integer.'
+      );
     }
 
     const media = await this.mediaRepo.findByProductId(id);
     if (media.length === 0) {
-      throw new ValidationError('Publication failed: Product must have at least one gallery image before publishing.');
+      throw new ValidationError(
+        'Publication failed: Product must have at least one gallery image before publishing.'
+      );
     }
 
     const updated = await this.productRepo.update(id, expectedVersion, {
@@ -365,20 +423,47 @@ export class ProductService {
     return this.productRepo.findById(id, sellerId);
   }
 
-  public async getProductBySlug(slug: string, sellerId?: string): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
+  public async getProductBySlug(
+    slug: string,
+    sellerId?: string
+  ): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
     return this.productRepo.findBySlug(slug, sellerId);
   }
 
-  public async deleteProduct(actorUserId: string, id: string, expectedVersion: number, sellerId?: string): Promise<{ deleted: true; productId: string }> {
+  public async deleteProduct(
+    actorUserId: string,
+    id: string,
+    expectedVersion: number,
+    sellerId?: string
+  ): Promise<{ deleted: true; productId: string }> {
     const product = await this.productRepo.findById(id, sellerId);
     if (!product) throw new NotFoundError(`Product with id '${id}' not found.`);
     await this.assertSellerTenantAccess(actorUserId, product.sellerId);
-    if (product.status === ProductStatus.PUBLISHED || product.status === ProductStatus.PENDING_APPROVAL || product.status === ProductStatus.APPROVED) {
+    if (
+      product.status === ProductStatus.PUBLISHED ||
+      product.status === ProductStatus.PENDING_APPROVAL ||
+      product.status === ProductStatus.APPROVED
+    ) {
       throw new ConflictError('Only draft, rejected, or archived products can be deleted.');
     }
     await this.productRepo.softDelete(id, expectedVersion, actorUserId, sellerId);
-    await (prisma as any).outboxEvent.create({ data: { eventType: 'PRODUCT_DELETED', aggregateType: 'Product', aggregateId: id, payload: { productId: id, sellerId: product.sellerId, version: expectedVersion + 1 } } });
-    await (prisma as any).auditLog.create({ data: { actorId: actorUserId, action: 'PRODUCT_DELETE', resource: 'Product', resourceId: id, metadata: { sellerId: product.sellerId, version: expectedVersion + 1 } } });
+    await (prisma as any).outboxEvent.create({
+      data: {
+        eventType: 'PRODUCT_DELETED',
+        aggregateType: 'Product',
+        aggregateId: id,
+        payload: { productId: id, sellerId: product.sellerId, version: expectedVersion + 1 },
+      },
+    });
+    await (prisma as any).auditLog.create({
+      data: {
+        actorId: actorUserId,
+        action: 'PRODUCT_DELETE',
+        resource: 'Product',
+        resourceId: id,
+        metadata: { sellerId: product.sellerId, version: expectedVersion + 1 },
+      },
+    });
     return { deleted: true, productId: id };
   }
 
@@ -404,12 +489,18 @@ export class ProductService {
     }
 
     const isOwner = seller.ownerUserId === userId;
-    const isStaff = await this.roleAssignmentRepo.hasRole(userId, SystemRoleCode.SELLER_STAFF, sellerId);
+    const isStaff = await this.roleAssignmentRepo.hasRole(
+      userId,
+      SystemRoleCode.SELLER_STAFF,
+      sellerId
+    );
     const isSuperAdmin = await this.roleAssignmentRepo.hasRole(userId, SystemRoleCode.SUPER_ADMIN);
     const isAdmin = await this.roleAssignmentRepo.hasRole(userId, SystemRoleCode.ADMIN);
 
     if (!isOwner && !isStaff && !isSuperAdmin && !isAdmin) {
-      throw new AuthorizationError('You are not authorized to manage products for this merchant storefront.');
+      throw new AuthorizationError(
+        'You are not authorized to manage products for this merchant storefront.'
+      );
     }
   }
 }

@@ -3,17 +3,18 @@
 **Document Type**: Architectural Structure & Module Boundary Governance  
 **Phase Reference**: Phase 02 — Repository and Tooling  
 **Milestone Reference**: [Milestone 013](../../AlifWorld-300-Milestones/013-establish-directory-structure-and-module-boundaries.md)  
-**Status**: Authoritative & Mandatory  
+**Status**: Authoritative & Mandatory
 
 ---
 
 ## 1. Executive Summary & Core Rules
 
-Milestone 013 operationalizes the physical directory hierarchy and modular boundaries of the AlifWorld single-application Next.js modular monolith. 
+Milestone 013 operationalizes the physical directory hierarchy and modular boundaries of the AlifWorld single-application Next.js modular monolith.
 
 To maintain clean separation of concerns, high testability, and strict security across all 20 bounded contexts without introducing microservice operational overhead, the codebase enforces three fundamental rules:
+
 1. **The 4-Tier Layer Isolation Rule**:
-   - `Route Handlers & Pages (`src/app`)` -> `Domain Services (`src/features/*/services`)` -> `Domain Repositories (`src/features/*/repositories`)` -> `Persistence / External Gateways`.
+   - `Route Handlers & Pages (`src/app`)` -> `Domain Services (`src/features/_/services`)` -> `Domain Repositories (`src/features/_/repositories`)` -> `Persistence / External Gateways`.
    - Higher layers may depend on lower layers; lower layers NEVER import or depend on higher layers.
 2. **The Encapsulated Domain Boundary Rule**:
    - Domains in `src/features/<domain>` expose their public interface strictly via `src/features/<domain>/index.ts`.
@@ -99,19 +100,20 @@ alifworld/
 
 ## 3. Layer Responsibilities & Architectural Constraints
 
-| Architectural Layer | Directory Path | Responsibilities & Invariants | Prohibited Actions |
-|:---|:---|:---|:---|
-| **Route Adapters & UI** | `src/app/` | Validates HTTP/JSON input with Zod, checks session auth, calls domain services, serializes unified JSON envelopes. | ❌ No direct SQL/Prisma database queries. ❌ No raw financial calculations. |
-| **Domain Services** | `src/features/*/services` | Encapsulates business logic, coordinates multi-step domain workflows, enforces domain invariants, emits outbox events. | ❌ No direct HTTP `NextResponse` handling. ❌ No untyped object manipulations. |
-| **Domain Repositories**| `src/features/*/repositories` | Executes scoped Prisma queries, applies multi-tenant `sellerId` filters, selects only necessary fields. | ❌ No cross-domain queries. ❌ No bypass of tenant scoping. |
-| **Shared Primitives** | `src/shared/` | Holds pure domain primitives (`Poisha`, `ProductPoint`), system configuration, error classes, date/currency helpers. | ❌ Must never import from `features/` or `app/` (zero cyclic dependencies). |
-| **Asynchronous Workers**| `src/workers/` | Consumes BullMQ job queues, processes transactional outbox tasks, sends SMS, reconciles courier tracking. | ❌ No blocking operations without timeouts. ❌ No non-idempotent task processing. |
+| Architectural Layer      | Directory Path                | Responsibilities & Invariants                                                                                          | Prohibited Actions                                                                |
+| :----------------------- | :---------------------------- | :--------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| **Route Adapters & UI**  | `src/app/`                    | Validates HTTP/JSON input with Zod, checks session auth, calls domain services, serializes unified JSON envelopes.     | ❌ No direct SQL/Prisma database queries. ❌ No raw financial calculations.       |
+| **Domain Services**      | `src/features/*/services`     | Encapsulates business logic, coordinates multi-step domain workflows, enforces domain invariants, emits outbox events. | ❌ No direct HTTP `NextResponse` handling. ❌ No untyped object manipulations.    |
+| **Domain Repositories**  | `src/features/*/repositories` | Executes scoped Prisma queries, applies multi-tenant `sellerId` filters, selects only necessary fields.                | ❌ No cross-domain queries. ❌ No bypass of tenant scoping.                       |
+| **Shared Primitives**    | `src/shared/`                 | Holds pure domain primitives (`Poisha`, `ProductPoint`), system configuration, error classes, date/currency helpers.   | ❌ Must never import from `features/` or `app/` (zero cyclic dependencies).       |
+| **Asynchronous Workers** | `src/workers/`                | Consumes BullMQ job queues, processes transactional outbox tasks, sends SMS, reconciles courier tracking.              | ❌ No blocking operations without timeouts. ❌ No non-idempotent task processing. |
 
 ---
 
 ## 4. Multi-Tenant Scoping & Security Isolation
 
 Every seller in AlifWorld is an isolated commercial tenant:
+
 1. **Repository Enforcement**: Repositories managing tenant resources must require a `sellerId` argument on all mutative and query operations:
    ```typescript
    export interface ProductRepository {

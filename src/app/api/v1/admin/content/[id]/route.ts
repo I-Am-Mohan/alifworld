@@ -12,15 +12,37 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await authenticateRequest(req);
     const parsed = UpdateCmsContentSchema.safeParse(await req.json());
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid CMS content payload', details: parsed.error.flatten() } }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid CMS content payload',
+            details: parsed.error.flatten(),
+          },
+        },
+        { status: 400 }
+      );
     }
     const { id } = await params;
     const content = await service.updateCms(actor.userId, id, parsed.data);
     return NextResponse.json({ success: true, data: content }, { status: 200 });
   } catch (error: any) {
     if (error instanceof AppError) {
-      return NextResponse.json({ success: false, error: { code: error.code, message: error.message, details: error.details } }, { status: error.statusCode });
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: error.code, message: error.message, details: error.details },
+        },
+        { status: error.statusCode }
+      );
     }
-    return NextResponse.json({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to update CMS content' } }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to update CMS content' },
+      },
+      { status: 500 }
+    );
   }
 }

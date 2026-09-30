@@ -15,11 +15,7 @@
  */
 
 import { prisma } from '@/shared/database/prisma';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 import { SystemRoleCode } from '@/features/identity/types';
 import {
   ServerCheckoutCalculationResultDTO,
@@ -116,7 +112,11 @@ export class ServerCheckoutCalculationService {
       // Live inventory availability check
       const totalAvailableStock = (variant.stockBalances || []).reduce(
         (sum: number, sb: any) =>
-          sum + Math.max(0, (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)),
+          sum +
+          Math.max(
+            0,
+            (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)
+          ),
         0
       );
 
@@ -210,8 +210,7 @@ export class ServerCheckoutCalculationService {
 
         for (let i = 0; i < calculatedLines.length; i++) {
           const line = calculatedLines[i];
-          const isEligible =
-            !appliedCoupon.sellerId || line.sellerId === appliedCoupon.sellerId;
+          const isEligible = !appliedCoupon.sellerId || line.sellerId === appliedCoupon.sellerId;
 
           if (isEligible) {
             let lineDiscount = 0;
@@ -229,10 +228,7 @@ export class ServerCheckoutCalculationService {
               (lineDiscount * appliedCoupon.sellerSharePercent) / 100
             );
             line.platformDiscountPoisha = lineDiscount - line.sellerDiscountPoisha;
-            line.netPriceAfterDiscountPoisha = Math.max(
-              0,
-              line.grossSubtotalPoisha - lineDiscount
-            );
+            line.netPriceAfterDiscountPoisha = Math.max(0, line.grossSubtotalPoisha - lineDiscount);
           }
         }
       }
@@ -432,13 +428,15 @@ export class ServerCheckoutCalculationService {
     const isPlatformAdmin = actor.roles?.includes(SystemRoleCode.ADMIN);
     const isOwnerCustomer = actor.userId === order.customerId;
     const isOwnerSeller =
-      actor.sellerId &&
-      order.fulfillmentGroups.some((g: any) => g.sellerId === actor.sellerId);
+      actor.sellerId && order.fulfillmentGroups.some((g: any) => g.sellerId === actor.sellerId);
 
     if (!isSuperAdmin && !isPlatformAdmin && !isOwnerCustomer && !isOwnerSeller) {
-      throw new AuthorizationError('You do not have permission to view tax breakdown for this order.', {
-        code: 'OWNERSHIP_VIOLATION',
-      });
+      throw new AuthorizationError(
+        'You do not have permission to view tax breakdown for this order.',
+        {
+          code: 'OWNERSHIP_VIOLATION',
+        }
+      );
     }
 
     // Filter items if caller is a seller
@@ -447,7 +445,10 @@ export class ServerCheckoutCalculationService {
       eligibleItems = order.items.filter((i: any) => i.sellerId === actor.sellerId);
     }
 
-    const rateMap = new Map<number, { taxablePoisha: bigint; taxPoisha: bigint; itemsCount: number }>();
+    const rateMap = new Map<
+      number,
+      { taxablePoisha: bigint; taxPoisha: bigint; itemsCount: number }
+    >();
     let totalTaxablePoisha = 0n;
     let totalTaxPoisha = 0n;
 
@@ -610,10 +611,7 @@ export class ServerCheckoutCalculationService {
       }
 
       if (promotion.maxDiscountPoisha) {
-        discountAmountPoisha = Math.min(
-          discountAmountPoisha,
-          Number(promotion.maxDiscountPoisha)
-        );
+        discountAmountPoisha = Math.min(discountAmountPoisha, Number(promotion.maxDiscountPoisha));
       }
 
       return {

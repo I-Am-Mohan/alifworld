@@ -21,7 +21,7 @@ import { GET as trackShipmentRoute } from '@/app/api/v1/shipping/track/[tracking
 import { POST as cancelConsignmentRoute } from '@/app/api/v1/shipping/consignments/[consignmentId]/cancel/route';
 import { POST as verifyInHouseDeliveryRoute } from '@/app/api/v1/shipping/in-house/verify-delivery/route';
 import { POST as courierWebhookRoute } from '@/app/api/v1/shipping/webhooks/[courier]/route';
-import { courierDispatchService } from '@/features/shipping';
+import { courierDispatchService, shipmentRepository } from '@/features/shipping';
 import { NextRequest } from 'next/server';
 
 describe('Milestone 134: Courier Logistics & Delivery REST API Integration Tests', () => {
@@ -73,6 +73,36 @@ describe('Milestone 134: Courier Logistics & Delivery REST API Integration Tests
   });
 
   describe('2. POST & GET /api/v1/shipping/consignments', () => {
+    it('rejects customer, missing-permission, and cross-tenant shipment reads before querying', async () => {
+      const listSpy = spyOn(shipmentRepository, 'listShipments');
+      try {
+        for (const actor of [
+          { ...sellerActor, roles: ['CUSTOMER'], sellerId: null },
+          { ...sellerActor, permissions: [] },
+          sellerActor,
+        ]) {
+          authSpy.mockReturnValue(actor);
+          const response = await listConsignmentsRoute(
+            new NextRequest(
+              'http://localhost:3000/api/v1/shipping/consignments?sellerId=foreign-seller'
+            )
+          );
+          expect(response.status).toBe(403);
+        }
+        expect(listSpy).not.toHaveBeenCalled();
+      } finally {
+        listSpy.mockRestore();
+      }
+    });
+
+    it('rejects unbounded or invalid shipment filters', async () => {
+      for (const query of ['limit=101', 'page=0', 'status=UNKNOWN', 'courierProvider=UNKNOWN']) {
+        const response = await listConsignmentsRoute(
+          new NextRequest(`http://localhost:3000/api/v1/shipping/consignments?${query}`)
+        );
+        expect(response.status).toBe(422);
+      }
+    });
     it('creates consignment and normalizes recipient phone to E.164', async () => {
       const mockResult = {
         success: true,
@@ -201,10 +231,9 @@ describe('Milestone 134: Courier Logistics & Delivery REST API Integration Tests
         mockTracking as any
       );
 
-      const req = new NextRequest(
-        'http://localhost:3000/api/v1/shipping/track/TRK-PTH-999',
-        { method: 'GET' }
-      );
+      const req = new NextRequest('http://localhost:3000/api/v1/shipping/track/TRK-PTH-999', {
+        method: 'GET',
+      });
 
       const response = await trackShipmentRoute(req, {
         params: Promise.resolve({ trackingNumber: 'TRK-PTH-999' }),
@@ -258,10 +287,7 @@ describe('Milestone 134: Courier Logistics & Delivery REST API Integration Tests
     it('verifies doorstep delivery with matching OTP PIN', async () => {
       authSpy.mockReturnValue(riderActor as any);
 
-      const verifySpy = spyOn(
-        courierDispatchService,
-        'verifyInHouseDelivery'
-      ).mockResolvedValue({
+      const verifySpy = spyOn(courierDispatchService, 'verifyInHouseDelivery').mockResolvedValue({
         success: true,
         message: 'Doorstep delivery confirmed and verified successfully via OTP.',
         deliveredAt: new Date().toISOString(),
@@ -319,30 +345,24 @@ describe('Milestone 134: Courier Logistics & Delivery REST API Integration Tests
 
   describe('6. POST /api/v1/shipping/webhooks/[courier]', () => {
     it('ingests courier webhook status update and syncs shipment state', async () => {
-      const webhookSpy = spyOn(
-        courierDispatchService,
-        'handleCourierWebhook'
-      ).mockResolvedValue({
+      const webhookSpy = spyOn(courierDispatchService, 'handleCourierWebhook').mockResolvedValue({
         success: true,
         message: 'Shipment status updated to DELIVERED.',
         updatedShipmentId: 'shp_sample_123',
       });
 
-      const req = new NextRequest(
-        'http://localhost:3000/api/v1/shipping/webhooks/pathao',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-pathao-signature': 'mock-sig-123',
-          },
-          body: JSON.stringify({
-            consignment_id: 'PTH-20261015-888999',
-            order_status: 'Delivered',
-            updated_at: '2026-10-15T15:30:00Z',
-          }),
-        }
-      );
+      const req = new NextRequest('http://localhost:3000/api/v1/shipping/webhooks/pathao', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-pathao-signature': 'mock-sig-123',
+        },
+        body: JSON.stringify({
+          consignment_id: 'PTH-20261015-888999',
+          order_status: 'Delivered',
+          updated_at: '2026-10-15T15:30:00Z',
+        }),
+      });
 
       const response = await courierWebhookRoute(req, {
         params: Promise.resolve({ courier: 'pathao' }),

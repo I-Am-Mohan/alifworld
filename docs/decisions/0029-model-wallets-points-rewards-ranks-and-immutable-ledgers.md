@@ -5,7 +5,7 @@
 **Deciders**: Architecture Team, Financial Engineering, Compliance, Loyalty & Growth Operations  
 **Milestone Reference**: [Milestone 029](../../AlifWorld-300-Milestones/029-model-wallets-points-rewards-ranks-and-immutable-ledgers.md)  
 **Phase**: Phase 03: Data Architecture  
-**Supporting Specification**: [Wallets, Points, Rewards, Ranks & Immutable Ledgers Architecture](../architecture/wallets-points-rewards-ranks-and-immutable-ledgers.md)  
+**Supporting Specification**: [Wallets, Points, Rewards, Ranks & Immutable Ledgers Architecture](../architecture/wallets-points-rewards-ranks-and-immutable-ledgers.md)
 
 ---
 
@@ -14,6 +14,7 @@
 AlifWorld requires a comprehensive financial ledger, multi-account wallet architecture, decoupled loyalty rewards engine, and competitive rank qualification framework to power commerce incentives in Bangladesh.
 
 The critical domain requirements and business rules include:
+
 1. **Multi-Account Wallet Segregation**:
    - Customer balances must be strictly partitioned into:
      - `MAIN`: Spendable on storefront or withdrawable to verified commercial bank accounts (BEFTN/bKash).
@@ -49,20 +50,22 @@ The critical domain requirements and business rules include:
 ## Considered Options
 
 1. **Single Flat Wallet Balance with Type Tags**:
-   - *Pros*: Single table, simple queries.
-   - *Cons*: High risk of balance commingling; inability to enforce double-entry auditability; difficult to distinguish withdrawable cash from promotional store credits.
+   - _Pros_: Single table, simple queries.
+   - _Cons_: High risk of balance commingling; inability to enforce double-entry auditability; difficult to distinguish withdrawable cash from promotional store credits.
 2. **Synthetic BDT Conversion for Product Points**:
-   - *Pros*: Unified currency representation.
-   - *Cons*: Violates AlifWorld's foundational architecture; subjects loyalty tokens to financial regulator scrutiny; causes rounding leakage.
+   - _Pros_: Unified currency representation.
+   - _Cons_: Violates AlifWorld's foundational architecture; subjects loyalty tokens to financial regulator scrutiny; causes rounding leakage.
 3. **Multi-Account Segregated Wallets with Formal Double-Entry Ledger & Decoupled Point Accounts (Selected)**:
-   - *Pros*: Mathematically exact, satisfies double-entry bookkeeping standards, guarantees 100% split validation, and cleanly isolates loyalty points from fiat balances.
+   - _Pros_: Mathematically exact, satisfies double-entry bookkeeping standards, guarantees 100% split validation, and cleanly isolates loyalty points from fiat balances.
 
 ---
 
 ## Decision Outcome & Detailed Rationale
 
 ### 1. Relational Persistence Schema (Models 39–49)
+
 Added to `prisma/schema.prisma`:
+
 - `Wallet`: Multi-account segregated balance wallets (`MAIN`, `SHOPPING`, `GOOD_LUCK`, `CHARITY`, `SYSTEM_RESERVE`) with explicit `availablePoisha` and `pendingPoisha` attributes.
 - `LedgerAccount`: Chart of accounts for double-entry bookkeeping (`ASSET`, `LIABILITY`, `EQUITY`, `REVENUE`, `EXPENSE`).
 - `LedgerJournal`: Immutable journal transaction header enforcing $\sum \text{Debits} == \sum \text{Credits}$ with reversal linkage.
@@ -76,6 +79,7 @@ Added to `prisma/schema.prisma`:
 - `LeaderboardSnapshot`: Immutable historical leaderboard snapshots.
 
 ### 2. Standardized Identifiers & Lifecycle Governance
+
 - **ID Prefixes** (`src/shared/utils/id.ts`):
   - `WALLET`: `'wal'`
   - `LEDGER_ACCOUNT`: `'lac'`
@@ -97,11 +101,13 @@ Added to `prisma/schema.prisma`:
 ## Consequences
 
 ### Positive
+
 - Strict mathematical conservation of money and loyalty tokens.
 - Zero out-of-balance transactions via double-entry enforcement.
 - Full compliance with Bangladesh Bank, NBR Mushak, and consumer protection guidelines.
 - Clean separation between withdrawable customer cash and promotional store credits.
 
 ### Negative / Trade-offs
+
 - Creating transactions requires writing multi-row journal postings rather than single-table updates.
 - Reversing a journal requires creating an inverted journal rather than editing previous records.

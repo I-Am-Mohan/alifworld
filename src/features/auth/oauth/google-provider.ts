@@ -1,9 +1,9 @@
 /**
  * Google OpenID Connect / OAuth 2.0 Identity Provider
- * 
+ *
  * Implements code exchange, user profile retrieval, and mobile ID token verification
  * conforming to IOAuthProvider contract and NIST SP 800-63B standards.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 039
  */
 
@@ -32,11 +32,7 @@ export class GoogleOAuthProvider implements IOAuthProvider {
    * Whether provider is running in mock/sandbox mode.
    */
   private get isMock(): boolean {
-    return (
-      !this.clientId ||
-      this.clientId.startsWith('mock_') ||
-      process.env.NODE_ENV === 'test'
-    );
+    return !this.clientId || this.clientId.startsWith('mock_') || process.env.NODE_ENV === 'test';
   }
 
   /**

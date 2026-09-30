@@ -1,9 +1,9 @@
 /**
  * AlifWorld Web Security Contracts & Interfaces
- * 
+ *
  * Formalizes types for CSRF validation, CORS origin management,
  * cookie security attributes, and HTTP response security headers.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, Phase 05 Milestone 048
  */
 

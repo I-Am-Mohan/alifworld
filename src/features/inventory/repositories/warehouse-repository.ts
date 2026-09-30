@@ -1,9 +1,9 @@
 /**
  * AlifWorld Warehouse Repository
- * 
+ *
  * Encapsulates database queries for fulfillment centers, regional depots,
  * and merchant warehouse facilities across Bangladesh.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */

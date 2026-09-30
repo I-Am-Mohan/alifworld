@@ -7,10 +7,7 @@
  */
 
 import { prisma } from '@/shared/database/prisma';
-import {
-  NotFoundError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, AuthorizationError } from '@/shared/errors/app-error';
 import {
   SellerFulfillmentGroupDTO,
   FulfillmentGroupStatus,
@@ -200,7 +197,9 @@ export class SellerFulfillmentGroupRepository {
       data: {
         status: nextStatus,
         version: { increment: 1 },
-        ...(additionalData.deliveredAt !== undefined ? { deliveredAt: additionalData.deliveredAt } : {}),
+        ...(additionalData.deliveredAt !== undefined
+          ? { deliveredAt: additionalData.deliveredAt }
+          : {}),
       },
       include: {
         order: true,
@@ -267,10 +266,7 @@ export class SellerFulfillmentGroupRepository {
     const sfg = await this.findGroupByIdAndSellerId(groupId, sellerId);
 
     const isCod = sfg.shippingDestination.address !== null && sfg.totalPoisha > 0;
-    const totalWeightGrams = sfg.items.reduce(
-      (sum, item) => sum + item.quantity * 300,
-      0
-    );
+    const totalWeightGrams = sfg.items.reduce((sum, item) => sum + item.quantity * 300, 0);
 
     return {
       groupNumber: sfg.groupNumber,

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/v1/auth/token/policy
- * 
+ *
  * Public discovery endpoint for clients (web browsers, mobile Flutter apps)
  * defining token lifetimes, cookie policies, and password complexity constraints.
  */

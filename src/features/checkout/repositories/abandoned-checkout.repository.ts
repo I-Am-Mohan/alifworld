@@ -26,9 +26,7 @@ export class AbandonedCheckoutRepository {
       customerId?: string | null;
     }
   ): Promise<AbandonedCheckoutDTO> {
-    const expiresAt = new Date(
-      Date.now() + (params.expiresInHours || 72) * 60 * 60 * 1000
-    );
+    const expiresAt = new Date(Date.now() + (params.expiresInHours || 72) * 60 * 60 * 1000);
 
     const existing = await (this.db as any).abandonedCheckoutRecovery.findFirst({
       where: { cartId: params.cartId },

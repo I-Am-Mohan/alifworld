@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface TransferView {
   id: string;
@@ -112,7 +119,9 @@ export default function SellerTransfersPage() {
       fromWarehouse: 'Dhaka Tech Banani Depot (DHK-DTH-01)',
       toWarehouse: 'Dhaka Central Hub (DHK-HUB-01)',
       sku: transferVariant,
-      productTitle: transferVariant.startsWith('WLT') ? 'Walton Primo S8 Pro' : 'Xiaomi Redmi Buds 5 Pro',
+      productTitle: transferVariant.startsWith('WLT')
+        ? 'Walton Primo S8 Pro'
+        : 'Xiaomi Redmi Buds 5 Pro',
       quantity: transferQty,
       status: 'IN_TRANSIT',
       reason: transferReason,
@@ -156,9 +165,13 @@ export default function SellerTransfersPage() {
     setCorrections([newCor, ...corrections]);
     setShowCountModal(false);
     if (requiresApproval) {
-      setMessage(`Count variance (${variance > 0 ? '+' : ''}${variance} units) exceeds 10 units threshold. Flagged for Admin Maker-Checker Dual Approval.`);
+      setMessage(
+        `Count variance (${variance > 0 ? '+' : ''}${variance} units) exceeds 10 units threshold. Flagged for Admin Maker-Checker Dual Approval.`
+      );
     } else {
-      setMessage(`Count variance (${variance > 0 ? '+' : ''}${variance} units) auto-approved and applied to stock balance.`);
+      setMessage(
+        `Count variance (${variance > 0 ? '+' : ''}${variance} units) auto-approved and applied to stock balance.`
+      );
     }
     setTimeout(() => setMessage(null), 5000);
   };
@@ -215,7 +228,9 @@ export default function SellerTransfersPage() {
         {/* Transfer Modal */}
         {showTransferModal && (
           <Card className="border border-orange-200 bg-orange-50/40 p-6 space-y-4">
-            <h3 className="text-sm font-black text-slate-900">Initiate Inter-Warehouse Stock Transfer</h3>
+            <h3 className="text-sm font-black text-slate-900">
+              Initiate Inter-Warehouse Stock Transfer
+            </h3>
             <form onSubmit={handleInitiateTransfer} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
@@ -225,7 +240,9 @@ export default function SellerTransfersPage() {
                     onChange={(e) => setTransferVariant(e.target.value)}
                     className="w-full p-2 border border-slate-300 rounded bg-white font-mono"
                   >
-                    <option value="WLT-PRX60-BLU-128">Walton Primo S8 Pro (WLT-PRX60-BLU-128)</option>
+                    <option value="WLT-PRX60-BLU-128">
+                      Walton Primo S8 Pro (WLT-PRX60-BLU-128)
+                    </option>
                     <option value="MI-BUDS5P-WHT">Xiaomi Redmi Buds 5 Pro (MI-BUDS5P-WHT)</option>
                   </select>
                 </div>
@@ -279,7 +296,9 @@ export default function SellerTransfersPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Physical Counted Qty</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Physical Counted Qty
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -350,8 +369,12 @@ export default function SellerTransfersPage() {
                       <div className="font-bold text-slate-900 text-xs">{t.productTitle}</div>
                       <div className="text-[10px] font-mono text-slate-500">{t.sku}</div>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-700 font-medium">{t.fromWarehouse}</TableCell>
-                    <TableCell className="text-xs text-slate-700 font-medium">{t.toWarehouse}</TableCell>
+                    <TableCell className="text-xs text-slate-700 font-medium">
+                      {t.fromWarehouse}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-700 font-medium">
+                      {t.toWarehouse}
+                    </TableCell>
                     <TableCell className="text-right font-mono text-xs font-black text-[#FF6A00]">
                       {t.quantity} units
                     </TableCell>
@@ -420,8 +443,12 @@ export default function SellerTransfersPage() {
                       <div className="font-bold text-slate-900 text-xs">{c.productTitle}</div>
                       <div className="text-[10px] font-mono text-slate-500">{c.sku}</div>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs">{c.currentOnHand}</TableCell>
-                    <TableCell className="text-right font-mono text-xs font-bold">{c.countedQuantity}</TableCell>
+                    <TableCell className="text-right font-mono text-xs">
+                      {c.currentOnHand}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs font-bold">
+                      {c.countedQuantity}
+                    </TableCell>
                     <TableCell
                       className={`text-right font-mono text-xs font-black ${
                         c.variance < 0 ? 'text-red-600' : 'text-emerald-600'

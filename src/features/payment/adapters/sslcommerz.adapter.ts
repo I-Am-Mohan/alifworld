@@ -42,9 +42,7 @@ export class SslCommerzPaymentAdapter extends BasePaymentAdapter implements IPay
       nameBn: 'কার্ড ও ইন্টারনেট ব্যাংকিং (ভিসা/মাস্টারকার্ড)',
       isAvailable: !isExceeded,
       isConfigured: this.isConfigured,
-      unavailableReasonEn: isExceeded
-        ? 'Maximum limit for card checkout is ৳500,000.00.'
-        : null,
+      unavailableReasonEn: isExceeded ? 'Maximum limit for card checkout is ৳500,000.00.' : null,
       unavailableReasonBn: isExceeded
         ? 'কার্ডের মাধ্যমে সর্বোচ্চ ৫০০,০০০ টাকা পেমেন্ট সম্ভব।'
         : null,

@@ -1,13 +1,13 @@
 /**
  * Comprehensive Unit Tests: Seller Tenant Isolation in Every Data Path (Milestone 043)
- * 
+ *
  * Verifies:
  * 1. Query-level sellerId scoping (BaseRepository.whereSellerScope, buildSellerWhere)
  * 2. Repository queries apply sellerId in WHERE clause before retrieval, preventing cross-tenant leakage
  * 3. Prevention of merchant users from self-approving, verifying KYC, altering commission, or suspending stores
  * 4. Cross-tenant data isolation across Seller Settings, Staff, Products, and KYC documents
  * 5. Super Administrator cross-tenant operational bypass
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 043
  */
 
@@ -20,7 +20,12 @@ import { SellerKycDocumentRepository } from '@/features/seller/repositories/sell
 import { SellerStaffRepository } from '@/features/seller/repositories/seller-staff-repository';
 import { SellerStoreSettingsRepository } from '@/features/seller/repositories/seller-store-settings-repository';
 import { SellerRepository } from '@/features/seller/repositories/seller-repository';
-import { SellerStatus, KycDocumentType, KycDocumentStatus, CourierProvider } from '@/features/seller/types';
+import {
+  SellerStatus,
+  KycDocumentType,
+  KycDocumentStatus,
+  CourierProvider,
+} from '@/features/seller/types';
 import { AuthorizationError, ValidationError } from '@/shared/errors/app-error';
 import { SystemRoleCode } from '@/features/identity/types';
 
@@ -135,11 +140,7 @@ describe('Milestone 043 — Seller Tenant Isolation in Every Data Path', () => {
         }),
       };
 
-      const kycService = new SellerKycService(
-        {} as any,
-        {} as any,
-        mockRoleAssignmentRepo as any
-      );
+      const kycService = new SellerKycService({} as any, {} as any, mockRoleAssignmentRepo as any);
 
       // Merchant trying to approve KYC
       await expect(
@@ -155,11 +156,7 @@ describe('Milestone 043 — Seller Tenant Isolation in Every Data Path', () => {
         hasRole: mock(async () => false), // regular seller, no admin roles
       };
 
-      const kycService = new SellerKycService(
-        {} as any,
-        {} as any,
-        mockRoleAssignmentRepo as any
-      );
+      const kycService = new SellerKycService({} as any, {} as any, mockRoleAssignmentRepo as any);
 
       await expect(
         kycService.reviewDocument('usr_seller_staff', 1, {
@@ -210,9 +207,9 @@ describe('Milestone 043 — Seller Tenant Isolation in Every Data Path', () => {
         {} as any
       );
 
-      await expect(
-        sellerService.rejectSeller(TENANT_DHAKA, 1, 'bad', 'usr_admin')
-      ).rejects.toThrow(ValidationError);
+      await expect(sellerService.rejectSeller(TENANT_DHAKA, 1, 'bad', 'usr_admin')).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 

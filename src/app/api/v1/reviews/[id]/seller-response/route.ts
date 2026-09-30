@@ -12,10 +12,7 @@ export const dynamic = 'force-dynamic';
  * Adds or updates an official seller response to a review on their product.
  * Enforces seller tenant isolation.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.sellerId) {

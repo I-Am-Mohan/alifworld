@@ -25,10 +25,7 @@ function assertAdmin(actor: any) {
  * POST /api/v1/checkout/abandoned/[id]/recover
  * Admin triggers recovery notification dispatch (email/SMS) with optional promotional coupon.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     assertAdmin(actor);

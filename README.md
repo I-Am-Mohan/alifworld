@@ -16,16 +16,16 @@ AlifWorld's visual identity is governed by the customer storefront design guidel
 
 ```css
 :root {
-  --alif-amber: #F59E0B;
-  --alif-orange: #FF6A00;
+  --alif-amber: #f59e0b;
+  --alif-orange: #ff6a00;
   --alif-footer-bg: #161614;
-  --alif-white: #FFFFFF;
-  --alif-cream: #FAF9F6;
-  --alif-hero-navy: #0A4B8C;
-  --alif-sky-tint: #E0F2FE;
-  --alif-globe-blue: #0284C7;
-  --alif-stock-green: #16A34A;
-  --alif-whatsapp: #25D366;
+  --alif-white: #ffffff;
+  --alif-cream: #faf9f6;
+  --alif-hero-navy: #0a4b8c;
+  --alif-sky-tint: #e0f2fe;
+  --alif-globe-blue: #0284c7;
+  --alif-stock-green: #16a34a;
+  --alif-whatsapp: #25d366;
 }
 ```
 
@@ -108,36 +108,35 @@ Detailed brand tokens and rules: [Brand Identity & Design Tokens](docs/product/b
 
 The project executes through 30 structured phases, tracked in `AlifWorld-300-Milestones/`:
 
-| Phase | Milestone Range | Phase Theme | Status |
-|:---:|:---:|:---|:---:|
-| **01** | 001–010 | Governance and Architecture | **Completed (Milestones 001–010)** |
-| **02** | 011–020 | Repository and Tooling | **Completed (Milestones 011–020)** |
-| **03** | 021–030 | Data Architecture | **In Progress (Milestones 021–026 Completed)** |
-| **04** | 031–040 | Identity and Authentication | Planned |
-| **05** | 041–050 | Authorization, Security, and Tenancy | Planned |
-| **06** | 051–060 | Bangladesh Localization | Planned |
-| **07** | 061–070 | Seller Lifecycle | Planned |
-| **08** | 071–080 | Catalog Foundations | Planned |
-| **09** | 081–090 | Products and Media | Planned |
-| **10** | 091–100 | Pricing, Tax, and Promotions | Planned |
-| **11** | 101–110 | Inventory and Warehousing | Planned |
-| **12** | 111–120 | Search, Discovery, SEO, and Storefront | Planned |
-| **13** | 121–130 | Customer Experience | Planned |
-| **14** | 131–140 | Checkout and Shipping | Planned |
-| **15** | 141–150 | Orders, Fulfillment, Returns, and Refunds | Planned |
-| **16** | 151–160 | Payments and Seller Finance | Planned |
-| **17** | 161–170 | Wallet Ledger | Planned |
-| **18** | 171–180 | Product Points Engine | Planned |
-| **19** | 181–190 | Customer Rewards and Ranks | Planned |
-| **20** | 191–200 | Seller Rewards, Levels, and Leaderboards | Planned |
-| **21** | 201–210 | Regional Distribution and Commissions | Planned |
-| **22** | 211–220 | Lottery, Ads, Packages, and Affiliate Programs | Planned |
-| **23** | 221–230 | Rider and Delivery | Planned |
-| **24** | 231–240 | Admin, CMS, Support, and Analytics | Planned |
-| **25** | 241–250 | Notifications, Jobs, and Realtime Events | Planned |
-| **26** | 251–260 | REST API, OpenAPI, and Flutter Contracts | Planned |
-| **27** | 261–270 | Caching, Performance, Scale, and Resilience | Planned |
-| **28** | 271–280 | Testing, Security, Compliance, and Quality | Planned |
-| **29** | 281–290 | DevOps, Deployment, and Observability | Planned |
-| **30** | 291–300 | Launch, Handover, and Continuous Improvement | Planned |
- 
+| Phase  | Milestone Range | Phase Theme                                    |                     Status                     |
+| :----: | :-------------: | :--------------------------------------------- | :--------------------------------------------: |
+| **01** |     001–010     | Governance and Architecture                    |       **Completed (Milestones 001–010)**       |
+| **02** |     011–020     | Repository and Tooling                         |       **Completed (Milestones 011–020)**       |
+| **03** |     021–030     | Data Architecture                              | **In Progress (Milestones 021–026 Completed)** |
+| **04** |     031–040     | Identity and Authentication                    |                    Planned                     |
+| **05** |     041–050     | Authorization, Security, and Tenancy           |                    Planned                     |
+| **06** |     051–060     | Bangladesh Localization                        |                    Planned                     |
+| **07** |     061–070     | Seller Lifecycle                               |                    Planned                     |
+| **08** |     071–080     | Catalog Foundations                            |                    Planned                     |
+| **09** |     081–090     | Products and Media                             |                    Planned                     |
+| **10** |     091–100     | Pricing, Tax, and Promotions                   |                    Planned                     |
+| **11** |     101–110     | Inventory and Warehousing                      |                    Planned                     |
+| **12** |     111–120     | Search, Discovery, SEO, and Storefront         |                    Planned                     |
+| **13** |     121–130     | Customer Experience                            |                    Planned                     |
+| **14** |     131–140     | Checkout and Shipping                          |                    Planned                     |
+| **15** |     141–150     | Orders, Fulfillment, Returns, and Refunds      |                    Planned                     |
+| **16** |     151–160     | Payments and Seller Finance                    |                    Planned                     |
+| **17** |     161–170     | Wallet Ledger                                  |                    Planned                     |
+| **18** |     171–180     | Product Points Engine                          |                    Planned                     |
+| **19** |     181–190     | Customer Rewards and Ranks                     |                    Planned                     |
+| **20** |     191–200     | Seller Rewards, Levels, and Leaderboards       |                    Planned                     |
+| **21** |     201–210     | Regional Distribution and Commissions          |                    Planned                     |
+| **22** |     211–220     | Lottery, Ads, Packages, and Affiliate Programs |                    Planned                     |
+| **23** |     221–230     | Rider and Delivery                             |                    Planned                     |
+| **24** |     231–240     | Admin, CMS, Support, and Analytics             |                    Planned                     |
+| **25** |     241–250     | Notifications, Jobs, and Realtime Events       |                    Planned                     |
+| **26** |     251–260     | REST API, OpenAPI, and Flutter Contracts       |                    Planned                     |
+| **27** |     261–270     | Caching, Performance, Scale, and Resilience    |                    Planned                     |
+| **28** |     271–280     | Testing, Security, Compliance, and Quality     |                    Planned                     |
+| **29** |     281–290     | DevOps, Deployment, and Observability          |                    Planned                     |
+| **30** |     291–300     | Launch, Handover, and Continuous Improvement   |                    Planned                     |

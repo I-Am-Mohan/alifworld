@@ -31,4 +31,10 @@ export interface CatalogImportRow {
   tags: string[];
 }
 
-export interface CatalogImportError { rowNumber: number; field?: string; code: string; message: string; details?: Record<string, unknown>; }
+export interface CatalogImportError {
+  rowNumber: number;
+  field?: string;
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}

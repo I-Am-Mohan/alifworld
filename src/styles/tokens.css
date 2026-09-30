@@ -5,39 +5,39 @@
 
 :root {
   /* Primitive Brand Colors */
-  --alif-amber: #F59E0B;
-  --alif-amber-hover: #D97706;
-  --alif-amber-subtle: #FEF3C7;
-  --alif-orange: #FF6A00;
-  --alif-orange-hover: #E55F00;
-  --alif-orange-subtle: #FFF7ED;
+  --alif-amber: #f59e0b;
+  --alif-amber-hover: #d97706;
+  --alif-amber-subtle: #fef3c7;
+  --alif-orange: #ff6a00;
+  --alif-orange-hover: #e55f00;
+  --alif-orange-subtle: #fff7ed;
 
   --alif-black: #000000;
-  --alif-charcoal: #18181B;
+  --alif-charcoal: #18181b;
   --alif-footer-bg: #161614;
 
-  --alif-white: #FFFFFF;
-  --alif-cream: #FAF9F6;
-  --alif-cream-subtle: #F8FAFC;
+  --alif-white: #ffffff;
+  --alif-cream: #faf9f6;
+  --alif-cream-subtle: #f8fafc;
 
   /* Sky & Globe Accents */
-  --alif-hero-navy: #0A4B8C;
-  --alif-sky-tint: #E0F2FE;
-  --alif-globe-blue: #0284C7;
-  --alif-globe-light: #38BDF8;
+  --alif-hero-navy: #0a4b8c;
+  --alif-sky-tint: #e0f2fe;
+  --alif-globe-blue: #0284c7;
+  --alif-globe-light: #38bdf8;
 
   /* Utility & Functional Colors */
-  --alif-stock-green: #16A34A;
-  --alif-whatsapp: #25D366;
-  --alif-rating-gold: #F59E0B;
+  --alif-stock-green: #16a34a;
+  --alif-whatsapp: #25d366;
+  --alif-rating-gold: #f59e0b;
 
   /* Category Pastel Tints */
-  --alif-pastel-peach: #FFEDD5;
-  --alif-pastel-lavender: #EEF2FF;
-  --alif-pastel-sand: #FEF3C7;
-  --alif-pastel-rose: #FCE7F3;
-  --alif-pastel-mint: #CCFBF1;
-  --alif-pastel-jade: #DCFCE7;
+  --alif-pastel-peach: #ffedd5;
+  --alif-pastel-lavender: #eef2ff;
+  --alif-pastel-sand: #fef3c7;
+  --alif-pastel-rose: #fce7f3;
+  --alif-pastel-mint: #ccfbf1;
+  --alif-pastel-jade: #dcfce7;
 
   /* Semantic Theme Tokens */
   --alif-bg-app: var(--alif-cream);
@@ -45,14 +45,14 @@
   --alif-bg-card: var(--alif-white);
   --alif-bg-footer: var(--alif-footer-bg);
 
-  --alif-text-primary: #0F172A;
+  --alif-text-primary: #0f172a;
   --alif-text-secondary: #475569;
-  --alif-text-muted: #94A3B8;
-  --alif-text-footer: #9CA3AF;
-  --alif-text-inverse: #FFFFFF;
+  --alif-text-muted: #94a3b8;
+  --alif-text-footer: #9ca3af;
+  --alif-text-inverse: #ffffff;
 
-  --alif-border-subtle: #E2E8F0;
-  --alif-border-strong: #CBD5E1;
+  --alif-border-subtle: #e2e8f0;
+  --alif-border-strong: #cbd5e1;
 
   /* Interactive Elements */
   --alif-btn-primary-bg: var(--alif-amber);
@@ -60,5 +60,5 @@
   --alif-btn-primary-hover: var(--alif-amber-hover);
 
   --alif-btn-hero-bg: var(--alif-hero-navy);
-  --alif-btn-hero-text: #FFFFFF;
+  --alif-btn-hero-text: #ffffff;
 }

@@ -7,7 +7,10 @@ const service = new CategoryService();
 
 export async function GET(req: NextRequest) {
   try {
-    return NextResponse.json({ success: true, data: await service.getHierarchy() }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: await service.getHierarchy() },
+      { status: 200 }
+    );
   } catch (error) {
     return errorResponse(req, error, 'Failed to load category hierarchy');
   }

@@ -8,27 +8,11 @@
  */
 
 export type BangladeshDivisionCode =
-  | 'DHAKA'
-  | 'CHITTAGONG'
-  | 'RAJSHAHI'
-  | 'KHULNA'
-  | 'BARISAL'
-  | 'SYLHET'
-  | 'RANGPUR'
-  | 'MYMENSINGH';
+  'DHAKA' | 'CHITTAGONG' | 'RAJSHAHI' | 'KHULNA' | 'BARISAL' | 'SYLHET' | 'RANGPUR' | 'MYMENSINGH';
 
-export type DeliveryZone =
-  | 'METRO_DHAKA'
-  | 'DHAKA_SUBURBS'
-  | 'MAJOR_CITIES'
-  | 'REMOTE_UPAZILA';
+export type DeliveryZone = 'METRO_DHAKA' | 'DHAKA_SUBURBS' | 'MAJOR_CITIES' | 'REMOTE_UPAZILA';
 
-export type CourierProviderCode =
-  | 'PATHAO'
-  | 'STEADFAST'
-  | 'REDX'
-  | 'PAPERFLY'
-  | 'IN_HOUSE';
+export type CourierProviderCode = 'PATHAO' | 'STEADFAST' | 'REDX' | 'PAPERFLY' | 'IN_HOUSE';
 
 export interface DeliveryCourierOptionDTO {
   courierCode: CourierProviderCode;

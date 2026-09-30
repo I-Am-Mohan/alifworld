@@ -39,7 +39,7 @@ class MockPrismaDb {
       );
     },
     findMany: async ({ where, skip = 0, take = 50 }: any) => {
-      let filtered = this.products.filter(
+      const filtered = this.products.filter(
         (p) =>
           (where.status ? p.status === where.status : true) &&
           (where.deletedAt === null ? p.deletedAt === null : true)

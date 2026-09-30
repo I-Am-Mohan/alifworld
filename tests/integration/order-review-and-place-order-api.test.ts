@@ -13,10 +13,7 @@ import { describe, it, expect, beforeEach, afterEach, spyOn } from 'bun:test';
 import * as authzModule from '@/shared/authz';
 import { POST as reviewOrderRoute } from '@/app/api/v1/checkout/review/route';
 import { POST as placeOrderRoute } from '@/app/api/v1/checkout/place-order/route';
-import {
-  finalOrderReviewService,
-  placeOrderTransactionService,
-} from '@/features/checkout';
+import { finalOrderReviewService, placeOrderTransactionService } from '@/features/checkout';
 import { NextRequest } from 'next/server';
 
 describe('Milestone 139: Order Review & Place-Order REST API Integration Tests', () => {
@@ -157,10 +154,9 @@ describe('Milestone 139: Order Review & Place-Order REST API Integration Tests',
 
   describe('1. POST /api/v1/checkout/review', () => {
     it('generates complete order review with multi-seller packages, points, and legal consents', async () => {
-      const reviewSpy = spyOn(
-        finalOrderReviewService,
-        'generateOrderReview'
-      ).mockResolvedValue(sampleReviewResult as any);
+      const reviewSpy = spyOn(finalOrderReviewService, 'generateOrderReview').mockResolvedValue(
+        sampleReviewResult as any
+      );
 
       const req = new NextRequest('http://localhost:3000/api/v1/checkout/review', {
         method: 'POST',
@@ -195,10 +191,9 @@ describe('Milestone 139: Order Review & Place-Order REST API Integration Tests',
 
   describe('2. POST /api/v1/checkout/place-order', () => {
     it('places order atomically when all required legal consents are accepted', async () => {
-      const placeSpy = spyOn(
-        placeOrderTransactionService,
-        'placeOrder'
-      ).mockResolvedValue(samplePlacedOrderResult as any);
+      const placeSpy = spyOn(placeOrderTransactionService, 'placeOrder').mockResolvedValue(
+        samplePlacedOrderResult as any
+      );
 
       const req = new NextRequest('http://localhost:3000/api/v1/checkout/place-order', {
         method: 'POST',
@@ -241,10 +236,7 @@ describe('Milestone 139: Order Review & Place-Order REST API Integration Tests',
     });
 
     it('returns 200 OK on idempotent replay with identical key', async () => {
-      const placeSpy = spyOn(
-        placeOrderTransactionService,
-        'placeOrder'
-      ).mockResolvedValue({
+      const placeSpy = spyOn(placeOrderTransactionService, 'placeOrder').mockResolvedValue({
         ...samplePlacedOrderResult,
         isIdempotentReplay: true,
       } as any);

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Customer Domain Authorization Policy
- * 
+ *
  * Enforces self-service object ownership, personal data minimization,
  * customer address protection, and privilege escalation barriers.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 046
  */
 
@@ -37,7 +37,8 @@ export class CustomerPolicy implements IPolicy {
       return {
         granted: false,
         code: 'OWNERSHIP_VIOLATION',
-        reason: 'Customers are strictly prohibited from inspecting or modifying another customer\'s profile.',
+        reason:
+          "Customers are strictly prohibited from inspecting or modifying another customer's profile.",
         policyName: this.name,
         diagnostics: { actorId: actor.userId, targetCustomerId },
       };
@@ -49,10 +50,20 @@ export class CustomerPolicy implements IPolicy {
       case 'customer:profile:read': {
         // Self-read or authorized Support/Admin
         if (isSelf) {
-          return { granted: true, code: 'GRANTED', reason: 'Customer reading own profile and preferences.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Customer reading own profile and preferences.',
+            policyName: this.name,
+          };
         }
 
-        if (isPlatformAdmin || isSupport || actor.permissions.includes('users:read') || actor.permissions.includes('support:read')) {
+        if (
+          isPlatformAdmin ||
+          isSupport ||
+          actor.permissions.includes('users:read') ||
+          actor.permissions.includes('support:read')
+        ) {
           return {
             granted: true,
             code: 'GRANTED',
@@ -74,7 +85,14 @@ export class CustomerPolicy implements IPolicy {
         // Customer self-update: cannot tamper with internal status, verified flags, or wallet balance
         if (isSelf) {
           const attemptedFields = resource.data ? Object.keys(resource.data) : [];
-          const protectedFields = ['status', 'roles', 'isEmailVerified', 'isPhoneVerified', 'walletBalance', 'points'];
+          const protectedFields = [
+            'status',
+            'roles',
+            'isEmailVerified',
+            'isPhoneVerified',
+            'walletBalance',
+            'points',
+          ];
           const illegalAttempts = attemptedFields.filter((f) => protectedFields.includes(f));
 
           if (illegalAttempts.length > 0) {
@@ -87,11 +105,21 @@ export class CustomerPolicy implements IPolicy {
             };
           }
 
-          return { granted: true, code: 'GRANTED', reason: 'Customer updating own self-service profile.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Customer updating own self-service profile.',
+            policyName: this.name,
+          };
         }
 
         if (isPlatformAdmin || actor.permissions.includes('users:write')) {
-          return { granted: true, code: 'GRANTED', reason: 'Administrator updating customer profile.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Administrator updating customer profile.',
+            policyName: this.name,
+          };
         }
 
         return {
@@ -108,11 +136,21 @@ export class CustomerPolicy implements IPolicy {
       case 'customer:address:manage': {
         // Customer addresses: strict self-service ownership
         if (isSelf) {
-          return { granted: true, code: 'GRANTED', reason: 'Customer managing own delivery addresses.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Customer managing own delivery addresses.',
+            policyName: this.name,
+          };
         }
 
         if (isPlatformAdmin || (isSupport && action === 'addresses:read')) {
-          return { granted: true, code: 'GRANTED', reason: 'Operator accessing customer delivery address.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Operator accessing customer delivery address.',
+            policyName: this.name,
+          };
         }
 
         return {
@@ -127,7 +165,12 @@ export class CustomerPolicy implements IPolicy {
       case 'customer:review:write': {
         // Review creation/management: only the customer who purchased the product
         if (isSelf) {
-          return { granted: true, code: 'GRANTED', reason: 'Customer authoring review for verified purchase.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Customer authoring review for verified purchase.',
+            policyName: this.name,
+          };
         }
 
         return {
@@ -142,7 +185,12 @@ export class CustomerPolicy implements IPolicy {
       case 'privacy:export': {
         // GDPR / Privacy Personal Data Export: Self-service only
         if (isSelf) {
-          return { granted: true, code: 'GRANTED', reason: 'Customer downloading own personal data dossier.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Customer downloading own personal data dossier.',
+            policyName: this.name,
+          };
         }
 
         return {

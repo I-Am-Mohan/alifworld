@@ -14,8 +14,7 @@ class MockAddressRepository extends CustomerAddressRepository {
 
   public async findById(userId: string, id: string) {
     return (
-      this.addresses.find((a) => a.id === id && a.userId === userId && a.deletedAt === null) ||
-      null
+      this.addresses.find((a) => a.id === id && a.userId === userId && a.deletedAt === null) || null
     );
   }
 

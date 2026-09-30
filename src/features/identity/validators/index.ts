@@ -1,9 +1,9 @@
 /**
  * Identity & Access Management (IAM) Zod Validation Schemas
- * 
+ *
  * Enforces strict input validation, Bangladesh phone normalization,
  * identifier structure checks, and versioned mutations.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0022, ADR-0023
  */
@@ -31,19 +31,17 @@ export const SellerIdSchema = createPrefixedIdSchema(ID_PREFIXES.SELLER);
 /**
  * Bangladesh phone number Zod transformer.
  */
-export const BangladeshPhoneSchema = z
-  .string()
-  .transform((val, ctx) => {
-    try {
-      return normalizeBangladeshPhone(val);
-    } catch {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Invalid Bangladesh mobile number. Must match +8801[3-9]XXXXXXXX',
-      });
-      return z.NEVER;
-    }
-  });
+export const BangladeshPhoneSchema = z.string().transform((val, ctx) => {
+  try {
+    return normalizeBangladeshPhone(val);
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid Bangladesh mobile number. Must match +8801[3-9]XXXXXXXX',
+    });
+    return z.NEVER;
+  }
+});
 
 /**
  * Case-insensitive normalized email schema.
@@ -109,7 +107,10 @@ export const CreateRoleInputSchema = z.object({
     .toUpperCase()
     .min(3, 'Role code must be at least 3 characters')
     .max(50)
-    .regex(/^[A-Z0-9_]+$/, 'Role code must contain only uppercase letters, numbers, and underscores'),
+    .regex(
+      /^[A-Z0-9_]+$/,
+      'Role code must contain only uppercase letters, numbers, and underscores'
+    ),
   name: z.string().trim().min(2).max(100),
   description: z.string().trim().max(255).optional(),
   permissionCodes: z.array(z.string()).default([]),
@@ -138,7 +139,10 @@ export const CreatePermissionInputSchema = z.object({
     .toLowerCase()
     .min(3)
     .max(100)
-    .regex(/^[a-z0-9_]+:[a-z0-9_]+$/, 'Permission code must follow format "module:action" (e.g. users:read)'),
+    .regex(
+      /^[a-z0-9_]+:[a-z0-9_]+$/,
+      'Permission code must follow format "module:action" (e.g. users:read)'
+    ),
   name: z.string().trim().min(2).max(100),
   module: z.nativeEnum(PermissionModule),
   description: z.string().trim().max(255).optional(),
@@ -160,16 +164,15 @@ export type AssignRoleInput = z.infer<typeof AssignRoleInputSchema>;
 /**
  * Revoke Role from User Input Schema
  */
-export const RevokeRoleInputSchema = z.object({
-  assignmentId: RoleAssignmentIdSchema.optional(),
-  userId: UserIdSchema.optional(),
-  roleId: RoleIdSchema.optional(),
-  sellerId: SellerIdSchema.optional(),
-}).refine(
-  (data) => Boolean(data.assignmentId || (data.userId && data.roleId)),
-  {
+export const RevokeRoleInputSchema = z
+  .object({
+    assignmentId: RoleAssignmentIdSchema.optional(),
+    userId: UserIdSchema.optional(),
+    roleId: RoleIdSchema.optional(),
+    sellerId: SellerIdSchema.optional(),
+  })
+  .refine((data) => Boolean(data.assignmentId || (data.userId && data.roleId)), {
     message: 'Either assignmentId or both userId and roleId must be specified to revoke a role',
-  }
-);
+  });
 
 export type RevokeRoleInput = z.infer<typeof RevokeRoleInputSchema>;

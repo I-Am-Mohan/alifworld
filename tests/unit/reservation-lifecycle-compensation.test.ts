@@ -37,7 +37,10 @@ class MockStockBalanceRepo extends StockBalanceRepository {
     return this.balances.get(id) ?? null;
   }
 
-  public async findByWarehouseAndVariant(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async findByWarehouseAndVariant(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     for (const bal of this.balances.values()) {
       if (bal.warehouseId === warehouseId && bal.variantId === variantId) {
         return bal;
@@ -130,7 +133,11 @@ class MockReservationRepo extends StockReservationRepository {
     return updated;
   }
 
-  public async commit(id: string, expectedVersion: number, orderId: string): Promise<StockReservationModel> {
+  public async commit(
+    id: string,
+    expectedVersion: number,
+    orderId: string
+  ): Promise<StockReservationModel> {
     const res = this.reservations.get(id);
     if (!res) throw new NotFoundError(`Reservation ${id} not found`);
     const updated: StockReservationModel = {
@@ -243,10 +250,11 @@ describe('Milestone 105 - Reservation Lifecycle & Compensation Unit Tests', () =
     expect(reservation.status).toBe(ReservationStatus.ACTIVE);
 
     // 2. Release reservation
-    const { reservation: released, balance: releasedBalance } = await inventoryService.releaseReservation({
-      reservationId: reservation.id,
-      reason: 'User cancelled cart',
-    });
+    const { reservation: released, balance: releasedBalance } =
+      await inventoryService.releaseReservation({
+        reservationId: reservation.id,
+        reason: 'User cancelled cart',
+      });
 
     expect(released.status).toBe(ReservationStatus.RELEASED);
     expect(releasedBalance.reserved).toBe(0);
@@ -271,10 +279,11 @@ describe('Milestone 105 - Reservation Lifecycle & Compensation Unit Tests', () =
     });
 
     // 2. Commit reservation
-    const { reservation: committed, balance: committedBalance } = await inventoryService.commitReservation({
-      reservationId: reservation.id,
-      orderId: 'ord_123',
-    });
+    const { reservation: committed, balance: committedBalance } =
+      await inventoryService.commitReservation({
+        reservationId: reservation.id,
+        orderId: 'ord_123',
+      });
 
     expect(committed.status).toBe(ReservationStatus.COMMITTED);
     expect(committedBalance.onHand).toBe(35);

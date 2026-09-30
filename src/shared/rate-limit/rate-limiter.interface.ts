@@ -1,6 +1,6 @@
 /**
  * Distributed Rate Limiter Interfaces
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 040
  */
 

@@ -63,8 +63,44 @@ class MockPrismaUserDb {
   };
 }
 
+class MockB2bCommerceService {
+  private orgs = new Map<string, any>();
+  private memberships = new Map<string, any>();
+
+  public async registerOrganization(userId: string, input: any) {
+    const orgId = `org_${Math.random().toString(36).substring(2, 10)}`;
+    const org = {
+      id: orgId,
+      companyName: input.companyName,
+      businessType: input.businessType,
+      tradeLicenseNumber: input.tradeLicenseNumber,
+      binNumber: input.binNumber,
+      tinNumber: input.tinNumber,
+      creditLimitPoisha: 0,
+      status: 'PENDING_APPROVAL',
+      membersCount: 1,
+      createdAt: new Date(),
+    };
+    this.orgs.set(orgId, org);
+    this.memberships.set(userId, { orgId, role: 'ADMIN' });
+    return org;
+  }
+
+  public async getUserOrganization(userId: string) {
+    const mem = this.memberships.get(userId);
+    if (!mem) return null;
+    const org = this.orgs.get(mem.orgId);
+    if (!org) return null;
+    return {
+      ...org,
+      currentUserRole: mem.role,
+    };
+  }
+}
+
 describe('Milestone 121: Customer Profile, Preferences, Consent, and Security Unit Tests', () => {
   let mockDb: MockPrismaUserDb;
+  let mockB2b: MockB2bCommerceService;
   let service: CustomerAccountService;
 
   const initialPassword = 'Password123!';
@@ -91,7 +127,8 @@ describe('Milestone 121: Customer Profile, Preferences, Consent, and Security Un
   beforeEach(() => {
     mockDb = new MockPrismaUserDb();
     mockDb.users = [{ ...mockUser }];
-    service = new CustomerAccountService(mockDb);
+    mockB2b = new MockB2bCommerceService();
+    service = new CustomerAccountService(mockDb, mockB2b);
   });
 
   describe('1. Profile Retrieval & Minimization', () => {
@@ -121,7 +158,9 @@ describe('Milestone 121: Customer Profile, Preferences, Consent, and Security Un
       expect(updated.name).toBe('Rahim Chowdhury');
       expect(updated.locale).toBe('bn-BD');
       expect(updated.version).toBe(2);
-      expect(mockDb.outboxEvents.some((e) => e.eventType === 'customer.profile_updated')).toBe(true);
+      expect(mockDb.outboxEvents.some((e) => e.eventType === 'customer.profile_updated')).toBe(
+        true
+      );
     });
 
     it('rejects profile update with ConflictError on version collision', async () => {
@@ -162,7 +201,9 @@ describe('Milestone 121: Customer Profile, Preferences, Consent, and Security Un
 
       expect(consent.termsVersion).toBe('v1.2');
       expect(consent.marketingConsent).toBe(true);
-      expect(mockDb.outboxEvents.some((e) => e.eventType === 'customer.consent_recorded')).toBe(true);
+      expect(mockDb.outboxEvents.some((e) => e.eventType === 'customer.consent_recorded')).toBe(
+        true
+      );
     });
   });
 
@@ -176,7 +217,9 @@ describe('Milestone 121: Customer Profile, Preferences, Consent, and Security Un
 
       expect(result.success).toBe(true);
       expect(result.tokenVersion).toBe(2); // Invalidation of existing JWT sessions
-      expect(mockDb.outboxEvents.some((e) => e.eventType === 'customer.password_changed')).toBe(true);
+      expect(mockDb.outboxEvents.some((e) => e.eventType === 'customer.password_changed')).toBe(
+        true
+      );
     });
 
     it('rejects password change with AuthenticationError when current password is wrong', async () => {

@@ -191,7 +191,9 @@ describe('Customer Email and Password Registration (Milestone 032)', () => {
       expect(pointAccount.availablePoints).toBe(0);
 
       // Verify outbox notification event
-      expect(mockRepo.outboxEvents.some((e) => e.eventType === 'auth.customer_registered')).toBe(true);
+      expect(mockRepo.outboxEvents.some((e) => e.eventType === 'auth.customer_registered')).toBe(
+        true
+      );
     });
 
     it('rejects registration with duplicate email address with ConflictError', async () => {

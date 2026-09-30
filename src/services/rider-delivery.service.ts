@@ -1,17 +1,26 @@
 /**
  * AlifWorld Rider Delivery & Dispatch Domain Service
- * 
+ *
  * Manages assignment leases, atomic acceptance to prevent double-assignment,
  * live GPS telemetry updates, shipment event timelines, and route scoping.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 046
  */
 
 import { prisma } from '@/shared/database/prisma';
 import { ActorContext } from '@/shared/authz/authz.types';
 import { defaultPolicyEngine } from '@/shared/authz';
-import { ConflictError, NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
-import { RiderAcceptAssignmentInput, RiderLocationUpdateInput, RiderStatusUpdateInput } from '@/validators/support-and-rider.validators';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
+import {
+  RiderAcceptAssignmentInput,
+  RiderLocationUpdateInput,
+  RiderStatusUpdateInput,
+} from '@/validators/support-and-rider.validators';
 
 export interface AssignmentLease {
   leaseId: string;
@@ -58,7 +67,11 @@ export class RiderDeliveryService {
 
     // Check if an existing unexpired lease belongs to another rider
     const existingLease = RiderDeliveryService.leases.get(deliveryId);
-    if (existingLease && existingLease.riderId !== riderId && existingLease.expiresAt.getTime() > Date.now()) {
+    if (
+      existingLease &&
+      existingLease.riderId !== riderId &&
+      existingLease.expiresAt.getTime() > Date.now()
+    ) {
       throw new ConflictError('Delivery assignment is already leased to another rider.');
     }
 

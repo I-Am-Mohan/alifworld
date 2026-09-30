@@ -225,7 +225,8 @@ export class PricingService {
     if (input.priority !== undefined) data.priority = input.priority;
     if (input.status !== undefined) data.status = input.status;
     if (input.buyerSegment !== undefined) data.buyerSegment = input.buyerSegment;
-    if (input.startsAt !== undefined) data.startsAt = input.startsAt ? new Date(input.startsAt) : null;
+    if (input.startsAt !== undefined)
+      data.startsAt = input.startsAt ? new Date(input.startsAt) : null;
     if (input.endsAt !== undefined) data.endsAt = input.endsAt ? new Date(input.endsAt) : null;
 
     return this.repo.updatePriceList(id, data);
@@ -261,7 +262,10 @@ export class PricingService {
           sellerId: priceList.sellerId || variantRecord.product.sellerId,
           priceListId: priceList.id,
           priceListRuleId: rule.id,
-          changeType: priceList.startsAt && new Date(priceList.startsAt) > new Date() ? 'SCHEDULED_PRICE_ADDED' : 'PRICE_LIST_RULE_ADDED',
+          changeType:
+            priceList.startsAt && new Date(priceList.startsAt) > new Date()
+              ? 'SCHEDULED_PRICE_ADDED'
+              : 'PRICE_LIST_RULE_ADDED',
           previousPricePoisha: variantRecord.pricePoisha,
           newPricePoisha: input.pricePoisha,
           previousCompareAtPoisha: variantRecord.compareAtPricePoisha,
@@ -286,7 +290,9 @@ export class PricingService {
     const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
 
     if (isSeller && variantRecord.product.sellerId !== actor.sellerId) {
-      throw new AuthorizationError('Insufficient permissions to update pricing for this seller product');
+      throw new AuthorizationError(
+        'Insufficient permissions to update pricing for this seller product'
+      );
     }
     if (!isSeller && !isAdmin) {
       throw new AuthorizationError('Insufficient permissions to update product variant pricing');
@@ -361,7 +367,13 @@ export class PricingService {
 
   async listPriceLists(
     actor: ActorContext,
-    params: { channel?: string; buyerSegment?: string; status?: string; page?: number; limit?: number }
+    params: {
+      channel?: string;
+      buyerSegment?: string;
+      status?: string;
+      page?: number;
+      limit?: number;
+    }
   ) {
     const isSeller = actor.roles.includes('SELLER');
     const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
@@ -405,7 +417,10 @@ export class PricingService {
       throw new NotFoundError(`Product variant '${input.variantId}' not found`);
     }
 
-    const activeRules = await this.repo.getActiveRulesForVariant(variantRecord.id, variantRecord.productId);
+    const activeRules = await this.repo.getActiveRulesForVariant(
+      variantRecord.id,
+      variantRecord.productId
+    );
 
     // Map rules to domain format
     const eligibleRules: EligiblePriceListRule[] = activeRules.map((rule) => ({
@@ -487,7 +502,10 @@ export class PricingService {
         throw new NotFoundError(`Product variant with ID '${item.variantId}' not found`);
       }
 
-      const activeRules = await this.repo.getActiveRulesForVariant(variantRecord.id, variantRecord.productId);
+      const activeRules = await this.repo.getActiveRulesForVariant(
+        variantRecord.id,
+        variantRecord.productId
+      );
       const eligibleRules: EligiblePriceListRule[] = activeRules.map((rule) => ({
         id: rule.id,
         priceListId: rule.priceListId,
@@ -619,7 +637,10 @@ export class PricingService {
           usageCount: couponRule.usageCount,
           status: couponRule.status,
           deletedAt: couponRule.deletedAt,
-          targets: (couponRule.targets || []).map((t) => ({ targetType: t.targetType, targetId: t.targetId })),
+          targets: (couponRule.targets || []).map((t) => ({
+            targetType: t.targetType,
+            targetId: t.targetId,
+          })),
           isStackable: (couponRule as any).isStackable ?? true,
           exclusionScope: (couponRule as any).exclusionScope ?? 'STACKABLE',
         });
@@ -650,26 +671,31 @@ export class PricingService {
     );
 
     // Map promotions details
-    const appliedPromotions: AppliedPromotionQuoteDetail[] = stackedPromotionsResult.appliedPromotions.map((p) => ({
-      ruleId: p.ruleId,
-      code: p.code,
-      title: p.title,
-      discountType: p.discountType,
-      discountAmountPoisha: p.discountAmountPoisha,
-      sellerSharePoisha: p.attribution.sellerSharePoisha,
-      platformSharePoisha: p.attribution.platformSharePoisha,
-      fundingType: p.attribution.fundingType,
-    }));
+    const appliedPromotions: AppliedPromotionQuoteDetail[] =
+      stackedPromotionsResult.appliedPromotions.map((p) => ({
+        ruleId: p.ruleId,
+        code: p.code,
+        title: p.title,
+        discountType: p.discountType,
+        discountAmountPoisha: p.discountAmountPoisha,
+        sellerSharePoisha: p.attribution.sellerSharePoisha,
+        platformSharePoisha: p.attribution.platformSharePoisha,
+        fundingType: p.attribution.fundingType,
+      }));
 
-    const excludedPromotions: ExcludedPromotionQuoteDetail[] = stackedPromotionsResult.excludedPromotions.map((e) => ({
-      ruleId: e.ruleId,
-      code: e.code,
-      title: e.title,
-      exclusionReason: e.exclusionReason,
-    }));
+    const excludedPromotions: ExcludedPromotionQuoteDetail[] =
+      stackedPromotionsResult.excludedPromotions.map((e) => ({
+        ruleId: e.ruleId,
+        code: e.code,
+        title: e.title,
+        exclusionReason: e.exclusionReason,
+      }));
 
     // Build line item discount map (lineItemId -> { discountPoisha, sellerSharePoisha, platformSharePoisha })
-    const lineDiscountMap = new Map<string, { total: bigint; sellerShare: bigint; platformShare: bigint }>();
+    const lineDiscountMap = new Map<
+      string,
+      { total: bigint; sellerShare: bigint; platformShare: bigint }
+    >();
     resolvedItems.forEach((ri) => {
       lineDiscountMap.set(ri.lineItemId, { total: 0n, sellerShare: 0n, platformShare: 0n });
     });
@@ -681,7 +707,11 @@ export class PricingService {
         shippingDiscountPoisha += p.discountAmountPoisha;
       }
       p.lineAllocations.forEach((alloc) => {
-        const current = lineDiscountMap.get(alloc.lineItemId) || { total: 0n, sellerShare: 0n, platformShare: 0n };
+        const current = lineDiscountMap.get(alloc.lineItemId) || {
+          total: 0n,
+          sellerShare: 0n,
+          platformShare: 0n,
+        };
         const allocAttr = calculatePromotionAttribution(alloc.discountPoisha, {
           fundingType: p.attribution.fundingType as any,
           sellerSharePercent: p.attribution.sellerSharePercent,
@@ -706,9 +736,14 @@ export class PricingService {
     let totalProductPoints = 0;
 
     for (const ri of resolvedItems) {
-      const lineDisc = lineDiscountMap.get(ri.lineItemId) || { total: 0n, sellerShare: 0n, platformShare: 0n };
+      const lineDisc = lineDiscountMap.get(ri.lineItemId) || {
+        total: 0n,
+        sellerShare: 0n,
+        platformShare: 0n,
+      };
       const baseTotalPoisha = ri.resolvedPrice.totalPoisha;
-      const netAmountPoisha = baseTotalPoisha > lineDisc.total ? baseTotalPoisha - lineDisc.total : 0n;
+      const netAmountPoisha =
+        baseTotalPoisha > lineDisc.total ? baseTotalPoisha - lineDisc.total : 0n;
 
       const taxRatePercent = await this.taxService.resolvePersistedTaxRatePercent({
         categoryId: ri.categoryId,
@@ -762,7 +797,8 @@ export class PricingService {
     }
 
     const netSubtotalPoisha = subtotalBasePoisha - totalDiscountPoisha;
-    const effectiveShippingFee = shippingFeePoisha > shippingDiscountPoisha ? shippingFeePoisha - shippingDiscountPoisha : 0n;
+    const effectiveShippingFee =
+      shippingFeePoisha > shippingDiscountPoisha ? shippingFeePoisha - shippingDiscountPoisha : 0n;
     const grandTotalPoisha = netSubtotalPoisha + totalTaxPoisha + effectiveShippingFee;
 
     const totals: AuthoritativeQuoteTotals = {
@@ -836,4 +872,3 @@ export class PricingService {
     };
   }
 }
-

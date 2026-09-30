@@ -8,12 +8,7 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import {
-  toPoisha,
-  fromPoisha,
-  toProductPoint,
-  Poisha,
-} from '@/shared/types/domain-terms';
+import { toPoisha, fromPoisha, toProductPoint, Poisha } from '@/shared/types/domain-terms';
 import { formatPoishaToBdt, parseBdtToPoisha } from '@/shared/utils/currency';
 import {
   assertCurrencyCode,
@@ -70,7 +65,9 @@ describe('Domain Primitives: Currency & Product Points', () => {
     });
 
     it('formats minor units without floating-point conversion', () => {
-      expect(formatMinorUnitAmount(900719925474099199n, 'BDT', 'en-BD')).toBe('৳ 9,007,199,254,740,991.99');
+      expect(formatMinorUnitAmount(900719925474099199n, 'BDT', 'en-BD')).toBe(
+        '৳ 9,007,199,254,740,991.99'
+      );
     });
   });
 

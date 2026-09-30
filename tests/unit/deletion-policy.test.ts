@@ -1,9 +1,9 @@
 /**
  * Unit Tests for AlifWorld Deletion Policy & BaseRepository Lifecycle Methods
- * 
+ *
  * Verifies strict immutability enforcement on financial, audit, and ledger models,
  * soft-delete allowances on domain models, and BaseRepository lifecycle hooks.
- * 
+ *
  * Reference: docs/architecture/identifiers-lifecycle-and-deletion-policy.md
  * Invariant: ADR-0022
  */

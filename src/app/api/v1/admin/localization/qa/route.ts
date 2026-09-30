@@ -11,7 +11,10 @@ const service = new TranslationQaService();
 export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'LOCALIZATION_QA' });
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      id: 'LOCALIZATION_QA',
+    });
 
     const query = catalogQaQuerySchema.safeParse({
       referenceLocale: req.nextUrl.searchParams.get('referenceLocale') || undefined,
@@ -20,7 +23,14 @@ export async function GET(req: NextRequest) {
     });
     if (!query.success) {
       return NextResponse.json(
-        { success: false, error: { code: 'VALIDATION_FAILED', message: 'Invalid localization QA query', details: query.error.flatten() } },
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'Invalid localization QA query',
+            details: query.error.flatten(),
+          },
+        },
         { status: 422 }
       );
     }

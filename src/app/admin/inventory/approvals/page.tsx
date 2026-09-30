@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface PendingCorrectionView {
   id: string;
@@ -67,7 +74,9 @@ export default function AdminMakerCheckerApprovalsPage() {
         if (c.id === id) {
           // Maker-Checker Check: Submitter cannot be approver
           if (c.submittedBy === currentAdminUserId) {
-            setToastMessage('❌ Maker-Checker Violation: You cannot approve your own submitted correction!');
+            setToastMessage(
+              '❌ Maker-Checker Violation: You cannot approve your own submitted correction!'
+            );
             setTimeout(() => setToastMessage(null), 4000);
             return c;
           }
@@ -137,7 +146,9 @@ export default function AdminMakerCheckerApprovalsPage() {
                 Gate-05 Maker-Checker Dual Authorization Invariant
               </h4>
               <p className="text-xs text-amber-800 mt-0.5 leading-relaxed font-medium">
-                Physical count corrections with variance exceeding <strong>10 units</strong> require explicit Admin approval before stock balances are updated. By security policy, the submitter (Maker) can never approve their own correction request.
+                Physical count corrections with variance exceeding <strong>10 units</strong> require
+                explicit Admin approval before stock balances are updated. By security policy, the
+                submitter (Maker) can never approve their own correction request.
               </p>
             </div>
           </div>
@@ -193,9 +204,15 @@ export default function AdminMakerCheckerApprovalsPage() {
                         <span className="text-slate-700 font-bold">{c.sellerName}</span> ({c.sku})
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-700 font-medium">{c.warehouseName}</TableCell>
-                    <TableCell className="text-right font-mono text-xs">{c.currentOnHand}</TableCell>
-                    <TableCell className="text-right font-mono text-xs font-bold">{c.countedQuantity}</TableCell>
+                    <TableCell className="text-xs text-slate-700 font-medium">
+                      {c.warehouseName}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs">
+                      {c.currentOnHand}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs font-bold">
+                      {c.countedQuantity}
+                    </TableCell>
                     <TableCell className="text-right font-mono text-xs font-black text-red-600">
                       {c.variance} units
                     </TableCell>

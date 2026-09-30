@@ -2,11 +2,19 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import SellerCatalogClient from './catalog-client';
 
 interface SellerProduct {
@@ -182,7 +190,8 @@ function LegacySellerProductsPage() {
           <div>
             <h2 className="text-xl font-black text-slate-950">Store Product Catalog</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Manage multi-SKU variants, BDT poisha prices, and discrete Product Points under merchant isolation.
+              Manage multi-SKU variants, BDT poisha prices, and discrete Product Points under
+              merchant isolation.
             </p>
           </div>
           <div className="flex items-center space-x-2 text-xs font-mono">
@@ -232,13 +241,27 @@ function LegacySellerProductsPage() {
             <Table>
               <TableHeader className="bg-slate-50 border-b border-slate-200">
                 <TableRow>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Product &amp; SKU</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Category &amp; Brand</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Base Price (BDT)</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Product Points</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Variants</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Actions</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    Product &amp; SKU
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    Category &amp; Brand
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                    Base Price (BDT)
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                    Product Points
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                    Variants
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -248,7 +271,14 @@ function LegacySellerProductsPage() {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-400">
                           {p.imageUrl ? (
-                            <img src={p.imageUrl} alt={p.title} className="w-full h-full object-cover" />
+                            <Image
+                              src={p.imageUrl}
+                              alt={p.title}
+                              width={40}
+                              height={40}
+                              unoptimized
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             'IMG'
                           )}
@@ -267,7 +297,9 @@ function LegacySellerProductsPage() {
                     <TableCell className="text-right">
                       <div className="font-bold text-xs text-slate-950">{p.basePrice}</div>
                       {p.compareAtPrice && (
-                        <div className="text-[10px] text-slate-400 line-through">{p.compareAtPrice}</div>
+                        <div className="text-[10px] text-slate-400 line-through">
+                          {p.compareAtPrice}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -280,25 +312,33 @@ function LegacySellerProductsPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       {p.status === 'PUBLISHED' ? (
-                        <Badge variant="success" size="sm">PUBLISHED</Badge>
+                        <Badge variant="success" size="sm">
+                          PUBLISHED
+                        </Badge>
                       ) : p.status === 'DRAFT' ? (
-                        <Badge variant="warning" size="sm">DRAFT</Badge>
+                        <Badge variant="warning" size="sm">
+                          DRAFT
+                        </Badge>
                       ) : (
-                        <Badge variant="default" size="sm">ARCHIVED</Badge>
+                        <Badge variant="default" size="sm">
+                          ARCHIVED
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       <button
                         onClick={() => {
-                          setProducts(products.map((item) => {
-                            if (item.id === p.id) {
-                              return {
-                                ...item,
-                                status: item.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED',
-                              };
-                            }
-                            return item;
-                          }));
+                          setProducts(
+                            products.map((item) => {
+                              if (item.id === p.id) {
+                                return {
+                                  ...item,
+                                  status: item.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED',
+                                };
+                              }
+                              return item;
+                            })
+                          );
                         }}
                         className="text-xs text-[#FF6A00] font-bold hover:underline"
                       >
@@ -319,7 +359,8 @@ function LegacySellerProductsPage() {
           <div className="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl">
             <h3 className="text-lg font-black text-slate-900 mb-1">Create New Product Listing</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Add a new draft product with integer BDT poisha pricing and independent Product Points.
+              Add a new draft product with integer BDT poisha pricing and independent Product
+              Points.
             </p>
 
             <form onSubmit={handleCreateProduct} className="space-y-4">
@@ -351,9 +392,7 @@ function LegacySellerProductsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Category
-                </label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Category</label>
                 <select
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}

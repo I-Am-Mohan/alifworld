@@ -9,16 +9,32 @@ export const dynamic = 'force-dynamic';
 const service = new CollectionService();
 
 export async function GET(req: NextRequest) {
-  try { const actor = authenticateRequest(req); await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: 'COLLECTION_ADMIN' }); return NextResponse.json({ success: true, data: await service.getAdminAll() }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load collection administration list'); }
+  try {
+    const actor = authenticateRequest(req);
+    await defaultPolicyEngine.assert(actor, 'catalog:write', {
+      type: 'CATALOG',
+      id: 'COLLECTION_ADMIN',
+    });
+    return NextResponse.json({ success: true, data: await service.getAdminAll() });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load collection administration list');
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: 'COLLECTION_ADMIN' });
+    await defaultPolicyEngine.assert(actor, 'catalog:write', {
+      type: 'CATALOG',
+      id: 'COLLECTION_ADMIN',
+    });
     const parsed = CreateCollectionSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) throw new ValidationError('Invalid collection.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.createCollection(actor.userId, parsed.data) }, { status: 201 });
-  } catch (error) { return errorResponse(req, error, 'Failed to create collection'); }
+    return NextResponse.json(
+      { success: true, data: await service.createCollection(actor.userId, parsed.data) },
+      { status: 201 }
+    );
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to create collection');
+  }
 }

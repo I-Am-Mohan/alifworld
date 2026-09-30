@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'bun:test';
 import { normalizeBangladeshPhone } from '@/shared/utils/phone';
 import { getBangladeshDistrict, getBangladeshUpazilas } from '@/shared/geo/bangladesh-geo';
-import { CustomerAddressInputSchema, validateAddressHierarchy } from '@/features/customer/addresses';
+import {
+  CustomerAddressInputSchema,
+  validateAddressHierarchy,
+} from '@/features/customer/addresses';
 
 describe('Bangladesh phone, address, and geography contract (Milestone 056)', () => {
   it('normalizes national, international, and Bengali phone forms to +880 E.164', () => {

@@ -4,13 +4,14 @@
 **Date**: 2026-09-22  
 **Deciders**: Architecture Team, Security & Compliance, Data Engineering  
 **Milestone Reference**: [Milestone 022](../../AlifWorld-300-Milestones/022-standardize-identifiers-timestamps-lifecycle-fields-and-deletion-policy.md)  
-**Phase**: Phase 03: Data Architecture  
+**Phase**: Phase 03: Data Architecture
 
 ---
 
 ## Context and Problem Statement
 
 As AlifWorld models its data architecture across e-commerce storefronts, multi-tenant seller centers, administrative backoffices, and financial ledgers, lack of standardization in primary keys, timestamp handling, audit fields, concurrency controls, and record deletion introduces critical failure modes:
+
 1. Random UUIDv4 keys cause PostgreSQL B-tree index fragmentation and page splits under heavy insert loads.
 2. Inconsistent timezone interpretations lead to erroneous Customer Club period cutoffs and settlement calculations.
 3. Uncontrolled concurrent mutations risk lost updates in stock reservations, order checkouts, and wallet balance transfers.
@@ -27,19 +28,20 @@ As AlifWorld models its data architecture across e-commerce storefronts, multi-t
 ## Considered Options
 
 1. **Auto-Incrementing Integer IDs (SERIAL/BIGSERIAL)**:
-   - *Pros*: Compact, sequential, fast index lookups.
-   - *Cons*: Vulnerable to enumeration attacks, leaks business volume to competitors, difficult to merge across shards or multi-region setups.
+   - _Pros_: Compact, sequential, fast index lookups.
+   - _Cons_: Vulnerable to enumeration attacks, leaks business volume to competitors, difficult to merge across shards or multi-region setups.
 2. **Pure UUIDv4**:
-   - *Pros*: Globally unique, decentralized generation.
-   - *Cons*: Opaque (no type indication), random entropy fragments B-tree index clusters, poor locality of reference.
+   - _Pros_: Globally unique, decentralized generation.
+   - _Cons_: Opaque (no type indication), random entropy fragments B-tree index clusters, poor locality of reference.
 3. **Prefixed K-Sortable Identifiers (Selected)**:
-   - *Pros*: Combines 3-letter domain prefix (`usr`, `sel`, `ord`), millisecond timestamp (k-sortable), and cryptographic entropy. Prevents enumeration, preserves index locality, and provides instant human readability.
+   - _Pros_: Combines 3-letter domain prefix (`usr`, `sel`, `ord`), millisecond timestamp (k-sortable), and cryptographic entropy. Prevents enumeration, preserves index locality, and provides instant human readability.
 
 ---
 
 ## Decision Outcome & Detailed Rationale
 
 ### 1. Standardized Prefixed Identifiers
+
 We adopt a standardized identifier format:
 $$\text{id} = \text{\{prefix\}}_{3\text{ chars}} + \text{\_} + \text{\{timestamp\}}_{8\text{ chars, base36}} + \text{\{entropy\}}_{16\text{ hex chars}}$$
 
@@ -47,11 +49,14 @@ $$\text{id} = \text{\{prefix\}}_{3\text{ chars}} + \text{\_} + \text{\{timestamp
 - Validation via `isValidId(id, expectedPrefix)`.
 
 ### 2. Standardized Timestamps & Timezone Discipline
+
 - All database timestamps (`created_at`, `updated_at`, `deleted_at`) are stored in UTC using `TIMESTAMP(3)`.
 - All operational and business period boundaries (e.g. daily, weekly, monthly cutoffs for Customer Clubs and Seller Rank recalculations) are strictly computed in **`Asia/Dhaka`** (`UTC+6`).
 
 ### 3. Lifecycle Fields & Optimistic Concurrency Control (OCC)
+
 Domain models include standard lifecycle columns:
+
 - `created_at` / `updated_at`
 - `created_by` / `updated_by` (`usr_...` ID)
 - `version` (`Int @default(1)`)
@@ -59,7 +64,9 @@ Domain models include standard lifecycle columns:
 Mutations verify the expected version. Discrepancies trigger an immediate `ConflictError` (HTTP 409).
 
 ### 4. Three-Tier Deletion Policy
+
 We enforce a rigid 3-tier deletion policy across all AlifWorld data models:
+
 - **Tier 1: Strictly Immutable (Financial, Audit, Snapshots)**:
   - Models: `WalletLedger`, `CommissionLedger`, `ProductPointLedger`, `Transaction`, `Payment`, `Refund`, `OrderSnapshot`, `OrderItemSnapshot`, `AuditLog`, `OutboxEvent`.
   - Policy: Hard and soft deletes are **strictly forbidden**. `assertModelDeletable(modelName)` throws `ValidationError`. Corrections must use offsetting reversal transactions.
@@ -75,6 +82,7 @@ We enforce a rigid 3-tier deletion policy across all AlifWorld data models:
 ## Consequences
 
 ### Positive:
+
 - B-tree indexing on PostgreSQL scales efficiently with k-sortable keys.
 - Instant entity type identification in API responses, Flutter routes, and log monitoring.
 - Zero risk of financial record erasure or regulatory audit log destruction.
@@ -82,6 +90,7 @@ We enforce a rigid 3-tier deletion policy across all AlifWorld data models:
 - Uniform query filtering and soft-delete/restore mechanics through `BaseRepository`.
 
 ### Negative / Trade-offs:
+
 - Primary key string size (28 characters) is slightly larger than 16-byte raw UUIDs.
 - Developers must use `whereNotDeleted` or repository helpers to exclude soft-deleted records.
 

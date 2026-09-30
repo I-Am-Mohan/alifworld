@@ -7,6 +7,14 @@ export const dynamic = 'force-dynamic';
 const service = new VariantCombinationService();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try { authenticateRequest(req); const max = Math.min(1000, Number(req.nextUrl.searchParams.get('max') || 1000)); return NextResponse.json({ success: true, data: await service.generate((await params).id, max) }); }
-  catch (error) { return errorResponse(req, error, 'Failed to generate variant combinations'); }
+  try {
+    authenticateRequest(req);
+    const max = Math.min(1000, Number(req.nextUrl.searchParams.get('max') || 1000));
+    return NextResponse.json({
+      success: true,
+      data: await service.generate((await params).id, max),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to generate variant combinations');
+  }
 }

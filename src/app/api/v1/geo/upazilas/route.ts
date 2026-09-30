@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/v1/geo/upazilas?district=dhaka
- * 
+ *
  * Returns the commercial and administrative upazilas/thanas of Bangladesh,
  * optionally filtered by district ID or name.
  */

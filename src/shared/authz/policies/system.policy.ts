@@ -1,10 +1,10 @@
 /**
  * AlifWorld Platform System Settings & Root Operations Authorization Policy
- * 
+ *
  * Enforces strict separation between Admin and Super Admin capabilities
  * for platform system settings, payment/storage credentials, maintenance mode,
  * and immutable security audit logs.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 044
  */
 
@@ -32,9 +32,9 @@ export const SUPER_ADMIN_ONLY_CONFIG_KEYS = new Set([
   'COURIER_STEADFAST_SECRET_KEY',
   'SMS_GATEWAY_API_KEY',
   'FEATURE_POINTS_CASH_CONVERTIBLE', // Locked Invariant
-  'FEATURE_MAINTENANCE_MODE',        // Emergency platform kill-switch
-  'PLATFORM_CURRENCY',              // Root base currency
-  'PLATFORM_TIMEZONE',              // Business timezone invariant
+  'FEATURE_MAINTENANCE_MODE', // Emergency platform kill-switch
+  'PLATFORM_CURRENCY', // Root base currency
+  'PLATFORM_TIMEZONE', // Business timezone invariant
   'MAKER_CHECKER_THRESHOLD_POISHA',
 ]);
 
@@ -62,7 +62,12 @@ export class SystemPolicy implements IPolicy {
       case 'system:config:read': {
         // Operational admins can read standard settings
         if (isPlatformAdmin || actor.permissions.includes('system:config')) {
-          return { granted: true, code: 'GRANTED', reason: 'Admin authorized to read operational configuration.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Admin authorized to read operational configuration.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -86,7 +91,8 @@ export class SystemPolicy implements IPolicy {
         }
 
         // Check if any attempted keys are Super Admin only
-        const keysBeingUpdated: string[] = resource.data?.keys || (resource.data?.config ? Object.keys(resource.data.config) : []);
+        const keysBeingUpdated: string[] =
+          resource.data?.keys || (resource.data?.config ? Object.keys(resource.data.config) : []);
         const sensitiveKeys = keysBeingUpdated.filter((k) => SUPER_ADMIN_ONLY_CONFIG_KEYS.has(k));
 
         if (sensitiveKeys.length > 0) {
@@ -111,7 +117,12 @@ export class SystemPolicy implements IPolicy {
       case 'audit:read':
       case 'system:audit_read': {
         if (actor.permissions.includes('system:audit_read')) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to inspect operational audit logs.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Authorized to inspect operational audit logs.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,

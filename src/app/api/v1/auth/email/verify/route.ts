@@ -9,7 +9,7 @@ const verificationService = new EmailVerificationService();
 
 /**
  * POST /api/v1/auth/email/verify
- * 
+ *
  * Verifies a customer email address using a submitted 6-digit numeric OTP code.
  * Upon successful verification, marks user as email-verified in the database.
  */

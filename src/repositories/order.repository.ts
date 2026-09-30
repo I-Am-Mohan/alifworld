@@ -1,18 +1,29 @@
 /**
  * Order & Fulfillment Repository
- * 
+ *
  * Manages parent customer orders, multi-vendor seller fulfillment groups,
  * order line item snapshots, shipments, and immutable status audit trails.
- * 
+ *
  * Invariants:
  * - ADR-0003: Single modular monolith with tenant isolation
  * - ADR-0022: Immutable audit logs and soft deletion
  * - ADR-0027: Multi-vendor parent orders partitioned into isolated seller fulfillment groups
  */
 
-import { BaseRepository, parseOffsetPagination, formatPaginatedResult, assertSellerScope, assertOwnership } from '@/shared/database/base-repository';
+import {
+  BaseRepository,
+  parseOffsetPagination,
+  formatPaginatedResult,
+  assertSellerScope,
+  assertOwnership,
+} from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import { NotFoundError, AuthorizationError, ValidationError, ConflictError } from '@/shared/errors/app-error';
+import {
+  NotFoundError,
+  AuthorizationError,
+  ValidationError,
+  ConflictError,
+} from '@/shared/errors/app-error';
 import { ActorContext } from '@/shared/authz/authz.types';
 import { SystemRoleCode } from '@/features/identity/types';
 
@@ -93,7 +104,14 @@ export class OrderRepository extends BaseRepository {
     return this.executeSafe(async () => {
       return this.withTransaction(async (tx) => {
         const claimed = await (tx as any).cart.updateMany({
-          where: { id: input.cartId, userId: input.customerId, currency: 'BDT', status: 'ACTIVE', version: input.cartVersion, deletedAt: null },
+          where: {
+            id: input.cartId,
+            userId: input.customerId,
+            currency: 'BDT',
+            status: 'ACTIVE',
+            version: input.cartVersion,
+            deletedAt: null,
+          },
           data: { status: 'CONVERTED', version: { increment: 1 } },
         });
         if (claimed.count !== 1) {
@@ -292,11 +310,14 @@ export class OrderRepository extends BaseRepository {
       const groups = order.fulfillmentGroups || [];
       const hasMatchingGroup = groups.some((g: any) => g.sellerId === actor.sellerId);
       if (!hasMatchingGroup) {
-        throw new AuthorizationError('Cannot view orders assigned to a different merchant fulfillment group.', {
-          code: 'TENANT_VIOLATION',
-          actorSellerId: actor.sellerId,
-          orderId: order.id,
-        });
+        throw new AuthorizationError(
+          'Cannot view orders assigned to a different merchant fulfillment group.',
+          {
+            code: 'TENANT_VIOLATION',
+            actorSellerId: actor.sellerId,
+            orderId: order.id,
+          }
+        );
       }
       return;
     }
@@ -305,14 +326,19 @@ export class OrderRepository extends BaseRepository {
     if (isRider) {
       const groups = order.fulfillmentGroups || [];
       const hasAssignedShipment = groups.some((g: any) =>
-        (g.shipments || []).some((s: any) => s.riderId === actor.userId || s.assignedRiderId === actor.userId)
+        (g.shipments || []).some(
+          (s: any) => s.riderId === actor.userId || s.assignedRiderId === actor.userId
+        )
       );
       if (!hasAssignedShipment) {
-        throw new AuthorizationError('Rider can only inspect orders assigned to their delivery route.', {
-          code: 'OWNERSHIP_VIOLATION',
-          actorId: actor.userId,
-          orderId: order.id,
-        });
+        throw new AuthorizationError(
+          'Rider can only inspect orders assigned to their delivery route.',
+          {
+            code: 'OWNERSHIP_VIOLATION',
+            actorId: actor.userId,
+            orderId: order.id,
+          }
+        );
       }
       return;
     }

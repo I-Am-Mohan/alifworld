@@ -6,5 +6,9 @@ export const dynamic = 'force-dynamic';
 const service = new BrandService();
 
 export async function GET(req: NextRequest) {
-  try { return NextResponse.json({ success: true, data: await service.getAll() }); } catch (error) { return errorResponse(req, error, 'Failed to load approved brands'); }
+  try {
+    return NextResponse.json({ success: true, data: await service.getAll() });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load approved brands');
+  }
 }

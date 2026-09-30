@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from 'react';
 import { LanguageDefinition, I18nConfig } from './types';
 import {
   DEFAULT_LOCALE,
@@ -39,6 +46,29 @@ function applyDocumentLocale(code: string): void {
   }
 }
 
+function subscribeLocale(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  window.addEventListener('alifworld:locale-change', onChange);
+  return () => {
+    window.removeEventListener('storage', onChange);
+    window.removeEventListener('alifworld:locale-change', onChange);
+  };
+}
+
+function readStoredLocale(): string | null {
+  try {
+    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+    const cookie = document.cookie.match(new RegExp(`(^| )${LOCALE_COOKIE_NAME}=([^;]+)`))?.[2];
+    return stored || cookie ? normalizeClientLocale(stored || cookie) : null;
+  } catch {
+    return null;
+  }
+}
+
+function serverLocaleSnapshot() {
+  return null;
+}
+
 export function I18nProvider({
   children,
   initialLocale,
@@ -48,12 +78,18 @@ export function I18nProvider({
   initialLocale?: string;
   initialLanguages?: LanguageDefinition[];
 }) {
-  const [locale, setLocaleState] = useState<string>(normalizeClientLocale(initialLocale));
+  const storedLocale = useSyncExternalStore(
+    subscribeLocale,
+    readStoredLocale,
+    serverLocaleSnapshot
+  );
+  const [selectedLocale, setLocaleState] = useState<string | null>(null);
+  const locale = selectedLocale || storedLocale || normalizeClientLocale(initialLocale);
   const [languages, setLanguages] = useState<LanguageDefinition[]>(
     initialLanguages || INITIAL_LANGUAGES
   );
   const [defaultLocale, setDefaultLocale] = useState<string>(DEFAULT_LOCALE);
-  const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(false);
+  const [isLoadingConfig, setIsLoadingConfig] = useState<boolean>(true);
 
   // Sync with cookie and localStorage
   const applyLocale = useCallback((newCode: string) => {
@@ -64,6 +100,7 @@ export function I18nProvider({
         localStorage.setItem(LOCALE_STORAGE_KEY, normalizedCode);
         document.cookie = `${LOCALE_COOKIE_NAME}=${normalizedCode};path=/;max-age=31536000;SameSite=Lax`;
         applyDocumentLocale(normalizedCode);
+        window.dispatchEvent(new Event('alifworld:locale-change'));
       } catch {}
     }
   }, []);
@@ -73,45 +110,41 @@ export function I18nProvider({
   };
 
   // Fetch dynamic language configuration from backend API
-  const refreshLanguages = useCallback(async () => {
-    try {
-      setIsLoadingConfig(true);
-      const res = await fetch('/api/v1/system/languages');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.data) {
-          const config: I18nConfig = data.data;
-          if (config.languages && config.languages.length > 0) {
-            setLanguages(config.languages);
+  const loadLanguages = useCallback(
+    () =>
+      fetch('/api/v1/system/languages')
+        .then(async (res) => {
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.data) {
+              const config: I18nConfig = data.data;
+              if (config.languages && config.languages.length > 0) {
+                setLanguages(config.languages);
+              }
+              if (config.defaultLocale) {
+                setDefaultLocale(config.defaultLocale);
+              }
+            }
           }
-          if (config.defaultLocale) {
-            setDefaultLocale(config.defaultLocale);
-          }
-        }
-      }
-    } catch {
-      // Fallback gracefully to bundled initial languages
-    } finally {
-      setIsLoadingConfig(false);
-    }
-  }, []);
+        })
+        .catch(() => undefined)
+        .finally(() => setIsLoadingConfig(false)),
+    []
+  );
+
+  const refreshLanguages = useCallback(() => {
+    setIsLoadingConfig(true);
+    return loadLanguages();
+  }, [loadLanguages]);
 
   // Initial load
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      let saved = localStorage.getItem(LOCALE_STORAGE_KEY);
-      if (!saved) {
-        const match = document.cookie.match(new RegExp(`(^| )${LOCALE_COOKIE_NAME}=([^;]+)`));
-        if (match) saved = match[2];
-      }
-      if (saved) {
-        const normalizedSavedLocale = normalizeClientLocale(saved);
-        setLocaleState(normalizedSavedLocale);
-        applyDocumentLocale(normalizedSavedLocale);
-      }
-    }
-    refreshLanguages();
-  }, [refreshLanguages]);
+    void loadLanguages();
+  }, [loadLanguages]);
+
+  useEffect(() => {
+    applyDocumentLocale(locale);
+  }, [locale]);
 
   // Translation lookup helper supporting dot-notation & parameter interpolation
   const t = useCallback(

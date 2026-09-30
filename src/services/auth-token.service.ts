@@ -1,9 +1,9 @@
 /**
  * AlifWorld Central Authentication & Token Lifecycle Service
- * 
+ *
  * Orchestrates token issuance, dual-client delivery (Web HttpOnly cookies vs Flutter Bearer tokens),
  * single-use refresh token rotation with reuse detection, and global token version invalidation.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, OWASP Session Management Guidelines
  */
 
@@ -24,7 +24,11 @@ import {
   extractBearerToken,
 } from '@/shared/auth/jwt';
 import { SessionRepository } from '@/repositories/session.repository';
-import { UnauthorizedError, TokenReuseDetectedError, NotFoundError } from '@/shared/errors/app-error';
+import {
+  UnauthorizedError,
+  TokenReuseDetectedError,
+  NotFoundError,
+} from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { getPrismaClient } from '@/shared/database/prisma';
 
@@ -298,25 +302,30 @@ export class AuthTokenService {
     }
 
     // Parse Token Family Lineage & Consumed Hashes
-    const familyMeta = typeof (this.sessionRepo as any).parseFamilyMetadata === 'function'
-      ? this.sessionRepo.parseFamilyMetadata(session)
-      : {
-          familyId: claims.familyId,
-          generation: claims.generation,
-          consumedTokenHashes: [],
-        };
+    const familyMeta =
+      typeof (this.sessionRepo as any).parseFamilyMetadata === 'function'
+        ? this.sessionRepo.parseFamilyMetadata(session)
+        : {
+            familyId: claims.familyId,
+            generation: claims.generation,
+            consumedTokenHashes: [],
+          };
     const familyId = claims.familyId || familyMeta.familyId;
     const incomingHash = hashToken(incomingRefreshToken);
 
     const isCurrentActive = session.refreshTokenHash === incomingHash;
     const isConsumed = familyMeta.consumedTokenHashes.includes(incomingHash);
-    const isOldGeneration = typeof claims.generation === 'number' && claims.generation < familyMeta.generation;
+    const isOldGeneration =
+      typeof claims.generation === 'number' && claims.generation < familyMeta.generation;
 
     // Token Reuse Detection: If token is not current active, is consumed, or is an older generation
     if (!isCurrentActive || isConsumed || isOldGeneration) {
       // SECURITY BREACH: Old or stolen token was presented!
       // Invalidate the session family and all active sessions for this user immediately
-      await this.sessionRepo.revokeSession(session.id, 'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED');
+      await this.sessionRepo.revokeSession(
+        session.id,
+        'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED'
+      );
       await this.sessionRepo.revokeAllUserSessions(
         session.userId,
         'SECURITY_BREACH_REFRESH_TOKEN_REUSE_DETECTED'
@@ -393,9 +402,10 @@ export class AuthTokenService {
     });
 
     // Re-fetch full user with roles for fresh access token claims
-    const fullSession = typeof (this.sessionRepo as any).findSessionByToken === 'function'
-      ? await this.sessionRepo.findSessionByToken(session.sessionToken)
-      : session;
+    const fullSession =
+      typeof (this.sessionRepo as any).findSessionByToken === 'function'
+        ? await this.sessionRepo.findSessionByToken(session.sessionToken)
+        : session;
     const userWithRoles = fullSession?.user || user;
     const { roles, permissions } = this.extractRolesAndPermissions(userWithRoles);
 
@@ -520,7 +530,10 @@ export class AuthTokenService {
   /**
    * Globally invalidates all tokens and sessions for a user (e.g. on password reset or security alert).
    */
-  async revokeAllUserSessions(userId: string, reason = 'GLOBAL_SECURITY_REVOCATION'): Promise<number> {
+  async revokeAllUserSessions(
+    userId: string,
+    reason = 'GLOBAL_SECURITY_REVOCATION'
+  ): Promise<number> {
     const newVersion = await this.sessionRepo.incrementUserTokenVersion(userId);
     await this.sessionRepo.revokeAllUserSessions(userId, reason);
     return newVersion;
@@ -605,7 +618,10 @@ export class AuthTokenService {
   /**
    * Lists all active sessions for a user with user-friendly device info.
    */
-  async listUserSessions(userId: string, currentSessionId?: string): Promise<FormattedSessionItem[]> {
+  async listUserSessions(
+    userId: string,
+    currentSessionId?: string
+  ): Promise<FormattedSessionItem[]> {
     const sessions = await this.sessionRepo.getActiveSessionsForUser(userId);
 
     return sessions.map((s: any) => {
@@ -616,7 +632,9 @@ export class AuthTokenService {
         id: s.id,
         clientType: s.clientType as ClientType,
         deviceSummary,
-        ipAddress: s.ipAddress ? s.ipAddress.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, '$1.$2.*.*') : null,
+        ipAddress: s.ipAddress
+          ? s.ipAddress.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, '$1.$2.*.*')
+          : null,
         userAgent: s.userAgent,
         isCurrent: s.id === currentSessionId,
         createdAt: s.createdAt.toISOString(),
@@ -710,7 +728,10 @@ export class AuthTokenService {
     userAgent?: string | null;
   }): Promise<number> {
     const newVersion = await this.sessionRepo.incrementUserTokenVersion(params.userId);
-    await this.sessionRepo.revokeAllUserSessions(params.userId, params.reason || 'USER_REVOKED_ALL_DEVICES');
+    await this.sessionRepo.revokeAllUserSessions(
+      params.userId,
+      params.reason || 'USER_REVOKED_ALL_DEVICES'
+    );
 
     try {
       await this.prisma.auditLog.create({

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Server-Side Route Guard & Authorization Helper
- * 
+ *
  * Provides HTTP Route Handler decorators and extraction utilities for
  * executing policy engine assertions with request context.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0023, Milestone 042
  */
 
@@ -18,7 +18,10 @@ import {
   ObjectAuthorizationDecision,
 } from './object-authz.types';
 import { defaultPolicyEngine, PolicyEngine } from './policy-engine';
-import { defaultObjectAuthzService, ObjectAuthorizationService } from './object-authorization.service';
+import {
+  defaultObjectAuthzService,
+  ObjectAuthorizationService,
+} from './object-authorization.service';
 import { SystemRoleCode } from '@/features/identity/types';
 
 /**
@@ -171,7 +174,16 @@ export function withObjectAuthorization<TResponse = any>(
   action: string,
   descriptorOrResolver:
     | ObjectResourceDescriptor
-    | ((req: NextRequest, params?: any) => Promise<ObjectResourceDescriptor | { resourceType: ResourceType; objectId: string; data?: any; reason?: string }> | ObjectResourceDescriptor | { resourceType: ResourceType; objectId: string; data?: any; reason?: string }),
+    | ((
+        req: NextRequest,
+        params?: any
+      ) =>
+        | Promise<
+            | ObjectResourceDescriptor
+            | { resourceType: ResourceType; objectId: string; data?: any; reason?: string }
+          >
+        | ObjectResourceDescriptor
+        | { resourceType: ResourceType; objectId: string; data?: any; reason?: string }),
   handler: (
     req: NextRequest,
     ctx: {
@@ -190,7 +202,12 @@ export function withObjectAuthorization<TResponse = any>(
           ? await descriptorOrResolver(req, routeParams)
           : descriptorOrResolver;
 
-      const { actor, decision, descriptor } = await authorizeObjectRequest(req, action, target, service);
+      const { actor, decision, descriptor } = await authorizeObjectRequest(
+        req,
+        action,
+        target,
+        service
+      );
 
       return await handler(req, {
         actor,
@@ -222,16 +239,18 @@ export function withObjectAuthorization<TResponse = any>(
  */
 export function withAuthorization<TResponse = any>(
   action: string,
-  resourceOrFactory: ResourceContext | ((req: NextRequest) => ResourceContext | Promise<ResourceContext>),
-  handler: (req: NextRequest, ctx: { actor: ActorContext; decision: PolicyDecision }) => Promise<NextResponse<TResponse>>,
+  resourceOrFactory:
+    ResourceContext | ((req: NextRequest) => ResourceContext | Promise<ResourceContext>),
+  handler: (
+    req: NextRequest,
+    ctx: { actor: ActorContext; decision: PolicyDecision }
+  ) => Promise<NextResponse<TResponse>>,
   engine: PolicyEngine = defaultPolicyEngine
 ) {
   return async (req: NextRequest): Promise<NextResponse> => {
     try {
       const resource =
-        typeof resourceOrFactory === 'function'
-          ? await resourceOrFactory(req)
-          : resourceOrFactory;
+        typeof resourceOrFactory === 'function' ? await resourceOrFactory(req) : resourceOrFactory;
 
       const { actor, decision } = await authorizeRequest(req, action, resource, engine);
       return await handler(req, { actor, decision });

@@ -49,7 +49,9 @@ export class PromotionAttributionService {
     };
 
     if (!PromotionPolicy.canCreatePromotion(actor, resource)) {
-      throw new AuthorizationError('Insufficient permissions to create this promotion funding configuration');
+      throw new AuthorizationError(
+        'Insufficient permissions to create this promotion funding configuration'
+      );
     }
 
     const existing = await this.repo.getPromotionByCode(input.code);
@@ -115,8 +117,10 @@ export class PromotionAttributionService {
     const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
     if (isAdmin) {
       if (input.fundingType !== undefined) data.fundingType = input.fundingType;
-      if (input.sellerSharePercent !== undefined) data.sellerSharePercent = new Prisma.Decimal(input.sellerSharePercent);
-      if (input.platformSharePercent !== undefined) data.platformSharePercent = new Prisma.Decimal(input.platformSharePercent);
+      if (input.sellerSharePercent !== undefined)
+        data.sellerSharePercent = new Prisma.Decimal(input.sellerSharePercent);
+      if (input.platformSharePercent !== undefined)
+        data.platformSharePercent = new Prisma.Decimal(input.platformSharePercent);
     }
 
     return this.repo.updatePromotion(id, data);
@@ -265,7 +269,7 @@ export class PromotionAttributionService {
         throw new AuthorizationError('Seller account is not bound to a valid sellerId');
       }
       if (query.sellerId && query.sellerId !== actor.sellerId) {
-        throw new AuthorizationError('Sellers cannot view another seller\'s promotion attributions');
+        throw new AuthorizationError("Sellers cannot view another seller's promotion attributions");
       }
       scopedSellerId = actor.sellerId;
     }
@@ -299,7 +303,7 @@ export class PromotionAttributionService {
         throw new AuthorizationError('Seller account is not bound to a valid sellerId');
       }
       if (targetSellerId && targetSellerId !== actor.sellerId) {
-        throw new AuthorizationError('Sellers cannot view another seller\'s promotion summary');
+        throw new AuthorizationError("Sellers cannot view another seller's promotion summary");
       }
       scopedSellerId = actor.sellerId;
     }

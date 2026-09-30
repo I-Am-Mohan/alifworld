@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * Retrieves single unified parent customer order by ID or orderNumber.
  * Enforces customer self-ownership at query boundary.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

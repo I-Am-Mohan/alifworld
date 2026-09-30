@@ -1,10 +1,10 @@
 /**
  * AlifWorld Server-Side Authorization Policy Engine
- * 
+ *
  * Orchestrates declarative policy evaluation, tenant isolation enforcement,
  * object ownership verification, security audit trail emission, and standardized
  * exception dispatch.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 042
  */
 
@@ -245,7 +245,11 @@ export class PolicyEngine {
   /**
    * Convenience boolean check.
    */
-  public async can(actor: ActorContext, action: string, resource: ResourceContext): Promise<boolean> {
+  public async can(
+    actor: ActorContext,
+    action: string,
+    resource: ResourceContext
+  ): Promise<boolean> {
     const decision = await this.evaluate(actor, action, resource);
     return decision.granted;
   }

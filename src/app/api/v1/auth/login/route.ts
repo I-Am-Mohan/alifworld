@@ -14,10 +14,10 @@ const policies = getRateLimitPolicies();
 
 /**
  * POST /api/v1/auth/login
- * 
+ *
  * Authenticates user credentials (email or Bangladesh mobile number) and issues
  * access token and rotating refresh token.
- * 
+ *
  * Rate-limited via Redis sliding-window token bucket with automatic IP + identifier keying.
  * Audits every login attempt (success, failure, rate limit violation) with redaction guarantees.
  */
@@ -36,11 +36,7 @@ export async function POST(req: NextRequest) {
     attemptIdentifier = parseResult.data.identifier;
 
     // 1. Enforce distributed rate limiting
-    const rateLimitResult = await assertRateLimit(
-      req,
-      policies.AUTH_LOGIN,
-      attemptIdentifier
-    );
+    const rateLimitResult = await assertRateLimit(req, policies.AUTH_LOGIN, attemptIdentifier);
 
     // 2. Perform authentication and session initialization
     const result = await authLoginService.login(parseResult.data, {

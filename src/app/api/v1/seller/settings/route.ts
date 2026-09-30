@@ -1,9 +1,9 @@
 /**
  * REST API Route Handler: /api/v1/seller/settings
- * 
+ *
  * Manages store profile customization, courier defaults, logistics addresses,
  * and vacation mode with strict seller tenant isolation.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 043
  */
 
@@ -27,8 +27,14 @@ export async function GET(req: NextRequest) {
     });
 
     // Enforce tenant scoping: Merchant can only access their own sellerId unless Super Admin
-    if (!actor.roles.includes('SUPER_ADMIN') && requestedSellerId && requestedSellerId !== actor.sellerId) {
-      throw new AuthorizationError('Tenant isolation violation: Requested seller does not match the active seller tenant.');
+    if (
+      !actor.roles.includes('SUPER_ADMIN') &&
+      requestedSellerId &&
+      requestedSellerId !== actor.sellerId
+    ) {
+      throw new AuthorizationError(
+        'Tenant isolation violation: Requested seller does not match the active seller tenant.'
+      );
     }
     const targetSellerId = actor.roles.includes('SUPER_ADMIN')
       ? requestedSellerId || actor.sellerId
@@ -64,7 +70,10 @@ export async function PUT(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
-        { success: false, error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' } },
+        {
+          success: false,
+          error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' },
+        },
         { status: 400 }
       );
     }
@@ -95,7 +104,9 @@ export async function PUT(req: NextRequest) {
     });
 
     if (!actor.roles.includes('SUPER_ADMIN') && actor.sellerId !== input.sellerId) {
-      throw new AuthorizationError('Tenant isolation violation: Access to store settings outside assigned tenant is forbidden');
+      throw new AuthorizationError(
+        'Tenant isolation violation: Access to store settings outside assigned tenant is forbidden'
+      );
     }
 
     const updated = await settingsService.updateSettings(actor.userId, input);

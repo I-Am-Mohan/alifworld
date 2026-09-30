@@ -11,10 +11,7 @@ export const dynamic = 'force-dynamic';
  * Ingests asynchronous webhook status updates from Bangladesh courier partners
  * (Pathao, Steadfast, RedX, Paperfly).
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ courier: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ courier: string }> }) {
   try {
     const rawParams = await params;
     const validatedParams = CourierWebhookParamsSchema.parse({

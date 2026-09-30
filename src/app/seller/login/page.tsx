@@ -3,15 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  AlertCircle,
-  Store,
-  ShieldCheck,
-} from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, RefreshCw, AlertCircle, Store, ShieldCheck } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { useI18n } from '@/i18n/context';
@@ -32,7 +24,9 @@ export default function SellerLoginPage() {
     setError(null);
 
     if (!identifier.trim() || !password) {
-      setError(t('admin.identifierPasswordRequired') || 'Please provide your email/phone and password.');
+      setError(
+        t('admin.identifierPasswordRequired') || 'Please provide your email/phone and password.'
+      );
       return;
     }
 
@@ -113,9 +107,9 @@ export default function SellerLoginPage() {
         <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-900/5 p-7 sm:p-9 relative z-10">
           {/* Brand Logo & Header */}
           <div className="text-center mb-6">
-             <div className="flex justify-center mb-4">
-                          <AlifLogo size="lg" href="/seller/login" />
-                        </div>
+            <div className="flex justify-center mb-4">
+              <AlifLogo size="lg" href="/seller/login" />
+            </div>
             <h1 className="text-2xl font-black text-slate-950 tracking-tight">
               Sign in to Seller Center
             </h1>
@@ -154,10 +148,7 @@ export default function SellerLoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label
-                  htmlFor="seller-password"
-                  className="block text-xs font-bold text-slate-700"
-                >
+                <label htmlFor="seller-password" className="block text-xs font-bold text-slate-700">
                   Password
                 </label>
                 <Link

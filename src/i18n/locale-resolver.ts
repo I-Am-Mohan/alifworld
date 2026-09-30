@@ -1,6 +1,6 @@
 /**
  * AlifWorld Server-Side Locale Resolver & Negotiation Engine
- * 
+ *
  * Implements deterministic locale resolution hierarchy:
  * 1. Path prefix (/bn-BD/..., /en-BD/..., /bn/..., /en/...)
  * 2. Query parameter (?locale=... or ?lang=...)
@@ -8,7 +8,7 @@
  * 4. Cookie (aw_locale)
  * 5. Accept-Language header (RFC 7231 quality-weighted parsing)
  * 6. Default launch fallback (bn-BD)
- * 
+ *
  * Invariants: ADR-0003, Phase 06 Milestone 051, BCP 47
  */
 
@@ -104,7 +104,9 @@ export function parseAcceptLanguage(header: string | null | undefined): string[]
 /**
  * Resolves the preferred supported locale from an Accept-Language header.
  */
-export function resolveFromAcceptLanguage(header: string | null | undefined): CanonicalLocale | null {
+export function resolveFromAcceptLanguage(
+  header: string | null | undefined
+): CanonicalLocale | null {
   const preferred = parseAcceptLanguage(header);
 
   for (const candidate of preferred) {

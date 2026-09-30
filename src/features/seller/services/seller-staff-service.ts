@@ -1,9 +1,9 @@
 /**
  * AlifWorld Seller Staff Domain Service
- * 
+ *
  * Manages store staff delegation, invitations, role assignments,
  * and scoped access controls within strict multi-tenant isolation boundaries.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0021, ADR-0022, ADR-0024, Milestone 045
  */
 
@@ -12,7 +12,12 @@ import { SellerStaffRepository } from '../repositories/seller-staff-repository';
 import { UserRepository } from '@/features/identity/repositories/user-repository';
 import { RoleRepository } from '@/features/identity/repositories/role-repository';
 import { UserRoleAssignmentRepository } from '@/features/identity/repositories/user-role-assignment-repository';
-import { ConflictError, NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
 import { SellerStaffModel } from '../types';
 import { AddSellerStaffInput, InviteSellerStaffInput } from '../validators';
@@ -175,7 +180,11 @@ export class SellerStaffService {
   /**
    * Removes a staff member from a seller store.
    */
-  public async removeStaff(actorUserId: string, sellerId: string, targetUserId: string): Promise<void> {
+  public async removeStaff(
+    actorUserId: string,
+    sellerId: string,
+    targetUserId: string
+  ): Promise<void> {
     const seller = await this.sellerRepo.findById(sellerId);
     if (!seller) {
       throw new NotFoundError(`Seller store with id '${sellerId}' not found.`);

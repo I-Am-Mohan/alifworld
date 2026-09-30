@@ -168,10 +168,7 @@ describe('Phase 14 Acceptance Suite: Multi-Seller Checkout & Bangladesh Delivery
       expect(codJson.data.isEligible).toBe(true);
 
       // Step E: Final Order Review Snapshot
-      const reviewSpy = spyOn(
-        finalOrderReviewService,
-        'generateOrderReview'
-      ).mockResolvedValue({
+      const reviewSpy = spyOn(finalOrderReviewService, 'generateOrderReview').mockResolvedValue({
         cartId: 'crt_accepted_01',
         cartVersion: 1,
         reviewFingerprint: 'rev_fp_acceptance_123',
@@ -265,10 +262,7 @@ describe('Phase 14 Acceptance Suite: Multi-Seller Checkout & Bangladesh Delivery
       reviewSpy.mockRestore();
 
       // Step F: Atomic Place-Order Transaction with Consent
-      const placeSpy = spyOn(
-        placeOrderTransactionService,
-        'placeOrder'
-      ).mockResolvedValue({
+      const placeSpy = spyOn(placeOrderTransactionService, 'placeOrder').mockResolvedValue({
         orderId: 'ord_accepted_001',
         orderNumber: 'ORD-20261015-ACC001',
         customerId: 'usr_customer_accepted_01',
@@ -371,10 +365,7 @@ describe('Phase 14 Acceptance Suite: Multi-Seller Checkout & Bangladesh Delivery
 
   describe('3. Abandoned Checkout Recovery Lifecycle', () => {
     it('restores abandoned cart via token and validates revalidation metrics', async () => {
-      const recoverSpy = spyOn(
-        abandonedCheckoutRecoveryService,
-        'recoverCart'
-      ).mockResolvedValue({
+      const recoverSpy = spyOn(abandonedCheckoutRecoveryService, 'recoverCart').mockResolvedValue({
         success: true,
         cartId: 'crt_recovered_01',
         recoveryToken: 'rec_acceptance_token_123',

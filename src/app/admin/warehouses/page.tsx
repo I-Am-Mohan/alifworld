@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface AdminWarehouse {
   id: string;
@@ -250,7 +257,12 @@ export default function AdminWarehousesPage() {
               <span>ℹ️</span>
               <span>{sweepResult}</span>
             </div>
-            <button onClick={() => setSweepResult(null)} className="text-sky-600 hover:text-sky-900">✕</button>
+            <button
+              onClick={() => setSweepResult(null)}
+              className="text-sky-600 hover:text-sky-900"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -265,40 +277,58 @@ export default function AdminWarehousesPage() {
             Platform Warehouse Network &amp; Audit Trail
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-            Centralized fulfillment hubs, merchant-owned local depots, dynamic checkout TTL reservations (15-minute window), and immutable inventory ledgers across all 8 Bangladesh divisions.
+            Centralized fulfillment hubs, merchant-owned local depots, dynamic checkout TTL
+            reservations (15-minute window), and immutable inventory ledgers across all 8 Bangladesh
+            divisions.
           </p>
         </div>
 
         {/* Facilities Overview Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="bg-white border-slate-200/90 shadow-sm p-5 hover:shadow-md transition-shadow">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">Total Facilities</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              Total Facilities
+            </div>
             <div className="text-3xl font-black text-slate-900 mt-2">{warehouses.length}</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">8 Bangladesh Divisions Covered</div>
+            <div className="text-xs text-slate-500 mt-1 font-medium">
+              8 Bangladesh Divisions Covered
+            </div>
           </Card>
 
           <Card className="bg-white border-slate-200/90 shadow-sm p-5 hover:shadow-md transition-shadow">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">Platform Hubs</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              Platform Hubs
+            </div>
             <div className="text-3xl font-black text-[#FF6A00] mt-2">
               {warehouses.filter((w) => w.isPlatformHub).length}
             </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Centralized multi-seller fulfillment</div>
+            <div className="text-xs text-slate-500 mt-1 font-medium">
+              Centralized multi-seller fulfillment
+            </div>
           </Card>
 
           <Card className="bg-white border-slate-200/90 shadow-sm p-5 hover:shadow-md transition-shadow">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">Audited Net Available</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              Audited Net Available
+            </div>
             <div className="text-3xl font-black text-[#10B981] mt-2">
               {totalAvailableAll.toLocaleString()} units
             </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Physical On-Hand: {totalOnHandAll.toLocaleString()}</div>
+            <div className="text-xs text-slate-500 mt-1 font-medium">
+              Physical On-Hand: {totalOnHandAll.toLocaleString()}
+            </div>
           </Card>
 
           <Card className="bg-white border-slate-200/90 shadow-sm p-5 hover:shadow-md transition-shadow">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">Reserved for Checkout</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              Reserved for Checkout
+            </div>
             <div className="text-3xl font-black text-[#0284C7] mt-2">
               {totalReservedAll.toLocaleString()} units
             </div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">15-minute active buyer hold</div>
+            <div className="text-xs text-slate-500 mt-1 font-medium">
+              15-minute active buyer hold
+            </div>
           </Card>
         </div>
 
@@ -341,9 +371,12 @@ export default function AdminWarehousesPage() {
           <Card className="bg-white border-slate-200/90 shadow-sm overflow-hidden mb-8">
             <CardHeader className="bg-slate-50/70 border-b border-slate-200/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-bold text-slate-900">Physical Nodes &amp; Storage Depots</CardTitle>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Physical Nodes &amp; Storage Depots
+                </CardTitle>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Physical distribution points supporting Dhaka same-day dispatch and 64-district delivery.
+                  Physical distribution points supporting Dhaka same-day dispatch and 64-district
+                  delivery.
                 </p>
               </div>
               <div className="text-xs font-mono text-slate-500">
@@ -355,18 +388,35 @@ export default function AdminWarehousesPage() {
                 <Table>
                   <TableHeader className="bg-slate-50 border-b border-slate-200">
                     <TableRow>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Facility Code &amp; Name</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Division &amp; District</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Facility Type</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">Physical On-Hand</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">Reserved (Hold)</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">Available to Sell</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-center">Status</TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Facility Code &amp; Name
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Division &amp; District
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Facility Type
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">
+                        Physical On-Hand
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">
+                        Reserved (Hold)
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">
+                        Available to Sell
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-center">
+                        Status
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {warehouses.map((w) => (
-                      <TableRow key={w.id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
+                      <TableRow
+                        key={w.id}
+                        className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors"
+                      >
                         <TableCell className="py-3.5">
                           <div className="font-bold text-slate-900 text-sm">{w.name}</div>
                           <div className="text-xs font-mono text-[#FF6A00] font-bold">{w.code}</div>
@@ -409,9 +459,12 @@ export default function AdminWarehousesPage() {
           <Card className="bg-white border-slate-200/90 shadow-sm overflow-hidden mb-8">
             <CardHeader className="bg-slate-50/70 border-b border-slate-200/80 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-bold text-slate-900">Central Operations Movement Ledger</CardTitle>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Central Operations Movement Ledger
+                </CardTitle>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Cryptographically referenced append-only financial and physical inventory audit entries.
+                  Cryptographically referenced append-only financial and physical inventory audit
+                  entries.
                 </p>
               </div>
               <span className="text-xs font-mono text-[#10B981] bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full font-bold">
@@ -423,18 +476,35 @@ export default function AdminWarehousesPage() {
                 <Table>
                   <TableHeader className="bg-slate-50 border-b border-slate-200">
                     <TableRow>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Timestamp</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Facility</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Movement Type</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Variant Details</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">Quantity Delta</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Operator / Actor</TableHead>
-                      <TableHead className="text-slate-600 font-bold text-xs uppercase">Audit Justification</TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Timestamp
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Facility
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Movement Type
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Variant Details
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase text-right">
+                        Quantity Delta
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Operator / Actor
+                      </TableHead>
+                      <TableHead className="text-slate-600 font-bold text-xs uppercase">
+                        Audit Justification
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {auditMovements.map((mov) => (
-                      <TableRow key={mov.id} className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors">
+                      <TableRow
+                        key={mov.id}
+                        className="hover:bg-slate-50/60 border-b border-slate-100 transition-colors"
+                      >
                         <TableCell className="font-mono text-xs text-slate-500 py-3.5">
                           {mov.timestamp}
                         </TableCell>
@@ -447,10 +517,10 @@ export default function AdminWarehousesPage() {
                               mov.type === 'RECEIVE'
                                 ? 'green'
                                 : mov.type === 'RESERVE'
-                                ? 'blue'
-                                : mov.type === 'DAMAGE'
-                                ? 'danger'
-                                : 'cyan'
+                                  ? 'blue'
+                                  : mov.type === 'DAMAGE'
+                                    ? 'danger'
+                                    : 'cyan'
                             }
                           >
                             {mov.type}
@@ -469,9 +539,7 @@ export default function AdminWarehousesPage() {
                         <TableCell className="font-mono text-xs text-slate-600">
                           {mov.actor}
                         </TableCell>
-                        <TableCell className="text-xs text-slate-600">
-                          {mov.reason}
-                        </TableCell>
+                        <TableCell className="text-xs text-slate-600">{mov.reason}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -485,14 +553,62 @@ export default function AdminWarehousesPage() {
         {activeTab === 'divisions' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { name: 'Dhaka Division', code: 'DHK', hubs: 2, status: 'Active (Same-Day Available)', transit: '12-24 hrs' },
-              { name: 'Chittagong Division', code: 'CTG', hubs: 1, status: 'Active (Next-Day Hub)', transit: '24-48 hrs' },
-              { name: 'Sylhet Division', code: 'SYL', hubs: 1, status: 'Active (Regional Hub)', transit: '24-48 hrs' },
-              { name: 'Rajshahi Division', code: 'RAJ', hubs: 1, status: 'Active (Agro Depot)', transit: '48-72 hrs' },
-              { name: 'Khulna Division', code: 'KHL', hubs: 0, status: 'Route via Jessore Hub', transit: '48-72 hrs' },
-              { name: 'Barisal Division', code: 'BAR', hubs: 0, status: 'Route via Dhaka Central', transit: '48-72 hrs' },
-              { name: 'Rangpur Division', code: 'RNG', hubs: 0, status: 'Route via Bogura Depot', transit: '48-72 hrs' },
-              { name: 'Mymensingh Division', code: 'MYM', hubs: 0, status: 'Route via Gazipur Node', transit: '24-48 hrs' },
+              {
+                name: 'Dhaka Division',
+                code: 'DHK',
+                hubs: 2,
+                status: 'Active (Same-Day Available)',
+                transit: '12-24 hrs',
+              },
+              {
+                name: 'Chittagong Division',
+                code: 'CTG',
+                hubs: 1,
+                status: 'Active (Next-Day Hub)',
+                transit: '24-48 hrs',
+              },
+              {
+                name: 'Sylhet Division',
+                code: 'SYL',
+                hubs: 1,
+                status: 'Active (Regional Hub)',
+                transit: '24-48 hrs',
+              },
+              {
+                name: 'Rajshahi Division',
+                code: 'RAJ',
+                hubs: 1,
+                status: 'Active (Agro Depot)',
+                transit: '48-72 hrs',
+              },
+              {
+                name: 'Khulna Division',
+                code: 'KHL',
+                hubs: 0,
+                status: 'Route via Jessore Hub',
+                transit: '48-72 hrs',
+              },
+              {
+                name: 'Barisal Division',
+                code: 'BAR',
+                hubs: 0,
+                status: 'Route via Dhaka Central',
+                transit: '48-72 hrs',
+              },
+              {
+                name: 'Rangpur Division',
+                code: 'RNG',
+                hubs: 0,
+                status: 'Route via Bogura Depot',
+                transit: '48-72 hrs',
+              },
+              {
+                name: 'Mymensingh Division',
+                code: 'MYM',
+                hubs: 0,
+                status: 'Route via Gazipur Node',
+                transit: '24-48 hrs',
+              },
             ].map((div) => (
               <Card key={div.code} className="bg-white border-slate-200/90 shadow-sm p-5">
                 <div className="flex items-center justify-between">
@@ -581,8 +697,19 @@ export default function AdminWarehousesPage() {
                     onChange={(e) => setNewDivision(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6A00]/20 focus:border-[#FF6A00]"
                   >
-                    {['DHAKA', 'CHITTAGONG', 'SYLHET', 'RAJSHAHI', 'KHULNA', 'BARISAL', 'RANGPUR', 'MYMENSINGH'].map((d) => (
-                      <option key={d} value={d}>{d}</option>
+                    {[
+                      'DHAKA',
+                      'CHITTAGONG',
+                      'SYLHET',
+                      'RAJSHAHI',
+                      'KHULNA',
+                      'BARISAL',
+                      'RANGPUR',
+                      'MYMENSINGH',
+                    ].map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
                     ))}
                   </select>
                 </div>

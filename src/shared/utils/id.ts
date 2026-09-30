@@ -1,12 +1,12 @@
 /**
  * AlifWorld Standardized Identifier Generation & Validation Utility
- * 
+ *
  * Provides type-safe, human-readable, collision-resistant, and k-sortable IDs
  * prefixed by domain entity abbreviations.
- * 
+ *
  * Format: {prefix}_{timestampBase36}{entropyHex}
  * Example: usr_1j7x4b9e8m02k3f8d7c6b5a4
- * 
+ *
  * Reference: docs/architecture/identifiers-lifecycle-and-deletion-policy.md
  * Invariant: ADR-0022
  */

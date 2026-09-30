@@ -56,7 +56,9 @@ interface SplitRuleView {
 
 export default function AdminWalletsAndLedgerPage() {
   const { locale } = useI18n();
-  const [activeTab, setActiveTab] = useState<'accounts' | 'journals' | 'rules' | 'pools'>('accounts');
+  const [activeTab, setActiveTab] = useState<'accounts' | 'journals' | 'rules' | 'pools'>(
+    'accounts'
+  );
 
   const [accounts] = useState<ChartAccount[]>([
     {
@@ -126,9 +128,7 @@ export default function AdminWalletsAndLedgerPage() {
       totalPoisha: BigInt(100000),
       ruleVersion: 'v1.0.0',
       postedAt: '2026-09-22T12:00:00.000Z',
-      debits: [
-        { account: '5010-PROMOTIONAL-REWARDS-EXPENSE', amountPoisha: BigInt(100000) },
-      ],
+      debits: [{ account: '5010-PROMOTIONAL-REWARDS-EXPENSE', amountPoisha: BigInt(100000) }],
       credits: [
         { account: '2010-CUSTOMER-MAIN-LIABILITY', amountPoisha: BigInt(50000) },
         { account: '2020-CUSTOMER-SHOPPING-LIABILITY', amountPoisha: BigInt(20000) },
@@ -222,7 +222,8 @@ export default function AdminWalletsAndLedgerPage() {
               Chart of Accounts & Reward Allocation Ledgers
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Mathematically balanced multi-wallet ledgers, versioned split policies, and decoupled loyalty token auditing.
+              Mathematically balanced multi-wallet ledgers, versioned split policies, and decoupled
+              loyalty token auditing.
             </p>
           </div>
         </div>
@@ -248,7 +249,9 @@ export default function AdminWalletsAndLedgerPage() {
             <div className="text-2xl font-black text-blue-400 font-mono">
               {formatBdt(BigInt(90000))}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">Main + Shopping + Good-Luck + Charity</div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              Main + Shopping + Good-Luck + Charity
+            </div>
           </div>
 
           <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
@@ -267,9 +270,7 @@ export default function AdminWalletsAndLedgerPage() {
               <span>Ledger Balance Invariant</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="text-xl font-bold text-emerald-400">
-              100% Balanced
-            </div>
+            <div className="text-xl font-bold text-emerald-400">100% Balanced</div>
             <div className="text-[11px] text-slate-500 mt-1">Zero Out-of-Balance Residuals</div>
           </div>
         </div>
@@ -334,10 +335,10 @@ export default function AdminWalletsAndLedgerPage() {
                               acc.type === 'ASSET'
                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                 : acc.type === 'LIABILITY'
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                : acc.type === 'REVENUE'
-                                ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                  : acc.type === 'REVENUE'
+                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                    : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
                             }`}
                           >
                             {acc.type}
@@ -360,11 +361,16 @@ export default function AdminWalletsAndLedgerPage() {
         {activeTab === 'journals' && (
           <div className="space-y-4">
             {journals.map((j) => (
-              <div key={j.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div
+                key={j.id}
+                className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-4"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-2">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="font-mono font-bold text-white text-sm">{j.journalNumber}</span>
+                      <span className="font-mono font-bold text-white text-sm">
+                        {j.journalNumber}
+                      </span>
                       <span className="text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded">
                         {j.referenceType}
                       </span>
@@ -374,8 +380,12 @@ export default function AdminWalletsAndLedgerPage() {
                   </div>
 
                   <div className="text-right font-mono">
-                    <span className="text-[10px] text-slate-500 uppercase block">Balanced Total</span>
-                    <span className="font-bold text-base text-emerald-400">{formatBdt(j.totalPoisha)}</span>
+                    <span className="text-[10px] text-slate-500 uppercase block">
+                      Balanced Total
+                    </span>
+                    <span className="font-bold text-base text-emerald-400">
+                      {formatBdt(j.totalPoisha)}
+                    </span>
                   </div>
                 </div>
 
@@ -387,9 +397,14 @@ export default function AdminWalletsAndLedgerPage() {
                     </span>
                     <div className="space-y-1.5">
                       {j.debits.map((d, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-800 flex justify-between items-center">
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-800 flex justify-between items-center"
+                        >
                           <span className="font-mono text-slate-300">{d.account}</span>
-                          <span className="font-mono font-bold text-rose-400">{formatBdt(d.amountPoisha)}</span>
+                          <span className="font-mono font-bold text-rose-400">
+                            {formatBdt(d.amountPoisha)}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -402,9 +417,14 @@ export default function AdminWalletsAndLedgerPage() {
                     </span>
                     <div className="space-y-1.5">
                       {j.credits.map((c, idx) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-800 flex justify-between items-center">
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-800 flex justify-between items-center"
+                        >
                           <span className="font-mono text-slate-300">{c.account}</span>
-                          <span className="font-mono font-bold text-emerald-400">+{formatBdt(c.amountPoisha)}</span>
+                          <span className="font-mono font-bold text-emerald-400">
+                            +{formatBdt(c.amountPoisha)}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -421,7 +441,10 @@ export default function AdminWalletsAndLedgerPage() {
             {rules.map((r) => {
               const totalBps = Object.values(r.splits).reduce((a, b) => a + b, 0);
               return (
-                <div key={r.code} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div
+                  key={r.code}
+                  className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-4"
+                >
                   <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                     <div>
                       <div className="flex items-center space-x-2">
@@ -440,7 +463,10 @@ export default function AdminWalletsAndLedgerPage() {
 
                   <div className="space-y-2 text-xs">
                     {Object.entries(r.splits).map(([target, bps]) => (
-                      <div key={target} className="flex justify-between items-center p-2 rounded-lg bg-slate-800/30">
+                      <div
+                        key={target}
+                        className="flex justify-between items-center p-2 rounded-lg bg-slate-800/30"
+                      >
                         <span className="font-medium text-slate-300">{target}</span>
                         <span className="font-mono font-bold text-[#F59E0B]">
                           {(bps / 100).toFixed(2)}% ({bps} bps)

@@ -34,7 +34,9 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
         sku: result.sku,
         title: result.title,
         pricePoisha: result.pricePoisha.toString(),
-        compareAtPricePoisha: result.compareAtPricePoisha ? result.compareAtPricePoisha.toString() : null,
+        compareAtPricePoisha: result.compareAtPricePoisha
+          ? result.compareAtPricePoisha.toString()
+          : null,
         costPricePoisha: result.costPricePoisha ? result.costPricePoisha.toString() : null,
         minPricePoisha: result.minPricePoisha ? result.minPricePoisha.toString() : null,
         productPoint: result.productPoint,

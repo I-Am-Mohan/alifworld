@@ -1,9 +1,9 @@
 /**
  * AlifWorld Category Taxonomy Repository
- * 
+ *
  * Encapsulates database queries for hierarchical categories, parent/child
  * traversal, and NBR VAT rate mappings.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0025
  */
@@ -48,7 +48,10 @@ export class CategoryRepository {
     return category ? this.mapToModel(category) : null;
   }
 
-  public async findAll(options?: { isActive?: boolean; parentId?: string | null }): Promise<CategoryModel[]> {
+  public async findAll(options?: {
+    isActive?: boolean;
+    parentId?: string | null;
+  }): Promise<CategoryModel[]> {
     const where: any = { deletedAt: null };
     if (options?.isActive !== undefined) {
       where.isActive = options.isActive;

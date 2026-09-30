@@ -1,9 +1,9 @@
 /**
  * Seller Domain Zod Validation Schemas
- * 
+ *
  * Enforces strict input validation, tenant identifier verification,
  * NBR BIN/TIN syntax checks, and KYC document upload constraints.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0022, ADR-0024
  */
@@ -30,19 +30,17 @@ export const StaffIdSchema = createPrefixedIdSchema(ID_PREFIXES.STAFF);
 /**
  * Bangladesh phone number transformer for support phone.
  */
-export const BangladeshPhoneSchema = z
-  .string()
-  .transform((val, ctx) => {
-    try {
-      return normalizeBangladeshPhone(val);
-    } catch {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Invalid Bangladesh mobile number. Must match +8801[3-9]XXXXXXXX',
-      });
-      return z.NEVER;
-    }
-  });
+export const BangladeshPhoneSchema = z.string().transform((val, ctx) => {
+  try {
+    return normalizeBangladeshPhone(val);
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid Bangladesh mobile number. Must match +8801[3-9]XXXXXXXX',
+    });
+    return z.NEVER;
+  }
+});
 
 /**
  * Address Zod Schema
@@ -66,7 +64,10 @@ export const CreateSellerInputSchema = z.object({
     .toLowerCase()
     .min(3)
     .max(60)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Store slug must be lowercase alphanumeric characters separated by single hyphens'),
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      'Store slug must be lowercase alphanumeric characters separated by single hyphens'
+    ),
   tradeLicenseNumber: z.string().trim().max(50).optional(),
   binNumber: z
     .string()
@@ -116,12 +117,7 @@ export const SubmitKycDocumentInputSchema = z.object({
     .int()
     .positive()
     .max(10 * 1024 * 1024, 'Document file size cannot exceed 10 MB'),
-  mimeType: z.enum([
-    'application/pdf',
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-  ]),
+  mimeType: z.enum(['application/pdf', 'image/jpeg', 'image/png', 'image/webp']),
 });
 
 export type SubmitKycDocumentInput = z.infer<typeof SubmitKycDocumentInputSchema>;
@@ -153,18 +149,19 @@ export type VerifyKycDocumentInput = z.infer<typeof VerifyKycDocumentInputSchema
 /**
  * Add Seller Staff Input Schema
  */
-export const AddSellerStaffInputSchema = z.object({
-  sellerId: SellerIdSchema,
-  userId: UserIdSchema.optional(),
-  email: z.string().trim().email('Invalid email address').optional(),
-  phone: BangladeshPhoneSchema.optional(),
-  name: z.string().trim().min(2).max(100).optional(),
-  roleCode: z.string().trim().default('SELLER_STAFF'),
-  permissions: z.array(z.string().trim()).default([]),
-}).refine(
-  (data) => Boolean(data.userId || data.email || data.phone),
-  { message: 'At least one of userId, email, or Bangladesh phone must be provided to add staff' }
-);
+export const AddSellerStaffInputSchema = z
+  .object({
+    sellerId: SellerIdSchema,
+    userId: UserIdSchema.optional(),
+    email: z.string().trim().email('Invalid email address').optional(),
+    phone: BangladeshPhoneSchema.optional(),
+    name: z.string().trim().min(2).max(100).optional(),
+    roleCode: z.string().trim().default('SELLER_STAFF'),
+    permissions: z.array(z.string().trim()).default([]),
+  })
+  .refine((data) => Boolean(data.userId || data.email || data.phone), {
+    message: 'At least one of userId, email, or Bangladesh phone must be provided to add staff',
+  });
 
 export type AddSellerStaffInput = z.infer<typeof AddSellerStaffInputSchema>;
 
@@ -215,7 +212,10 @@ export const UpdateStoreSettingsInputSchema = z.object({
   defaultCourier: z.nativeEnum(CourierProvider).nullable().optional(),
   vacationMode: z.boolean().optional(),
   vacationMessage: z.string().trim().max(255).nullable().optional(),
-  version: z.number().int().positive('Optimistic concurrency version is required for settings update'),
+  version: z
+    .number()
+    .int()
+    .positive('Optimistic concurrency version is required for settings update'),
 });
 
 export type UpdateStoreSettingsInput = z.infer<typeof UpdateStoreSettingsInputSchema>;
@@ -230,7 +230,10 @@ export const CreateSellerSchema = z.object({
     .toLowerCase()
     .min(3)
     .max(60)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Store slug must be lowercase alphanumeric characters separated by single hyphens'),
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      'Store slug must be lowercase alphanumeric characters separated by single hyphens'
+    ),
   ownerUserId: z.string().optional(),
   companyName: z.string().optional(),
   tradeLicenseNumber: z.string().trim().max(50).optional(),

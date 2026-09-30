@@ -27,10 +27,7 @@ import {
 } from '@/shared/errors/app-error';
 import { auditService } from '@/shared/audit';
 import { normalizeBangladeshPhone } from '@/shared/utils/phone';
-import {
-  PlaceOrderRequestDTO,
-  PlacedOrderResultDTO,
-} from '../types/order-review.types';
+import { PlaceOrderRequestDTO, PlacedOrderResultDTO } from '../types/order-review.types';
 import { PlaceOrderInput } from '../validators/order-review.validators';
 import { serverCheckoutCalculationService } from './server-checkout-calculation.service';
 import { codFraudRiskService } from './cod-fraud-risk.service';
@@ -49,8 +46,15 @@ export class PlaceOrderTransactionService {
     customerId: string,
     clientIp?: string | null
   ): Promise<PlacedOrderResultDTO> {
-    const { cartId, recipient, paymentMethod, couponCode, codVerificationToken, consent, idempotencyKey } =
-      input;
+    const {
+      cartId,
+      recipient,
+      paymentMethod,
+      couponCode,
+      codVerificationToken,
+      consent,
+      idempotencyKey,
+    } = input;
 
     // 1. Mandatory Regulatory & Consumer Legal Consent Verification
     if (!consent.termsAccepted || !consent.privacyAccepted || !consent.returnPolicyAccepted) {

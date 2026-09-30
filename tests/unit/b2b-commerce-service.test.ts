@@ -120,7 +120,9 @@ class MockPrismaB2BDb {
 
   public b2bRfq = {
     findFirst: async ({ where }: any) => {
-      const rfq = this.rfqs.find((r) => r.id === where.id && (!where.deletedAt || r.deletedAt === null));
+      const rfq = this.rfqs.find(
+        (r) => r.id === where.id && (!where.deletedAt || r.deletedAt === null)
+      );
       if (!rfq) return null;
       const org = this.organizations.find((o) => o.id === rfq.organizationId);
       return { ...rfq, organization: org };
@@ -162,7 +164,9 @@ class MockPrismaB2BDb {
 
   public b2bQuote = {
     findFirst: async ({ where }: any) => {
-      const quote = this.quotes.find((q) => q.id === where.id && (!where.deletedAt || q.deletedAt === null));
+      const quote = this.quotes.find(
+        (q) => q.id === where.id && (!where.deletedAt || q.deletedAt === null)
+      );
       if (!quote) return null;
       const org = this.organizations.find((o) => o.id === quote.organizationId);
       const rfq = this.rfqs.find((r) => r.id === quote.rfqId);
@@ -212,7 +216,11 @@ class MockPrismaB2BDb {
 
   public cart = {
     findFirst: async ({ where }: any) => {
-      return this.carts.find((c) => c.userId === where.userId && c.status === 'ACTIVE' && !c.deletedAt) || null;
+      return (
+        this.carts.find(
+          (c) => c.userId === where.userId && c.status === 'ACTIVE' && !c.deletedAt
+        ) || null
+      );
     },
     create: async ({ data }: any) => {
       const cart = { ...data, createdAt: new Date(), updatedAt: new Date(), version: 1 };

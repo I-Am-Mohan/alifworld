@@ -1,9 +1,9 @@
 /**
  * CSRF Token Provisioning API Route
- * 
+ *
  * Generates an authentic cryptographically signed anti-CSRF token,
  * sets the standard aw_csrf client cookie, and returns token metadata.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, OWASP ASVS v4.0, Milestone 048
  */
 

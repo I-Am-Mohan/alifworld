@@ -1,6 +1,6 @@
 /**
  * AlifWorld Wallet, Double-Entry Ledger, Points & Rewards Validation Schemas
- * 
+ *
  * Invariants: ADR-0022, ADR-0028, ADR-0029, 100% Split Sum invariant, BigInt Poisha
  */
 
@@ -37,7 +37,9 @@ export const recordJournalSchema = z.object({
     .transform((val) => BigInt(val)),
   idempotencyKey: z.string().max(128).optional().nullable(),
   ruleVersion: z.string().max(32).default('v1.0.0'),
-  postings: z.array(journalPostingSchema).min(2, 'A balanced journal requires at least two postings (debit and credit)'),
+  postings: z
+    .array(journalPostingSchema)
+    .min(2, 'A balanced journal requires at least two postings (debit and credit)'),
 });
 
 export const createRewardRuleSchema = z

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as lowStockAlertsRoute } from '@/app/api/v1/inventory/alerts/low-stock/route';
 import { PUT as updateThresholdsRoute } from '@/app/api/v1/inventory/balances/[id]/thresholds/route';
@@ -44,11 +45,12 @@ describe('Milestone 106: Low-Stock Alerts & Reorder Views REST API Integration T
 
     InventoryService.prototype.listLowStockAlerts = async () => [mockStockBalance as any];
 
-    InventoryService.prototype.updateStockThresholds = async (input: any) => ({
-      ...mockStockBalance,
-      lowStockThreshold: input.lowStockThreshold,
-      reorderPoint: input.reorderPoint,
-    } as any);
+    InventoryService.prototype.updateStockThresholds = async (input: any) =>
+      ({
+        ...mockStockBalance,
+        lowStockThreshold: input.lowStockThreshold,
+        reorderPoint: input.reorderPoint,
+      }) as any;
 
     InventoryService.prototype.getReorderRecommendations = async () => [mockReorderRec as any];
   });
@@ -68,14 +70,17 @@ describe('Milestone 106: Low-Stock Alerts & Reorder Views REST API Integration T
   });
 
   it('PUT /api/v1/inventory/balances/[id]/thresholds should update thresholds', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/inventory/balances/stb_wh_001_var_001/thresholds', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        lowStockThreshold: 15,
-        reorderPoint: 30,
-      }),
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/inventory/balances/stb_wh_001_var_001/thresholds',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lowStockThreshold: 15,
+          reorderPoint: 30,
+        }),
+      }
+    );
 
     const res = await updateThresholdsRoute(req, {
       params: Promise.resolve({ id: 'stb_wh_001_var_001' }),

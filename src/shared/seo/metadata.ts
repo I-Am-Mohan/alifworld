@@ -53,7 +53,10 @@ export function localeAlternates(path: string): Record<CanonicalLocale, string> 
   ) as Record<CanonicalLocale, string>;
 }
 
-export function buildBreadcrumbJsonLd(items: BreadcrumbItem[], locale?: string): Record<string, unknown> {
+export function buildBreadcrumbJsonLd(
+  items: BreadcrumbItem[],
+  locale?: string
+): Record<string, unknown> {
   const normalizedLocale = normalizeToCanonicalLocale(locale);
   return {
     '@context': 'https://schema.org',
@@ -94,9 +97,7 @@ export function buildSeoMetadata(input: SeoPageInput): Metadata {
         'x-default': alternates[DEFAULT_LOCALE],
       },
     },
-    robots: input.noIndex
-      ? { index: false, follow: false }
-      : { index: true, follow: true },
+    robots: input.noIndex ? { index: false, follow: false } : { index: true, follow: true },
     openGraph: {
       type: input.type === 'product' ? 'website' : input.type || 'website',
       siteName: SEO_SITE_NAME,

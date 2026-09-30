@@ -1,6 +1,6 @@
 /**
  * Unit Tests: Seller Staff Roles, Invitations, and Scoped Access (Milestone 045)
- * 
+ *
  * Verifies:
  * 1. Delegation of staff roles (SELLER_STAFF, SELLER_MANAGER)
  * 2. Invitations via email or phone with user identity resolution
@@ -9,7 +9,7 @@
  * 5. Prevention of duplicate active staff assignments
  * 6. Tenant isolation across staff listings, invitations, and revocations
  * 7. Scoped role assignment in IAM and audit logging
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0021, ADR-0022, ADR-0024, Milestone 045
  */
 
@@ -18,7 +18,12 @@ import { SellerStaffService } from '@/features/seller/services/seller-staff-serv
 import { SellerPolicy } from '@/shared/authz/policies/seller.policy';
 import { SystemRoleCode } from '@/features/identity/types';
 import { ActorContext } from '@/shared/authz/authz.types';
-import { AuthorizationError, ConflictError, NotFoundError, ValidationError } from '@/shared/errors/app-error';
+import {
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
 
 describe('Milestone 045 — Seller Staff Roles, Invitations, and Scoped Access', () => {
@@ -67,7 +72,12 @@ describe('Milestone 045 — Seller Staff Roles, Invitations, and Scoped Access',
             sellerId,
             userId: STAFF_DHAKA_ID,
             roleCode: 'SELLER_STAFF',
-            user: { id: STAFF_DHAKA_ID, name: 'Rahim Staff', email: 'rahim@example.com', phone: '+8801711111111' },
+            user: {
+              id: STAFF_DHAKA_ID,
+              name: 'Rahim Staff',
+              email: 'rahim@example.com',
+              phone: '+8801711111111',
+            },
           },
         ]),
       };
@@ -91,7 +101,13 @@ describe('Milestone 045 — Seller Staff Roles, Invitations, and Scoped Access',
         findById: mock(async () => null),
       };
 
-      const service = new SellerStaffService(mockSellerRepo as any, {} as any, {} as any, {} as any, {} as any);
+      const service = new SellerStaffService(
+        mockSellerRepo as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any
+      );
       await expect(service.listStaff('sel_invalid')).rejects.toThrow(NotFoundError);
     });
   });
@@ -106,7 +122,11 @@ describe('Milestone 045 — Seller Staff Roles, Invitations, and Scoped Access',
         findById: mock(async () => mockSeller),
       };
       const mockUserRepo = {
-        findById: mock(async (id: string) => ({ id, name: 'Staff User', email: 'staff@example.com' })),
+        findById: mock(async (id: string) => ({
+          id,
+          name: 'Staff User',
+          email: 'staff@example.com',
+        })),
       };
       const mockStaffRepo = {
         findBySellerAndUser: mock(async () => null),
@@ -119,7 +139,9 @@ describe('Milestone 045 — Seller Staff Roles, Invitations, and Scoped Access',
         })),
       };
       const mockRoleRepo = {
-        findByCode: mock(async (code: string) => (code === SystemRoleCode.SELLER_STAFF ? mockRoleSellerStaff : null)),
+        findByCode: mock(async (code: string) =>
+          code === SystemRoleCode.SELLER_STAFF ? mockRoleSellerStaff : null
+        ),
       };
       const mockRoleAssignmentRepo = {
         assignRole: mock(async (params: any) => {
@@ -188,7 +210,7 @@ describe('Milestone 045 — Seller Staff Roles, Invitations, and Scoped Access',
         findByCode: mock(async () => mockRoleSellerStaff),
       };
       const mockRoleAssignmentRepo = {
-        assignRole: mock(async () => ({} as any)),
+        assignRole: mock(async () => ({}) as any),
       };
 
       const service = new SellerStaffService(

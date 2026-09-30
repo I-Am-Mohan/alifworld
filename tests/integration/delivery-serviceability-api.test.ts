@@ -58,10 +58,23 @@ describe('Milestone 132: Delivery Serviceability & Geo REST API Integration Test
       { code: 'CHITTAGONG', nameEn: 'Chittagong', nameBn: 'চট্টগ্রাম', headquarters: 'Chittagong' },
     ]);
     spyOn(deliveryServiceabilityService, 'listDistricts').mockResolvedValue([
-      { id: 'dist_dhk', divisionCode: 'DHAKA', nameEn: 'Dhaka', nameBn: 'ঢাকা', postalCodePrefix: '12' },
+      {
+        id: 'dist_dhk',
+        divisionCode: 'DHAKA',
+        nameEn: 'Dhaka',
+        nameBn: 'ঢাকা',
+        postalCodePrefix: '12',
+      },
     ]);
     spyOn(deliveryServiceabilityService, 'listUpazilas').mockResolvedValue([
-      { id: 'upz_gul', districtId: 'dist_dhk', nameEn: 'Gulshan', nameBn: 'গুলশান', postalCode: '1212', level: 'THANA' },
+      {
+        id: 'upz_gul',
+        districtId: 'dist_dhk',
+        nameEn: 'Gulshan',
+        nameBn: 'গুলশান',
+        postalCode: '1212',
+        level: 'THANA',
+      },
     ]);
   });
 
@@ -100,7 +113,9 @@ describe('Milestone 132: Delivery Serviceability & Geo REST API Integration Test
   });
 
   it('GET /api/v1/shipping/geo/districts returns filtered districts', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/shipping/geo/districts?divisionCode=DHAKA');
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/shipping/geo/districts?divisionCode=DHAKA'
+    );
     const res = await getDistrictsRoute(req);
     expect(res.status).toBe(200);
 
@@ -110,7 +125,9 @@ describe('Milestone 132: Delivery Serviceability & Geo REST API Integration Test
   });
 
   it('GET /api/v1/shipping/geo/upazilas returns upazilas for district', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/shipping/geo/upazilas?districtId=dist_dhk');
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/shipping/geo/upazilas?districtId=dist_dhk'
+    );
     const res = await getUpazilasRoute(req);
     expect(res.status).toBe(200);
 

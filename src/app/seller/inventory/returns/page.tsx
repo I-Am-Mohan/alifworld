@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface RmaItemView {
   id: string;
@@ -57,7 +64,9 @@ export default function SellerReturnsPage() {
   const [orderId, setOrderId] = useState('ORD-BD-99901');
   const [sku, setSku] = useState('WLT-PRX60-BLU-128');
   const [quantity, setQuantity] = useState(1);
-  const [disposition, setDisposition] = useState<'QUARANTINE_INSPECTION' | 'RESTOCK_AVAILABLE' | 'MARK_DAMAGED'>('QUARANTINE_INSPECTION');
+  const [disposition, setDisposition] = useState<
+    'QUARANTINE_INSPECTION' | 'RESTOCK_AVAILABLE' | 'MARK_DAMAGED'
+  >('QUARANTINE_INSPECTION');
   const [customerReason, setCustomerReason] = useState('Customer return - seal intact');
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -73,7 +82,12 @@ export default function SellerReturnsPage() {
       productTitle: sku.startsWith('WLT') ? 'Walton Primo S8 Pro' : 'Xiaomi Redmi Buds 5 Pro',
       quantity,
       disposition,
-      status: disposition === 'RESTOCK_AVAILABLE' ? 'RESTOCKED' : disposition === 'MARK_DAMAGED' ? 'DAMAGED' : 'RECEIVED',
+      status:
+        disposition === 'RESTOCK_AVAILABLE'
+          ? 'RESTOCKED'
+          : disposition === 'MARK_DAMAGED'
+            ? 'DAMAGED'
+            : 'RECEIVED',
       customerReason,
       createdAt: new Date().toISOString().replace('T', ' ').substring(0, 19),
     };
@@ -87,10 +101,14 @@ export default function SellerReturnsPage() {
   const handleDirectRestock = (id: string) => {
     setReturns((prev) =>
       prev.map((r) =>
-        r.id === id ? { ...r, disposition: 'RESTOCK_AVAILABLE' as const, status: 'RESTOCKED' as const } : r
+        r.id === id
+          ? { ...r, disposition: 'RESTOCK_AVAILABLE' as const, status: 'RESTOCKED' as const }
+          : r
       )
     );
-    setToastMessage(`Returned item '${id}' directly restocked into available warehouse inventory balance.`);
+    setToastMessage(
+      `Returned item '${id}' directly restocked into available warehouse inventory balance.`
+    );
     setTimeout(() => setToastMessage(null), 4000);
   };
 
@@ -144,7 +162,9 @@ export default function SellerReturnsPage() {
             <form onSubmit={handleReceiveRma} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">RMA Reference Number</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    RMA Reference Number
+                  </label>
                   <input
                     type="text"
                     value={rmaNumber}
@@ -168,7 +188,9 @@ export default function SellerReturnsPage() {
                     onChange={(e) => setSku(e.target.value)}
                     className="w-full p-2 border border-slate-300 rounded bg-white font-mono"
                   >
-                    <option value="WLT-PRX60-BLU-128">Walton Primo S8 Pro (WLT-PRX60-BLU-128)</option>
+                    <option value="WLT-PRX60-BLU-128">
+                      Walton Primo S8 Pro (WLT-PRX60-BLU-128)
+                    </option>
                     <option value="MI-BUDS5P-WHT">Xiaomi Redmi Buds 5 Pro (MI-BUDS5P-WHT)</option>
                   </select>
                 </div>

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Customer Account Domain Service
- * 
+ *
  * Orchestrates customer self-service profiles, communication preferences,
  * regulatory consent records, account security, and approved B2B organization memberships.
- * 
+ *
  * References:
  * - docs/architecture/scope-boundaries-and-domain-map.md
  * - docs/architecture/continuous-integration-and-quality-gates.md
@@ -12,7 +12,12 @@
 
 import { prisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
-import { ConflictError, NotFoundError, ValidationError, AuthenticationError } from '@/shared/errors/app-error';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+  AuthenticationError,
+} from '@/shared/errors/app-error';
 import { hashPassword, verifyPassword } from '@/shared/auth/password';
 import {
   CustomerProfile,
@@ -40,9 +45,15 @@ export class CustomerAccountService {
   // In-memory backing stores for dynamic consent and B2B organizations
   private consentRecords = new Map<string, CustomerConsent>();
   private organizationRecords = new Map<string, BusinessBuyerOrganization>();
-  private organizationMembers = new Map<string, { orgId: string; role: 'ADMIN' | 'PURCHASER' | 'VIEWER' }>();
+  private organizationMembers = new Map<
+    string,
+    { orgId: string; role: 'ADMIN' | 'PURCHASER' | 'VIEWER' }
+  >();
 
-  constructor(private readonly db: any = prisma) {}
+  constructor(
+    private readonly db: any = prisma,
+    private readonly b2bService: any = b2bCommerceService
+  ) {}
 
   /**
    * Retrieves minimized customer profile data.
@@ -318,7 +329,9 @@ export class CustomerAccountService {
     }
 
     if (!user.passwordHash) {
-      throw new ValidationError('Account does not have a current password configured. Please use reset password.');
+      throw new ValidationError(
+        'Account does not have a current password configured. Please use reset password.'
+      );
     }
 
     const isValidCurrent = verifyPassword(validated.currentPassword, user.passwordHash);
@@ -350,10 +363,8 @@ export class CustomerAccountService {
    * Resolves Business Buyer Organization details if user belongs to an approved organization.
    * Invariant: Negotiated pricing and credit limits are strictly hidden from non-members.
    */
-  public async getBusinessOrganization(
-    userId: string
-  ): Promise<BusinessBuyerOrganization | null> {
-    const dbOrg = await b2bCommerceService.getUserOrganization(userId);
+  public async getBusinessOrganization(userId: string): Promise<BusinessBuyerOrganization | null> {
+    const dbOrg = await this.b2bService.getUserOrganization(userId);
     if (dbOrg) {
       return {
         id: dbOrg.id,
@@ -395,7 +406,7 @@ export class CustomerAccountService {
   ): Promise<BusinessBuyerOrganization> {
     const validated = RegisterBusinessBuyerSchema.parse(input);
 
-    const created = await b2bCommerceService.registerOrganization(userId, validated);
+    const created = await this.b2bService.registerOrganization(userId, validated);
     return {
       id: created.id,
       companyName: created.companyName,
@@ -411,7 +422,11 @@ export class CustomerAccountService {
     };
   }
 
-  private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {
+  private async recordOutboxEvent(
+    eventType: string,
+    aggregateId: string,
+    payload: any
+  ): Promise<void> {
     try {
       await this.db.outboxEvent.create({
         data: {

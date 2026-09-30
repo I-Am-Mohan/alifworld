@@ -37,11 +37,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const division = searchParams.get('division') || 'DHAKA';
 
-    const groupedCart = await cartService.getGroupedCart(
-      userId,
-      guestCartToken,
-      division
-    );
+    const groupedCart = await cartService.getGroupedCart(userId, guestCartToken, division);
 
     return NextResponse.json(
       {

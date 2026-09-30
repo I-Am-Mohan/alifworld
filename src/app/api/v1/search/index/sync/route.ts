@@ -6,12 +6,14 @@ import { searchIndexerService } from '@/features/search/services/search-indexer.
 
 export const dynamic = 'force-dynamic';
 
-const SyncIndexSchema = z.object({
-  productId: z.string().optional(),
-  productIds: z.array(z.string().min(1)).optional(),
-}).refine((data) => data.productId || (data.productIds && data.productIds.length > 0), {
-  message: 'Either productId or productIds must be provided.',
-});
+const SyncIndexSchema = z
+  .object({
+    productId: z.string().optional(),
+    productIds: z.array(z.string().min(1)).optional(),
+  })
+  .refine((data) => data.productId || (data.productIds && data.productIds.length > 0), {
+    message: 'Either productId or productIds must be provided.',
+  });
 
 /**
  * POST /api/v1/search/index/sync

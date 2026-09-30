@@ -1,9 +1,9 @@
 /**
  * AlifWorld Reward Distribution & Rank Evaluation Domain Service
- * 
+ *
  * Orchestrates multi-wallet split calculations, deterministic rounding residual policy,
  * rank qualification evaluations, star band rankings, and periodic leaderboard snapshots.
- * 
+ *
  * Invariants: ADR-0022, ADR-0028, ADR-0029, 100% Split Sum invariant, Double-entry conservation
  */
 
@@ -37,7 +37,9 @@ export class RewardRankService {
   calculateRewardSplit(basisPoisha: bigint, splits: Record<string, number>): SplitResult {
     const totalBps = Object.values(splits).reduce((acc, curr) => acc + curr, 0);
     if (totalBps !== 10000) {
-      throw new ValidationError(`Reward rule splits must sum to exactly 10,000 basis points (100.00%). Received: ${totalBps} bps`);
+      throw new ValidationError(
+        `Reward rule splits must sum to exactly 10,000 basis points (100.00%). Received: ${totalBps} bps`
+      );
     }
 
     const allocations: Record<string, bigint> = {};
@@ -83,10 +85,10 @@ export class RewardRankService {
     });
 
     const defaultSplits: Record<string, number> = {
-      MAIN: 5000,           // 50%
-      SHOPPING: 2000,       // 20%
-      GOOD_LUCK: 1500,      // 15%
-      CHARITY: 500,         // 5%
+      MAIN: 5000, // 50%
+      SHOPPING: 2000, // 20%
+      GOOD_LUCK: 1500, // 15%
+      CHARITY: 500, // 5%
       SERVICE_CHARGE: 1000, // 10%
     };
 
@@ -95,20 +97,50 @@ export class RewardRankService {
 
     // Retrieve or provision customer wallets
     const mainWallet = await this.walletRepo.getOrCreateUserWallet(params.customerId, 'MAIN');
-    const shoppingWallet = await this.walletRepo.getOrCreateUserWallet(params.customerId, 'SHOPPING');
-    const goodLuckWallet = await this.walletRepo.getOrCreateUserWallet(params.customerId, 'GOOD_LUCK');
+    const shoppingWallet = await this.walletRepo.getOrCreateUserWallet(
+      params.customerId,
+      'SHOPPING'
+    );
+    const goodLuckWallet = await this.walletRepo.getOrCreateUserWallet(
+      params.customerId,
+      'GOOD_LUCK'
+    );
     const charityWallet = await this.walletRepo.getOrCreateUserWallet(params.customerId, 'CHARITY');
 
     // Chart of accounts codes
     const PROMO_EXPENSE_CODE = '5010-PROMOTIONAL-REWARDS-EXPENSE';
     const SERVICE_CHARGE_REVENUE_CODE = '4020-SERVICE-CHARGE-REVENUE';
 
-    await this.walletRepo.getOrCreateAccount(PROMO_EXPENSE_CODE, 'Promotional Rewards Expense', 'EXPENSE');
-    await this.walletRepo.getOrCreateAccount(SERVICE_CHARGE_REVENUE_CODE, 'Platform Service Charge Revenue', 'REVENUE');
-    await this.walletRepo.getOrCreateAccount('2010-CUSTOMER-MAIN-LIABILITY', 'Customer Main Wallet Liability', 'LIABILITY');
-    await this.walletRepo.getOrCreateAccount('2020-CUSTOMER-SHOPPING-LIABILITY', 'Customer Shopping Wallet Liability', 'LIABILITY');
-    await this.walletRepo.getOrCreateAccount('2030-CUSTOMER-GOODLUCK-LIABILITY', 'Customer Good Luck Wallet Liability', 'LIABILITY');
-    await this.walletRepo.getOrCreateAccount('2040-CUSTOMER-CHARITY-LIABILITY', 'Customer Charity Wallet Liability', 'LIABILITY');
+    await this.walletRepo.getOrCreateAccount(
+      PROMO_EXPENSE_CODE,
+      'Promotional Rewards Expense',
+      'EXPENSE'
+    );
+    await this.walletRepo.getOrCreateAccount(
+      SERVICE_CHARGE_REVENUE_CODE,
+      'Platform Service Charge Revenue',
+      'REVENUE'
+    );
+    await this.walletRepo.getOrCreateAccount(
+      '2010-CUSTOMER-MAIN-LIABILITY',
+      'Customer Main Wallet Liability',
+      'LIABILITY'
+    );
+    await this.walletRepo.getOrCreateAccount(
+      '2020-CUSTOMER-SHOPPING-LIABILITY',
+      'Customer Shopping Wallet Liability',
+      'LIABILITY'
+    );
+    await this.walletRepo.getOrCreateAccount(
+      '2030-CUSTOMER-GOODLUCK-LIABILITY',
+      'Customer Good Luck Wallet Liability',
+      'LIABILITY'
+    );
+    await this.walletRepo.getOrCreateAccount(
+      '2040-CUSTOMER-CHARITY-LIABILITY',
+      'Customer Charity Wallet Liability',
+      'LIABILITY'
+    );
 
     // Postings array strictly balancing Sum(Debits) == Sum(Credits)
     const postings = [
@@ -230,7 +262,9 @@ export class RewardRankService {
     });
 
     // Find the highest tier the actor qualifies for
-    const qualifiedDef = definitions.find((d: any) => d.pointThreshold !== null && params.points >= d.pointThreshold);
+    const qualifiedDef = definitions.find(
+      (d: any) => d.pointThreshold !== null && params.points >= d.pointThreshold
+    );
     if (!qualifiedDef) {
       return null;
     }

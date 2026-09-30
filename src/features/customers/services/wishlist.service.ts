@@ -1,9 +1,9 @@
 /**
  * AlifWorld Wishlist Domain Service
- * 
+ *
  * Manages customer saved items, custom lists, privacy settings, and share-safe link resolution.
  * Enforces strict self-service ownership and guarantees zero customer PII leakage on shared links.
- * 
+ *
  * References:
  * - docs/architecture/scope-boundaries-and-domain-map.md
  * - docs/architecture/continuous-integration-and-quality-gates.md
@@ -15,12 +15,7 @@ import { prisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
 import { ConflictError, NotFoundError, AuthorizationError } from '@/shared/errors/app-error';
 import { APP_BASE_URL } from '@/shared/seo/seo-builder';
-import {
-  Wishlist,
-  WishlistItem,
-  SharedWishlistView,
-  WishlistVisibility,
-} from '../types';
+import { Wishlist, WishlistItem, SharedWishlistView, WishlistVisibility } from '../types';
 import {
   CreateWishlistInput,
   CreateWishlistSchema,
@@ -44,9 +39,7 @@ export class WishlistService {
     // Ensure default wishlist exists for the customer
     await this.getDefaultWishlist(userId);
 
-    const userWishlists = Array.from(this.wishlists.values()).filter(
-      (w) => w.userId === userId
-    );
+    const userWishlists = Array.from(this.wishlists.values()).filter((w) => w.userId === userId);
 
     return userWishlists.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0));
   }
@@ -82,10 +75,7 @@ export class WishlistService {
   /**
    * Creates a new custom customer wishlist.
    */
-  public async createWishlist(
-    userId: string,
-    input: CreateWishlistInput
-  ): Promise<Wishlist> {
+  public async createWishlist(userId: string, input: CreateWishlistInput): Promise<Wishlist> {
     const validated = CreateWishlistSchema.parse(input);
 
     const wishlist: Wishlist = {
@@ -143,7 +133,8 @@ export class WishlistService {
     const updated: Wishlist = {
       ...wishlist,
       title: validated.title ?? wishlist.title,
-      description: validated.description !== undefined ? validated.description : wishlist.description,
+      description:
+        validated.description !== undefined ? validated.description : wishlist.description,
       visibility: validated.visibility ?? wishlist.visibility,
       updatedAt: new Date().toISOString(),
     };
@@ -188,7 +179,7 @@ export class WishlistService {
     let pricePoisha = Number(product.basePricePoisha || 0);
     let sku = product.sku || null;
     let productPoint = product.productPoint || 0;
-    let inStock = true;
+    const inStock = true;
 
     if (validated.variantId && product.variants) {
       const variant = product.variants.find((v: any) => v.id === validated.variantId);
@@ -208,7 +199,8 @@ export class WishlistService {
 
     // Check if item is already in wishlist
     const existingIndex = wishlist.items.findIndex(
-      (item) => item.productId === validated.productId && item.variantId === (validated.variantId || null)
+      (item) =>
+        item.productId === validated.productId && item.variantId === (validated.variantId || null)
     );
 
     if (existingIndex >= 0) {
@@ -412,7 +404,11 @@ export class WishlistService {
     });
   }
 
-  private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {
+  private async recordOutboxEvent(
+    eventType: string,
+    aggregateId: string,
+    payload: any
+  ): Promise<void> {
     try {
       await this.db.outboxEvent.create({
         data: {

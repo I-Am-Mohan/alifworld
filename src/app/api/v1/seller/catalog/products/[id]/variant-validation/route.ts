@@ -7,6 +7,10 @@ export const dynamic = 'force-dynamic';
 const service = new VariantCombinationService();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try { authenticateRequest(req); return NextResponse.json({ success: true, data: await service.validate((await params).id) }); }
-  catch (error) { return errorResponse(req, error, 'Failed to validate product variants'); }
+  try {
+    authenticateRequest(req);
+    return NextResponse.json({ success: true, data: await service.validate((await params).id) });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to validate product variants');
+  }
 }

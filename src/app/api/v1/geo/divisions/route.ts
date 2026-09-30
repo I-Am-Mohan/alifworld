@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/v1/geo/divisions
- * 
+ *
  * Returns the 8 administrative divisions of Bangladesh with bilingual metadata.
  * Flutter and Web client compatible.
  */

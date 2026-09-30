@@ -38,10 +38,9 @@ export async function POST(req: NextRequest) {
       // Guest calculation session
     }
 
-    const result = await serverCheckoutCalculationService.calculateCheckout(
-      validatedInput,
-      { customerId }
-    );
+    const result = await serverCheckoutCalculationService.calculateCheckout(validatedInput, {
+      customerId,
+    });
 
     return NextResponse.json(
       {

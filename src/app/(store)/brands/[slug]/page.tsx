@@ -70,7 +70,10 @@ export default function BrandLandingPage() {
       </header>
 
       {/* Main Container */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6"
+      >
         {/* Brand Hero Showcase */}
         <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-neutral-900 to-slate-800 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md">
           <div className="space-y-3 max-w-xl">
@@ -111,9 +114,7 @@ export default function BrandLandingPage() {
           </div>
 
           <div className="bg-white/10 backdrop-blur-sm p-5 rounded-2xl text-center shrink-0 border border-white/10">
-            <div className="text-3xl font-black text-amber-400">
-              {landingData?.totalHits || 0}
-            </div>
+            <div className="text-3xl font-black text-amber-400">{landingData?.totalHits || 0}</div>
             <div className="text-[11px] text-slate-300 uppercase font-bold tracking-wider mt-1">
               {isBn ? 'উপলব্ধ পণ্য' : 'Available Products'}
             </div>
@@ -126,7 +127,10 @@ export default function BrandLandingPage() {
             <span className="font-bold text-slate-600">{isBn ? 'ক্যাটাগরি:' : 'Category:'}</span>
             {landingData?.facets?.categories &&
               Object.keys(landingData.facets.categories).map((catName) => (
-                <Badge key={catName} className="bg-white border border-slate-200 text-slate-700 text-xs">
+                <Badge
+                  key={catName}
+                  className="bg-white border border-slate-200 text-slate-700 text-xs"
+                >
                   {catName} ({landingData.facets?.categories[catName]})
                 </Badge>
               ))}
@@ -140,9 +144,15 @@ export default function BrandLandingPage() {
               className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-800 text-xs focus:ring-1 focus:ring-[#FF6A00]"
             >
               <option value="relevance">{isBn ? 'প্রাসঙ্গিকতা' : 'Most Relevant'}</option>
-              <option value="price_asc">{isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}</option>
-              <option value="price_desc">{isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}</option>
-              <option value="points_desc">{isBn ? 'সর্বোচ্চ পয়েন্ট' : 'Highest Reward Points'}</option>
+              <option value="price_asc">
+                {isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}
+              </option>
+              <option value="price_desc">
+                {isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}
+              </option>
+              <option value="points_desc">
+                {isBn ? 'সর্বোচ্চ পয়েন্ট' : 'Highest Reward Points'}
+              </option>
             </select>
           </div>
         </div>

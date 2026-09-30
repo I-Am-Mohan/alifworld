@@ -6,11 +6,7 @@ import { formatLocalizedText } from '@/shared/utils/localization';
 export const NotificationChannelSchema = z.enum(['EMAIL', 'SMS', 'PUSH', 'IN_APP']);
 export type NotificationChannel = z.infer<typeof NotificationChannelSchema>;
 
-export const NotificationEventSchema = z.enum([
-  'SECURITY',
-  'TRANSACTIONAL',
-  'MARKETING',
-]);
+export const NotificationEventSchema = z.enum(['SECURITY', 'TRANSACTIONAL', 'MARKETING']);
 export type NotificationEvent = z.infer<typeof NotificationEventSchema>;
 
 export interface NotificationPreference {
@@ -39,7 +35,11 @@ export function renderNotificationTemplate(
 }
 
 export function getTransactionalTemplate(
-  key: 'emailVerificationSubject' | 'emailVerificationBody' | 'passwordResetSubject' | 'orderConfirmationSubject',
+  key:
+    | 'emailVerificationSubject'
+    | 'emailVerificationBody'
+    | 'passwordResetSubject'
+    | 'orderConfirmationSubject',
   locale: string
 ): string {
   const dictionary = getDictionary(locale) as any;
@@ -52,5 +52,8 @@ export function shouldDeliverNotification(
   preferences: NotificationPreference[]
 ): boolean {
   if (event === 'SECURITY' || event === 'TRANSACTIONAL') return true;
-  return preferences.find((preference) => preference.event === event && preference.channel === channel)?.enabled ?? false;
+  return (
+    preferences.find((preference) => preference.event === event && preference.channel === channel)
+      ?.enabled ?? false
+  );
 }

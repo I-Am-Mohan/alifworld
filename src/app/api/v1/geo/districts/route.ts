@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/v1/geo/districts?division=DHAKA
- * 
+ *
  * Returns the administrative districts of Bangladesh, optionally filtered by division.
  * Returns 64 districts in total when unfiltered.
  */

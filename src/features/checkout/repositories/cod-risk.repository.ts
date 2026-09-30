@@ -142,10 +142,7 @@ export class CodRiskRepository {
   }> {
     const whereClause: any = {
       deletedAt: null,
-      OR: [
-        { shippingPhone: phone },
-        ...(customerId ? [{ customerId }] : []),
-      ],
+      OR: [{ shippingPhone: phone }, ...(customerId ? [{ customerId }] : [])],
     };
 
     const orders = await (this.db as any).order.findMany({
@@ -173,8 +170,7 @@ export class CodRiskRepository {
     }
 
     const failedDeliveries = returnedOrders + cancelledOrders;
-    const rtoRatePercent =
-      totalOrders > 0 ? Math.round((failedDeliveries / totalOrders) * 100) : 0;
+    const rtoRatePercent = totalOrders > 0 ? Math.round((failedDeliveries / totalOrders) * 100) : 0;
 
     return {
       totalOrders,
@@ -196,10 +192,7 @@ export class CodRiskRepository {
       deletedAt: null,
       status: { in: ['PENDING_PAYMENT', 'PROCESSING', 'CONFIRMED'] },
       paymentStatus: 'UNPAID',
-      OR: [
-        { shippingPhone: phone },
-        ...(customerId ? [{ customerId }] : []),
-      ],
+      OR: [{ shippingPhone: phone }, ...(customerId ? [{ customerId }] : [])],
     };
 
     return (this.db as any).order.count({ where });

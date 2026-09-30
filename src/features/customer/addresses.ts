@@ -14,7 +14,12 @@ export const CustomerAddressInputSchema = z.object({
   districtId: z.string().trim().min(2),
   upazilaId: z.string().trim().min(2).optional().nullable(),
   addressLine: z.string().trim().min(5).max(255),
-  postalCode: z.string().trim().regex(/^\d{4}$/).optional().nullable(),
+  postalCode: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/)
+    .optional()
+    .nullable(),
   isDefault: z.boolean().default(false),
 });
 
@@ -26,13 +31,19 @@ export function validateAddressHierarchy(input: CustomerAddressInput): CustomerA
 
   const district = getBangladeshDistrict(input.districtId);
   if (!district || district.divisionCode !== division.code) {
-    throw new Error(`District '${input.districtId}' does not belong to division '${division.code}'.`);
+    throw new Error(
+      `District '${input.districtId}' does not belong to division '${division.code}'.`
+    );
   }
 
   if (input.upazilaId) {
-    const upazila = getBangladeshUpazilas(input.districtId).find((item) => item.id === input.upazilaId);
+    const upazila = getBangladeshUpazilas(input.districtId).find(
+      (item) => item.id === input.upazilaId
+    );
     if (!upazila || upazila.districtId !== district.id) {
-      throw new Error(`Upazila/thana '${input.upazilaId}' does not belong to district '${district.id}'.`);
+      throw new Error(
+        `Upazila/thana '${input.upazilaId}' does not belong to district '${district.id}'.`
+      );
     }
   }
 

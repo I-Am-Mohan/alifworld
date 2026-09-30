@@ -26,4 +26,3 @@ export * from './types/abandoned-checkout.types';
 export * from './validators/abandoned-checkout.validators';
 export * from './repositories/abandoned-checkout.repository';
 export * from './services/abandoned-checkout-recovery.service';
-

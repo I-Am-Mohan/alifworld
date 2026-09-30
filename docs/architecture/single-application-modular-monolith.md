@@ -3,7 +3,7 @@
 **Document Type**: System Architecture Specification & Engineering Blueprint  
 **Phase Reference**: Phase 01 — Governance and Architecture  
 **Milestone Reference**: [Milestone 006](../../AlifWorld-300-Milestones/006-single-application-modular-monolith-architecture-decisions.md)  
-**Status**: Authoritative & Mandatory  
+**Status**: Authoritative & Mandatory
 
 ---
 
@@ -35,6 +35,7 @@ AlifWorld adopts a **Single-Codebase Next.js Modular Monolith** architecture. Wh
 ```
 
 ### Key Architectural Benefits:
+
 1. **Atomic Cross-Domain Transactions**: Consistent checkout and ledger postings execute inside native PostgreSQL transactions without distributed 2PC or complex sagas.
 2. **Zero In-Process Network Latency**: Internal domain communication executes in memory via typed TypeScript service calls with sub-millisecond overhead.
 3. **Single Build & Deployment Pipeline**: A single Docker container image packages both the Next.js web application and the BullMQ background worker daemon.
@@ -113,6 +114,7 @@ Dependencies strictly flow downward. Reverse dependencies or layer skipping are 
 ```
 
 ### Layer Constraints:
+
 1. **Route Handlers (`app/api/v1/*`)**: Must remain thin. Responsible only for extracting headers, validating requests with Zod, calling a Domain Service, and returning standardized JSON envelopes. **Zero SQL queries or business state transitions allowed in route handlers.**
 2. **Domain Services (`services/*`)**: The sole orchestrators of business transactions, state machines, and outbox event emissions. Domain services never inspect raw HTTP requests or mutate tables of other domains directly.
 3. **Pure Calculation Engines (`services/calculations/*`)**: Deterministic functions without database or network I/O. Given identical inputs, they produce identical outputs with explicit integer poisha rounding.
@@ -125,12 +127,16 @@ Dependencies strictly flow downward. Reverse dependencies or layer skipping are 
 Domains interact through two strictly controlled patterns:
 
 ### 4.1 In-Process Synchronous Invocation
+
 Used when immediate consistency is mandatory:
+
 - **Example**: Checkout calls `InventoryService.reserveStock()` inside a database transaction to lock quantities.
 - **Rule**: Direct method invocation via typed service interfaces. Cross-domain table mutations are strictly prohibited.
 
 ### 4.2 Asynchronous Event Decoupling (Transactional Outbox)
+
 Used for all side-effects and eventual consistency workflows:
+
 - **Example**: An order is marked `COMPLETED`. The `OrderService` atomically writes an event to the `OutboxEvent` table inside the same transaction:
   ```typescript
   await prisma.$transaction(async (tx) => {
@@ -154,13 +160,13 @@ Used for all side-effects and eventual consistency workflows:
 
 All external dependencies are wrapped in boot-safe, resilient adapters:
 
-| Dependency | Purpose | Abstraction Pattern | Failure / Degradation Strategy |
-|:---|:---|:---|:---|
-| **PostgreSQL** | Primary relational store | Prisma ORM with connection pooling | Automatic reconnect, read-replica routing |
-| **Redis** | Locks, rate limits, queues | Typed Redis client (`shared/adapters/redis`) | Direct PostgreSQL fallback with circuit breaker |
-| **BullMQ** | Async job queues | Typed Queue interfaces (`shared/adapters/queue`) | Dead-letter queues with exponential backoff |
-| **Meilisearch** | Fast catalog search | Search Adapter (`shared/adapters/search`) | **Automatic PostgreSQL Full-Text Fallback** |
-| **S3 Storage** | Permanent media storage | Storage Adapter (`shared/adapters/storage`) | Presigned direct uploads; stateless application |
+| Dependency      | Purpose                    | Abstraction Pattern                              | Failure / Degradation Strategy                  |
+| :-------------- | :------------------------- | :----------------------------------------------- | :---------------------------------------------- |
+| **PostgreSQL**  | Primary relational store   | Prisma ORM with connection pooling               | Automatic reconnect, read-replica routing       |
+| **Redis**       | Locks, rate limits, queues | Typed Redis client (`shared/adapters/redis`)     | Direct PostgreSQL fallback with circuit breaker |
+| **BullMQ**      | Async job queues           | Typed Queue interfaces (`shared/adapters/queue`) | Dead-letter queues with exponential backoff     |
+| **Meilisearch** | Fast catalog search        | Search Adapter (`shared/adapters/search`)        | **Automatic PostgreSQL Full-Text Fallback**     |
+| **S3 Storage**  | Permanent media storage    | Storage Adapter (`shared/adapters/storage`)      | Presigned direct uploads; stateless application |
 
 ---
 
@@ -184,6 +190,7 @@ CMD ["bun", "run", "workers/index.ts"]
 ## 7. Architectural Boundary Enforcement
 
 To ensure boundaries are not compromised during autonomous milestone execution:
+
 1. **ESLint Boundary Rules**: Lint rules enforce that `app/api/v1` cannot import from `repositories/` directly (must go through `services/`).
 2. **Strict TypeScript Types**: Zero `any` policy; branded `Poisha` and `ProductPoint` types prevent financial bugs at compile time.
 3. **Automated CI Validation**: CI pipeline runs `bun run lint`, `bun run typecheck`, and `bun run test` on every pull request.

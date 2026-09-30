@@ -17,7 +17,10 @@ import {
 
 describe('Domain Error Hierarchy & Envelope Serialization', () => {
   it('serializes ValidationError to HTTP 422 standard envelope', () => {
-    const err = new ValidationError('Invalid request payload', { field: 'phone', reason: 'invalid_format' });
+    const err = new ValidationError('Invalid request payload', {
+      field: 'phone',
+      reason: 'invalid_format',
+    });
     expect(err.statusCode).toBe(422);
     expect(err.errorCode).toBe('VALIDATION_FAILED');
     expect(err.toJSON()).toEqual({
@@ -43,7 +46,10 @@ describe('Domain Error Hierarchy & Envelope Serialization', () => {
   });
 
   it('serializes ComplianceGateError with gate metadata', () => {
-    const err = new ComplianceGateError('GATE-02', 'Lottery feature is pending regulatory approval');
+    const err = new ComplianceGateError(
+      'GATE-02',
+      'Lottery feature is pending regulatory approval'
+    );
     expect(err.statusCode).toBe(403);
     expect(err.errorCode).toBe('FEATURE_PENDING_REGULATORY_APPROVAL');
     expect(err.details).toEqual({ gateId: 'GATE-02' });

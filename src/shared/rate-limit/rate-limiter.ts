@@ -1,19 +1,15 @@
 /**
  * Distributed Redis Sliding-Window Rate Limiter
- * 
+ *
  * Provides atomic, token-bucket/sliding-window throttling using Redis sorted sets.
  * Implements seamless, boot-safe in-memory fallback if Redis is temporarily unreachable.
- * 
+ *
  * Invariants: ADR-0019, ADR-0022, ADR-0031, Milestone 040
  */
 
 import Redis from 'ioredis';
 import { getServerEnv } from '@/shared/config/environment';
-import {
-  IRateLimiter,
-  RateLimitPolicy,
-  RateLimitResult,
-} from './rate-limiter.interface';
+import { IRateLimiter, RateLimitPolicy, RateLimitResult } from './rate-limiter.interface';
 
 export class RedisRateLimiter implements IRateLimiter {
   private redisClient: Redis | null = null;
@@ -99,9 +95,7 @@ export class RedisRateLimiter implements IRateLimiter {
           const currentCount = Number(results[2][1]);
           const isAllowed = currentCount <= policy.maxRequests;
           const remaining = Math.max(0, policy.maxRequests - currentCount);
-          const retryAfterSeconds = isAllowed
-            ? 0
-            : Math.ceil(policy.windowMs / 1000);
+          const retryAfterSeconds = isAllowed ? 0 : Math.ceil(policy.windowMs / 1000);
 
           return {
             isAllowed,

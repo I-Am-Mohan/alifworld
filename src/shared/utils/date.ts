@@ -41,10 +41,34 @@ function dhakaParts(date: Date): Record<string, number> {
   ) as Record<string, number>;
 }
 
-function fromDhakaParts(parts: { year: number; month: number; day: number; hour: number; minute: number; second?: number; millisecond?: number }): Date {
-  const targetUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second ?? 0, parts.millisecond ?? 0);
+function fromDhakaParts(parts: {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second?: number;
+  millisecond?: number;
+}): Date {
+  const targetUtc = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second ?? 0,
+    parts.millisecond ?? 0
+  );
   const rendered = dhakaParts(new Date(targetUtc));
-  const renderedUtc = Date.UTC(rendered.year, rendered.month - 1, rendered.day, rendered.hour, rendered.minute, rendered.second, parts.millisecond ?? 0);
+  const renderedUtc = Date.UTC(
+    rendered.year,
+    rendered.month - 1,
+    rendered.day,
+    rendered.hour,
+    rendered.minute,
+    rendered.second,
+    parts.millisecond ?? 0
+  );
   return new Date(targetUtc + (targetUtc - renderedUtc));
 }
 
@@ -62,10 +86,7 @@ export function getDhakaIsoString(date: Date = new Date()): string {
 /**
  * Formats a given Date for localized display in Bangladesh.
  */
-export function formatDhakaDateTime(
-  date: Date,
-  locale: 'bn-BD' | 'en-BD' = 'bn-BD'
-): string {
+export function formatDhakaDateTime(date: Date, locale: 'bn-BD' | 'en-BD' = 'bn-BD'): string {
   return new Intl.DateTimeFormat(locale, {
     timeZone: DHAKA_TIMEZONE,
     year: 'numeric',
@@ -104,15 +125,18 @@ export function getDhakaPeriodBounds(options: DhakaPeriodOptions): DhakaPeriodBo
   const cadence = options.cadence;
   const startHour = options.startHour ?? 0;
   const startMinute = options.startMinute ?? 0;
-  if (!Number.isInteger(startHour) || startHour < 0 || startHour > 23) throw new Error('startHour must be between 0 and 23.');
-  if (!Number.isInteger(startMinute) || startMinute < 0 || startMinute > 59) throw new Error('startMinute must be between 0 and 59.');
+  if (!Number.isInteger(startHour) || startHour < 0 || startHour > 23)
+    throw new Error('startHour must be between 0 and 23.');
+  if (!Number.isInteger(startMinute) || startMinute < 0 || startMinute > 59)
+    throw new Error('startMinute must be between 0 and 59.');
 
   const current = dhakaParts(date);
   let start = { year: current.year, month: current.month, day: current.day };
 
   if (cadence === 'WEEKLY') {
     const weekStartsOn = options.weekStartsOn ?? 1;
-    if (!Number.isInteger(weekStartsOn) || weekStartsOn < 0 || weekStartsOn > 6) throw new Error('weekStartsOn must be between 0 and 6.');
+    if (!Number.isInteger(weekStartsOn) || weekStartsOn < 0 || weekStartsOn > 6)
+      throw new Error('weekStartsOn must be between 0 and 6.');
     const weekday = new Date(Date.UTC(current.year, current.month - 1, current.day)).getUTCDay();
     start = addCalendarDays(start, -((weekday - weekStartsOn + 7) % 7));
   } else if (cadence === 'MONTHLY') {
@@ -125,9 +149,22 @@ export function getDhakaPeriodBounds(options: DhakaPeriodOptions): DhakaPeriodBo
   let next: { year: number; month: number; day: number };
   if (cadence === 'DAILY') next = addCalendarDays(start, 1);
   else if (cadence === 'WEEKLY') next = addCalendarDays(start, 7);
-  else if (cadence === 'MONTHLY') next = addCalendarDays({ year: start.month === 12 ? start.year + 1 : start.year, month: start.month === 12 ? 1 : start.month + 1, day: 1 }, 0);
+  else if (cadence === 'MONTHLY')
+    next = addCalendarDays(
+      {
+        year: start.month === 12 ? start.year + 1 : start.year,
+        month: start.month === 12 ? 1 : start.month + 1,
+        day: 1,
+      },
+      0
+    );
   else next = { year: start.year + 1, month: 1, day: 1 };
 
   const nextStart = fromDhakaParts({ ...next, hour: startHour, minute: startMinute });
-  return { start: startDate, end: new Date(nextStart.getTime() - 1), timezone: DHAKA_TIMEZONE, cadence };
+  return {
+    start: startDate,
+    end: new Date(nextStart.getTime() - 1),
+    timezone: DHAKA_TIMEZONE,
+    cadence,
+  };
 }

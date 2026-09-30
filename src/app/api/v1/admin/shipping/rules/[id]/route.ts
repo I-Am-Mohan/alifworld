@@ -11,8 +11,7 @@ export const dynamic = 'force-dynamic';
 
 function assertAdmin(actor: any) {
   const isAdmin =
-    actor.roles.includes(SystemRoleCode.ADMIN) ||
-    actor.roles.includes(SystemRoleCode.SUPER_ADMIN);
+    actor.roles.includes(SystemRoleCode.ADMIN) || actor.roles.includes(SystemRoleCode.SUPER_ADMIN);
 
   if (!isAdmin) {
     throw new AuthorizationError('Admin or Super Admin authority required.', {
@@ -25,10 +24,7 @@ function assertAdmin(actor: any) {
  * GET /api/v1/admin/shipping/rules/[id]
  * Retrieves shipping rate rule by ID.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     assertAdmin(actor);
@@ -49,10 +45,7 @@ export async function GET(
  * PATCH /api/v1/admin/shipping/rules/[id]
  * Updates an existing shipping rate rule.
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     assertAdmin(actor);
@@ -89,10 +82,7 @@ export async function PATCH(
  * DELETE /api/v1/admin/shipping/rules/[id]
  * Soft deletes a shipping rate rule.
  */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     assertAdmin(actor);

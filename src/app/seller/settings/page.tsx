@@ -41,45 +41,52 @@ export default function SellerSettingsPage() {
   const [brandingType, setBrandingType] = useState<'LOGO' | 'BANNER'>('LOGO');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const loadSettings = useCallback(async () => {
-    try {
-      setLoading(true);
-      const profileResponse = await fetch('/api/v1/seller/profile');
-      const profileJson = await profileResponse.json().catch(() => null);
-      if (!profileResponse.ok || !profileJson?.success) throw new Error(profileJson?.error?.message || 'Unable to load seller profile.');
-      setSellerId(profileJson.data.id);
-      setBusinessName(profileJson.data.businessName || '');
-      setSlug(profileJson.data.slug || '');
-      setSellerVersion(profileJson.data.settings?.version || 1);
-      const settings = profileJson.data.settings;
-      setSupportEmail(settings?.supportEmail || '');
-      setSupportPhone(settings?.supportPhone || '');
-      setVacationMode(settings?.vacationMode || false);
-      setVacationMessage(settings?.vacationMessage || '');
-      setStoreDescription(settings?.storeDescription || '');
-      setShippingPolicy(settings?.shippingPolicy || '');
-      setReturnPolicy(settings?.returnPolicy || '');
-      setCancellationPolicy(settings?.cancellationPolicy || '');
-      setPublicEmailEnabled(settings?.publicEmailEnabled || false);
-      setPublicPhoneEnabled(settings?.publicPhoneEnabled || false);
-      setPublicPickupAddressEnabled(settings?.publicPickupAddressEnabled || false);
-      setDefaultCourier(settings?.defaultCourier || 'PATHAO');
-      const address = settings?.pickupAddress;
-      if (address) {
-        setStreetAddress(address.streetAddress || '');
-        setDivision(address.division || 'DHAKA');
-        setDistrict(address.district || '');
-        setUpazila(address.upazila || '');
-        setPostalCode(address.postalCode || '');
-      }
-    } catch (error: any) {
-      setSaveError(error.message || 'Unable to load seller profile.');
-    } finally {
-      setLoading(false);
-    }
+  const loadSettings = useCallback((signal?: AbortSignal) => {
+    return fetch('/api/v1/seller/profile', { signal })
+      .then(async (profileResponse) => {
+        const profileJson = await profileResponse.json().catch(() => null);
+        if (!profileResponse.ok || !profileJson?.success)
+          throw new Error(profileJson?.error?.message || 'Unable to load seller profile.');
+        setSellerId(profileJson.data.id);
+        setBusinessName(profileJson.data.businessName || '');
+        setSlug(profileJson.data.slug || '');
+        setSellerVersion(profileJson.data.settings?.version || 1);
+        const settings = profileJson.data.settings;
+        setSupportEmail(settings?.supportEmail || '');
+        setSupportPhone(settings?.supportPhone || '');
+        setVacationMode(settings?.vacationMode || false);
+        setVacationMessage(settings?.vacationMessage || '');
+        setStoreDescription(settings?.storeDescription || '');
+        setShippingPolicy(settings?.shippingPolicy || '');
+        setReturnPolicy(settings?.returnPolicy || '');
+        setCancellationPolicy(settings?.cancellationPolicy || '');
+        setPublicEmailEnabled(settings?.publicEmailEnabled || false);
+        setPublicPhoneEnabled(settings?.publicPhoneEnabled || false);
+        setPublicPickupAddressEnabled(settings?.publicPickupAddressEnabled || false);
+        setDefaultCourier(settings?.defaultCourier || 'PATHAO');
+        const address = settings?.pickupAddress;
+        if (address) {
+          setStreetAddress(address.streetAddress || '');
+          setDivision(address.division || 'DHAKA');
+          setDistrict(address.district || '');
+          setUpazila(address.upazila || '');
+          setPostalCode(address.postalCode || '');
+        }
+      })
+      .catch((error: any) => {
+        if (signal?.aborted) return;
+        setSaveError(error.message || 'Unable to load seller profile.');
+      })
+      .finally(() => {
+        if (!signal?.aborted) setLoading(false);
+      });
   }, []);
 
-  useEffect(() => { void loadSettings(); }, [loadSettings]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadSettings(controller.signal);
+    return () => controller.abort();
+  }, [loadSettings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,10 +95,27 @@ export default function SellerSettingsPage() {
       const response = await csrfFetch('/api/v1/seller/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sellerId, supportEmail: supportEmail || null, supportPhone: supportPhone || null, pickupAddress: { division, district, upazila, streetAddress, postalCode }, defaultCourier, vacationMode, vacationMessage: vacationMessage || null, storeDescription: storeDescription || null, shippingPolicy: shippingPolicy || null, returnPolicy: returnPolicy || null, cancellationPolicy: cancellationPolicy || null, publicEmailEnabled, publicPhoneEnabled, publicPickupAddressEnabled, version: sellerVersion }),
+        body: JSON.stringify({
+          sellerId,
+          supportEmail: supportEmail || null,
+          supportPhone: supportPhone || null,
+          pickupAddress: { division, district, upazila, streetAddress, postalCode },
+          defaultCourier,
+          vacationMode,
+          vacationMessage: vacationMessage || null,
+          storeDescription: storeDescription || null,
+          shippingPolicy: shippingPolicy || null,
+          returnPolicy: returnPolicy || null,
+          cancellationPolicy: cancellationPolicy || null,
+          publicEmailEnabled,
+          publicPhoneEnabled,
+          publicPickupAddressEnabled,
+          version: sellerVersion,
+        }),
       });
       const json = await response.json().catch(() => null);
-      if (!response.ok || !json?.success) throw new Error(json?.error?.message || 'Unable to save seller settings.');
+      if (!response.ok || !json?.success)
+        throw new Error(json?.error?.message || 'Unable to save seller settings.');
       setSellerVersion(json.data.version);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3500);
@@ -137,12 +161,22 @@ export default function SellerSettingsPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
-        {loading && <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500">{t('common.loading')}</div>}
-        {saveError && <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-700">{saveError}</div>}
+        {loading && (
+          <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-500">
+            {t('common.loading')}
+          </div>
+        )}
+        {saveError && (
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-bold text-rose-700">
+            {saveError}
+          </div>
+        )}
         {saveSuccess && (
           <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2">
             <span>✓</span>
-            <span>Store logistics settings successfully updated. Saved under OCC version control.</span>
+            <span>
+              Store logistics settings successfully updated. Saved under OCC version control.
+            </span>
           </div>
         )}
 
@@ -213,18 +247,122 @@ export default function SellerSettingsPage() {
               </Card>
 
               <Card className="space-y-5 bg-white p-6">
-                <h2 className="text-base font-bold text-slate-900">{t('sellerProfile.branding')}</h2>
+                <h2 className="text-base font-bold text-slate-900">
+                  {t('sellerProfile.branding')}
+                </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {([['LOGO', 'sellerProfile.logo'], ['BANNER', 'sellerProfile.banner']] as const).map(([type, label]) => (
-                    <label key={type} className="block text-xs font-semibold text-slate-700">{t(label)}
-                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { setBrandingType(type); setBrandingFile(event.target.files?.[0] || null); }} className="mt-2 block w-full rounded-lg border border-slate-300 p-2 text-xs" />
+                  {(
+                    [
+                      ['LOGO', 'sellerProfile.logo'],
+                      ['BANNER', 'sellerProfile.banner'],
+                    ] as const
+                  ).map(([type, label]) => (
+                    <label key={type} className="block text-xs font-semibold text-slate-700">
+                      {t(label)}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => {
+                          setBrandingType(type);
+                          setBrandingFile(event.target.files?.[0] || null);
+                        }}
+                        className="mt-2 block w-full rounded-lg border border-slate-300 p-2 text-xs"
+                      />
                     </label>
                   ))}
                 </div>
-                <button type="button" disabled={!brandingFile || !sellerId} onClick={async () => { if (!brandingFile) return; const form = new FormData(); form.set('sellerId', sellerId); form.set('assetType', brandingType); form.set('version', String(sellerVersion)); form.set('file', brandingFile); const response = await csrfFetch('/api/v1/seller/settings/branding', { method: 'POST', body: form }); const json = await response.json().catch(() => null); if (!response.ok || !json?.success) { setSaveError(json?.error?.message || t('sellerProfile.brandingFailed')); return; } setSellerVersion(json.data.version); setBrandingFile(null); setSaveSuccess(true); }} className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{t('sellerProfile.uploadBranding')}</button>
-                <h2 className="pt-3 text-base font-bold text-slate-900">{t('sellerProfile.policies')}</h2>
-                {([['storeDescription', storeDescription, setStoreDescription, 'sellerProfile.description'], ['shippingPolicy', shippingPolicy, setShippingPolicy, 'sellerProfile.shippingPolicy'], ['returnPolicy', returnPolicy, setReturnPolicy, 'sellerProfile.returnPolicy'], ['cancellationPolicy', cancellationPolicy, setCancellationPolicy, 'sellerProfile.cancellationPolicy']] as const).map(([key, value, setter, label]) => <label key={key} className="block text-xs font-semibold text-slate-700">{t(label)}<textarea value={value} onChange={(event) => setter(event.target.value)} maxLength={key === 'storeDescription' ? 2000 : 4000} className="mt-2 min-h-20 w-full rounded-lg border border-slate-300 p-2.5 text-xs" /></label>)}
-                <div className="space-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-700"><h2 className="text-base font-bold text-slate-900">{t('sellerProfile.publicContacts')}</h2><label className="flex gap-2"><input type="checkbox" checked={publicEmailEnabled} onChange={(event) => setPublicEmailEnabled(event.target.checked)} />{t('sellerProfile.publicEmail')}</label><label className="flex gap-2"><input type="checkbox" checked={publicPhoneEnabled} onChange={(event) => setPublicPhoneEnabled(event.target.checked)} />{t('sellerProfile.publicPhone')}</label><label className="flex gap-2"><input type="checkbox" checked={publicPickupAddressEnabled} onChange={(event) => setPublicPickupAddressEnabled(event.target.checked)} />{t('sellerProfile.publicPickup')}</label></div>
+                <button
+                  type="button"
+                  disabled={!brandingFile || !sellerId}
+                  onClick={async () => {
+                    if (!brandingFile) return;
+                    const form = new FormData();
+                    form.set('sellerId', sellerId);
+                    form.set('assetType', brandingType);
+                    form.set('version', String(sellerVersion));
+                    form.set('file', brandingFile);
+                    const response = await csrfFetch('/api/v1/seller/settings/branding', {
+                      method: 'POST',
+                      body: form,
+                    });
+                    const json = await response.json().catch(() => null);
+                    if (!response.ok || !json?.success) {
+                      setSaveError(json?.error?.message || t('sellerProfile.brandingFailed'));
+                      return;
+                    }
+                    setSellerVersion(json.data.version);
+                    setBrandingFile(null);
+                    setSaveSuccess(true);
+                  }}
+                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50"
+                >
+                  {t('sellerProfile.uploadBranding')}
+                </button>
+                <h2 className="pt-3 text-base font-bold text-slate-900">
+                  {t('sellerProfile.policies')}
+                </h2>
+                {(
+                  [
+                    [
+                      'storeDescription',
+                      storeDescription,
+                      setStoreDescription,
+                      'sellerProfile.description',
+                    ],
+                    [
+                      'shippingPolicy',
+                      shippingPolicy,
+                      setShippingPolicy,
+                      'sellerProfile.shippingPolicy',
+                    ],
+                    ['returnPolicy', returnPolicy, setReturnPolicy, 'sellerProfile.returnPolicy'],
+                    [
+                      'cancellationPolicy',
+                      cancellationPolicy,
+                      setCancellationPolicy,
+                      'sellerProfile.cancellationPolicy',
+                    ],
+                  ] as const
+                ).map(([key, value, setter, label]) => (
+                  <label key={key} className="block text-xs font-semibold text-slate-700">
+                    {t(label)}
+                    <textarea
+                      value={value}
+                      onChange={(event) => setter(event.target.value)}
+                      maxLength={key === 'storeDescription' ? 2000 : 4000}
+                      className="mt-2 min-h-20 w-full rounded-lg border border-slate-300 p-2.5 text-xs"
+                    />
+                  </label>
+                ))}
+                <div className="space-y-2 border-t border-slate-100 pt-4 text-xs font-semibold text-slate-700">
+                  <h2 className="text-base font-bold text-slate-900">
+                    {t('sellerProfile.publicContacts')}
+                  </h2>
+                  <label className="flex gap-2">
+                    <input
+                      type="checkbox"
+                      checked={publicEmailEnabled}
+                      onChange={(event) => setPublicEmailEnabled(event.target.checked)}
+                    />
+                    {t('sellerProfile.publicEmail')}
+                  </label>
+                  <label className="flex gap-2">
+                    <input
+                      type="checkbox"
+                      checked={publicPhoneEnabled}
+                      onChange={(event) => setPublicPhoneEnabled(event.target.checked)}
+                    />
+                    {t('sellerProfile.publicPhone')}
+                  </label>
+                  <label className="flex gap-2">
+                    <input
+                      type="checkbox"
+                      checked={publicPickupAddressEnabled}
+                      onChange={(event) => setPublicPickupAddressEnabled(event.target.checked)}
+                    />
+                    {t('sellerProfile.publicPickup')}
+                  </label>
+                </div>
               </Card>
 
               {/* Warehouse Depot & Pickup Location */}
@@ -327,7 +465,9 @@ export default function SellerSettingsPage() {
                       onChange={(e) => setDefaultCourier(e.target.value)}
                       className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
                     >
-                      <option value="PATHAO">Pathao Courier (Same-Day Dhaka &amp; Nationwide)</option>
+                      <option value="PATHAO">
+                        Pathao Courier (Same-Day Dhaka &amp; Nationwide)
+                      </option>
                       <option value="STEADFAST">Steadfast Logistics (Nationwide Coverage)</option>
                       <option value="REDX">RedX Logistics</option>
                       <option value="PAPERFLY">Paperfly</option>
@@ -345,7 +485,8 @@ export default function SellerSettingsPage() {
                       <div>
                         <div className="text-xs font-bold text-slate-900">Vacation Mode</div>
                         <div className="text-[11px] text-slate-500">
-                          Temporarily pauses storefront checkout for your products while preserving ratings.
+                          Temporarily pauses storefront checkout for your products while preserving
+                          ratings.
                         </div>
                       </div>
                     </label>
@@ -369,26 +510,35 @@ export default function SellerSettingsPage() {
             <Card className="p-6 bg-white border-slate-200 shadow-sm">
               <h3 className="text-sm font-bold text-slate-900 mb-3">Regulatory Credentials</h3>
               <p className="text-xs text-slate-500 mb-4">
-                These credentials are verified by platform operations. Contact support to update legal tax records.
+                These credentials are verified by platform operations. Contact support to update
+                legal tax records.
               </p>
 
               <div className="space-y-3 text-xs">
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
                   <span className="text-slate-400 block text-[10px] font-mono">TRADE LICENSE</span>
                   <span className="font-mono font-bold text-slate-800">TRAD/DNCC/042189/2024</span>
-                  <Badge variant="success" size="sm" className="mt-1 block w-fit">VERIFIED</Badge>
+                  <Badge variant="success" size="sm" className="mt-1 block w-fit">
+                    VERIFIED
+                  </Badge>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                  <span className="text-slate-400 block text-[10px] font-mono">NBR 13-DIGIT BIN</span>
+                  <span className="text-slate-400 block text-[10px] font-mono">
+                    NBR 13-DIGIT BIN
+                  </span>
                   <span className="font-mono font-bold text-slate-800">0012345678901</span>
-                  <Badge variant="success" size="sm" className="mt-1 block w-fit">VERIFIED</Badge>
+                  <Badge variant="success" size="sm" className="mt-1 block w-fit">
+                    VERIFIED
+                  </Badge>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
                   <span className="text-slate-400 block text-[10px] font-mono">12-DIGIT TIN</span>
                   <span className="font-mono font-bold text-slate-800">123456789012</span>
-                  <Badge variant="success" size="sm" className="mt-1 block w-fit">VERIFIED</Badge>
+                  <Badge variant="success" size="sm" className="mt-1 block w-fit">
+                    VERIFIED
+                  </Badge>
                 </div>
               </div>
             </Card>

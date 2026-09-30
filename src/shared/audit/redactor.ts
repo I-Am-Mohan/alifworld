@@ -1,9 +1,9 @@
 /**
  * Audit Log Sensitive Data Redaction Engine
- * 
+ *
  * Enforces append-only security by stripping credentials, tokens, secrets,
  * passwords, OTPs, PINs, card data, and authorization headers from audit payloads.
- * 
+ *
  * Invariants: NIST SP 800-63B, OWASP Logging Guidelines, Milestone 040
  */
 

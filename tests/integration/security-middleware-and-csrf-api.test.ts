@@ -1,6 +1,6 @@
 /**
  * Integration Tests: Global Security Middleware and CSRF Endpoint (Milestone 048)
- * 
+ *
  * Tests:
  * 1. Global middleware (src/middleware.ts):
  *    - Request ID correlation injection and preservation
@@ -13,7 +13,7 @@
  * 2. CSRF token provisioning endpoint (src/app/api/v1/auth/csrf/route.ts):
  *    - Returns 200 OK with authentic signed token and sets aw_csrf cookie
  *    - Token verifies cryptographically against secret
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, Phase 05 Milestone 048
  */
 

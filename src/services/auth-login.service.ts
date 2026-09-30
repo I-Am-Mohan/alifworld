@@ -1,9 +1,9 @@
 /**
  * AlifWorld User Authentication & Login Service
- * 
+ *
  * Manages user authentication, multi-identifier resolution (email or Bangladesh mobile),
  * constant-time password hash verification, session initialization, and access-token issuance.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, ADR-0034, NIST SP 800-63B Guidelines
  */
 

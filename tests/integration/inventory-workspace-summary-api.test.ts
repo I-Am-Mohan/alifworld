@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as workspaceSummaryRoute } from '@/app/api/v1/inventory/workspace/summary/route';
 import { InventoryService } from '@/features/inventory/services/inventory-service';

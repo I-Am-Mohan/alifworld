@@ -1,8 +1,8 @@
 /**
  * Scoped Orders Collection API Route
- * 
+ *
  * Enforces server-side tenant scoping and customer ownership at query boundaries.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 043, Milestone 047
  */
 
@@ -50,9 +50,7 @@ export async function GET(req: NextRequest) {
     // 2. Customer Scoping: strictly return orders where customerId matches actor.userId
     // If query parameter 'customerId' was passed, ignore it or verify it matches actor.userId
     const targetCustomerId =
-      isSuperAdmin || isPlatformAdmin
-        ? searchParams.get('customerId') || undefined
-        : actor.userId;
+      isSuperAdmin || isPlatformAdmin ? searchParams.get('customerId') || undefined : actor.userId;
 
     if (targetCustomerId) {
       const result = await orderRepo.findOrdersByCustomerId(targetCustomerId, { page, limit });

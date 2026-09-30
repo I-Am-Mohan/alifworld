@@ -1,13 +1,13 @@
 /**
  * Order Fulfillment & Multi-Vendor Lifecycle Service
- * 
+ *
  * Implements business transactions for:
  * 1. Multi-vendor cart-to-order checkout with strict seller fulfillment partitioning.
  * 2. Exact integer poisha financial calculations (1 BDT = 100 poisha).
  * 3. Independent discrete Product Points snapshots (zero conversion rate).
  * 4. Seller tenant-scoped state machine transitions and audit logging.
  * 5. Courier dispatch and shipment tracking event management.
- * 
+ *
  * Reference: docs/architecture/carts-orders-fulfillment-groups-and-shipments.md
  * Invariants: ADR-0003, ADR-0022, ADR-0025, ADR-0026, ADR-0027
  */
@@ -15,10 +15,20 @@
 import { CartRepository } from '@/repositories/cart.repository';
 import { OrderRepository, CreateOrderFulfillmentGroupInput } from '@/repositories/order.repository';
 import { CheckoutInput } from '@/validators/order.validator';
-import { ValidationError, NotFoundError, ConflictError, AuthorizationError } from '@/shared/errors/app-error';
+import {
+  ValidationError,
+  NotFoundError,
+  ConflictError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { auditService } from '@/shared/audit';
 import { createHash } from 'node:crypto';
+import { orderTransitionService } from '@/features/orders/state-machines/order-transition.service';
+import {
+  FULFILLMENT_GROUP_TRANSITIONS,
+  type FulfillmentGroupStatus,
+} from '@/features/orders/state-machines/order-state-machine';
 
 // Standard logistics rates in minor integer poisha (1 BDT = 100 poisha)
 export const SHIPPING_RATES_POISHA = {
@@ -30,11 +40,18 @@ export const SHIPPING_RATES_POISHA = {
 export const PLATFORM_COMMISSION_BPS = 500; // 500 basis points = 5.00%
 
 export function snapshotOrderLine(pricePoisha: bigint, productPoint: number, quantity: number) {
-  if (pricePoisha <= 0n || pricePoisha > 9223372036854775807n ||
-      !Number.isSafeInteger(quantity) || quantity <= 0 || quantity > 2147483647 ||
-      !Number.isSafeInteger(productPoint) || productPoint < 0 ||
-      productPoint > 2147483647 || productPoint * quantity > 2147483647 ||
-      pricePoisha * BigInt(quantity) > 9223372036854775807n) {
+  if (
+    pricePoisha <= 0n ||
+    pricePoisha > 9223372036854775807n ||
+    !Number.isSafeInteger(quantity) ||
+    quantity <= 0 ||
+    quantity > 2147483647 ||
+    !Number.isSafeInteger(productPoint) ||
+    productPoint < 0 ||
+    productPoint > 2147483647 ||
+    productPoint * quantity > 2147483647 ||
+    pricePoisha * BigInt(quantity) > 9223372036854775807n
+  ) {
     throw new ValidationError('Invalid order item price, quantity, or Product Points');
   }
 
@@ -47,17 +64,7 @@ export function snapshotOrderLine(pricePoisha: bigint, productPoint: number, qua
 }
 
 // Valid seller fulfillment group state machine transitions
-export const VALID_GROUP_TRANSITIONS: Record<string, string[]> = {
-  PENDING: ['ACCEPTED', 'REJECTED'],
-  ACCEPTED: ['PACKING', 'CANCELLED'],
-  PACKING: ['READY_FOR_PICKUP'],
-  READY_FOR_PICKUP: ['HANDED_OVER_TO_COURIER'],
-  HANDED_OVER_TO_COURIER: ['IN_TRANSIT'],
-  IN_TRANSIT: ['DELIVERED'],
-  DELIVERED: [],
-  CANCELLED: [],
-  REJECTED: [],
-};
+export const VALID_GROUP_TRANSITIONS = FULFILLMENT_GROUP_TRANSITIONS;
 
 export class OrderFulfillmentService {
   constructor(
@@ -69,7 +76,12 @@ export class OrderFulfillmentService {
    * Executes checkout, partitioning cart items into multi-vendor seller groups
    * and freezing exact pricing and point snapshots.
    */
-  async processCheckout(cartId: string, customerId: string, input: CheckoutInput, idempotencyKey: string) {
+  async processCheckout(
+    cartId: string,
+    customerId: string,
+    input: CheckoutInput,
+    idempotencyKey: string
+  ) {
     // 1. Fetch cart with active items
     const cart = await this.cartRepo.findById(cartId);
     if (cart && cart.userId !== customerId) {
@@ -85,7 +97,9 @@ export class OrderFulfillmentService {
     const dateStamp = new Date(cart.createdAt).toISOString().slice(0, 10).replace(/-/g, '');
     const requestHash = createHash('sha256')
       .update(JSON.stringify([cartId, customerId, idempotencyKey, input]))
-      .digest('hex').slice(0, 24).toUpperCase();
+      .digest('hex')
+      .slice(0, 24)
+      .toUpperCase();
     const orderNumber = `ORD-${dateStamp}-${requestHash}`;
     const previousOrder = await this.orderRepo.findOrderByNumber(orderNumber);
     if (previousOrder) {
@@ -188,25 +202,25 @@ export class OrderFulfillmentService {
     let createdOrder;
     try {
       createdOrder = await this.orderRepo.createOrder({
-      cartId,
-      cartVersion: cart.version,
-      orderNumber,
-      customerId,
-      subtotalPoisha: orderSubtotalPoisha,
-      shippingFeePoisha: orderShippingFeePoisha,
-      taxPoisha: orderTaxPoisha,
-      totalPoisha: orderTotalPoisha,
-      totalProductPoints: orderTotalProductPoints,
-      shippingName: input.shippingName,
-      shippingPhone: input.shippingPhone,
-      shippingDivision: input.shippingDivision,
-      shippingDistrict: input.shippingDistrict,
-      shippingUpazila: input.shippingUpazila,
-      shippingAddress: input.shippingAddress,
-      shippingPostalCode: input.shippingPostalCode,
-      billingAddress: input.billingAddress,
-      customerNotes: input.customerNotes,
-      fulfillmentGroups,
+        cartId,
+        cartVersion: cart.version,
+        orderNumber,
+        customerId,
+        subtotalPoisha: orderSubtotalPoisha,
+        shippingFeePoisha: orderShippingFeePoisha,
+        taxPoisha: orderTaxPoisha,
+        totalPoisha: orderTotalPoisha,
+        totalProductPoints: orderTotalProductPoints,
+        shippingName: input.shippingName,
+        shippingPhone: input.shippingPhone,
+        shippingDivision: input.shippingDivision,
+        shippingDistrict: input.shippingDistrict,
+        shippingUpazila: input.shippingUpazila,
+        shippingAddress: input.shippingAddress,
+        shippingPostalCode: input.shippingPostalCode,
+        billingAddress: input.billingAddress,
+        customerNotes: input.customerNotes,
+        fulfillmentGroups,
       });
     } catch (error) {
       if (error instanceof ConflictError) {
@@ -246,54 +260,19 @@ export class OrderFulfillmentService {
     actorId?: string,
     reason?: string
   ) {
-    const sfg = await this.orderRepo.findFulfillmentGroupByIdAndSeller(groupId, sellerId);
-    if (!sfg) {
-      throw new NotFoundError(`Fulfillment group '${groupId}' not found`);
+    if (!actorId) throw new AuthorizationError('Authenticated seller actor required.');
+    if (!Object.prototype.hasOwnProperty.call(FULFILLMENT_GROUP_TRANSITIONS, nextStatus)) {
+      throw new ValidationError('Unknown fulfillment status.');
     }
-
-    const allowedNext = VALID_GROUP_TRANSITIONS[sfg.status] ?? [];
-    if (!allowedNext.includes(nextStatus)) {
-      throw new ConflictError(
-        `Invalid status transition from '${sfg.status}' to '${nextStatus}'. Allowed: [${allowedNext.join(', ')}]`,
-        { currentStatus: sfg.status, requestedStatus: nextStatus }
-      );
-    }
-
-    // Perform the status update
-    const updated = await this.orderRepo.updateFulfillmentGroupStatus(
+    await orderTransitionService.transitionFulfillmentGroupStatus({
       groupId,
       sellerId,
-      nextStatus,
-      actorId
-    );
-
-    // Record audit event in parent order history
-    await this.orderRepo.recordStatusTransition(
-      sfg.orderId,
-      sfg.status,
-      nextStatus,
-      actorId,
-      'SELLER',
-      reason ?? `Seller updated fulfillment group ${sfg.groupNumber} to ${nextStatus}`
-    );
-
-    // Record immutable audit log
-    await auditService.logBusinessEvent({
-      action: 'FULFILLMENT_GROUP_STATUS_CHANGED',
-      resource: 'SELLER_FULFILLMENT_GROUP',
-      resourceId: groupId,
+      nextStatus: nextStatus as FulfillmentGroupStatus,
       actorId,
       actorRole: 'SELLER',
-      before: { status: sfg.status },
-      after: { status: nextStatus },
-      metadata: {
-        orderId: sfg.orderId,
-        sellerId,
-        reason: reason ?? `Seller updated fulfillment group ${sfg.groupNumber} to ${nextStatus}`,
-      },
+      reason,
     });
-
-    return updated;
+    return this.orderRepo.findFulfillmentGroupByIdAndSeller(groupId, sellerId);
   }
 
   /**
@@ -323,6 +302,10 @@ export class OrderFulfillmentService {
       throw new NotFoundError(`Fulfillment group '${groupId}' not found`);
     }
 
+    if (sfg.status !== 'READY_FOR_PICKUP') {
+      throw new ConflictError('Fulfillment group must be ready for pickup before dispatch.');
+    }
+
     const shipmentNumber = `SHP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     const shipment = await this.orderRepo.createShipment({
@@ -341,14 +324,14 @@ export class OrderFulfillmentService {
       shippingCostPoisha: options.shippingCostPoisha,
     });
 
-    // Advance fulfillment group to HANDED_OVER_TO_COURIER if valid
-    if (sfg.status === 'READY_FOR_PICKUP' || sfg.status === 'PACKING') {
-      await this.orderRepo.updateFulfillmentGroupStatus(
-        groupId,
-        sellerId,
-        'HANDED_OVER_TO_COURIER'
-      );
-    }
+    await orderTransitionService.transitionFulfillmentGroupStatus({
+      groupId,
+      sellerId,
+      nextStatus: 'HANDED_OVER_TO_COURIER',
+      actorId: 'logistics-system',
+      actorRole: 'SYSTEM',
+      idempotencyKey: `shipment:${shipment.id}:handover`,
+    });
 
     // Record immutable audit log
     await auditService.logBusinessEvent({

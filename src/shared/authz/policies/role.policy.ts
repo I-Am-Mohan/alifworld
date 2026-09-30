@@ -1,9 +1,9 @@
 /**
  * AlifWorld RBAC Role & Permission Assignment Authorization Policy
- * 
+ *
  * Enforces role delegation boundaries, privilege escalation barriers,
  * and seller-tenant scoping requirements.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0023, Milestone 042
  */
 
@@ -24,7 +24,12 @@ export class RolePolicy implements IPolicy {
       case 'read':
       case 'roles:read':
         if (isSuperAdmin || isPlatformAdmin || actor.permissions.includes('roles:read')) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to view roles catalogue.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Authorized to view roles catalogue.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -36,19 +41,29 @@ export class RolePolicy implements IPolicy {
       case 'manage':
       case 'roles:manage':
         if (isSuperAdmin) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to manage custom roles.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Authorized to manage custom roles.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
           code: 'FORBIDDEN',
-          reason: 'Only a Super Administrator can create or modify system roles and permission sets.',
+          reason:
+            'Only a Super Administrator can create or modify system roles and permission sets.',
           policyName: this.name,
         };
 
       case 'assign':
       case 'roles:assign': {
         // 1. Only SUPER_ADMIN can assign administrative roles (SUPER_ADMIN or ADMIN)
-        if ((targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) && !isSuperAdmin) {
+        if (
+          (targetRoleCode === SystemRoleCode.SUPER_ADMIN ||
+            targetRoleCode === SystemRoleCode.ADMIN) &&
+          !isSuperAdmin
+        ) {
           return {
             granted: false,
             code: 'PRIVILEGE_ESCALATION',
@@ -74,7 +89,12 @@ export class RolePolicy implements IPolicy {
 
         // 3. Platform Admin or Super Admin can assign platform and seller roles
         if (isSuperAdmin || isPlatformAdmin || actor.permissions.includes('roles:assign')) {
-          return { granted: true, code: 'GRANTED', reason: 'Administrator authorized to assign role.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Administrator authorized to assign role.',
+            policyName: this.name,
+          };
         }
 
         // 4. Store Owner delegating staff role within their own store
@@ -82,7 +102,12 @@ export class RolePolicy implements IPolicy {
         if (isStoreOwner && targetSellerId && actor.sellerId === targetSellerId) {
           const delegatableRoles = [SystemRoleCode.SELLER_STAFF, 'SELLER_MANAGER'];
           if (delegatableRoles.includes(targetRoleCode as any)) {
-            return { granted: true, code: 'GRANTED', reason: 'Store owner delegating store staff role.', policyName: this.name };
+            return {
+              granted: true,
+              code: 'GRANTED',
+              reason: 'Store owner delegating store staff role.',
+              policyName: this.name,
+            };
           }
         }
 
@@ -97,7 +122,11 @@ export class RolePolicy implements IPolicy {
       case 'revoke':
       case 'roles:revoke': {
         // 1. Only SUPER_ADMIN can revoke administrative roles (SUPER_ADMIN or ADMIN)
-        if ((targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) && !isSuperAdmin) {
+        if (
+          (targetRoleCode === SystemRoleCode.SUPER_ADMIN ||
+            targetRoleCode === SystemRoleCode.ADMIN) &&
+          !isSuperAdmin
+        ) {
           return {
             granted: false,
             code: 'PRIVILEGE_ESCALATION',
@@ -107,12 +136,22 @@ export class RolePolicy implements IPolicy {
         }
 
         if (isSuperAdmin || isPlatformAdmin || actor.permissions.includes('roles:assign')) {
-          return { granted: true, code: 'GRANTED', reason: 'Administrator authorized to revoke role.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Administrator authorized to revoke role.',
+            policyName: this.name,
+          };
         }
 
         const isStoreOwner = actor.roles.includes(SystemRoleCode.SELLER_OWNER);
         if (isStoreOwner && targetSellerId && actor.sellerId === targetSellerId) {
-          return { granted: true, code: 'GRANTED', reason: 'Store owner revoking store staff role.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Store owner revoking store staff role.',
+            policyName: this.name,
+          };
         }
 
         return {

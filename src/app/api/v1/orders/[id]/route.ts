@@ -1,9 +1,9 @@
 /**
  * Single Order Object-Level Authorization API Route
- * 
+ *
  * Enforces customer self-ownership, seller fulfillment-group tenant isolation,
  * rider delivery assignment, and administrative inspection.
- * 
+ *
  * Invariants: ADR-0003, ADR-0010, ADR-0022, ADR-0023, Milestone 042, Milestone 047
  */
 
@@ -21,10 +21,7 @@ const orderRepo = new OrderRepository();
  * GET /api/v1/orders/[id]
  * Retrieves a single order with strict object-level authorization.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id: orderId } = await params;

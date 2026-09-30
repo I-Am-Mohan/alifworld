@@ -176,7 +176,11 @@ class MockThreadSafeReservationRepository extends StockReservationRepository {
     return { ...updated };
   }
 
-  public async commit(id: string, expectedVersion: number, orderId: string): Promise<StockReservationModel> {
+  public async commit(
+    id: string,
+    expectedVersion: number,
+    orderId: string
+  ): Promise<StockReservationModel> {
     const res = this.reservations.get(id);
     if (!res) throw new NotFoundError(`Reservation '${id}' not found.`);
     if (res.version !== expectedVersion) {

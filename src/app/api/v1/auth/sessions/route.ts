@@ -8,10 +8,10 @@ const authTokenService = new AuthTokenService();
 
 /**
  * GET /api/v1/auth/sessions
- * 
+ *
  * Lists all active authenticated sessions and registered devices for the current user.
  * Flags the caller's active session with `isCurrent: true`.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031
  */
 export async function GET(req: NextRequest) {

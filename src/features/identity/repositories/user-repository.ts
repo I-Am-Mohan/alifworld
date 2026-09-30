@@ -1,14 +1,19 @@
 /**
  * AlifWorld User Repository
- * 
+ *
  * Encapsulates database queries for the User model, enforces OCC versioning,
  * pagination, search filters, and soft-delete lifecycle rules.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0021, ADR-0022, ADR-0023
  */
 
-import { BaseRepository, parseOffsetPagination, formatPaginatedResult, PaginatedResponse } from '@/shared/database/base-repository';
+import {
+  BaseRepository,
+  parseOffsetPagination,
+  formatPaginatedResult,
+  PaginatedResponse,
+} from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { nextVersion } from '@/shared/database/lifecycle';
 import { NotFoundError, ConflictError } from '@/shared/errors/app-error';
@@ -131,7 +136,11 @@ export class UserRepository extends BaseRepository {
   /**
    * Updates a user record with Optimistic Concurrency Control (OCC) version verification.
    */
-  public async update(id: string, expectedVersion: number, data: UpdateUserData): Promise<UserModel> {
+  public async update(
+    id: string,
+    expectedVersion: number,
+    data: UpdateUserData
+  ): Promise<UserModel> {
     return this.executeSafe(async () => {
       const existing = await this.findById(id);
       if (!existing) {
@@ -155,7 +164,11 @@ export class UserRepository extends BaseRepository {
   /**
    * Soft-deletes a user entity, recording deletion timestamp and actor.
    */
-  public async softDelete(id: string, expectedVersion: number, actorId?: string): Promise<UserModel> {
+  public async softDelete(
+    id: string,
+    expectedVersion: number,
+    actorId?: string
+  ): Promise<UserModel> {
     return this.executeSafe(async () => {
       this.assertCanDelete('User');
 

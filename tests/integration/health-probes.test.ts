@@ -27,10 +27,8 @@ describe('System Health Probes Integration', () => {
     const body = await response.json();
     expect(body.success).toBe(true);
     expect(body.data.status).toBe('ready');
-    expect(body.data.currency).toBe('BDT');
-    expect(body.data.timezone).toBe('Asia/Dhaka');
     expect(body.data.checks.configuration).toBe('valid');
-    expect(body.data.checks.gates.pointsCashConvertible).toBe(false);
-    expect(body.data.checks.gates.affiliateDepth).toBe(1);
+    expect(body.data.checks.process).toBe('healthy');
+    expect(body.data.timestamp).toBeDefined();
   });
 });

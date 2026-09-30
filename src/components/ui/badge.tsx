@@ -1,7 +1,18 @@
 import React from 'react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'orange' | 'blue' | 'cyan' | 'green' | 'success' | 'warning' | 'danger' | 'error' | 'outline' | 'black';
+  variant?:
+    | 'default'
+    | 'orange'
+    | 'blue'
+    | 'cyan'
+    | 'green'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'error'
+    | 'outline'
+    | 'black';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -12,7 +23,8 @@ export function Badge({
   children,
   ...props
 }: BadgeProps) {
-  const baseStyles = 'inline-flex items-center font-bold tracking-wide uppercase rounded-full select-none';
+  const baseStyles =
+    'inline-flex items-center font-bold tracking-wide uppercase rounded-full select-none';
 
   const variants = {
     default: 'bg-slate-100 text-slate-700 border border-slate-200',

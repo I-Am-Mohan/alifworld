@@ -1,10 +1,10 @@
 /**
  * AlifWorld Resilient Search Service
- * 
+ *
  * Orchestrator implementing the vendor-neutral SearchServiceInterface.
  * Automatically fails over from primary Meilisearch engine to PostgreSQL ILIKE
  * fallback within 250ms SLA on connection errors, timeouts, or unconfigured environments.
- * 
+ *
  * Reference:
  * - docs/architecture/scope-boundaries-and-domain-map.md
  * - docs/architecture/non-functional-requirements-and-slos.md
@@ -35,10 +35,7 @@ export class ResilientSearchService implements SearchServiceInterface {
   private readonly failureThreshold = 3;
   private readonly circuitCooldownMs = 30_000; // 30s cooldown before retrying primary
 
-  constructor(
-    primaryAdapter?: SearchServiceInterface,
-    fallbackAdapter?: SearchServiceInterface
-  ) {
+  constructor(primaryAdapter?: SearchServiceInterface, fallbackAdapter?: SearchServiceInterface) {
     this.primaryAdapter = primaryAdapter ?? new MeilisearchSearchAdapter();
     this.fallbackAdapter = fallbackAdapter ?? new PostgresSearchAdapter();
   }

@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +125,8 @@ export default function AdminUsersPage() {
           <div>
             <h2 className="text-xl font-black text-slate-950">Identity &amp; Role Directory</h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Inspect user identities, Bangladesh E.164 phone numbers, and tenant-scoped role delegations.
+              Inspect user identities, Bangladesh E.164 phone numbers, and tenant-scoped role
+              delegations.
             </p>
           </div>
           <div className="flex items-center space-x-3 w-full sm:w-auto">
@@ -150,12 +158,24 @@ export default function AdminUsersPage() {
             <Table>
               <TableHeader className="bg-slate-50 border-b border-slate-200">
                 <TableRow>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">User Name &amp; ID</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Contact Details</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase">Assigned Roles</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Verifications</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
-                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">Created Date</TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    User Name &amp; ID
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    Contact Details
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase">
+                    Assigned Roles
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                    Verifications
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                    Created Date
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -174,7 +194,13 @@ export default function AdminUsersPage() {
                         {u.roles.map((role) => (
                           <Badge
                             key={role}
-                            variant={role === 'SUPER_ADMIN' ? 'orange' : role === 'SELLER_OWNER' ? 'blue' : 'default'}
+                            variant={
+                              role === 'SUPER_ADMIN'
+                                ? 'orange'
+                                : role === 'SELLER_OWNER'
+                                  ? 'blue'
+                                  : 'default'
+                            }
                             size="sm"
                           >
                             {role}
@@ -184,20 +210,30 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="inline-flex space-x-1">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
-                          u.isEmailVerified ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
-                        }`}>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            u.isEmailVerified
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
+                        >
                           EMAIL
                         </span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
-                          u.isPhoneVerified ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
-                        }`}>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            u.isPhoneVerified
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-slate-100 text-slate-500'
+                          }`}
+                        >
                           PHONE
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="success" size="sm">{u.status}</Badge>
+                      <Badge variant="success" size="sm">
+                        {u.status}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right text-xs text-slate-500 font-mono">
                       {u.createdAt}

@@ -86,7 +86,9 @@ export function CmsHomeSections({ initialData, locale = 'en-BD' }: CmsHomeSectio
                       key={dotIdx}
                       onClick={() => setActiveBannerIndex(dotIdx)}
                       className={`h-2.5 rounded-full transition-all ${
-                        dotIdx === activeBannerIndex ? 'w-8 bg-[#FF6A00]' : 'w-2.5 bg-white/40 hover:bg-white/60'
+                        dotIdx === activeBannerIndex
+                          ? 'w-8 bg-[#FF6A00]'
+                          : 'w-2.5 bg-white/40 hover:bg-white/60'
                       }`}
                       aria-label={`Slide ${dotIdx + 1}`}
                     />

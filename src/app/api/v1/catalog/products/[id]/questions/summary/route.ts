@@ -8,10 +8,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/catalog/products/[id]/questions/summary
  * Returns total, answered, and unanswered question counts for a product.
  */
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await props.params;
 

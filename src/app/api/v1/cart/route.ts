@@ -1,8 +1,8 @@
 /**
  * Customer Shopping Cart API Route
- * 
+ *
  * Supports both authenticated users and guest shopping carts with token isolation.
- * 
+ *
  * Invariants: ADR-0003, ADR-0027, Milestone 127
  */
 
@@ -138,4 +138,3 @@ export async function DELETE(req: NextRequest) {
     return errorResponse(req, error);
   }
 }
-

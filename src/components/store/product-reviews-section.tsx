@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  ProductReviewDTO,
-  ProductRatingSummaryDTO,
-} from '@/features/reviews/types/review.types';
+import { ProductReviewDTO, ProductRatingSummaryDTO } from '@/features/reviews/types/review.types';
 
 interface ProductReviewsSectionProps {
   productId: string;
@@ -59,10 +56,10 @@ export function ProductReviewsSection({
             unhelpfulVotesCount: 0,
             sellerResponse:
               'ধন্যবাদ স্যার! আপনার সন্তুষ্টিই আমাদের প্রধান লক্ষ্য। সবসময় সেরা পণ্য ও সেবা দিতে আমরা প্রতিশ্রুতিবদ্ধ।',
-            sellerRespondedAt: new Date(Date.now() - 86400000).toISOString(),
+            sellerRespondedAt: '2026-09-29T12:00:00.000Z',
             sellerStoreName: 'Official Flagship Store',
-            createdAt: new Date(Date.now() - 172800000).toISOString(),
-            updatedAt: new Date(Date.now() - 172800000).toISOString(),
+            createdAt: '2026-09-28T12:00:00.000Z',
+            updatedAt: '2026-09-28T12:00:00.000Z',
             media: [
               {
                 id: 'm1',
@@ -88,8 +85,8 @@ export function ProductReviewsSection({
             unhelpfulVotesCount: 1,
             sellerResponse: null,
             sellerRespondedAt: null,
-            createdAt: new Date(Date.now() - 345600000).toISOString(),
-            updatedAt: new Date(Date.now() - 345600000).toISOString(),
+            createdAt: '2026-09-26T12:00:00.000Z',
+            updatedAt: '2026-09-26T12:00:00.000Z',
             media: [],
           },
         ]
@@ -136,7 +133,11 @@ export function ProductReviewsSection({
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim().length < 10) {
-      showToast(isBn ? 'রিভিউ কমপক্ষে ১০ অক্ষরের হতে হবে।' : 'Review comment must be at least 10 characters.');
+      showToast(
+        isBn
+          ? 'রিভিউ কমপক্ষে ১০ অক্ষরের হতে হবে।'
+          : 'Review comment must be at least 10 characters.'
+      );
       return;
     }
 
@@ -173,7 +174,8 @@ export function ProductReviewsSection({
     setSummary((prev) => {
       const newTotal = prev.totalReviews + 1;
       const newDist = { ...prev.distribution };
-      newDist[newRating as keyof typeof newDist] = (newDist[newRating as keyof typeof newDist] || 0) + 1;
+      newDist[newRating as keyof typeof newDist] =
+        (newDist[newRating as keyof typeof newDist] || 0) + 1;
       return {
         ...prev,
         totalReviews: newTotal,
@@ -186,7 +188,11 @@ export function ProductReviewsSection({
     setNewTitle('');
     setNewComment('');
     setNewPhotoUrl('');
-    showToast(isBn ? 'আপনার ভেরিফায়েড রিভিউ সফলভাবে যোগ হয়েছে!' : 'Your verified review was submitted successfully!');
+    showToast(
+      isBn
+        ? 'আপনার ভেরিফায়েড রিভিউ সফলভাবে যোগ হয়েছে!'
+        : 'Your verified review was submitted successfully!'
+    );
   };
 
   const filteredReviews = reviews.filter((r) => {
@@ -319,7 +325,10 @@ export function ProductReviewsSection({
           </div>
         ) : (
           filteredReviews.map((rev) => (
-            <Card key={rev.id} className="p-6 border border-slate-100 bg-slate-50/50 space-y-4 rounded-xl">
+            <Card
+              key={rev.id}
+              className="p-6 border border-slate-100 bg-slate-50/50 space-y-4 rounded-xl"
+            >
               {/* Author & Rating Header */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -350,9 +359,7 @@ export function ProductReviewsSection({
               </div>
 
               {/* Title & Comment */}
-              {rev.title && (
-                <div className="font-bold text-xs text-slate-900">{rev.title}</div>
-              )}
+              {rev.title && <div className="font-bold text-xs text-slate-900">{rev.title}</div>}
               <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">
                 {rev.comment}
               </p>
@@ -393,9 +400,7 @@ export function ProductReviewsSection({
                       </span>
                     )}
                   </div>
-                  <p className="text-blue-950 text-xs leading-relaxed">
-                    {rev.sellerResponse}
-                  </p>
+                  <p className="text-blue-950 text-xs leading-relaxed">{rev.sellerResponse}</p>
                 </div>
               )}
 
@@ -474,9 +479,7 @@ export function ProductReviewsSection({
                       ★
                     </button>
                   ))}
-                  <span className="text-xs text-slate-500 font-bold ml-2">
-                    {newRating} / 5
-                  </span>
+                  <span className="text-xs text-slate-500 font-bold ml-2">{newRating} / 5</span>
                 </div>
               </div>
 
@@ -488,14 +491,18 @@ export function ProductReviewsSection({
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder={isBn ? 'যেমন: চমৎকার পণ্য, ১০০% আসল!' : 'e.g. Excellent build quality!'}
+                  placeholder={
+                    isBn ? 'যেমন: চমৎকার পণ্য, ১০০% আসল!' : 'e.g. Excellent build quality!'
+                  }
                   className="w-full p-2.5 border border-slate-300 rounded-lg text-xs"
                 />
               </div>
 
               <div>
                 <label className="font-bold text-slate-700 block mb-1">
-                  {isBn ? 'বিস্তারিত অভিজ্ঞতা (কমপ��্ষে ১০ অক্ষর)' : 'Detailed Experience (Minimum 10 characters)'}
+                  {isBn
+                    ? 'বিস্তারিত অভিজ্ঞতা (কমপ��্ষে ১০ অক্ষর)'
+                    : 'Detailed Experience (Minimum 10 characters)'}
                 </label>
                 <textarea
                   value={newComment}

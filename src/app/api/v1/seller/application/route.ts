@@ -11,7 +11,11 @@ const service = new SellerApplicationService();
 export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'seller_application:read', { type: 'SELLER', ownerId: actor.userId, sellerId: actor.sellerId });
+    await defaultPolicyEngine.assert(actor, 'seller_application:read', {
+      type: 'SELLER',
+      ownerId: actor.userId,
+      sellerId: actor.sellerId,
+    });
     const application = await service.getCurrentForApplicant(actor.userId);
     return NextResponse.json({ success: true, data: application }, { status: 200 });
   } catch (error) {
@@ -22,10 +26,23 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'seller_application:create', { type: 'SELLER', ownerId: actor.userId });
+    await defaultPolicyEngine.assert(actor, 'seller_application:create', {
+      type: 'SELLER',
+      ownerId: actor.userId,
+    });
     const parsed = SellerApplicationDraftSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: { code: 'VALIDATION_FAILED', message: 'Invalid seller application details.', details: parsed.error.flatten() } }, { status: 422 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'Invalid seller application details.',
+            details: parsed.error.flatten(),
+          },
+        },
+        { status: 422 }
+      );
     }
     const application = await service.createDraft(actor.userId, parsed.data);
     return NextResponse.json({ success: true, data: application }, { status: 201 });

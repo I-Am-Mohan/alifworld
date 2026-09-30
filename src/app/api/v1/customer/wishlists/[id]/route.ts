@@ -11,10 +11,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/customer/wishlists/[id]
  * Retrieves a customer wishlist by ID with self-service ownership assertion.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;
@@ -37,10 +34,7 @@ export async function GET(
  * PUT /api/v1/customer/wishlists/[id]
  * Updates wishlist attributes (title, description, visibility).
  */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;
@@ -68,10 +62,7 @@ export async function PUT(
  * DELETE /api/v1/customer/wishlists/[id]
  * Deletes a custom customer wishlist. (Primary default wishlist cannot be deleted).
  */
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

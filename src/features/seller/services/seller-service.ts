@@ -1,9 +1,9 @@
 /**
  * AlifWorld Seller Domain Service
- * 
+ *
  * Orchestrates merchant store onboarding, KYC review transitions,
  * staff associations, and compliance audits.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0006, ADR-0021, ADR-0022, ADR-0024
  */
@@ -14,9 +14,20 @@ import { SellerStoreSettingsRepository } from '../repositories/seller-store-sett
 import { SellerKycDocumentRepository } from '../repositories/seller-kyc-document-repository';
 import { UserRoleAssignmentRepository } from '@/features/identity/repositories/user-role-assignment-repository';
 import { RoleRepository } from '@/features/identity/repositories/role-repository';
-import { ConflictError, NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
-import { PublicSellerProfile, SellerModel, SellerStatus, KycDocumentType, KycDocumentStatus } from '../types';
+import {
+  PublicSellerProfile,
+  SellerModel,
+  SellerStatus,
+  KycDocumentType,
+  KycDocumentStatus,
+} from '../types';
 import { CreateSellerInput, UpdateSellerInput } from '../validators';
 import { SystemRoleCode } from '@/features/identity/types';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
@@ -40,9 +51,12 @@ export class SellerService {
     // Check if slug is unique
     const existingSlug = await this.sellerRepo.findBySlug(input.slug);
     if (existingSlug) {
-      throw new ConflictError(`Store slug '${input.slug}' is already taken. Please select another URL handle.`, {
-        slug: input.slug,
-      });
+      throw new ConflictError(
+        `Store slug '${input.slug}' is already taken. Please select another URL handle.`,
+        {
+          slug: input.slug,
+        }
+      );
     }
 
     // Check if owner already has a registered store
@@ -158,10 +172,15 @@ export class SellerService {
    * Approves and verifies a merchant store (Admin Only).
    * Verifies that at least a Trade License document has been approved.
    */
-  public async verifySeller(sellerId: string, expectedVersion: number, adminUserId: string): Promise<SellerModel> {
+  public async verifySeller(
+    sellerId: string,
+    expectedVersion: number,
+    adminUserId: string
+  ): Promise<SellerModel> {
     const kycDocs = await this.kycRepo.listBySeller(sellerId);
     const hasVerifiedTradeLicense = kycDocs.some(
-      (d) => d.documentType === KycDocumentType.TRADE_LICENSE && d.status === KycDocumentStatus.VERIFIED
+      (d) =>
+        d.documentType === KycDocumentType.TRADE_LICENSE && d.status === KycDocumentStatus.VERIFIED
     );
 
     if (!hasVerifiedTradeLicense) {
@@ -203,27 +222,113 @@ export class SellerService {
     return updated;
   }
 
-  public async restrictSeller(sellerId: string, expectedVersion: number, reason: string, adminUserId: string): Promise<SellerModel> {
-    return this.transitionLifecycle(sellerId, expectedVersion, SellerStatus.RESTRICTED, reason, adminUserId);
+  public async restrictSeller(
+    sellerId: string,
+    expectedVersion: number,
+    reason: string,
+    adminUserId: string
+  ): Promise<SellerModel> {
+    return this.transitionLifecycle(
+      sellerId,
+      expectedVersion,
+      SellerStatus.RESTRICTED,
+      reason,
+      adminUserId
+    );
   }
 
-  public async reactivateSeller(sellerId: string, expectedVersion: number, reason: string, adminUserId: string): Promise<SellerModel> {
-    return this.transitionLifecycle(sellerId, expectedVersion, SellerStatus.VERIFIED, reason, adminUserId);
+  public async reactivateSeller(
+    sellerId: string,
+    expectedVersion: number,
+    reason: string,
+    adminUserId: string
+  ): Promise<SellerModel> {
+    return this.transitionLifecycle(
+      sellerId,
+      expectedVersion,
+      SellerStatus.VERIFIED,
+      reason,
+      adminUserId
+    );
   }
 
-  private async transitionLifecycle(sellerId: string, expectedVersion: number, targetStatus: SellerStatus, reason: string, adminUserId: string): Promise<SellerModel> {
-    if (!reason || reason.trim().length < 5) throw new ValidationError('A descriptive lifecycle reason (minimum 5 characters) is required.');
+  private async transitionLifecycle(
+    sellerId: string,
+    expectedVersion: number,
+    targetStatus: SellerStatus,
+    reason: string,
+    adminUserId: string
+  ): Promise<SellerModel> {
+    if (!reason || reason.trim().length < 5)
+      throw new ValidationError(
+        'A descriptive lifecycle reason (minimum 5 characters) is required.'
+      );
     const current = await this.sellerRepo.findById(sellerId);
     if (!current) throw new NotFoundError(`Seller with id '${sellerId}' not found.`);
-    if (!canTransitionSellerStatus(current.status, targetStatus)) throw new ConflictError(`Seller cannot transition from ${current.status} to ${targetStatus}.`);
-    if (current.version !== expectedVersion) throw new ConflictError('Seller was modified by another request.');
+    if (!canTransitionSellerStatus(current.status, targetStatus))
+      throw new ConflictError(
+        `Seller cannot transition from ${current.status} to ${targetStatus}.`
+      );
+    if (current.version !== expectedVersion)
+      throw new ConflictError('Seller was modified by another request.');
     return prisma.$transaction(async (tx: any) => {
-      const update = await tx.seller.updateMany({ where: { id: sellerId, deletedAt: null, version: expectedVersion, status: current.status }, data: { status: targetStatus, rejectionReason: targetStatus === SellerStatus.SUSPENDED ? reason.trim() : null, restrictionReason: targetStatus === SellerStatus.RESTRICTED ? reason.trim() : null, version: expectedVersion + 1 } });
-      if (update.count !== 1) throw new ConflictError('Seller lifecycle changed before this request completed.');
+      const update = await tx.seller.updateMany({
+        where: { id: sellerId, deletedAt: null, version: expectedVersion, status: current.status },
+        data: {
+          status: targetStatus,
+          rejectionReason: targetStatus === SellerStatus.SUSPENDED ? reason.trim() : null,
+          restrictionReason: targetStatus === SellerStatus.RESTRICTED ? reason.trim() : null,
+          version: expectedVersion + 1,
+        },
+      });
+      if (update.count !== 1)
+        throw new ConflictError('Seller lifecycle changed before this request completed.');
       const eventId = generateId(ID_PREFIXES.AUDIT);
-      await tx.sellerLifecycleEvent.create({ data: { id: generateId(ID_PREFIXES.CONFIG), sellerId, fromStatus: current.status, toStatus: targetStatus, reason: reason.trim(), actorId: adminUserId } });
-      await tx.outboxEvent.create({ data: { id: generateId(ID_PREFIXES.OUTBOX), eventType: targetStatus === SellerStatus.VERIFIED ? 'SELLER_REACTIVATED' : targetStatus === SellerStatus.RESTRICTED ? 'SELLER_RESTRICTED' : 'SELLER_SUSPENDED', aggregateType: 'Seller', aggregateId: sellerId, payload: { sellerId, fromStatus: current.status, toStatus: targetStatus, reason: reason.trim(), actorId: adminUserId } } });
-      await tx.auditLog.create({ data: { id: eventId, actorId: adminUserId, action: targetStatus === SellerStatus.VERIFIED ? 'SELLER_REACTIVATED' : targetStatus === SellerStatus.RESTRICTED ? 'SELLER_RESTRICTED' : 'SELLER_SUSPENDED', resource: 'Seller', resourceId: sellerId, metadata: { fromStatus: current.status, toStatus: targetStatus, reason: reason.trim() } } });
+      await tx.sellerLifecycleEvent.create({
+        data: {
+          id: generateId(ID_PREFIXES.CONFIG),
+          sellerId,
+          fromStatus: current.status,
+          toStatus: targetStatus,
+          reason: reason.trim(),
+          actorId: adminUserId,
+        },
+      });
+      await tx.outboxEvent.create({
+        data: {
+          id: generateId(ID_PREFIXES.OUTBOX),
+          eventType:
+            targetStatus === SellerStatus.VERIFIED
+              ? 'SELLER_REACTIVATED'
+              : targetStatus === SellerStatus.RESTRICTED
+                ? 'SELLER_RESTRICTED'
+                : 'SELLER_SUSPENDED',
+          aggregateType: 'Seller',
+          aggregateId: sellerId,
+          payload: {
+            sellerId,
+            fromStatus: current.status,
+            toStatus: targetStatus,
+            reason: reason.trim(),
+            actorId: adminUserId,
+          },
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          id: eventId,
+          actorId: adminUserId,
+          action:
+            targetStatus === SellerStatus.VERIFIED
+              ? 'SELLER_REACTIVATED'
+              : targetStatus === SellerStatus.RESTRICTED
+                ? 'SELLER_RESTRICTED'
+                : 'SELLER_SUSPENDED',
+          resource: 'Seller',
+          resourceId: sellerId,
+          metadata: { fromStatus: current.status, toStatus: targetStatus, reason: reason.trim() },
+        },
+      });
       return tx.seller.findUnique({ where: { id: sellerId } });
     });
   }
@@ -237,7 +342,13 @@ export class SellerService {
     reason: string,
     adminUserId: string
   ): Promise<SellerModel> {
-    return this.transitionLifecycle(sellerId, expectedVersion, SellerStatus.SUSPENDED, reason, adminUserId);
+    return this.transitionLifecycle(
+      sellerId,
+      expectedVersion,
+      SellerStatus.SUSPENDED,
+      reason,
+      adminUserId
+    );
   }
 
   /**
@@ -250,7 +361,9 @@ export class SellerService {
     adminUserId: string
   ): Promise<SellerModel> {
     if (!reason || reason.trim().length < 5) {
-      throw new ValidationError('A descriptive rejection reason (minimum 5 characters) is required.');
+      throw new ValidationError(
+        'A descriptive rejection reason (minimum 5 characters) is required.'
+      );
     }
 
     const updated = await this.sellerRepo.update(sellerId, expectedVersion, {

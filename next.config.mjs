@@ -11,7 +11,11 @@ try {
   // Non-fatal if filesystem is read-only
 }
 
-const appCdnUrl = process.env.NEXT_PUBLIC_CDN_URL || process.env.S3_PUBLIC_BASE_URL || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL;
+const appCdnUrl =
+  process.env.NEXT_PUBLIC_CDN_URL ||
+  process.env.S3_PUBLIC_BASE_URL ||
+  process.env.APP_URL ||
+  process.env.NEXT_PUBLIC_APP_URL;
 let dynamicCdnHost = '';
 try {
   if (appCdnUrl) {
@@ -34,11 +38,15 @@ const nextConfig = {
         port: '9000',
         pathname: '/**',
       },
-      ...(dynamicCdnHost ? [{
-        protocol: appCdnUrl.startsWith('https') ? 'https' : 'http',
-        hostname: dynamicCdnHost,
-        pathname: '/**',
-      }] : []),
+      ...(dynamicCdnHost
+        ? [
+            {
+              protocol: appCdnUrl.startsWith('https') ? 'https' : 'http',
+              hostname: dynamicCdnHost,
+              pathname: '/**',
+            },
+          ]
+        : []),
       {
         protocol: 'https',
         hostname: '*.s3.*.amazonaws.com',

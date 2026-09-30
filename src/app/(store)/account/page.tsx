@@ -8,7 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 export default function CustomerAccountPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'profile' | 'addresses' | 'preferences' | 'consent' | 'security' | 'organization'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    | 'overview'
+    | 'orders'
+    | 'profile'
+    | 'addresses'
+    | 'preferences'
+    | 'consent'
+    | 'security'
+    | 'organization'
+  >('overview');
   const [locale, setLocale] = useState<'en-BD' | 'bn-BD'>('en-BD');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -111,7 +120,9 @@ export default function CustomerAccountPage() {
   const [isB2BRegistered, setIsB2BRegistered] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [tradeLicense, setTradeLicense] = useState('');
-  const [businessType, setBusinessType] = useState<'CORPORATION' | 'LLC' | 'PARTNERSHIP' | 'SOLE_PROPRIETORSHIP'>('LLC');
+  const [businessType, setBusinessType] = useState<
+    'CORPORATION' | 'LLC' | 'PARTNERSHIP' | 'SOLE_PROPRIETORSHIP'
+  >('LLC');
 
   const isBn = locale === 'bn-BD';
 
@@ -135,7 +146,9 @@ export default function CustomerAccountPage() {
         isDefault: a.id === id,
       }))
     );
-    showToast(isBn ? 'ডিফল্ট ডেলিভারি ঠিকানা সেট করা হয়েছে।' : 'Default delivery address updated.');
+    showToast(
+      isBn ? 'ডিফল্ট ডেলিভারি ঠিকানা সেট করা হয়েছে।' : 'Default delivery address updated.'
+    );
   };
 
   const handleDeleteAddress = (id: string) => {
@@ -169,23 +182,33 @@ export default function CustomerAccountPage() {
 
     setShowAddAddressModal(false);
     setNewAddressLine('');
-    showToast(isBn ? 'নতুন ডেলিভারি ঠিকানা যুক্ত করা হয়েছে।' : 'New delivery address added successfully.');
+    showToast(
+      isBn ? 'নতুন ডেলিভারি ঠিকানা যুক্ত করা হয়েছে।' : 'New delivery address added successfully.'
+    );
   };
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setProfileVersion((prev) => prev + 1);
-    showToast(isBn ? 'প্রোফাইল সফলভাবে আপডেট করা হয়েছে।' : 'Customer profile updated successfully.');
+    showToast(
+      isBn ? 'প্রোফাইল সফলভাবে আপডেট করা হয়েছে।' : 'Customer profile updated successfully.'
+    );
   };
 
   const handlePreferencesSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(isBn ? 'যোগাযোগের পছন্দসমূহ সংরক্ষিত হয়েছে।' : 'Communication preferences saved successfully.');
+    showToast(
+      isBn
+        ? 'যোগাযোগের পছন্দসমূহ সংরক্ষিত হয়েছে।'
+        : 'Communication preferences saved successfully.'
+    );
   };
 
   const handleConsentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    showToast(isBn ? 'সম্মতি রেকর্ড আপডেট করা হয়েছে।' : 'Privacy consent records updated with audit log.');
+    showToast(
+      isBn ? 'সম্মতি রেকর্ড আপডেট করা হয়েছে।' : 'Privacy consent records updated with audit log.'
+    );
   };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -197,13 +220,21 @@ export default function CustomerAccountPage() {
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    showToast(isBn ? 'পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে।' : 'Password changed successfully. Active sessions invalidated.');
+    showToast(
+      isBn
+        ? 'পাসওয়ার্ড সফলভাবে পরিবর্তিত হয়েছে।'
+        : 'Password changed successfully. Active sessions invalidated.'
+    );
   };
 
   const handleB2BSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsB2BRegistered(true);
-    showToast(isBn ? 'বিজনেস বায়ার আবেদন জমা দেওয়া হয়েছে।' : 'Business Buyer application submitted for administrative review.');
+    showToast(
+      isBn
+        ? 'বিজনেস বায়ার আবেদন জমা দেওয়া হয়েছে।'
+        : 'Business Buyer application submitted for administrative review.'
+    );
   };
 
   return (
@@ -256,7 +287,10 @@ export default function CustomerAccountPage() {
       </header>
 
       {/* Main Account Workspace */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8"
+      >
         {/* Account Header Hero */}
         <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md">
           <div className="space-y-2">
@@ -328,7 +362,10 @@ export default function CustomerAccountPage() {
                   {isBn ? 'সক্রিয় অর্ডার' : 'Active Orders'}
                 </span>
                 <div className="text-2xl font-black text-slate-900">
-                  {orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length}
+                  {
+                    orders.filter((o) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
+                      .length
+                  }
                 </div>
                 <span className="text-[10px] text-blue-600 font-semibold">1 in transit</span>
               </Card>
@@ -354,7 +391,10 @@ export default function CustomerAccountPage() {
                   {isBn ? 'উইশলিস্ট আইটেম' : 'Wishlist Saved'}
                 </span>
                 <div className="text-2xl font-black text-slate-900">8</div>
-                <Link href="/wishlist" className="text-[10px] text-[#FF6A00] font-bold hover:underline">
+                <Link
+                  href="/wishlist"
+                  className="text-[10px] text-[#FF6A00] font-bold hover:underline"
+                >
                   View Favorites →
                 </Link>
               </Card>
@@ -397,15 +437,21 @@ export default function CustomerAccountPage() {
                           {order.status}
                         </Badge>
                       </div>
-                      <div className="text-xs font-black text-slate-900">{order.totalBdtFormatted}</div>
+                      <div className="text-xs font-black text-slate-900">
+                        {order.totalBdtFormatted}
+                      </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-0.5 text-xs text-slate-600">
                         <div className="font-bold text-slate-900">{order.firstItemTitle}</div>
                         <div>
-                          Merchant: <span className="text-slate-800 font-semibold">{order.sellerName}</span> •{' '}
-                          Courier: <span className="font-mono">{order.courierProvider} ({order.trackingNumber})</span>
+                          Merchant:{' '}
+                          <span className="text-slate-800 font-semibold">{order.sellerName}</span> •{' '}
+                          Courier:{' '}
+                          <span className="font-mono">
+                            {order.courierProvider} ({order.trackingNumber})
+                          </span>
                         </div>
                       </div>
 
@@ -439,7 +485,8 @@ export default function CustomerAccountPage() {
                 {isBn ? 'আপনার অর্ডার ইতিহাস' : 'Order History & Status Tracking'}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Review complete order line items, courier consignment IDs, and 1-click reorder shortcuts.
+                Review complete order line items, courier consignment IDs, and 1-click reorder
+                shortcuts.
               </p>
             </div>
 
@@ -449,7 +496,9 @@ export default function CustomerAccountPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#FF6A00]">{order.orderNumber}</span>
+                        <span className="font-mono text-xs font-bold text-[#FF6A00]">
+                          {order.orderNumber}
+                        </span>
                         <Badge
                           className={`text-[10px] font-bold ${
                             order.status === 'DELIVERED'
@@ -461,19 +510,26 @@ export default function CustomerAccountPage() {
                         </Badge>
                       </div>
                       <div className="text-xs text-slate-500">
-                        Placed on {order.createdAt} • Store: <strong className="text-slate-700">{order.sellerName}</strong>
+                        Placed on {order.createdAt} • Store:{' '}
+                        <strong className="text-slate-700">{order.sellerName}</strong>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-sm font-black text-slate-900">{order.totalBdtFormatted}</div>
-                      <div className="text-[10px] text-amber-700 font-bold">+{order.pointsEarned} Product Points</div>
+                      <div className="text-sm font-black text-slate-900">
+                        {order.totalBdtFormatted}
+                      </div>
+                      <div className="text-[10px] text-amber-700 font-bold">
+                        +{order.pointsEarned} Product Points
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
                     <div className="space-y-1 text-slate-600">
-                      <div>Item: <strong className="text-slate-800">{order.firstItemTitle}</strong></div>
+                      <div>
+                        Item: <strong className="text-slate-800">{order.firstItemTitle}</strong>
+                      </div>
                       <div>
                         Courier: <strong>{order.courierProvider}</strong> • Tracking No:{' '}
                         <strong className="font-mono text-blue-800">{order.trackingNumber}</strong>
@@ -560,7 +616,10 @@ export default function CustomerAccountPage() {
               </div>
 
               <div className="pt-2">
-                <Button type="submit" className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs">
+                <Button
+                  type="submit"
+                  className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs"
+                >
                   {isBn ? 'পরিবর্তন সংরক্ষণ করুন' : 'Save Changes'}
                 </Button>
               </div>
@@ -595,7 +654,9 @@ export default function CustomerAccountPage() {
             {showAddAddressModal && (
               <Card className="border border-[#FF6A00]/40 bg-orange-50/20 p-6 space-y-4">
                 <h4 className="text-sm font-black text-slate-900">
-                  {isBn ? 'নতুন বাংলাদেশ ডেলিভারি ঠিকানা যোগ করুন' : 'Add New Bangladesh Delivery Address'}
+                  {isBn
+                    ? 'নতুন বাংলাদেশ ডেলিভারি ঠিকানা যোগ করুন'
+                    : 'Add New Bangladesh Delivery Address'}
                 </h4>
                 <form onSubmit={handleAddAddressSubmit} className="space-y-4 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -621,7 +682,9 @@ export default function CustomerAccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Recipient Phone (+880)</label>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        Recipient Phone (+880)
+                      </label>
                       <input
                         type="text"
                         value={newRecipientPhone}
@@ -670,7 +733,9 @@ export default function CustomerAccountPage() {
                       />
                     </div>
                     <div>
-                      <label className="font-bold text-slate-700 block mb-1">Postal Code (4-digits)</label>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        Postal Code (4-digits)
+                      </label>
                       <input
                         type="text"
                         value={newPostalCode}
@@ -682,7 +747,9 @@ export default function CustomerAccountPage() {
                   </div>
 
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Street Address Line</label>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Street Address Line
+                    </label>
                     <input
                       type="text"
                       value={newAddressLine}
@@ -706,7 +773,11 @@ export default function CustomerAccountPage() {
                   </label>
 
                   <div className="flex justify-end space-x-2 pt-2">
-                    <Button type="button" variant="outline" onClick={() => setShowAddAddressModal(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAddAddressModal(false)}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" className="bg-[#FF6A00] text-white font-bold">
@@ -756,11 +827,13 @@ export default function CustomerAccountPage() {
 
                   <div className="text-xs space-y-1 text-slate-600">
                     <div className="font-bold text-slate-800">
-                      {addr.recipientName} • <span className="font-mono">{addr.recipientPhone}</span>
+                      {addr.recipientName} •{' '}
+                      <span className="font-mono">{addr.recipientPhone}</span>
                     </div>
                     <div>{addr.addressLine}</div>
                     <div>
-                      {addr.upazila ? `${addr.upazila}, ` : ''}{addr.district} - {addr.postalCode}, {addr.divisionCode}
+                      {addr.upazila ? `${addr.upazila}, ` : ''}
+                      {addr.district} - {addr.postalCode}, {addr.divisionCode}
                     </div>
                   </div>
                 </Card>
@@ -774,10 +847,13 @@ export default function CustomerAccountPage() {
           <Card className="border border-slate-200 bg-white p-6 max-w-2xl space-y-6">
             <div>
               <h3 className="text-sm font-black text-slate-900">
-                {isBn ? 'বিজ্ঞপ্তি ও বিপণন পছন্দসমূহ' : 'Notification & Marketing Preferences Matrix'}
+                {isBn
+                  ? 'বিজ্ঞপ্তি ও বিপণন পছন্দসমূহ'
+                  : 'Notification & Marketing Preferences Matrix'}
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Customize how and when you receive order updates, delivery tracking, and promotional alerts.
+                Customize how and when you receive order updates, delivery tracking, and promotional
+                alerts.
               </p>
             </div>
 
@@ -787,10 +863,13 @@ export default function CustomerAccountPage() {
                 <div>
                   <div className="font-bold text-slate-900 flex items-center gap-1.5">
                     <span>🔒 Account Security & Login Alerts</span>
-                    <Badge className="bg-slate-200 text-slate-700 text-[9px] font-bold">Mandatory</Badge>
+                    <Badge className="bg-slate-200 text-slate-700 text-[9px] font-bold">
+                      Mandatory
+                    </Badge>
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    Critical password changes, login OTPs, and security alerts across SMS and Email. Cannot be disabled.
+                    Critical password changes, login OTPs, and security alerts across SMS and Email.
+                    Cannot be disabled.
                   </div>
                 </div>
                 <input
@@ -820,7 +899,8 @@ export default function CustomerAccountPage() {
                 <div>
                   <div className="font-bold text-slate-800">🚚 Push Delivery & Rider Tracking</div>
                   <div className="text-[11px] text-slate-500">
-                    Instant app and web notifications when rider is out for delivery with tracking link.
+                    Instant app and web notifications when rider is out for delivery with tracking
+                    link.
                   </div>
                 </div>
                 <input
@@ -877,7 +957,10 @@ export default function CustomerAccountPage() {
               </label>
 
               <div className="pt-2">
-                <Button type="submit" className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs">
+                <Button
+                  type="submit"
+                  className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs"
+                >
                   {isBn ? 'পছন্দসমূহ সংরক্ষণ করুন' : 'Save Preferences'}
                 </Button>
               </div>
@@ -901,7 +984,9 @@ export default function CustomerAccountPage() {
                     className="mt-0.5 rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
                   />
                   <div>
-                    <span className="font-bold text-slate-800">Terms of Service Agreement (Version v1.2)</span>
+                    <span className="font-bold text-slate-800">
+                      Terms of Service Agreement (Version v1.2)
+                    </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       Required for wallet transactions, escrow safety, and platform purchases.
                     </p>
@@ -916,9 +1001,12 @@ export default function CustomerAccountPage() {
                     className="mt-0.5 rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
                   />
                   <div>
-                    <span className="font-bold text-slate-800">Privacy Policy & Personal Data Protection (Version v1.2)</span>
+                    <span className="font-bold text-slate-800">
+                      Privacy Policy & Personal Data Protection (Version v1.2)
+                    </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      Confirms understanding of address sharing with verified courier delivery partners.
+                      Confirms understanding of address sharing with verified courier delivery
+                      partners.
                     </p>
                   </div>
                 </label>
@@ -931,7 +1019,9 @@ export default function CustomerAccountPage() {
                     className="mt-0.5 rounded text-[#FF6A00] focus:ring-[#FF6A00] w-4 h-4"
                   />
                   <div>
-                    <span className="font-bold text-slate-800">Targeted Promotional Profiling Consent</span>
+                    <span className="font-bold text-slate-800">
+                      Targeted Promotional Profiling Consent
+                    </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       Optional consent for personalized product recommendations.
                     </p>
@@ -940,7 +1030,10 @@ export default function CustomerAccountPage() {
               </div>
 
               <div className="pt-2">
-                <Button type="submit" className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs">
+                <Button
+                  type="submit"
+                  className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs"
+                >
                   {isBn ? 'সম্মতি আপডেট করুন' : 'Update Consent Records'}
                 </Button>
               </div>
@@ -967,7 +1060,9 @@ export default function CustomerAccountPage() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">New Password (Min. 8 characters)</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    New Password (Min. 8 characters)
+                  </label>
                   <input
                     type="password"
                     value={newPassword}
@@ -977,7 +1072,9 @@ export default function CustomerAccountPage() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Confirm New Password</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Confirm New Password
+                  </label>
                   <input
                     type="password"
                     value={confirmPassword}
@@ -987,7 +1084,10 @@ export default function CustomerAccountPage() {
                   />
                 </div>
                 <div className="pt-2">
-                  <Button type="submit" className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
+                  <Button
+                    type="submit"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                  >
                     Update Password & Invalidate Sessions
                   </Button>
                 </div>
@@ -1032,15 +1132,20 @@ export default function CustomerAccountPage() {
                 {isBn ? 'বিজনেস বায়ার অর্গানাইজেশন (B2B)' : 'Business Buyer Organization'}
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Approved business organizations enjoy wholesale bulk pricing, corporate GST/VAT invoices, and custom credit terms.
+                Approved business organizations enjoy wholesale bulk pricing, corporate GST/VAT
+                invoices, and custom credit terms.
               </p>
             </div>
 
             {isB2BRegistered ? (
               <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-black text-blue-900">{companyName || 'Apex Retail Holdings Ltd.'}</span>
-                  <Badge className="bg-blue-600 text-white text-[10px] font-bold">Approved Buyer</Badge>
+                  <span className="font-black text-blue-900">
+                    {companyName || 'Apex Retail Holdings Ltd.'}
+                  </span>
+                  <Badge className="bg-blue-600 text-white text-[10px] font-bold">
+                    Approved Buyer
+                  </Badge>
                 </div>
                 <div className="text-slate-600 space-y-1">
                   <div>Trade License: {tradeLicense || 'TRAD-2024-DHK-9988'}</div>
@@ -1054,14 +1159,18 @@ export default function CustomerAccountPage() {
                     href="/b2b"
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-colors"
                   >
-                    {isBn ? 'B2B পোর্টালে যান (RFQ ও কোটেশন) →' : 'Open B2B Portal (RFQs & Quotes) →'}
+                    {isBn
+                      ? 'B2B পোর্টালে যান (RFQ ও কোটেশন) →'
+                      : 'Open B2B Portal (RFQs & Quotes) →'}
                   </Link>
                 </div>
               </div>
             ) : (
               <form onSubmit={handleB2BSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Company / Organization Legal Name</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Company / Organization Legal Name
+                  </label>
                   <input
                     type="text"
                     value={companyName}
@@ -1074,7 +1183,9 @@ export default function CustomerAccountPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Business Entity Type</label>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Business Entity Type
+                    </label>
                     <select
                       value={businessType}
                       onChange={(e) => setBusinessType(e.target.value as any)}
@@ -1087,7 +1198,9 @@ export default function CustomerAccountPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="font-bold text-slate-700 block mb-1">Trade License Number</label>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      Trade License Number
+                    </label>
                     <input
                       type="text"
                       value={tradeLicense}
@@ -1100,7 +1213,10 @@ export default function CustomerAccountPage() {
                 </div>
 
                 <div className="pt-2">
-                  <Button type="submit" className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs">
+                  <Button
+                    type="submit"
+                    className="bg-[#FF6A00] hover:bg-[#E55F00] text-white font-bold text-xs"
+                  >
                     Apply for Business Buyer Status
                   </Button>
                 </div>
@@ -1113,7 +1229,8 @@ export default function CustomerAccountPage() {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 font-medium">
-          AlifWorld Customer Experience • Protected Identity, Personal Data Minimization & B2B Governance
+          AlifWorld Customer Experience • Protected Identity, Personal Data Minimization & B2B
+          Governance
         </div>
       </footer>
     </div>

@@ -9,8 +9,14 @@ const repository = new SellerKycDocumentRepository();
 export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'sellers:verify', { type: 'SELLER', id: 'KYC_REVIEW_QUEUE' });
-    return NextResponse.json({ success: true, data: await repository.listPendingForAdmin() }, { status: 200 });
+    await defaultPolicyEngine.assert(actor, 'sellers:verify', {
+      type: 'SELLER',
+      id: 'KYC_REVIEW_QUEUE',
+    });
+    return NextResponse.json(
+      { success: true, data: await repository.listPendingForAdmin() },
+      { status: 200 }
+    );
   } catch (error) {
     return errorResponse(req, error, 'Failed to load KYC review queue');
   }

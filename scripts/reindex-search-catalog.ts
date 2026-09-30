@@ -1,9 +1,9 @@
 /**
  * AlifWorld Search Catalog Reindexing CLI Script
- * 
+ *
  * Usage:
  *   bun run scripts/reindex-search-catalog.ts [--batch-size=100]
- * 
+ *
  * Invariants: ADR-0003, ADR-0004, ADR-0022
  */
 

@@ -9,7 +9,7 @@ const oauthService = new OAuthService();
 
 /**
  * POST /api/v1/auth/oauth/facebook/verify
- * 
+ *
  * Verifies native Facebook user access token from Flutter/Mobile/SPA applications.
  * Issues RFC 6749 Bearer tokens and establishes customer session.
  */

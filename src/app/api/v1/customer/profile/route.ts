@@ -1,9 +1,9 @@
 /**
  * Customer Self-Service Profile API Route
- * 
+ *
  * Enforces strict object-level self-ownership, personal data minimization,
  * and anti-tampering privilege escalation barriers.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0023, Milestone 046, Milestone 047
  */
 
@@ -84,8 +84,17 @@ export async function PUT(req: NextRequest) {
     }
 
     // Anti-tampering check: verify no protected security/financial fields are provided
-    const protectedFields = ['status', 'roles', 'isEmailVerified', 'isPhoneVerified', 'walletBalance', 'points'];
-    const attemptedProtectedFields = Object.keys(rawBody).filter((k) => protectedFields.includes(k));
+    const protectedFields = [
+      'status',
+      'roles',
+      'isEmailVerified',
+      'isPhoneVerified',
+      'walletBalance',
+      'points',
+    ];
+    const attemptedProtectedFields = Object.keys(rawBody).filter((k) =>
+      protectedFields.includes(k)
+    );
 
     // Object-level authorization check with intent and payload inspection
     await defaultObjectAuthzService.assert({

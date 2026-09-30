@@ -64,12 +64,15 @@ describe('Logout, Revocation, Session, and Device Management (Milestone 036)', (
     mockSessionRepo = {
       parseFamilyMetadata: (session: any) => {
         try {
-          if (!session.deviceInfo) return { familyId: 'fam_default', generation: 0, consumedTokenHashes: [] };
+          if (!session.deviceInfo)
+            return { familyId: 'fam_default', generation: 0, consumedTokenHashes: [] };
           const parsed = JSON.parse(session.deviceInfo);
           return {
             familyId: parsed.familyId || 'fam_default',
             generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
-            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes) ? parsed.consumedTokenHashes : [],
+            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes)
+              ? parsed.consumedTokenHashes
+              : [],
             rawDeviceInfo: parsed.rawDeviceInfo ?? null,
           };
         } catch {
@@ -101,7 +104,9 @@ describe('Logout, Revocation, Session, and Device Management (Milestone 036)', (
           refreshTokenHash: params.refreshTokenHash || null,
           clientType: params.clientType || 'WEB',
           ipAddress: params.ipAddress || '103.112.54.21',
-          userAgent: params.userAgent || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
+          userAgent:
+            params.userAgent ||
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
           deviceInfo: JSON.stringify({
             familyId: params.familyId || `fam_${id}`,
             generation: 0,
@@ -190,13 +195,15 @@ describe('Logout, Revocation, Session, and Device Management (Milestone 036)', (
     });
 
     it('should parse Chrome on macOS browser user agent', () => {
-      const ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+      const ua =
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
       const summary = parseDeviceSummary(ua, 'WEB', null);
       expect(summary).toBe('Google Chrome on macOS');
     });
 
     it('should parse Safari on iOS user agent', () => {
-      const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1';
+      const ua =
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1';
       const summary = parseDeviceSummary(ua, 'WEB', null);
       expect(summary).toBe('Apple Safari on iOS');
     });
@@ -234,7 +241,8 @@ describe('Logout, Revocation, Session, and Device Management (Milestone 036)', (
       await mockSessionRepo.createSession({
         sessionId: 'ses_mac_01',
         userId: testUser.id,
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36',
       });
 
       await mockSessionRepo.createSession({

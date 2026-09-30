@@ -6,5 +6,7 @@ export const ModerationResolveSchema = z.object({
 });
 export type ModerationResolveInput = z.infer<typeof ModerationResolveSchema>;
 
-export const DuplicateRecheckSchema = z.object({ reason: z.string().trim().max(500).optional().nullable() });
+export const DuplicateRecheckSchema = z.object({
+  reason: z.string().trim().max(500).optional().nullable(),
+});
 export type DuplicateRecheckInput = z.infer<typeof DuplicateRecheckSchema>;

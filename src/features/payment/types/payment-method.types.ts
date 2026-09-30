@@ -8,20 +8,10 @@
  */
 
 export type PaymentGatewayCode =
-  | 'BKASH'
-  | 'NAGAD'
-  | 'UPAY'
-  | 'ROCKET'
-  | 'SSLCOMMERZ'
-  | 'COD'
-  | 'CUSTOMER_WALLET';
+  'BKASH' | 'NAGAD' | 'UPAY' | 'ROCKET' | 'SSLCOMMERZ' | 'COD' | 'CUSTOMER_WALLET';
 
 export type PaymentMethodCategory =
-  | 'MFS'
-  | 'CARD'
-  | 'INTERNET_BANKING'
-  | 'CASH_ON_DELIVERY'
-  | 'WALLET';
+  'MFS' | 'CARD' | 'INTERNET_BANKING' | 'CASH_ON_DELIVERY' | 'WALLET';
 
 export interface PaymentMethodAvailabilityDTO {
   code: PaymentGatewayCode;
@@ -117,18 +107,11 @@ export interface IPaymentGatewayAdapter {
   readonly isEnabled: boolean;
   readonly isConfigured: boolean;
 
-  checkAvailability(
-    context: PaymentDiscoveryContext
-  ): Promise<PaymentMethodAvailabilityDTO>;
+  checkAvailability(context: PaymentDiscoveryContext): Promise<PaymentMethodAvailabilityDTO>;
 
-  calculateFee(
-    amountPoisha: number
-  ): { feePoisha: number; feePercent: number };
+  calculateFee(amountPoisha: number): { feePoisha: number; feePercent: number };
 
-  verifyWebhookSignature?(
-    rawBody: string,
-    headers: Record<string, string>
-  ): boolean;
+  verifyWebhookSignature?(rawBody: string, headers: Record<string, string>): boolean;
 
   parseWebhookPayload?(
     payload: unknown,

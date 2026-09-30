@@ -11,10 +11,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/admin/reviews/[id]/moderate
  * Platform Admin moderates review status (APPROVED, REJECTED, FLAGGED).
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.roles.includes('ADMIN') && !actor.roles.includes('SUPER_ADMIN')) {

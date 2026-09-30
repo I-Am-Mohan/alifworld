@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Check,
@@ -53,45 +54,59 @@ export default function SellerApplicationStatusPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchStatus = useCallback(async (isManualRefresh = false) => {
-    try {
-      if (isManualRefresh) setRefreshing(true);
-      else setLoading(true);
-      setError(null);
-
-      const res = await fetch('/api/v1/seller/application');
-      if (res.status === 401) {
-        router.replace('/seller/login');
-        return;
-      }
-      const json = await res.json().catch(() => null);
-      if (res.ok && json?.data) {
-        setApplication(json.data);
-        if (json.data.status === 'APPROVED') {
-          // If approved, redirect to seller portal dashboard
-          router.replace('/seller/products');
-        }
-      } else {
-        setApplication(null);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to refresh application status.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [router]);
+  const fetchStatus = useCallback(
+    (signal?: AbortSignal) => {
+      return fetch('/api/v1/seller/application', { signal })
+        .then(async (res) => {
+          if (res.status === 401) {
+            router.replace('/seller/login');
+            return;
+          }
+          const json = await res.json().catch(() => null);
+          if (res.ok && json?.data) {
+            setApplication(json.data);
+            if (json.data.status === 'APPROVED') {
+              // If approved, redirect to seller portal dashboard
+              router.replace('/seller/products');
+            }
+          } else {
+            setApplication(null);
+          }
+          setError(null);
+        })
+        .catch((err: any) => {
+          if (signal?.aborted) return;
+          setError(err.message || 'Failed to refresh application status.');
+        })
+        .finally(() => {
+          if (!signal?.aborted) {
+            setLoading(false);
+            setRefreshing(false);
+          }
+        });
+    },
+    [router]
+  );
 
   useEffect(() => {
-    void fetchStatus();
+    const controller = new AbortController();
+    void fetchStatus(controller.signal);
 
     // Auto-poll status every 30 seconds
     const interval = setInterval(() => {
-      void fetchStatus(true);
+      void fetchStatus();
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [fetchStatus]);
+
+  const handleManualRefresh = () => {
+    setRefreshing(true);
+    void fetchStatus();
+  };
 
   if (loading) {
     return (
@@ -122,7 +137,7 @@ export default function SellerApplicationStatusPage() {
             <LanguageSwitcher />
             <button
               type="button"
-              onClick={() => void fetchStatus(true)}
+              onClick={handleManualRefresh}
               disabled={refreshing}
               className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all inline-flex items-center space-x-1.5 shadow-xs cursor-pointer disabled:opacity-50"
             >
@@ -158,20 +173,20 @@ export default function SellerApplicationStatusPage() {
                 {isApproved
                   ? 'Your Seller Account is Approved!'
                   : isChangesRequested
-                  ? 'Action Required: Application Feedback'
-                  : isRejected
-                  ? 'Application Status: Not Approved'
-                  : 'Your Seller Application is Under Review'}
+                    ? 'Action Required: Application Feedback'
+                    : isRejected
+                      ? 'Application Status: Not Approved'
+                      : 'Your Seller Application is Under Review'}
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
                 {isApproved
                   ? 'Congratulations! Your merchant store has been verified by our compliance team. You can now access your Seller Dashboard.'
                   : isChangesRequested
-                  ? 'Our compliance team requested updates before approving your seller account.'
-                  : isRejected
-                  ? 'Unfortunately, your seller application could not be verified at this time.'
-                  : "We've received your application and our compliance team is verifying your information. This usually takes a short time."}
+                    ? 'Our compliance team requested updates before approving your seller account.'
+                    : isRejected
+                      ? 'Unfortunately, your seller application could not be verified at this time.'
+                      : "We've received your application and our compliance team is verifying your information. This usually takes a short time."}
               </p>
 
               {isApproved && (
@@ -201,9 +216,11 @@ export default function SellerApplicationStatusPage() {
 
             {/* Banner Right 3D Illustration Graphic Card */}
             <div className="w-full max-w-sm shrink-0 rounded-2xl overflow-hidden border border-white/10 shadow-2xl group hover:scale-[1.02] transition-transform duration-300">
-              <img
+              <Image
                 src="/seller-hero-banner.jpg"
                 alt="Seller Application Submitted Illustration"
+                width={384}
+                height={216}
                 className="w-full h-auto object-cover rounded-2xl"
               />
             </div>
@@ -286,7 +303,9 @@ export default function SellerApplicationStatusPage() {
                   </div>
 
                   <div className="mt-1">
-                    <div className={`text-xs font-bold ${isCurrent ? 'text-[#FF6A00]' : 'text-slate-900'}`}>
+                    <div
+                      className={`text-xs font-bold ${isCurrent ? 'text-[#FF6A00]' : 'text-slate-900'}`}
+                    >
                       {step.title}
                     </div>
                     <div className="text-[10px] text-slate-500 font-medium">
@@ -316,9 +335,12 @@ export default function SellerApplicationStatusPage() {
               <Clock className="w-5 h-5" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-sm font-black text-slate-900">Our team is reviewing your details</h3>
+              <h3 className="text-sm font-black text-slate-900">
+                Our team is reviewing your details
+              </h3>
               <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                You&apos;ll receive an email and in-app notification once your seller account is approved.
+                You&apos;ll receive an email and in-app notification once your seller account is
+                approved.
               </p>
               <p className="text-[11px] text-slate-400 font-mono pt-1">
                 This page will automatically refresh when there is an update.

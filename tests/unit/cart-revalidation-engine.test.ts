@@ -213,10 +213,7 @@ describe('Milestone 129: Multi-Dimensional Cart Revalidation Engine Unit Tests',
   describe('1. Stock & Inventory Revalidation', () => {
     it('adjusts quantity when warehouse stock decreases below cart quantity', async () => {
       // Add 5 to cart
-      await service.addItem(
-        { variantId: 'var_phone_blue', quantity: 5 },
-        'usr_customer_01'
-      );
+      await service.addItem({ variantId: 'var_phone_blue', quantity: 5 }, 'usr_customer_01');
 
       // Simulate warehouse available stock dropping to 2
       mockVariant.stockBalances[0].onHand = 2;
@@ -232,10 +229,7 @@ describe('Milestone 129: Multi-Dimensional Cart Revalidation Engine Unit Tests',
     });
 
     it('soft-deletes item and blocks checkout when item goes out of stock', async () => {
-      await service.addItem(
-        { variantId: 'var_phone_blue', quantity: 3 },
-        'usr_customer_01'
-      );
+      await service.addItem({ variantId: 'var_phone_blue', quantity: 3 }, 'usr_customer_01');
 
       // Simulate item going completely out of stock
       mockVariant.stockBalances[0].onHand = 0;
@@ -252,10 +246,7 @@ describe('Milestone 129: Multi-Dimensional Cart Revalidation Engine Unit Tests',
 
   describe('2. Price Drift & Points Revalidation', () => {
     it('re-snapshots updated price and discrete Product Points when catalog changes', async () => {
-      await service.addItem(
-        { variantId: 'var_phone_blue', quantity: 1 },
-        'usr_customer_01'
-      );
+      await service.addItem({ variantId: 'var_phone_blue', quantity: 1 }, 'usr_customer_01');
 
       // Seller raises price from 18,500 to 19,500 and points from 150 to 200
       mockVariant.pricePoisha = BigInt(1950000);
@@ -316,23 +307,17 @@ describe('Milestone 129: Multi-Dimensional Cart Revalidation Engine Unit Tests',
       });
 
       // Cart subtotal is 18,500 BDT (< 30,000 BDT min spend)
-      await service.addItem(
-        { variantId: 'var_phone_blue', quantity: 1 },
-        'usr_customer_01'
-      );
+      await service.addItem({ variantId: 'var_phone_blue', quantity: 1 }, 'usr_customer_01');
 
-      await expect(
-        service.applyCoupon('BIGSPEND', 'usr_customer_01')
-      ).rejects.toThrow(ValidationError);
+      await expect(service.applyCoupon('BIGSPEND', 'usr_customer_01')).rejects.toThrow(
+        ValidationError
+      );
     });
   });
 
   describe('4. Seller Eligibility & Storefront Status Revalidation', () => {
     it('blocks checkout if seller enters vacation mode', async () => {
-      await service.addItem(
-        { variantId: 'var_phone_blue', quantity: 1 },
-        'usr_customer_01'
-      );
+      await service.addItem({ variantId: 'var_phone_blue', quantity: 1 }, 'usr_customer_01');
 
       // Seller turns on vacation mode
       mockSeller.settings.vacationMode = true;

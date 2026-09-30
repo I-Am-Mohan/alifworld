@@ -64,9 +64,13 @@ export default function SellerPromotionsPage() {
       </div>
 
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading promotion attribution summary...</div>
+        <div className="p-8 text-center text-slate-500">
+          Loading promotion attribution summary...
+        </div>
       ) : error ? (
-        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">{error}</div>
+        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">
+          {error}
+        </div>
       ) : summary ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -105,7 +109,9 @@ export default function SellerPromotionsPage() {
           </div>
 
           <div className="bg-white dark:bg-slate-800 rounded-lg border p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Funding Type Breakdown</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Funding Type Breakdown
+            </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
                 <thead className="bg-slate-50 dark:bg-slate-700/50 text-xs uppercase font-semibold text-slate-500">
@@ -126,12 +132,21 @@ export default function SellerPromotionsPage() {
                     </tr>
                   ) : (
                     summary.fundingBreakdown.map((row) => (
-                      <tr key={row.fundingType} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30">
-                        <td className="p-3 font-medium text-slate-900 dark:text-white">{row.fundingType}</td>
+                      <tr
+                        key={row.fundingType}
+                        className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30"
+                      >
+                        <td className="p-3 font-medium text-slate-900 dark:text-white">
+                          {row.fundingType}
+                        </td>
                         <td className="p-3">{row.count}</td>
                         <td className="p-3 font-semibold">{formatBDT(row.discountAmountPoisha)}</td>
-                        <td className="p-3 text-amber-600 font-medium">{formatBDT(row.sellerSharePoisha)}</td>
-                        <td className="p-3 text-blue-600 font-medium">{formatBDT(row.platformSharePoisha)}</td>
+                        <td className="p-3 text-amber-600 font-medium">
+                          {formatBDT(row.sellerSharePoisha)}
+                        </td>
+                        <td className="p-3 text-blue-600 font-medium">
+                          {formatBDT(row.platformSharePoisha)}
+                        </td>
                       </tr>
                     ))
                   )}

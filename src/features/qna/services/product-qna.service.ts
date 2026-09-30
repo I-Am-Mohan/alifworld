@@ -11,16 +11,8 @@
 
 import { prisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
-import {
-  ProductQuestionDTO,
-  ProductAnswerDTO,
-  ProductQnaSummaryDTO,
-} from '../types/qna.types';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
+import { ProductQuestionDTO, ProductAnswerDTO, ProductQnaSummaryDTO } from '../types/qna.types';
 import {
   CreateQuestionInput,
   CreateAnswerInput,
@@ -201,7 +193,9 @@ export class ProductQnaService {
     input: CreateAnswerInput
   ): Promise<ProductAnswerDTO> {
     if (!sellerId) {
-      throw new AuthorizationError('Only authorized sellers can answer customer pre-sale questions.');
+      throw new AuthorizationError(
+        'Only authorized sellers can answer customer pre-sale questions.'
+      );
     }
 
     // Strict tenant isolation: verify question belongs to product owned by sellerId
@@ -212,7 +206,14 @@ export class ProductQnaService {
         deletedAt: null,
       },
       include: {
-        product: { select: { id: true, title: true, sellerId: true, seller: { select: { businessName: true } } } },
+        product: {
+          select: {
+            id: true,
+            title: true,
+            sellerId: true,
+            seller: { select: { businessName: true } },
+          },
+        },
       },
     });
 
@@ -313,10 +314,7 @@ export class ProductQnaService {
   /**
    * Community upvote on a question.
    */
-  public async voteQuestion(
-    questionId: string,
-    userId: string
-  ): Promise<{ upvotesCount: number }> {
+  public async voteQuestion(questionId: string, userId: string): Promise<{ upvotesCount: number }> {
     const question = await (this.db as any).productQuestion.findFirst({
       where: { id: questionId, deletedAt: null },
     });
@@ -364,10 +362,7 @@ export class ProductQnaService {
   /**
    * Community upvote on an answer.
    */
-  public async voteAnswer(
-    answerId: string,
-    userId: string
-  ): Promise<{ upvotesCount: number }> {
+  public async voteAnswer(answerId: string, userId: string): Promise<{ upvotesCount: number }> {
     const answer = await (this.db as any).productAnswer.findFirst({
       where: { id: answerId, deletedAt: null },
     });

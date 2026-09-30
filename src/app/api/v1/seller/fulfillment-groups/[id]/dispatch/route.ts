@@ -21,10 +21,7 @@ function resolveSellerId(actor: any): string {
  * POST /api/v1/seller/fulfillment-groups/[id]/dispatch
  * Dispatches a seller fulfillment group package to the selected courier.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

@@ -1,9 +1,9 @@
 /**
  * AlifWorld User Domain Service
- * 
+ *
  * Orchestrates user creation, uniqueness validation, Bangladesh phone normalization,
  * status transitions, and audit trail emission.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0021, ADR-0022, ADR-0023
  */
@@ -150,7 +150,12 @@ export class UserService {
   /**
    * Suspends a user account.
    */
-  public async suspendUser(id: string, expectedVersion: number, reason: string, actorId: string): Promise<UserModel> {
+  public async suspendUser(
+    id: string,
+    expectedVersion: number,
+    reason: string,
+    actorId: string
+  ): Promise<UserModel> {
     const updated = await this.userRepo.update(id, expectedVersion, {
       status: UserStatus.SUSPENDED,
     });
@@ -171,7 +176,11 @@ export class UserService {
   /**
    * Activates a suspended or pending user account.
    */
-  public async activateUser(id: string, expectedVersion: number, actorId: string): Promise<UserModel> {
+  public async activateUser(
+    id: string,
+    expectedVersion: number,
+    actorId: string
+  ): Promise<UserModel> {
     const updated = await this.userRepo.update(id, expectedVersion, {
       status: UserStatus.ACTIVE,
     });
@@ -191,7 +200,11 @@ export class UserService {
   /**
    * Soft-deletes a user.
    */
-  public async softDeleteUser(id: string, expectedVersion: number, actorId: string): Promise<UserModel> {
+  public async softDeleteUser(
+    id: string,
+    expectedVersion: number,
+    actorId: string
+  ): Promise<UserModel> {
     const deleted = await this.userRepo.softDelete(id, expectedVersion, actorId);
 
     await (prisma as any).auditLog.create({

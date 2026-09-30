@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
  * Public, share-safe endpoint to view a shared customer wishlist.
  * Invariant: Redacts all personal customer data (no email, phone, addresses, or internal IDs).
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params;
     const sharedView = await wishlistService.getSharedWishlist(token);

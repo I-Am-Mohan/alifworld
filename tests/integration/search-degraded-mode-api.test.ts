@@ -1,6 +1,10 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
-import { GET as getDegradedModeRoute, POST as postDegradedModeRoute } from '@/app/api/v1/search/degraded-mode/route';
+import {
+  GET as getDegradedModeRoute,
+  POST as postDegradedModeRoute,
+} from '@/app/api/v1/search/degraded-mode/route';
 import { searchService } from '@/features/search/services/search-service';
 import { NextRequest } from 'next/server';
 

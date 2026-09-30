@@ -12,8 +12,16 @@ describe('Milestone 088 product lifecycle contract', () => {
   });
 
   it('requires approval before publication', async () => {
-    const repository: any = { findProduct: async () => ({ id: 'prd_1', status: ProductStatus.PENDING_APPROVAL }) };
-    const service = new ProductApprovalService(repository, {} as any, { hasRole: async () => true } as any);
-    await expect(service.publish('admin', 'prd_1', { version: 1 })).rejects.toThrow('Only approved products');
+    const repository: any = {
+      findProduct: async () => ({ id: 'prd_1', status: ProductStatus.PENDING_APPROVAL }),
+    };
+    const service = new ProductApprovalService(
+      repository,
+      {} as any,
+      { hasRole: async () => true } as any
+    );
+    await expect(service.publish('admin', 'prd_1', { version: 1 })).rejects.toThrow(
+      'Only approved products'
+    );
   });
 });

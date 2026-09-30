@@ -3,8 +3,19 @@ import { z } from 'zod';
 export const PayoutProfileInputSchema = z.object({
   sellerId: z.string().regex(/^sel_[A-Za-z0-9]+$/),
   providerName: z.string().trim().min(2).max(120),
-  accountNumber: z.string().trim().min(4).max(40).regex(/^[A-Za-z0-9 -]+$/),
-  routingNumber: z.string().trim().min(4).max(40).regex(/^[A-Za-z0-9 -]+$/).optional(),
+  accountNumber: z
+    .string()
+    .trim()
+    .min(4)
+    .max(40)
+    .regex(/^[A-Za-z0-9 -]+$/),
+  routingNumber: z
+    .string()
+    .trim()
+    .min(4)
+    .max(40)
+    .regex(/^[A-Za-z0-9 -]+$/)
+    .optional(),
   accountTitle: z.string().trim().min(2).max(160),
   version: z.number().int().positive(),
 });

@@ -8,7 +8,7 @@ const phoneAuthService = new PhoneAuthService();
 
 /**
  * POST /api/v1/auth/phone/check
- * 
+ *
  * Inspects whether an account exists for a given Bangladesh phone number.
  * Used by the login flow to route between OTP Login and Unregistered Register prompt.
  */

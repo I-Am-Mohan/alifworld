@@ -1,16 +1,16 @@
 /**
  * Bangladesh Phone Number Normalization, Validation & Operator Identification Utility
- * 
+ *
  * Enforces strict E.164 compliance for all Bangladesh mobile numbers:
  * +8801[3-9]XXXXXXXX (14 characters total)
- * 
+ *
  * Capabilities:
  * 1. Normalization to standard E.164 (+8801XXXXXXXXX).
  * 2. Mobile Network Operator (MNO) detection (Grameenphone, Banglalink, Robi/Airtel, Teletalk).
  * 3. Bengali numeral normalization (০১২৩৪৫৬৭৮৯ -> 0123456789).
  * 4. Privacy-safe phone masking for logs, SMS notifications, and UI display.
  * 5. National and Bengali display formatting (01712-345678 / ০১৭১২-৩৪৫৬৭৮).
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Milestone: 038 (Design Bangladesh phone normalization and OTP authentication)
  * Invariants: ADR-0005, ADR-0023, ADR-0031
@@ -71,11 +71,7 @@ export function toBengaliNumerals(input: string | number): string {
 // ------------------------------------------------------------------------------
 // Bangladesh Mobile Network Operators (MNO)
 // ------------------------------------------------------------------------------
-export type BangladeshMobileOperatorCode =
-  | 'GRAMEENPHONE'
-  | 'BANGLALINK'
-  | 'ROBI'
-  | 'TELETALK';
+export type BangladeshMobileOperatorCode = 'GRAMEENPHONE' | 'BANGLALINK' | 'ROBI' | 'TELETALK';
 
 export interface BangladeshMobileOperator {
   code: BangladeshMobileOperatorCode;
@@ -85,39 +81,37 @@ export interface BangladeshMobileOperator {
   isGovernmentOwned: boolean;
 }
 
-export const BANGLADESH_OPERATORS: Record<
-  BangladeshMobileOperatorCode,
-  BangladeshMobileOperator
-> = {
-  GRAMEENPHONE: {
-    code: 'GRAMEENPHONE',
-    name: 'Grameenphone',
-    brand: 'GP / Skitto',
-    prefixes: ['017', '013'],
-    isGovernmentOwned: false,
-  },
-  BANGLALINK: {
-    code: 'BANGLALINK',
-    name: 'Banglalink',
-    brand: 'Banglalink Digital',
-    prefixes: ['019', '014'],
-    isGovernmentOwned: false,
-  },
-  ROBI: {
-    code: 'ROBI',
-    name: 'Robi Axiata',
-    brand: 'Robi / Airtel',
-    prefixes: ['018', '016'],
-    isGovernmentOwned: false,
-  },
-  TELETALK: {
-    code: 'TELETALK',
-    name: 'Teletalk Bangladesh',
-    brand: 'Teletalk',
-    prefixes: ['015'],
-    isGovernmentOwned: true,
-  },
-};
+export const BANGLADESH_OPERATORS: Record<BangladeshMobileOperatorCode, BangladeshMobileOperator> =
+  {
+    GRAMEENPHONE: {
+      code: 'GRAMEENPHONE',
+      name: 'Grameenphone',
+      brand: 'GP / Skitto',
+      prefixes: ['017', '013'],
+      isGovernmentOwned: false,
+    },
+    BANGLALINK: {
+      code: 'BANGLALINK',
+      name: 'Banglalink',
+      brand: 'Banglalink Digital',
+      prefixes: ['019', '014'],
+      isGovernmentOwned: false,
+    },
+    ROBI: {
+      code: 'ROBI',
+      name: 'Robi Axiata',
+      brand: 'Robi / Airtel',
+      prefixes: ['018', '016'],
+      isGovernmentOwned: false,
+    },
+    TELETALK: {
+      code: 'TELETALK',
+      name: 'Teletalk Bangladesh',
+      brand: 'Teletalk',
+      prefixes: ['015'],
+      isGovernmentOwned: true,
+    },
+  };
 
 // Map of 3-digit prefix (e.g. '017', '013') to Operator
 export const OPERATOR_PREFIX_MAP: Record<string, BangladeshMobileOperator> = {
@@ -135,9 +129,7 @@ export const OPERATOR_PREFIX_MAP: Record<string, BangladeshMobileOperator> = {
  * Accepts any raw or normalized phone format.
  * Returns the operator object or null if not a recognized Bangladesh mobile number.
  */
-export function getBangladeshMobileOperator(
-  rawPhone: string
-): BangladeshMobileOperator | null {
+export function getBangladeshMobileOperator(rawPhone: string): BangladeshMobileOperator | null {
   try {
     const normalized = normalizeBangladeshPhone(rawPhone);
     // +880 17... -> national prefix is '0' + slice(4, 6)
@@ -168,7 +160,7 @@ export function isValidBangladeshPhone(phone: unknown): phone is string {
  * Normalizes an arbitrary Bangladesh phone input string to strict E.164 format.
  * Handles Bengali numerals, removes formatting characters, and maps valid national
  * prefixes to standard E.164 (+8801XXXXXXXXX).
- * 
+ *
  * Handles input formats:
  * - 017XXXXXXXX / ০১৭১XXXXXXX -> +88017XXXXXXXX
  * - 88017XXXXXXXX -> +88017XXXXXXXX
@@ -176,7 +168,7 @@ export function isValidBangladeshPhone(phone: unknown): phone is string {
  * - +880 17XX-XXXXXX -> +88017XXXXXXXX
  * - 17XXXXXXXX (10 digits without leading 0) -> +88017XXXXXXXX
  * - 0088017XXXXXXXX -> +88017XXXXXXXX
- * 
+ *
  * Rejects defunct CDMA/invalid operators (e.g. 010, 011, 012).
  * Throws ValidationError if input cannot be normalized to a valid BD mobile number.
  */
@@ -262,7 +254,7 @@ export function formatBangladeshPhoneInternational(phone: string): string {
 /**
  * Masks a Bangladesh phone number to redact customer personal digits for privacy
  * in audit logs, SMS notification confirmations, and UI display.
- * 
+ *
  * Preserves operator prefix and final 3 digits while masking intermediate digits:
  * - standard (+880 17***-**678): Keeps operator prefix + last 3 digits
  * - minimal (+880 1712-***678): Keeps first 4 digits + last 3 digits

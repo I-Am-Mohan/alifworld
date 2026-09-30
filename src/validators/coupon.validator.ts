@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const RedemptionStatusEnum = z.enum(['RESERVED', 'COMMITTED', 'REVERSED']);
 
 export const ApplyCouponSchema = z.object({
-  couponCode: z.string().min(1).transform((v) => v.toUpperCase()),
+  couponCode: z
+    .string()
+    .min(1)
+    .transform((v) => v.toUpperCase()),
   subtotalPoisha: z.union([z.string(), z.number(), z.bigint()]).transform((v) => BigInt(v)),
   sellerId: z.string().uuid().optional().nullable(),
 });

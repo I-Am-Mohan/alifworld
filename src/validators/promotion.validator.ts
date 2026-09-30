@@ -5,7 +5,12 @@ export const PromotionFundingTypeEnum = z.enum(['PLATFORM_FUNDED', 'SELLER_FUNDE
 export const PromotionStatusEnum = z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'EXPIRED', 'ARCHIVED']);
 
 export const BaseCreatePromotionSchema = z.object({
-  code: z.string().min(3).max(30).regex(/^[A-Za-z0-9_-]+$/).transform((v) => v.toUpperCase()),
+  code: z
+    .string()
+    .min(3)
+    .max(30)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .transform((v) => v.toUpperCase()),
   title: z.string().min(3).max(200),
   titleBn: z.string().max(200).optional(),
   description: z.string().max(1000).optional(),
@@ -15,8 +20,14 @@ export const BaseCreatePromotionSchema = z.object({
   platformSharePercent: z.number().min(0).max(100).default(100),
   sellerId: z.string().uuid().optional().nullable(),
   discountValue: z.number().min(0),
-  maxDiscountPoisha: z.union([z.string(), z.number(), z.bigint()]).optional().transform((val) => val != null ? BigInt(val) : undefined),
-  minOrderSubtotalPoisha: z.union([z.string(), z.number(), z.bigint()]).optional().transform((val) => val != null ? BigInt(val) : 0n),
+  maxDiscountPoisha: z
+    .union([z.string(), z.number(), z.bigint()])
+    .optional()
+    .transform((val) => (val != null ? BigInt(val) : undefined)),
+  minOrderSubtotalPoisha: z
+    .union([z.string(), z.number(), z.bigint()])
+    .optional()
+    .transform((val) => (val != null ? BigInt(val) : 0n)),
   usageLimit: z.number().int().min(1).optional().nullable(),
   perCustomerLimit: z.number().int().min(1).default(1),
   startsAt: z.string().datetime().or(z.date()),
@@ -24,15 +35,18 @@ export const BaseCreatePromotionSchema = z.object({
   status: PromotionStatusEnum.default('ACTIVE'),
 });
 
-export const CreatePromotionSchema = BaseCreatePromotionSchema.refine((data) => {
-  if (data.fundingType === 'CO_FUNDED') {
-    return data.sellerSharePercent > 0 && data.sellerSharePercent < 100;
+export const CreatePromotionSchema = BaseCreatePromotionSchema.refine(
+  (data) => {
+    if (data.fundingType === 'CO_FUNDED') {
+      return data.sellerSharePercent > 0 && data.sellerSharePercent < 100;
+    }
+    return true;
+  },
+  {
+    message: 'CO_FUNDED promotions must have a sellerSharePercent greater than 0 and less than 100',
+    path: ['sellerSharePercent'],
   }
-  return true;
-}, {
-  message: 'CO_FUNDED promotions must have a sellerSharePercent greater than 0 and less than 100',
-  path: ['sellerSharePercent'],
-});
+);
 
 export const UpdatePromotionSchema = BaseCreatePromotionSchema.partial().extend({
   status: PromotionStatusEnum.optional(),

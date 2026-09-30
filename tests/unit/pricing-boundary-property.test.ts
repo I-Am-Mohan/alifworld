@@ -17,7 +17,7 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
     it('guarantees sellerSharePoisha + platformSharePoisha === discountAmountPoisha across 1,000 random inputs', () => {
       for (let i = 0; i < 1000; i++) {
         const discountAmountPoisha = BigInt(Math.floor(Math.random() * 1000000000)); // Up to ৳10,000,000
-        const sellerSharePercent = Math.round((Math.random() * 100) * 100) / 100; // 0.00 to 100.00%
+        const sellerSharePercent = Math.round(Math.random() * 100 * 100) / 100; // 0.00 to 100.00%
 
         const attr = calculatePromotionAttribution(discountAmountPoisha, {
           fundingType: 'CO_FUNDED',
@@ -33,11 +33,15 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
     it('handles PLATFORM_FUNDED and SELLER_FUNDED extreme boundary discounts without errors', () => {
       const hugeDiscount = 9999999999999n;
 
-      const platformAttr = calculatePromotionAttribution(hugeDiscount, { fundingType: 'PLATFORM_FUNDED' });
+      const platformAttr = calculatePromotionAttribution(hugeDiscount, {
+        fundingType: 'PLATFORM_FUNDED',
+      });
       expect(platformAttr.sellerSharePoisha).toBe(0n);
       expect(platformAttr.platformSharePoisha).toBe(hugeDiscount);
 
-      const sellerAttr = calculatePromotionAttribution(hugeDiscount, { fundingType: 'SELLER_FUNDED' });
+      const sellerAttr = calculatePromotionAttribution(hugeDiscount, {
+        fundingType: 'SELLER_FUNDED',
+      });
       expect(sellerAttr.sellerSharePoisha).toBe(hugeDiscount);
       expect(sellerAttr.platformSharePoisha).toBe(0n);
     });
@@ -47,8 +51,12 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
     it('verifies accounting balance equations across 1,000 random order monetary states', () => {
       for (let i = 0; i < 1000; i++) {
         const subtotalPoisha = BigInt(Math.floor(Math.random() * 10000000) + 1000);
-        const sellerDiscountPoisha = BigInt(Math.floor(Number(subtotalPoisha) * Math.random() * 0.4));
-        const platformDiscountPoisha = BigInt(Math.floor(Number(subtotalPoisha) * Math.random() * 0.2));
+        const sellerDiscountPoisha = BigInt(
+          Math.floor(Number(subtotalPoisha) * Math.random() * 0.4)
+        );
+        const platformDiscountPoisha = BigInt(
+          Math.floor(Number(subtotalPoisha) * Math.random() * 0.2)
+        );
         const sellerCommissionPoisha = BigInt(Math.floor(Number(subtotalPoisha) * 0.05)); // 5%
 
         const payout = calculateSellerPayoutWithPromotions({
@@ -62,10 +70,14 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
         expect(payout.sellerGrossEarningsPoisha).toBe(subtotalPoisha - sellerDiscountPoisha);
 
         // Invariant 2: Seller Payout = Seller Gross - Seller Commission
-        expect(payout.sellerPayoutPoisha).toBe(payout.sellerGrossEarningsPoisha - sellerCommissionPoisha);
+        expect(payout.sellerPayoutPoisha).toBe(
+          payout.sellerGrossEarningsPoisha - sellerCommissionPoisha
+        );
 
         // Invariant 3: Platform Net Revenue = Seller Commission - Platform Discount
-        expect(payout.platformNetRevenuePoisha).toBe(sellerCommissionPoisha - platformDiscountPoisha);
+        expect(payout.platformNetRevenuePoisha).toBe(
+          sellerCommissionPoisha - platformDiscountPoisha
+        );
       }
     });
   });
@@ -87,7 +99,9 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
           priceIncludesTax: false,
         });
 
-        expect(breakdown.netPricePoisha + breakdown.taxAmountPoisha).toBe(breakdown.grossPricePoisha);
+        expect(breakdown.netPricePoisha + breakdown.taxAmountPoisha).toBe(
+          breakdown.grossPricePoisha
+        );
         expect(breakdown.taxAmountPoisha).toBeGreaterThanOrEqual(0n);
       }
     });
@@ -108,7 +122,9 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
           priceIncludesTax: true,
         });
 
-        expect(breakdown.grossPricePoisha - breakdown.taxAmountPoisha).toBe(breakdown.netPricePoisha);
+        expect(breakdown.grossPricePoisha - breakdown.taxAmountPoisha).toBe(
+          breakdown.netPricePoisha
+        );
         expect(breakdown.taxAmountPoisha).toBeGreaterThanOrEqual(0n);
       }
     });
@@ -124,7 +140,8 @@ describe('Milestone 100: Pricing, Rounding, Boundary, and Property-Based Unit Te
         serviceCharge: 10,
       };
 
-      const sum = splits.main + splits.shopping + splits.goodLuck + splits.charity + splits.serviceCharge;
+      const sum =
+        splits.main + splits.shopping + splits.goodLuck + splits.charity + splits.serviceCharge;
       expect(sum).toBe(100);
     });
 

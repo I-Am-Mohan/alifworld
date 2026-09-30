@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { POST as returnIntakeRoute } from '@/app/api/v1/inventory/returns/intake/route';
 import { POST as returnInspectRoute } from '@/app/api/v1/inventory/returns/inspect/route';

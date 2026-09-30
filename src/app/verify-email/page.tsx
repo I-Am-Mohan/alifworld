@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -14,9 +14,26 @@ import {
   Clock,
 } from 'lucide-react';
 
+function subscribeSearch(callback: () => void) {
+  window.addEventListener('popstate', callback);
+  return () => window.removeEventListener('popstate', callback);
+}
+
+function getEmailFromUrl(): string {
+  if (typeof window === 'undefined') return '';
+  return new URLSearchParams(window.location.search).get('email') || '';
+}
+
+function getEmailServerSnapshot(): string {
+  return '';
+}
+
 export default function VerifyEmailPage() {
   const [locale, setLocale] = useState<'bn' | 'en'>('bn');
-  const [email, setEmail] = useState('');
+  const urlEmail = useSyncExternalStore(subscribeSearch, getEmailFromUrl, getEmailServerSnapshot);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const email = userEmail !== null ? userEmail : urlEmail;
+  const setEmail = (val: string) => setUserEmail(val);
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -26,15 +43,6 @@ export default function VerifyEmailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [devCode, setDevCode] = useState<string | null>(null);
-
-  // Read email from URL search params on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const emailParam = params.get('email');
-      if (emailParam) setEmail(emailParam);
-    }
-  }, []);
 
   // Cooldown countdown timer
   useEffect(() => {
@@ -84,12 +92,20 @@ export default function VerifyEmailPage() {
     setError(null);
 
     if (!email.trim() || !email.includes('@')) {
-      setError(locale === 'bn' ? 'অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন' : 'Please provide a valid email address');
+      setError(
+        locale === 'bn'
+          ? 'অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন'
+          : 'Please provide a valid email address'
+      );
       return;
     }
 
     if (fullCode.length !== 6) {
-      setError(locale === 'bn' ? '৬ ডিজিটের ভেরিফিকেশন কোড লিখুন' : 'Please enter the complete 6-digit code');
+      setError(
+        locale === 'bn'
+          ? '৬ ডিজিটের ভেরিফিকেশন কোড লিখুন'
+          : 'Please enter the complete 6-digit code'
+      );
       return;
     }
 
@@ -124,7 +140,11 @@ export default function VerifyEmailPage() {
     setError(null);
 
     if (!email.trim() || !email.includes('@')) {
-      setError(locale === 'bn' ? 'অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন' : 'Please provide a valid email address');
+      setError(
+        locale === 'bn'
+          ? 'অনুগ্রহ করে একটি সঠিক ইমেইল ঠিকানা দিন'
+          : 'Please provide a valid email address'
+      );
       return;
     }
 
@@ -160,7 +180,13 @@ export default function VerifyEmailPage() {
       <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 p-0.5 border border-white/20">
-            <Image src="/logo.png" alt="AlifWorld Logo" width={36} height={36} className="w-full h-full object-contain" />
+            <Image
+              src="/logo.png"
+              alt="AlifWorld Logo"
+              width={36}
+              height={36}
+              className="w-full h-full object-contain"
+            />
           </div>
           <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
             AlifWorld
@@ -206,9 +232,7 @@ export default function VerifyEmailPage() {
                 {locale === 'bn' ? 'ইমেইল ভেরিফিকেশন সফল!' : 'Email Verified!'}
               </h2>
 
-              <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                {success}
-              </p>
+              <p className="text-slate-300 text-sm mb-6 leading-relaxed">{success}</p>
 
               <Link
                 href="/login"
@@ -273,7 +297,9 @@ export default function VerifyEmailPage() {
                     {digits.map((digit, idx) => (
                       <input
                         key={idx}
-                        ref={(el) => { inputRefs.current[idx] = el; }}
+                        ref={(el) => {
+                          inputRefs.current[idx] = el;
+                        }}
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
@@ -318,7 +344,9 @@ export default function VerifyEmailPage() {
                   ) : cooldown > 0 ? (
                     <>
                       <Clock className="w-3.5 h-3.5" />
-                      <span>{cooldown}s {locale === 'bn' ? 'পরে আবার' : 'cooldown'}</span>
+                      <span>
+                        {cooldown}s {locale === 'bn' ? 'পরে আবার' : 'cooldown'}
+                      </span>
                     </>
                   ) : (
                     <>
@@ -335,7 +363,9 @@ export default function VerifyEmailPage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/60 py-6 text-center text-xs text-slate-500">
-        <p>© {new Date().getFullYear()} AlifWorld Marketplace Ltd. Bangladesh. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} AlifWorld Marketplace Ltd. Bangladesh. All rights reserved.
+        </p>
       </footer>
     </div>
   );

@@ -10,7 +10,16 @@
 export interface CheckoutShippingAddressDTO {
   shippingName: string;
   shippingPhone: string;
-  shippingDivision: 'DHAKA' | 'CHITTAGONG' | 'RAJSHAHI' | 'KHULNA' | 'BARISAL' | 'SYLHET' | 'RANGPUR' | 'MYMENSINGH' | string;
+  shippingDivision:
+    | 'DHAKA'
+    | 'CHITTAGONG'
+    | 'RAJSHAHI'
+    | 'KHULNA'
+    | 'BARISAL'
+    | 'SYLHET'
+    | 'RANGPUR'
+    | 'MYMENSINGH'
+    | string;
   shippingDistrict: string;
   shippingUpazila?: string | null;
   shippingAddress: string;

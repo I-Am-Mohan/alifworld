@@ -4,7 +4,7 @@
 **Date**: 2026-09-22  
 **Deciders**: AlifWorld Architecture, DevOps & QA Team  
 **Milestone Reference**: [Milestone 020](../../AlifWorld-300-Milestones/020-build-the-baseline-continuous-integration-quality-gate.md)  
-**Supporting Specification**: [Continuous Integration and Quality Gates Specification](../architecture/continuous-integration-and-quality-gates.md)  
+**Supporting Specification**: [Continuous Integration and Quality Gates Specification](../architecture/continuous-integration-and-quality-gates.md)
 
 ---
 
@@ -32,6 +32,7 @@ A formal Architecture Decision Record is required to lock the CI quality gate ar
 The AlifWorld engineering architecture formally adopts the **Baseline Continuous Integration Quality Gate and Phase 02 Certification**:
 
 ### 1. GitHub Actions CI Quality Gate (`.github/workflows/ci.yml`)
+
 - Triggers on `push` and `pull_request` against `main` and `develop` branches.
 - Uses `oven-sh/setup-bun@v2` with `latest` Bun runtime.
 - Executes sequential quality pipeline:
@@ -43,9 +44,11 @@ The AlifWorld engineering architecture formally adopts the **Baseline Continuous
   6. `bun run build:local`: Verifies Next.js standalone container compilation.
 
 ### 2. Local CI Script Contract
+
 - Adds `ci:check` to [`package.json`](../../package.json) executing the identical chain locally.
 
 ### 3. Formal Certification and Completion of Phase 02
+
 - Phase 02 (Milestones 011–020) is certified as **100% Completed**.
 - The single Next.js modular monolith codebase is fully established with strict TypeScript, design system brand tokens, validated environment variables, Bun command contract, testing pyramid, local Docker infrastructure, and automated CI quality gate.
 
@@ -54,10 +57,12 @@ The AlifWorld engineering architecture formally adopts the **Baseline Continuous
 ## Consequences
 
 ### Positive:
+
 - Blocks broken, unformatted, or failing code from being merged into trunk branches.
 - Eliminates manual review of formatting, linting, or type errors.
 - Provides identical local and remote verification contracts.
 - Certifies a rock-solid, production-grade foundation for Phase 03 (Data Architecture).
 
 ### Negative:
+
 - Pull requests cannot be merged if any step in the pipeline fails, requiring developers to resolve issues prior to approval.

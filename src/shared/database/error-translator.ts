@@ -1,10 +1,10 @@
 /**
  * AlifWorld Database Error Translator
- * 
+ *
  * Maps PostgreSQL and Prisma runtime exceptions to strongly-typed domain AppErrors.
  * Prevents sensitive schema identifiers, SQL statements, and internal server paths
  * from leaking to user-facing or client responses.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariants: docs/architecture/scope-boundaries-and-domain-map.md
  */
@@ -46,12 +46,13 @@ export function translateDatabaseError(error: unknown, context?: string): AppErr
       const fields = Array.isArray(target)
         ? target.join(', ')
         : typeof target === 'string'
-        ? target
-        : 'unique fields';
-      return new ConflictError(
-        `A record with the specified ${fields} already exists`,
-        { code, target, context }
-      );
+          ? target
+          : 'unique fields';
+      return new ConflictError(`A record with the specified ${fields} already exists`, {
+        code,
+        target,
+        context,
+      });
     }
 
     // Record required but not found for update/delete
@@ -88,14 +89,15 @@ export function translateDatabaseError(error: unknown, context?: string): AppErr
 
     // Required relation missing / violation
     case 'P2014': {
-      return new ValidationError(
-        'Required relationship constraint violated for this mutation',
-        { code, context }
-      );
+      return new ValidationError('Required relationship constraint violated for this mutation', {
+        code,
+        context,
+      });
     }
 
     default: {
-      const message = err?.message || (error instanceof Error ? error.message : 'Unknown database error');
+      const message =
+        err?.message || (error instanceof Error ? error.message : 'Unknown database error');
       return new InternalServerError(
         `Database operation failure${context ? ` in ${context}` : ''}: ${message}`,
         { code, context }

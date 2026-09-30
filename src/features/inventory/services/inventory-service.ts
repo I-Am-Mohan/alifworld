@@ -1,13 +1,13 @@
 /**
  * AlifWorld Inventory Service
- * 
+ *
  * Core domain service orchestrating warehouse stock balances, intake movements,
  * atomic checkout reservations, commitments, releases, manual audit adjustments,
  * and deterministic TTL expiration sweeps.
- * 
+ *
  * Core Invariant:
  * Available = OnHand - Reserved - Damaged - Quarantined >= 0
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
@@ -208,7 +208,9 @@ export class InventoryService {
     }
 
     if (!updatedBalance) {
-      throw new ConflictError('Concurrent inventory reservation race condition. Please retry your request.');
+      throw new ConflictError(
+        'Concurrent inventory reservation race condition. Please retry your request.'
+      );
     }
 
     // 3. Create reservation record with TTL cutoff
@@ -232,7 +234,9 @@ export class InventoryService {
       availableAfter: updatedBalance.available,
       sourceType: SourceType.CHECKOUT_RESERVATION,
       sourceId: reservation.id,
-      reason: validated.cartId ? `Checkout reservation for cart ${validated.cartId}` : 'Checkout reservation',
+      reason: validated.cartId
+        ? `Checkout reservation for cart ${validated.cartId}`
+        : 'Checkout reservation',
     });
 
     await this.recordOutboxEvent('inventory.stock_reserved', reservation.id, {
@@ -659,7 +663,10 @@ export class InventoryService {
     return expiredCount;
   }
 
-  public async getBalance(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async getBalance(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     return this.stockBalanceRepo.findByWarehouseAndVariant(warehouseId, variantId);
   }
 
@@ -907,7 +914,8 @@ export class InventoryService {
       sourceType: SourceType.PURCHASE_ORDER,
       sourceId: transfer.id,
       actorId,
-      reason: validated.notes ?? `Inter-warehouse transfer received from ${transfer.fromWarehouseId}`,
+      reason:
+        validated.notes ?? `Inter-warehouse transfer received from ${transfer.fromWarehouseId}`,
     });
 
     const completedTransfer: StockTransferRecord = {
@@ -1124,7 +1132,9 @@ export class InventoryService {
   }
 
   public async listPendingCountCorrections(): Promise<StockCountCorrectionRecord[]> {
-    return Array.from(this.countCorrections.values()).filter((c) => c.status === 'PENDING_APPROVAL');
+    return Array.from(this.countCorrections.values()).filter(
+      (c) => c.status === 'PENDING_APPROVAL'
+    );
   }
 
   public async listStockTransfers(): Promise<StockTransferRecord[]> {
@@ -1405,7 +1415,11 @@ export class InventoryService {
     };
   }
 
-  private async recordOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {
+  private async recordOutboxEvent(
+    eventType: string,
+    aggregateId: string,
+    payload: any
+  ): Promise<void> {
     try {
       await (prisma as any).outboxEvent.create({
         data: {

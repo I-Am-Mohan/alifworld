@@ -7,6 +7,19 @@ export const dynamic = 'force-dynamic';
 const service = new CatalogBulkService();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try { const actor = authenticateRequest(req); if (!actor.sellerId) return NextResponse.json({ success: false, error: { code: 'SELLER_SCOPE_REQUIRED', message: 'Seller scope is required.' } }, { status: 422 }); const job = await service.getImport(actor.userId, actor.sellerId, (await params).id); return NextResponse.json({ success: true, data: job.errors || [] }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load catalog import errors'); }
+  try {
+    const actor = authenticateRequest(req);
+    if (!actor.sellerId)
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: 'SELLER_SCOPE_REQUIRED', message: 'Seller scope is required.' },
+        },
+        { status: 422 }
+      );
+    const job = await service.getImport(actor.userId, actor.sellerId, (await params).id);
+    return NextResponse.json({ success: true, data: job.errors || [] });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load catalog import errors');
+  }
 }

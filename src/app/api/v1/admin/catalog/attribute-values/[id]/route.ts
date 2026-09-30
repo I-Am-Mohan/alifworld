@@ -14,7 +14,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const id = (await params).id;
     await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id });
     const parsed = UpdateCatalogAttributeValueSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid catalog attribute value update.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.updateValue(actor.userId, id, parsed.data) });
-  } catch (error) { return errorResponse(req, error, 'Failed to update attribute value'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid catalog attribute value update.', parsed.error.flatten());
+    return NextResponse.json({
+      success: true,
+      data: await service.updateValue(actor.userId, id, parsed.data),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to update attribute value');
+  }
 }

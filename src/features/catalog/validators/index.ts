@@ -1,9 +1,9 @@
 /**
  * AlifWorld Catalog & Taxonomy Zod Validators
- * 
+ *
  * Strict runtime validation for categories, brands, products, variants,
  * media, poisha integer currencies, and discrete Product Points.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0001, ADR-0005, ADR-0016, ADR-0022, ADR-0025
  */
@@ -17,7 +17,11 @@ const SKU_REGEX = /^[A-Z0-9_-]{3,50}$/;
 export const CreateCategorySchema = z.object({
   name: z.string().min(2, 'Category name must be at least 2 characters').max(100),
   nameBn: z.string().max(150).optional().nullable(),
-  slug: z.string().min(2).max(100).regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
+  slug: z
+    .string()
+    .min(2)
+    .max(100)
+    .regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
   description: z.string().max(1000).optional().nullable(),
   parentId: z.string().optional().nullable(),
   imageUrl: z.string().url('Invalid image URL').optional().nullable(),
@@ -37,7 +41,11 @@ export type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>;
 
 export const CreateBrandSchema = z.object({
   name: z.string().min(2, 'Brand name must be at least 2 characters').max(100),
-  slug: z.string().min(2).max(100).regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
+  slug: z
+    .string()
+    .min(2)
+    .max(100)
+    .regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
   logoUrl: z.string().url('Invalid logo URL').optional().nullable(),
   website: z.string().url('Invalid website URL').optional().nullable(),
   isVerified: z.boolean().default(false),
@@ -53,7 +61,9 @@ export const UpdateBrandSchema = CreateBrandSchema.partial().extend({
 export type UpdateBrandInput = z.infer<typeof UpdateBrandSchema>;
 
 export const CreateProductVariantSchema = z.object({
-  sku: z.string().regex(SKU_REGEX, 'SKU must be uppercase alphanumeric with dashes/underscores (3-50 chars)'),
+  sku: z
+    .string()
+    .regex(SKU_REGEX, 'SKU must be uppercase alphanumeric with dashes/underscores (3-50 chars)'),
   title: z.string().min(1, 'Variant title is required').max(150),
   pricePoisha: z.coerce.number().int().min(1, 'Price must be at least 1 poisha (0.01 BDT)'),
   compareAtPricePoisha: z.coerce.number().int().min(1).optional().nullable(),
@@ -103,15 +113,34 @@ export const CreateProductSchema = z.object({
   brandId: z.string().optional().nullable(),
   title: z.string().min(3, 'Product title must be at least 3 characters').max(200),
   titleBn: z.string().max(250).optional().nullable(),
-  slug: z.string().min(3).max(200).regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
+  slug: z
+    .string()
+    .min(3)
+    .max(200)
+    .regex(SLUG_REGEX, 'Slug must be lowercase alphanumeric with hyphens'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   descriptionBn: z.string().optional().nullable(),
-  basePricePoisha: z.coerce.number().int().safe().min(1, 'Base price must be at least 1 poisha (0.01 BDT)'),
+  basePricePoisha: z.coerce
+    .number()
+    .int()
+    .safe()
+    .min(1, 'Base price must be at least 1 poisha (0.01 BDT)'),
   compareAtPricePoisha: z.coerce.number().int().safe().min(1).optional().nullable(),
   currency: z.literal('BDT'),
-  productPoint: z.number().int().min(0, 'Seller-defined Product Point is required and must be non-negative'),
-  sku: z.string().regex(SKU_REGEX, 'SKU must be uppercase alphanumeric with dashes/underscores (3-50 chars)').optional().nullable(),
-  barcode: z.string().regex(/^\d{8,14}$/, 'Barcode must contain 8 to 14 digits').optional().nullable(),
+  productPoint: z
+    .number()
+    .int()
+    .min(0, 'Seller-defined Product Point is required and must be non-negative'),
+  sku: z
+    .string()
+    .regex(SKU_REGEX, 'SKU must be uppercase alphanumeric with dashes/underscores (3-50 chars)')
+    .optional()
+    .nullable(),
+  barcode: z
+    .string()
+    .regex(/^\d{8,14}$/, 'Barcode must contain 8 to 14 digits')
+    .optional()
+    .nullable(),
   isPhysical: z.boolean().default(true),
   weightGrams: z.number().int().min(0).optional().nullable(),
   lengthMm: z.number().int().min(0).optional().nullable(),
@@ -157,7 +186,9 @@ export const CreateCatalogAttributeSchema = z.object({
 });
 export type CreateCatalogAttributeInput = z.infer<typeof CreateCatalogAttributeSchema>;
 
-export const UpdateCatalogAttributeSchema = CreateCatalogAttributeSchema.partial().extend({ version: z.number().int().positive() });
+export const UpdateCatalogAttributeSchema = CreateCatalogAttributeSchema.partial().extend({
+  version: z.number().int().positive(),
+});
 export type UpdateCatalogAttributeInput = z.infer<typeof UpdateCatalogAttributeSchema>;
 
 export const CreateCatalogAttributeValueSchema = z.object({
@@ -170,7 +201,9 @@ export const CreateCatalogAttributeValueSchema = z.object({
 });
 export type CreateCatalogAttributeValueInput = z.infer<typeof CreateCatalogAttributeValueSchema>;
 
-export const UpdateCatalogAttributeValueSchema = CreateCatalogAttributeValueSchema.partial().extend({ version: z.number().int().positive() });
+export const UpdateCatalogAttributeValueSchema = CreateCatalogAttributeValueSchema.partial().extend(
+  { version: z.number().int().positive() }
+);
 export type UpdateCatalogAttributeValueInput = z.infer<typeof UpdateCatalogAttributeValueSchema>;
 
 export const CategoryAttributeAssignmentSchema = z.object({
@@ -180,34 +213,81 @@ export const CategoryAttributeAssignmentSchema = z.object({
   filterableOverride: z.boolean().nullable().optional(),
   displayOrder: z.number().int().min(0).default(0),
 });
-export const CategoryAttributeAssignmentsSchema = z.object({ assignments: z.array(CategoryAttributeAssignmentSchema).max(100) }).superRefine((input, ctx) => {
-  const ids = input.assignments.map((assignment) => assignment.attributeId);
-  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['assignments'], message: 'Category attributes must be unique.' });
-});
+export const CategoryAttributeAssignmentsSchema = z
+  .object({ assignments: z.array(CategoryAttributeAssignmentSchema).max(100) })
+  .superRefine((input, ctx) => {
+    const ids = input.assignments.map((assignment) => assignment.attributeId);
+    if (new Set(ids).size !== ids.length)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['assignments'],
+        message: 'Category attributes must be unique.',
+      });
+  });
 export type CategoryAttributeAssignmentInput = z.infer<typeof CategoryAttributeAssignmentSchema>;
 
 export const ProductOptionSetSchema = z.object({
   attributeId: z.string().min(4),
-  valueIds: z.array(z.string().min(4)).min(1).max(100).refine((values) => new Set(values).size === values.length, 'Option values must be unique.'),
+  valueIds: z
+    .array(z.string().min(4))
+    .min(1)
+    .max(100)
+    .refine((values) => new Set(values).size === values.length, 'Option values must be unique.'),
   isRequired: z.boolean().default(false),
   isVariantDefining: z.boolean().default(false),
   displayOrder: z.number().int().min(0).default(0),
 });
-export const ProductOptionSetsSchema = z.object({ version: z.number().int().positive(), optionSets: z.array(ProductOptionSetSchema).max(20) }).superRefine((input, ctx) => {
-  const ids = input.optionSets.map((optionSet) => optionSet.attributeId);
-  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['optionSets'], message: 'Product option-set attributes must be unique.' });
-});
+export const ProductOptionSetsSchema = z
+  .object({
+    version: z.number().int().positive(),
+    optionSets: z.array(ProductOptionSetSchema).max(20),
+  })
+  .superRefine((input, ctx) => {
+    const ids = input.optionSets.map((optionSet) => optionSet.attributeId);
+    if (new Set(ids).size !== ids.length)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['optionSets'],
+        message: 'Product option-set attributes must be unique.',
+      });
+  });
 export type ProductOptionSetsInput = z.infer<typeof ProductOptionSetsSchema>;
 
-export const VariantOptionsSchema = z.object({
-  version: z.number().int().positive(),
-  options: z.array(z.object({ attributeId: z.string().min(4), valueId: z.string().min(4).optional(), textValue: z.string().trim().max(200).optional(), displayOrder: z.number().int().min(0).default(0) })).max(20),
-}).superRefine((input, ctx) => {
-  const ids = input.options.map((option) => option.attributeId);
-  if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options'], message: 'A variant cannot contain duplicate attributes.' });
-  input.options.forEach((option, index) => {
-    if (!option.valueId && !option.textValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options', index], message: 'Each option requires a governed value or text value.' });
-    if (option.valueId && option.textValue) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['options', index], message: 'An option cannot contain both a governed value and text value.' });
+export const VariantOptionsSchema = z
+  .object({
+    version: z.number().int().positive(),
+    options: z
+      .array(
+        z.object({
+          attributeId: z.string().min(4),
+          valueId: z.string().min(4).optional(),
+          textValue: z.string().trim().max(200).optional(),
+          displayOrder: z.number().int().min(0).default(0),
+        })
+      )
+      .max(20),
+  })
+  .superRefine((input, ctx) => {
+    const ids = input.options.map((option) => option.attributeId);
+    if (new Set(ids).size !== ids.length)
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['options'],
+        message: 'A variant cannot contain duplicate attributes.',
+      });
+    input.options.forEach((option, index) => {
+      if (!option.valueId && !option.textValue)
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options', index],
+          message: 'Each option requires a governed value or text value.',
+        });
+      if (option.valueId && option.textValue)
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options', index],
+          message: 'An option cannot contain both a governed value and text value.',
+        });
+    });
   });
-});
 export type VariantOptionsInput = z.infer<typeof VariantOptionsSchema>;

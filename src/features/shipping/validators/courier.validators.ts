@@ -8,13 +8,28 @@
 import { z } from 'zod';
 import { normalizeBangladeshPhone } from '@/shared/utils/phone';
 
-export const CourierCodeEnum = z.enum([
-  'PATHAO',
-  'STEADFAST',
-  'REDX',
-  'PAPERFLY',
-  'IN_HOUSE',
-]);
+export const CourierCodeEnum = z.enum(['PATHAO', 'STEADFAST', 'REDX', 'PAPERFLY', 'IN_HOUSE']);
+
+export const ListConsignmentsSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  sellerId: z.string().min(1).max(200).optional(),
+  courierProvider: CourierCodeEnum.optional(),
+  status: z
+    .enum([
+      'PENDING',
+      'LABEL_CREATED',
+      'ASSIGNED',
+      'PICKED_UP',
+      'IN_TRANSIT',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'FAILED_DELIVERY',
+      'RETURNED_TO_SELLER',
+      'CANCELLED',
+    ])
+    .optional(),
+});
 
 export const CreateConsignmentSchema = z.object({
   fulfillmentGroupId: z.string().min(1, 'Fulfillment group ID is required'),

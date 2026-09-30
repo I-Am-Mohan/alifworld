@@ -5,7 +5,7 @@
 **Deciders**: Architecture Team, Financial Engineering, Compliance, Multi-Vendor Operations  
 **Milestone Reference**: [Milestone 028](../../AlifWorld-300-Milestones/028-model-payments-refunds-commissions-settlements-and-payouts.md)  
 **Phase**: Phase 03: Data Architecture  
-**Supporting Specification**: [Payments, Refunds, Commissions, Settlements & Payouts Architecture](../architecture/payments-refunds-commissions-settlements-and-payouts.md)  
+**Supporting Specification**: [Payments, Refunds, Commissions, Settlements & Payouts Architecture](../architecture/payments-refunds-commissions-settlements-and-payouts.md)
 
 ---
 
@@ -14,6 +14,7 @@
 AlifWorld requires a robust financial architecture to manage customer payment transactions, gateway webhook notifications, item-level partial refunds, platform commission accounting, periodic merchant clearing batches, and electronic payout disbursals in Bangladesh.
 
 The key engineering and business constraints include:
+
 1. **Zero Floating-Point Representation**: All monetary values across customer payments, gateway processing charges, line-item refunds, platform commissions, seller settlements, and electronic bank wire payouts must operate strictly on integer minor units (poisha, where $1\text{ BDT} = 100\text{ poisha}$). Floating-point arithmetic (`number`) is strictly prohibited.
 2. **Independent Product Points (PP) Loyalty Reversals**: Product price and Product Points are decoupled, independent values. On item return or partial refund, the exact snapshotted Product Points associated with the returned units must be reversed without applying synthetic BDT conversion rates.
 3. **Item-Level Bounded Partial Refunds**: Customers may request refunds for specific line items or quantities. The cumulative refund amount must never exceed the captured payment amount.
@@ -35,20 +36,22 @@ The key engineering and business constraints include:
 ## Considered Options
 
 1. **Direct Mutation of Order Totals on Refund**:
-   - *Pros*: Simple single-row update.
-   - *Cons*: Violates financial audit principles; destroys historical transaction records; creates reconciliation discrepancies with payment gateway statements.
+   - _Pros_: Simple single-row update.
+   - _Cons_: Violates financial audit principles; destroys historical transaction records; creates reconciliation discrepancies with payment gateway statements.
 2. **Floating-Point Currency Storage (`DECIMAL(12, 2)`)**:
-   - *Pros*: Native human-readable format.
-   - *Cons*: Subject to IEEE 754 precision drift and rounding errors across multiplication and division; violates AlifWorld's integer minor unit rule.
+   - _Pros_: Native human-readable format.
+   - _Cons_: Subject to IEEE 754 precision drift and rounding errors across multiplication and division; violates AlifWorld's integer minor unit rule.
 3. **Double-Entry Integer Minor Unit Ledger Architecture (Selected)**:
-   - *Pros*: Provides mathematically exact poisha bookkeeping, strict append-only auditability, decoupled Product Points reversal, verifiable rule versioning, and secure multi-tenant clearing.
+   - _Pros_: Provides mathematically exact poisha bookkeeping, strict append-only auditability, decoupled Product Points reversal, verifiable rule versioning, and secure multi-tenant clearing.
 
 ---
 
 ## Decision Outcome & Detailed Rationale
 
 ### 1. Relational Persistence Schema (Models 32–38)
+
 Added to `prisma/schema.prisma`:
+
 - `Payment`: Inward customer payment captured via digital gateway (bKash, Nagad) or Cash on Delivery. Stores `amountPoisha` and `feePoisha` as `BigInt`.
 - `Refund`: Customer refund transaction tracking approved amounts, gateway refund identifiers, and net seller deductions.
 - `RefundItem`: Itemized breakdown of returned units, refunded poisha, reversed VAT, and returned discrete Product Points.
@@ -58,6 +61,7 @@ Added to `prisma/schema.prisma`:
 - `PaymentWebhookLog`: Gateway webhook ingestion log storing raw payloads, provider signatures, verification status, and replay deduplication (`externalEventId`).
 
 ### 2. Standardized Identifiers & Lifecycle Governance
+
 - **ID Prefixes** (`src/shared/utils/id.ts`):
   - `PAYMENT`: `'pay'`
   - `REFUND`: `'ref'`
@@ -76,6 +80,7 @@ Added to `prisma/schema.prisma`:
   - `PaymentWebhookLog`: `IMMUTABLE`
 
 ### 3. Data Integrity & Financial Invariants
+
 - **Poisha Conservation**:
   $$\text{Net Payout} = \text{Gross Subtotal} + \text{Shipping Fee} + \text{Tax} - \text{Commission} - \text{Refund Deductions}$$
   Calculated strictly using `BigInt` integer arithmetic.
@@ -89,11 +94,13 @@ Added to `prisma/schema.prisma`:
 ## Consequences
 
 ### Positive
+
 - Zero floating-point rounding errors across checkout, refunds, and merchant payouts.
 - Full compliance with Bangladesh Bank BEFTN clearing standards and NBR VAT rules.
 - Cryptographic verification and deduplication prevent replay attacks on payment webhook endpoints.
 - Complete transparency for sellers regarding 5% platform deductions and payout schedules.
 
 ### Negative / Trade-offs
+
 - Client applications must convert `BigInt` poisha strings to formatted BDT currency strings (`৳25,348.50`).
 - Strict immutability requires negative reversal records rather than inline edits for commission and refund corrections.

@@ -9,7 +9,7 @@ const registrationService = new AuthRegistrationService();
 
 /**
  * POST /api/v1/auth/register
- * 
+ *
  * Registers a new customer user account.
  * Provisions customer wallets (MAIN, SHOPPING, GOOD_LUCK, CHARITY),
  * assigns CUSTOMER role, initializes loyalty point account, and generates email OTP.

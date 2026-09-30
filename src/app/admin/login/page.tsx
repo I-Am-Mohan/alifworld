@@ -3,14 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  AlertCircle,
-  KeyRound,
-} from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, RefreshCw, AlertCircle, KeyRound } from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { useI18n } from '@/i18n/context';
@@ -111,7 +104,6 @@ export default function AdminLoginPage() {
               <AlifLogo size="lg" href="/admin/login" />
             </div>
 
-
             <h1 className="text-2xl font-black text-slate-950 tracking-tight">
               {t('admin.loginTitle')}
             </h1>
@@ -119,7 +111,6 @@ export default function AdminLoginPage() {
               {t('admin.loginSubtitle')}
             </p>
           </div>
-
 
           {/* Error Banner */}
           {error && (
@@ -195,7 +186,8 @@ export default function AdminLoginPage() {
           {/* Security Notice */}
           <div className="mt-6 pt-5 border-t border-slate-100 text-center">
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              All administrative access attempts, token sessions, and console operations are cryptographically audited.
+              All administrative access attempts, token sessions, and console operations are
+              cryptographically audited.
             </p>
           </div>
         </div>

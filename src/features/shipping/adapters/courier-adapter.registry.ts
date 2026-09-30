@@ -9,11 +9,7 @@
  * - IN_HOUSE: AlifExpress In-House Fleet
  */
 
-import {
-  CourierCode,
-  ICourierAdapter,
-  CourierInfoDTO,
-} from '../types/courier.types';
+import { CourierCode, ICourierAdapter, CourierInfoDTO } from '../types/courier.types';
 import { PathaoCourierAdapter } from './pathao.adapter';
 import { SteadfastCourierAdapter } from './steadfast.adapter';
 import { RedXCourierAdapter } from './redx.adapter';

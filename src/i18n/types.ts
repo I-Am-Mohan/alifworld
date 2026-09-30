@@ -3,12 +3,7 @@ export type SupportedLocale = 'bn-BD' | 'en-BD' | 'bn' | 'en';
 export type LocaleDirection = 'ltr' | 'rtl';
 
 export type LocaleNegotiationSource =
-  | 'path'
-  | 'query'
-  | 'header'
-  | 'cookie'
-  | 'accept-language'
-  | 'default';
+  'path' | 'query' | 'header' | 'cookie' | 'accept-language' | 'default';
 
 export interface LanguageDefinition {
   code: string; // e.g. 'bn-BD', 'en-BD', 'bn', 'en', 'ar'

@@ -77,7 +77,7 @@ export default async function ProductReviewsPage({
             {isBn ? 'গ্রাহক মতামত ও ভেরিফায়েড রিভিউ' : 'Customer Reviews & Ratings'}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            {product.title} • {isBn ? 'বিক্রেতা:' : 'Seller:'}{' '}\
+            {product.title} • {isBn ? 'বিক্রেতা:' : 'Seller:'} \
             <strong className="text-slate-800">{product.seller.businessName}</strong>
           </p>
         </div>

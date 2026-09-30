@@ -1,4 +1,8 @@
-import { getCatalogLeafKeys, getCatalogPlaceholders, validateCatalogPair } from '@/i18n/translations/catalog-validation';
+import {
+  getCatalogLeafKeys,
+  getCatalogPlaceholders,
+  validateCatalogPair,
+} from '@/i18n/translations/catalog-validation';
 import { getDictionary } from '@/i18n/translations';
 import { CANONICAL_LOCALES, normalizeToCanonicalLocale } from '@/i18n/config';
 import type { TranslationDictionary } from './types';
@@ -31,7 +35,8 @@ function flattenCatalog(value: TranslationDictionary, prefix = ''): Record<strin
   for (const [key, child] of Object.entries(value)) {
     const path = prefix ? `${prefix}.${key}` : key;
     if (typeof child === 'string') flattened[path] = child;
-    else if (child && typeof child === 'object') Object.assign(flattened, flattenCatalog(child, path));
+    else if (child && typeof child === 'object')
+      Object.assign(flattened, flattenCatalog(child, path));
   }
   return flattened;
 }

@@ -9,7 +9,7 @@ const oauthService = new OAuthService();
 
 /**
  * GET /api/v1/auth/oauth/google
- * 
+ *
  * Initiates Google OAuth 2.0 / OpenID Connect authorization code flow.
  * Generates an HMAC-signed anti-CSRF state token and sets an HttpOnly nonce cookie.
  */
@@ -37,11 +37,7 @@ export async function GET(req: NextRequest) {
     }
 
     const originUrl = req.nextUrl.origin;
-    const result = oauthService.initiateAuth(
-      'GOOGLE',
-      parseResult.data.returnUrl,
-      originUrl
-    );
+    const result = oauthService.initiateAuth('GOOGLE', parseResult.data.returnUrl, originUrl);
 
     const response = NextResponse.redirect(result.authorizationUrl, 302);
 

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Database Data Dictionary Generator
- * 
+ *
  * Automatically compiles the authoritative PostgreSQL & Prisma Data Dictionary
  * from prisma/schema.prisma, lifecycle policies, and index registries.
- * 
+ *
  * Invariants: ADR-0022, ADR-0028, ADR-0029, Phase 03 Data Architecture
  */
 
@@ -212,7 +212,9 @@ export function writeDataDictionary(): void {
   mkdirSync(dirname(outputPath), { recursive: true });
   const content = generateDataDictionaryMarkdown();
   writeFileSync(outputPath, content, 'utf-8');
-  console.info(`[DataDictionary] Authoritative PostgreSQL Data Dictionary generated at: ${outputPath}`);
+  console.info(
+    `[DataDictionary] Authoritative PostgreSQL Data Dictionary generated at: ${outputPath}`
+  );
 }
 
 if (import.meta.main || process.argv[1]?.includes('generate-data-dictionary')) {

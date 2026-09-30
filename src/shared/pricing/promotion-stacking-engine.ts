@@ -7,7 +7,8 @@ import {
 
 export interface StackingRuleDescriptor extends DiscountRuleDescriptor {
   isStackable: boolean;
-  exclusionScope: 'EXCLUSIVE_SITEWIDE' | 'EXCLUSIVE_CATEGORY' | 'EXCLUSIVE_PRODUCT' | 'STACKABLE' | string;
+  exclusionScope:
+    'EXCLUSIVE_SITEWIDE' | 'EXCLUSIVE_CATEGORY' | 'EXCLUSIVE_PRODUCT' | 'STACKABLE' | string;
 }
 
 export interface ExcludedPromotionDetail {
@@ -71,7 +72,8 @@ export function resolveStackedPromotions(
         ruleId: rule.id,
         code: rule.code || null,
         title: rule.title,
-        exclusionReason: 'Excluded because non-stackable rule conflicts with previously applied promotions',
+        exclusionReason:
+          'Excluded because non-stackable rule conflicts with previously applied promotions',
       });
       continue;
     }
@@ -86,7 +88,8 @@ export function resolveStackedPromotions(
           ruleId: rule.id,
           code: rule.code || null,
           title: rule.title,
-          exclusionReason: 'Excluded because target product is locked by a higher-priority exclusive promotion',
+          exclusionReason:
+            'Excluded because target product is locked by a higher-priority exclusive promotion',
         });
         continue;
       }
@@ -101,7 +104,8 @@ export function resolveStackedPromotions(
           ruleId: rule.id,
           code: rule.code || null,
           title: rule.title,
-          exclusionReason: 'Excluded because target category is locked by a higher-priority exclusive promotion',
+          exclusionReason:
+            'Excluded because target category is locked by a higher-priority exclusive promotion',
         });
         continue;
       }
@@ -171,7 +175,10 @@ export function resolveStackedPromotions(
     }
   }
 
-  const totalDiscountPoisha = appliedPromotions.reduce((sum, p) => sum + p.discountAmountPoisha, 0n);
+  const totalDiscountPoisha = appliedPromotions.reduce(
+    (sum, p) => sum + p.discountAmountPoisha,
+    0n
+  );
 
   return {
     appliedPromotions,

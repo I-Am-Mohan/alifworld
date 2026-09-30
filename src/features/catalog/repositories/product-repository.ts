@@ -1,9 +1,9 @@
 /**
  * AlifWorld Product Catalog Repository
- * 
+ *
  * Encapsulates database queries for products, tenant scoping (sellerId),
  * variants, media relations, OCC versioning, and slug history redirects.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0001, ADR-0003, ADR-0005, ADR-0021, ADR-0022, ADR-0025
  */
@@ -38,7 +38,10 @@ export class ProductRepository {
    * Looks up product by public slug.
    * If not found directly, inspects ProductSlugHistory to enable SEO redirects.
    */
-  public async findBySlug(slug: string, sellerId?: string): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
+  public async findBySlug(
+    slug: string,
+    sellerId?: string
+  ): Promise<{ product: ProductModel | null; redirectedFrom?: string }> {
     const directProduct = await (prisma as any).product.findFirst({
       where: { slug, deletedAt: null, ...(sellerId ? { sellerId } : {}) },
       include: {
@@ -80,7 +83,12 @@ export class ProductRepository {
       },
     });
 
-    if (slugHistory && slugHistory.product && !slugHistory.product.deletedAt && (!sellerId || slugHistory.product.sellerId === sellerId)) {
+    if (
+      slugHistory &&
+      slugHistory.product &&
+      !slugHistory.product.deletedAt &&
+      (!sellerId || slugHistory.product.sellerId === sellerId)
+    ) {
       return {
         product: this.mapToModel(slugHistory.product),
         redirectedFrom: slug,
@@ -274,7 +282,9 @@ export class ProductRepository {
       updateData.basePricePoisha = BigInt(data.basePricePoisha);
     }
     if (data.compareAtPricePoisha !== undefined) {
-      updateData.compareAtPricePoisha = data.compareAtPricePoisha ? BigInt(data.compareAtPricePoisha) : null;
+      updateData.compareAtPricePoisha = data.compareAtPricePoisha
+        ? BigInt(data.compareAtPricePoisha)
+        : null;
     }
 
     const updated = await (prisma as any).product.update({
@@ -311,7 +321,12 @@ export class ProductRepository {
     });
   }
 
-  public async softDelete(id: string, expectedVersion: number, deletedBy?: string, sellerId?: string): Promise<void> {
+  public async softDelete(
+    id: string,
+    expectedVersion: number,
+    deletedBy?: string,
+    sellerId?: string
+  ): Promise<void> {
     const existing = await (prisma as any).product.findFirst({
       where: { id, deletedAt: null, ...(sellerId ? { sellerId } : {}) },
     });

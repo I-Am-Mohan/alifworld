@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as getOrgRoute, POST as registerOrgRoute } from '@/app/api/v1/b2b/organization/route';
-import { GET as listMembersRoute, POST as inviteMemberRoute } from '@/app/api/v1/b2b/organization/members/route';
+import {
+  GET as listMembersRoute,
+  POST as inviteMemberRoute,
+} from '@/app/api/v1/b2b/organization/members/route';
 import { POST as reviewOrgRoute } from '@/app/api/v1/b2b/admin/organizations/[id]/review/route';
 import { POST as configureCreditRoute } from '@/app/api/v1/b2b/admin/organizations/[id]/credit/route';
 import { GET as listRfqsRoute, POST as createRfqRoute } from '@/app/api/v1/b2b/rfqs/route';
@@ -192,16 +196,19 @@ describe('Milestone 124: B2B Commerce & RFQ REST API Integration Tests', () => {
   it('POST /api/v1/b2b/admin/organizations/[id]/credit configures credit facility', async () => {
     spyOn(authzModule, 'authenticateRequest').mockReturnValue(adminActor as any);
 
-    const req = new NextRequest('http://localhost:3000/api/v1/b2b/admin/organizations/org_apex_01/credit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        creditStatus: 'APPROVED',
-        creditLimitPoisha: 100000000,
-        creditTermsDays: 30,
-        earnsProductPoints: false,
-      }),
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/b2b/admin/organizations/org_apex_01/credit',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creditStatus: 'APPROVED',
+          creditLimitPoisha: 100000000,
+          creditTermsDays: 30,
+          earnsProductPoints: false,
+        }),
+      }
+    );
     const res = await configureCreditRoute(req, {
       params: Promise.resolve({ id: 'org_apex_01' }),
     });

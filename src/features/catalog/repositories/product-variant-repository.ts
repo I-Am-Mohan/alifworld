@@ -1,8 +1,8 @@
 /**
  * AlifWorld Product Variant Repository
- * 
+ *
  * Manages sellable SKU variations, variant pricing, options, and OCC.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0001, ADR-0003, ADR-0005, ADR-0021, ADR-0022, ADR-0025
  */
@@ -13,9 +13,18 @@ import { ConflictError, NotFoundError } from '@/shared/errors/app-error';
 import { ProductVariantModel } from '../types';
 
 export class ProductVariantRepository {
-  public async findById(id: string, productId?: string, sellerId?: string): Promise<ProductVariantModel | null> {
+  public async findById(
+    id: string,
+    productId?: string,
+    sellerId?: string
+  ): Promise<ProductVariantModel | null> {
     const variant = await (prisma as any).productVariant.findFirst({
-      where: { id, deletedAt: null, ...(productId ? { productId } : {}), ...(sellerId ? { product: { sellerId } } : {}) },
+      where: {
+        id,
+        deletedAt: null,
+        ...(productId ? { productId } : {}),
+        ...(sellerId ? { product: { sellerId } } : {}),
+      },
       include: { options: { orderBy: { displayOrder: 'asc' } } },
     });
     return variant ? this.mapToModel(variant) : null;
@@ -28,7 +37,10 @@ export class ProductVariantRepository {
     return variant ? this.mapToModel(variant) : null;
   }
 
-  public async findByProductId(productId: string, sellerId?: string): Promise<ProductVariantModel[]> {
+  public async findByProductId(
+    productId: string,
+    sellerId?: string
+  ): Promise<ProductVariantModel[]> {
     const variants = await (prisma as any).productVariant.findMany({
       where: { productId, deletedAt: null, ...(sellerId ? { product: { sellerId } } : {}) },
       include: { options: { orderBy: { displayOrder: 'asc' } } },
@@ -37,24 +49,27 @@ export class ProductVariantRepository {
     return variants.map((v: any) => this.mapToModel(v));
   }
 
-  public async create(productId: string, data: {
-    sku: string;
-    title: string;
-    pricePoisha: bigint | number;
-    compareAtPricePoisha?: bigint | number | null;
-    productPoint: number;
-    barcode?: string | null;
-    weightGrams?: number | null;
-    option1Name?: string | null;
-    option1Value?: string | null;
-    option2Name?: string | null;
-    option2Value?: string | null;
-    option3Name?: string | null;
-    option3Value?: string | null;
-    imageUrl?: string | null;
-    isActive?: boolean;
-    displayOrder?: number;
-  }): Promise<ProductVariantModel> {
+  public async create(
+    productId: string,
+    data: {
+      sku: string;
+      title: string;
+      pricePoisha: bigint | number;
+      compareAtPricePoisha?: bigint | number | null;
+      productPoint: number;
+      barcode?: string | null;
+      weightGrams?: number | null;
+      option1Name?: string | null;
+      option1Value?: string | null;
+      option2Name?: string | null;
+      option2Value?: string | null;
+      option3Name?: string | null;
+      option3Value?: string | null;
+      imageUrl?: string | null;
+      isActive?: boolean;
+      displayOrder?: number;
+    }
+  ): Promise<ProductVariantModel> {
     const id = generatePrefixedId(ENTITY_PREFIXES.VARIANT);
 
     const variant = await (prisma as any).productVariant.create({
@@ -104,10 +119,17 @@ export class ProductVariantRepository {
       imageUrl: string | null;
       isActive: boolean;
       displayOrder: number;
-    }>
-  , productId?: string, sellerId?: string): Promise<ProductVariantModel> {
+    }>,
+    productId?: string,
+    sellerId?: string
+  ): Promise<ProductVariantModel> {
     const existing = await (prisma as any).productVariant.findFirst({
-      where: { id, deletedAt: null, ...(productId ? { productId } : {}), ...(sellerId ? { product: { sellerId } } : {}) },
+      where: {
+        id,
+        deletedAt: null,
+        ...(productId ? { productId } : {}),
+        ...(sellerId ? { product: { sellerId } } : {}),
+      },
     });
 
     if (!existing) {
@@ -129,7 +151,9 @@ export class ProductVariantRepository {
       updateData.pricePoisha = BigInt(data.pricePoisha);
     }
     if (data.compareAtPricePoisha !== undefined) {
-      updateData.compareAtPricePoisha = data.compareAtPricePoisha ? BigInt(data.compareAtPricePoisha) : null;
+      updateData.compareAtPricePoisha = data.compareAtPricePoisha
+        ? BigInt(data.compareAtPricePoisha)
+        : null;
     }
 
     const updated = await (prisma as any).productVariant.update({
@@ -140,9 +164,20 @@ export class ProductVariantRepository {
     return this.mapToModel(updated);
   }
 
-  public async softDelete(id: string, expectedVersion: number, deletedBy?: string, productId?: string, sellerId?: string): Promise<void> {
+  public async softDelete(
+    id: string,
+    expectedVersion: number,
+    deletedBy?: string,
+    productId?: string,
+    sellerId?: string
+  ): Promise<void> {
     const existing = await (prisma as any).productVariant.findFirst({
-      where: { id, deletedAt: null, ...(productId ? { productId } : {}), ...(sellerId ? { product: { sellerId } } : {}) },
+      where: {
+        id,
+        deletedAt: null,
+        ...(productId ? { productId } : {}),
+        ...(sellerId ? { product: { sellerId } } : {}),
+      },
     });
 
     if (!existing) {
@@ -186,7 +221,14 @@ export class ProductVariantRepository {
       isActive: raw.isActive,
       displayOrder: raw.displayOrder,
       version: raw.version,
-      options: raw.options?.map((option: any) => ({ id: option.id, variantId: option.variantId, attributeId: option.attributeId, valueId: option.valueId, textValue: option.textValue, displayOrder: option.displayOrder })),
+      options: raw.options?.map((option: any) => ({
+        id: option.id,
+        variantId: option.variantId,
+        attributeId: option.attributeId,
+        valueId: option.valueId,
+        textValue: option.textValue,
+        displayOrder: option.displayOrder,
+      })),
       deletedAt: raw.deletedAt,
       deletedBy: raw.deletedBy,
       createdAt: raw.createdAt,

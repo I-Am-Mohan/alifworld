@@ -11,17 +11,31 @@ const service = new AttributeService();
 export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: 'ATTRIBUTE_ADMIN' });
+    await defaultPolicyEngine.assert(actor, 'catalog:write', {
+      type: 'CATALOG',
+      id: 'ATTRIBUTE_ADMIN',
+    });
     return NextResponse.json({ success: true, data: await service.listAttributes(true) });
-  } catch (error) { return errorResponse(req, error, 'Failed to load catalog attributes'); }
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load catalog attributes');
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: 'ATTRIBUTE_ADMIN' });
+    await defaultPolicyEngine.assert(actor, 'catalog:write', {
+      type: 'CATALOG',
+      id: 'ATTRIBUTE_ADMIN',
+    });
     const parsed = CreateCatalogAttributeSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid catalog attribute.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.createAttribute(actor.userId, parsed.data) }, { status: 201 });
-  } catch (error) { return errorResponse(req, error, 'Failed to create catalog attribute'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid catalog attribute.', parsed.error.flatten());
+    return NextResponse.json(
+      { success: true, data: await service.createAttribute(actor.userId, parsed.data) },
+      { status: 201 }
+    );
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to create catalog attribute');
+  }
 }

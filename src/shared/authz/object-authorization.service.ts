@@ -1,10 +1,10 @@
 /**
  * AlifWorld Server-Side Object-Level Authorization & Ownership Verification Service
- * 
+ *
  * Provides centralized, authoritative enforcement of object-level authorization,
  * direct user ownership, merchant tenant scoping, delegated operational actors,
  * and immutable security audit trails.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 047
  */
 
@@ -43,7 +43,10 @@ export class ObjectAuthorizationService {
   /**
    * Classifies the relationship of the actor relative to the targeted object instance.
    */
-  public classifyRelation(actor: ActorContext, object: ObjectResourceDescriptor): OwnershipRelation {
+  public classifyRelation(
+    actor: ActorContext,
+    object: ObjectResourceDescriptor
+  ): OwnershipRelation {
     const isSuperAdmin = actor.roles.includes(SystemRoleCode.SUPER_ADMIN);
     if (isSuperAdmin) {
       return 'PLATFORM_SUPER_ADMIN';
@@ -52,7 +55,9 @@ export class ObjectAuthorizationService {
     // Direct Customer / User Self-Ownership
     const isDirectOwner =
       (object.ownerId && object.ownerId === actor.userId) ||
-      ((object.type === 'USER' || object.type === 'CUSTOMER' || object.type === 'CUSTOMER_PROFILE') &&
+      ((object.type === 'USER' ||
+        object.type === 'CUSTOMER' ||
+        object.type === 'CUSTOMER_PROFILE') &&
         object.id === actor.userId);
 
     if (isDirectOwner) {
@@ -282,8 +287,14 @@ export class ObjectAuthorizationService {
     resourceType: ResourceType,
     objectId: string,
     options?: { data?: TData; reason?: string }
-  ): Promise<{ decision: ObjectAuthorizationDecision; descriptor: ObjectResourceDescriptor<TData> }> {
-    const descriptor = (await this.resolve(resourceType, objectId)) as ObjectResourceDescriptor<TData> | null;
+  ): Promise<{
+    decision: ObjectAuthorizationDecision;
+    descriptor: ObjectResourceDescriptor<TData>;
+  }> {
+    const descriptor = (await this.resolve(
+      resourceType,
+      objectId
+    )) as ObjectResourceDescriptor<TData> | null;
 
     if (!descriptor) {
       throw new NotFoundError(`${resourceType} '${objectId}' not found`);

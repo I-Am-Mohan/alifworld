@@ -11,16 +11,11 @@
  */
 
 import { prisma } from '@/shared/database/prisma';
-import {
-  NotFoundError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, AuthorizationError } from '@/shared/errors/app-error';
 import { maskBangladeshPhone } from '@/shared/utils/phone';
-import {
-  SellerFulfillmentOrderDTO,
-} from '../types/order.types';
+import { SellerFulfillmentOrderDTO } from '../types/order.types';
 import { QuerySellerOrdersInput } from '../validators/order.validators';
-import { ORDER_STATUS_LABELS } from './customer-order.service';
+import { FULFILLMENT_GROUP_STATUS_LABELS } from '../state-machines/order-state-machine';
 
 export class SellerFulfillmentOrderService {
   private db = prisma;
@@ -169,7 +164,9 @@ export class SellerFulfillmentOrderService {
 
     const formatBdt = (poisha: number) => `৳${(poisha / 100).toFixed(2)}`;
 
-    const statusLabels = ORDER_STATUS_LABELS[record.status] || {
+    const statusLabels = FULFILLMENT_GROUP_STATUS_LABELS[
+      record.status as keyof typeof FULFILLMENT_GROUP_STATUS_LABELS
+    ] || {
       en: record.status,
       bn: record.status,
     };

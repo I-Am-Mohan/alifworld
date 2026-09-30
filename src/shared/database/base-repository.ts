@@ -1,9 +1,9 @@
 /**
  * AlifWorld Base Repository & Data Access Utilities
- * 
+ *
  * Implements the four-tier dependency discipline: Repositories encapsulate
  * Prisma queries, enforce tenant isolation boundaries, and normalize pagination.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariants: ADR-0003, ADR-0006
  */
@@ -53,7 +53,10 @@ export interface PaginatedResponse<T> {
 export function parseOffsetPagination(params: OffsetPaginationParams = {}): OffsetPaginationResult {
   const page = Math.max(1, Math.floor(Number(params.page) || 1));
   const maxLimit = params.maxLimit && params.maxLimit > 0 ? params.maxLimit : 100;
-  const rawLimit = params.limit !== undefined && !isNaN(Number(params.limit)) ? Math.floor(Number(params.limit)) : 20;
+  const rawLimit =
+    params.limit !== undefined && !isNaN(Number(params.limit))
+      ? Math.floor(Number(params.limit))
+      : 20;
   const limit = Math.max(1, Math.min(rawLimit, maxLimit));
   const skip = (page - 1) * limit;
 
@@ -89,13 +92,19 @@ export function formatPaginatedResult<T>(
  *
  * Invariant: Cross-tenant data leaks are strictly prevented at repository boundaries.
  */
-export function assertSellerScope(entitySellerId: string | null | undefined, authorizedSellerId: string): void {
+export function assertSellerScope(
+  entitySellerId: string | null | undefined,
+  authorizedSellerId: string
+): void {
   if (!entitySellerId || entitySellerId !== authorizedSellerId) {
-    throw new AuthorizationError('Tenant isolation violation: Access to entity outside seller scope is forbidden', {
-      code: 'TENANT_VIOLATION',
-      entitySellerId: entitySellerId || null,
-      authorizedSellerId,
-    });
+    throw new AuthorizationError(
+      'Tenant isolation violation: Access to entity outside seller scope is forbidden',
+      {
+        code: 'TENANT_VIOLATION',
+        entitySellerId: entitySellerId || null,
+        authorizedSellerId,
+      }
+    );
   }
 }
 
@@ -216,13 +225,20 @@ export abstract class BaseRepository {
       return;
     }
 
-    const field = options.ownerField || (entity.customerId !== undefined ? 'customerId' : entity.ownerId !== undefined ? 'ownerId' : 'userId');
+    const field =
+      options.ownerField ||
+      (entity.customerId !== undefined
+        ? 'customerId'
+        : entity.ownerId !== undefined
+          ? 'ownerId'
+          : 'userId');
     const ownerId = entity[field];
 
     assertOwnership(
       ownerId,
       actor.userId,
-      options.message ?? `Ownership violation: Actor '${actor.userId}' does not own entity '${entity.id || 'unidentified'}'`
+      options.message ??
+        `Ownership violation: Actor '${actor.userId}' does not own entity '${entity.id || 'unidentified'}'`
     );
   }
 
@@ -253,7 +269,8 @@ export abstract class BaseRepository {
 
     if (!sellerId || !actor.sellerId || sellerId !== actor.sellerId) {
       throw new AuthorizationError(
-        options.message ?? `Tenant isolation violation: Actor seller '${actor.sellerId || 'none'}' cannot access tenant '${sellerId}'`,
+        options.message ??
+          `Tenant isolation violation: Actor seller '${actor.sellerId || 'none'}' cannot access tenant '${sellerId}'`,
         {
           code: 'TENANT_VIOLATION',
           actorSellerId: actor.sellerId || null,
@@ -319,7 +336,11 @@ export abstract class BaseRepository {
    * Asserts that an optimistic concurrency version matches expected version.
    * Throws ConflictError upon version discrepancy.
    */
-  protected assertVersion(currentVersion: number, expectedVersion: number, entityId?: string): void {
+  protected assertVersion(
+    currentVersion: number,
+    expectedVersion: number,
+    entityId?: string
+  ): void {
     assertOptimisticVersion(currentVersion, expectedVersion, entityId);
   }
 

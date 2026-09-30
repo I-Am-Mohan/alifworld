@@ -1,8 +1,8 @@
 /**
  * AlifWorld Role Repository
- * 
+ *
  * Manages RBAC Role entities, system role protections, and RolePermission mappings.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0022, ADR-0023
  */
@@ -76,7 +76,11 @@ export class RoleRepository extends BaseRepository {
   /**
    * Updates a role with OCC version checking.
    */
-  public async update(id: string, expectedVersion: number, data: UpdateRoleData): Promise<RoleModel> {
+  public async update(
+    id: string,
+    expectedVersion: number,
+    data: UpdateRoleData
+  ): Promise<RoleModel> {
     return this.executeSafe(async () => {
       const existing = await this.findById(id);
       if (!existing) {
@@ -100,7 +104,11 @@ export class RoleRepository extends BaseRepository {
   /**
    * Soft-deletes a role, barring deletion if it is a protected system role.
    */
-  public async softDelete(id: string, expectedVersion: number, actorId?: string): Promise<RoleModel> {
+  public async softDelete(
+    id: string,
+    expectedVersion: number,
+    actorId?: string
+  ): Promise<RoleModel> {
     return this.executeSafe(async () => {
       this.assertCanDelete('Role');
 
@@ -110,10 +118,10 @@ export class RoleRepository extends BaseRepository {
       }
 
       if (existing.isSystem) {
-        throw new ValidationError(
-          `Protected system role '${existing.code}' cannot be deleted.`,
-          { roleId: id, code: existing.code }
-        );
+        throw new ValidationError(`Protected system role '${existing.code}' cannot be deleted.`, {
+          roleId: id,
+          code: existing.code,
+        });
       }
 
       this.assertVersion(existing.version, expectedVersion, id);

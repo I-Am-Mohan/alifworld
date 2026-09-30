@@ -19,7 +19,9 @@ describe('Milestone 057 locale-aware formatting contract', () => {
     expect(formatLocalizedCurrency(0n, 'en-BD')).toBe('BDT 0.00');
     expect(formatLocalizedCurrency(99n, 'en-BD')).toBe('BDT 0.99');
     expect(formatLocalizedCurrency(-125050n, 'en-BD')).toBe('BDT -1,250.50');
-    expect(formatLocalizedCurrency(900719925474099199n, 'en-BD')).toBe('BDT 9,007,199,254,740,991.99');
+    expect(formatLocalizedCurrency(900719925474099199n, 'en-BD')).toBe(
+      'BDT 9,007,199,254,740,991.99'
+    );
     expect(formatLocalizedCurrency(125050n, 'bn-BD')).toContain('৳');
   });
 
@@ -32,7 +34,9 @@ describe('Milestone 057 locale-aware formatting contract', () => {
   });
 
   it('interpolates text as literal values and preserves missing placeholders', () => {
-    expect(formatLocalizedText('Order {orderNumber}: {count}', { orderNumber: 'ORD-1', count: 2 })).toBe('Order ORD-1: 2');
+    expect(
+      formatLocalizedText('Order {orderNumber}: {count}', { orderNumber: 'ORD-1', count: 2 })
+    ).toBe('Order ORD-1: 2');
     expect(formatLocalizedText('Hello {name}', {})).toBe('Hello {name}');
     expect(formatLocalizedText('<b>{value}</b>', { value: '<script>' })).toBe('<b><script></b>');
   });

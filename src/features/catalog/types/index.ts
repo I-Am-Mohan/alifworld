@@ -1,9 +1,9 @@
 /**
  * AlifWorld Catalog & Taxonomy Domain Types
- * 
+ *
  * Defines type contracts for categories, approved brands, products,
  * variants, media assets, tax rules, and pricing snapshots.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0001, ADR-0005, ADR-0014, ADR-0022, ADR-0025
  */
@@ -66,7 +66,8 @@ export interface BrandModel {
   updatedAt: Date;
 }
 
-export type CatalogAttributeInputType = 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'SELECT' | 'MULTI_SELECT' | 'COLOR';
+export type CatalogAttributeInputType =
+  'TEXT' | 'NUMBER' | 'BOOLEAN' | 'SELECT' | 'MULTI_SELECT' | 'COLOR';
 
 export interface CatalogAttributeModel {
   id: string;

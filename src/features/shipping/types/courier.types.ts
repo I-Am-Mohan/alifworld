@@ -144,29 +144,15 @@ export interface ICourierAdapter {
     upazila?: string | null
   ): Promise<CourierServiceabilityDTO>;
 
-  createConsignment(
-    request: CreateConsignmentRequest
-  ): Promise<CourierConsignmentResultDTO>;
+  createConsignment(request: CreateConsignmentRequest): Promise<CourierConsignmentResultDTO>;
 
-  trackShipment(
-    consignmentId: string,
-    trackingNumber?: string
-  ): Promise<CourierTrackingResultDTO>;
+  trackShipment(consignmentId: string, trackingNumber?: string): Promise<CourierTrackingResultDTO>;
 
-  cancelConsignment(
-    consignmentId: string,
-    reason?: string
-  ): Promise<CourierCancellationResultDTO>;
+  cancelConsignment(consignmentId: string, reason?: string): Promise<CourierCancellationResultDTO>;
 
-  parseWebhook(
-    payload: unknown,
-    headers?: Record<string, string>
-  ): Promise<CourierWebhookEventDTO>;
+  parseWebhook(payload: unknown, headers?: Record<string, string>): Promise<CourierWebhookEventDTO>;
 
-  verifyWebhookSignature?(
-    rawBody: string,
-    headers?: Record<string, string>
-  ): boolean;
+  verifyWebhookSignature?(rawBody: string, headers?: Record<string, string>): boolean;
 }
 
 export interface CourierInfoDTO {

@@ -143,11 +143,7 @@ describe('Milestone 134: Bangladesh Courier Adapters Unit Tests', () => {
     });
 
     it('confirms nationwide upazila serviceability across all 64 districts', async () => {
-      const serviceability = await steadfast.checkServiceability(
-        'RANGPUR',
-        'Kurigram',
-        'Chilmari'
-      );
+      const serviceability = await steadfast.checkServiceability('RANGPUR', 'Kurigram', 'Chilmari');
       expect(serviceability.isServiceable).toBe(true);
       expect(serviceability.courierCode).toBe('STEADFAST');
       expect(serviceability.supportsCod).toBe(true);

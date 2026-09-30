@@ -1,9 +1,9 @@
 /**
  * AlifWorld Server-Side Authorization Policy Engine Types & Contracts
- * 
+ *
  * Defines Actor context, Resource context, Actions, Decision codes,
  * and declarative Policy contracts for multi-tenant ABAC/RBAC evaluation.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0023, Phase 05 Milestone 042
  */
 

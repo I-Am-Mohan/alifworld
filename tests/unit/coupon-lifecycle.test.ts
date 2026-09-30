@@ -87,7 +87,7 @@ describe('Milestone 095: Coupon Lifecycle & Redemption Controls', () => {
           discountRuleId: 'rule-coupon-eid',
           perCustomerLimit: 1,
         })
-      ).rejects.toThrow('Per-customer limit of 1 reached for coupon \'EID2026\'');
+      ).rejects.toThrow("Per-customer limit of 1 reached for coupon 'EID2026'");
     });
 
     it('enforces total usage limit cap when usageCount >= usageLimit', async () => {

@@ -1,6 +1,6 @@
 /**
  * Unit Tests: CSRF, CORS, Security Headers, and Cookie Policies
- * 
+ *
  * Verifies:
  * 1. CSRF cryptographic token generation, HMAC verification, and expiration
  * 2. CSRF request evaluation (safe methods, mobile Bearer bypass, webhook exemption, double-submit validation)
@@ -8,7 +8,7 @@
  * 4. CORS preflight OPTIONS response generation
  * 5. Security header construction across storefront vs operational consoles (X-Frame-Options, CSP, HSTS, Permissions-Policy)
  * 6. Standardized cookie security attributes across tokens, sessions, locales, and CSRF cookies
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, Phase 05 Milestone 048
  */
 

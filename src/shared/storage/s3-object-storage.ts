@@ -1,24 +1,41 @@
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getServerEnv } from '@/shared/config/environment';
 import { prisma } from '@/shared/database/prisma';
 
 export interface PrivateObjectStorage {
-  putObject(input: { key: string; body: Uint8Array; contentType: string; metadata?: Record<string, string> }): Promise<void>;
+  putObject(input: {
+    key: string;
+    body: Uint8Array;
+    contentType: string;
+    metadata?: Record<string, string>;
+  }): Promise<void>;
   createReadUrl(key: string, expiresInSeconds?: number): Promise<{ url: string; expiresAt: Date }>;
 }
 
 export interface ProductMediaStorage extends PrivateObjectStorage {}
 
 // In-memory mock storage fallback for local development when S3 credentials are missing
-const memoryStorageCache = new Map<string, { body: Uint8Array; contentType: string; metadata?: Record<string, string> }>();
+const memoryStorageCache = new Map<
+  string,
+  { body: Uint8Array; contentType: string; metadata?: Record<string, string> }
+>();
 
 export class S3PrivateObjectStorage implements PrivateObjectStorage {
   private _client: S3Client | null = null;
   private _bucket: string | null = null;
   private _isMock: boolean = false;
 
-  private async getClientAndBucket(): Promise<{ client: S3Client | null; bucket: string; isMock: boolean }> {
+  private async getClientAndBucket(): Promise<{
+    client: S3Client | null;
+    bucket: string;
+    isMock: boolean;
+  }> {
     if (this._bucket && (this._client || this._isMock)) {
       return { client: this._client, bucket: this._bucket, isMock: this._isMock };
     }
@@ -60,7 +77,9 @@ export class S3PrivateObjectStorage implements PrivateObjectStorage {
       if (provider === 'CLOUDFLARE_R2') {
         const r2Bucket = map.get('STORAGE_R2_BUCKET');
         const accountId = map.get('STORAGE_R2_ACCOUNT_ID');
-        const r2Endpoint = map.get('STORAGE_R2_ENDPOINT') || (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : '');
+        const r2Endpoint =
+          map.get('STORAGE_R2_ENDPOINT') ||
+          (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : '');
         const r2AccessKey = map.get('STORAGE_R2_ACCESS_KEY');
         const r2SecretKey = map.get('STORAGE_R2_SECRET_KEY');
 
@@ -115,7 +134,12 @@ export class S3PrivateObjectStorage implements PrivateObjectStorage {
     return { client: this._client, bucket: s3Bucket, isMock: false };
   }
 
-  async putObject(input: { key: string; body: Uint8Array; contentType: string; metadata?: Record<string, string> }): Promise<void> {
+  async putObject(input: {
+    key: string;
+    body: Uint8Array;
+    contentType: string;
+    metadata?: Record<string, string>;
+  }): Promise<void> {
     const { client, bucket, isMock } = await this.getClientAndBucket();
 
     if (isMock || !client) {
@@ -150,23 +174,25 @@ export class S3PrivateObjectStorage implements PrivateObjectStorage {
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
   }
 
-  async createReadUrl(key: string, expiresInSeconds = 15 * 60): Promise<{ url: string; expiresAt: Date }> {
+  async createReadUrl(
+    key: string,
+    expiresInSeconds = 15 * 60
+  ): Promise<{ url: string; expiresAt: Date }> {
     const expiresAt = new Date(Date.now() + expiresInSeconds * 1000);
     const { client, bucket, isMock } = await this.getClientAndBucket();
 
     if (isMock || !client) {
-      const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const appUrl =
+        process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
       return {
         url: `${appUrl}/api/v1/seller/kyc/mock-file?key=${encodeURIComponent(key)}`,
         expiresAt,
       };
     }
 
-    const url = await getSignedUrl(
-      client,
-      new GetObjectCommand({ Bucket: bucket, Key: key }),
-      { expiresIn: expiresInSeconds }
-    );
+    const url = await getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
+      expiresIn: expiresInSeconds,
+    });
     return { url, expiresAt };
   }
 }

@@ -230,6 +230,7 @@ stateDiagram-v2
 ## 6. Bilingual Storefront Interface (`/verify-email`)
 
 The verification interface is built as a dark-theme, responsive Next.js client component:
+
 - **6-Digit PIN Input**: Renders 6 separate inputs with single-digit masking, automatic focus shift on typing, and backwards focus shift on backspace.
 - **Clipboard Handling**: Detects paste events on any of the cells, extracts first 6 numeric characters, distributes them across inputs, and shifts focus to the final input cell.
 - **Interactive 60s Countdown Timer**: Tracks remaining cooldown seconds in real-time, disabling the Resend button until the countdown completes.

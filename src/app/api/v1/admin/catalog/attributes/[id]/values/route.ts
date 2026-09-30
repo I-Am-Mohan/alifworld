@@ -11,9 +11,17 @@ const service = new AttributeService();
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: (await params).id });
-    return NextResponse.json({ success: true, data: await service.listValues((await params).id, true) });
-  } catch (error) { return errorResponse(req, error, 'Failed to load attribute values'); }
+    await defaultPolicyEngine.assert(actor, 'catalog:write', {
+      type: 'CATALOG',
+      id: (await params).id,
+    });
+    return NextResponse.json({
+      success: true,
+      data: await service.listValues((await params).id, true),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load attribute values');
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -22,7 +30,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const attributeId = (await params).id;
     await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: attributeId });
     const parsed = CreateCatalogAttributeValueSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid catalog attribute value.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.createValue(actor.userId, attributeId, parsed.data) }, { status: 201 });
-  } catch (error) { return errorResponse(req, error, 'Failed to create attribute value'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid catalog attribute value.', parsed.error.flatten());
+    return NextResponse.json(
+      { success: true, data: await service.createValue(actor.userId, attributeId, parsed.data) },
+      { status: 201 }
+    );
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to create attribute value');
+  }
 }

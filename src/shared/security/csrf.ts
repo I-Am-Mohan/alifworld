@@ -1,9 +1,9 @@
 /**
  * AlifWorld Server-Side CSRF Protection Subsystem
- * 
+ *
  * Implements HMAC-SHA256 cryptographically signed Double Submit Cookie verification,
  * Origin/Referer header validation, safe API/mobile bypasses, and webhook exemptions.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, OWASP ASVS v4.0, Milestone 048
  */
 
@@ -197,7 +197,9 @@ export function verifyRequestCsrf(
   // CSRF attacks target ambient browser cookies; Bearer-only requests cannot be forged cross-origin.
   const hasAuthHeader = Boolean(req.headers.get('authorization')?.startsWith('Bearer '));
   const hasAccessCookie = Boolean(req.cookies.get(TOKEN_POLICIES.ACCESS_TOKEN_COOKIE_NAME)?.value);
-  const hasRefreshCookie = Boolean(req.cookies.get(TOKEN_POLICIES.REFRESH_TOKEN_COOKIE_NAME)?.value);
+  const hasRefreshCookie = Boolean(
+    req.cookies.get(TOKEN_POLICIES.REFRESH_TOKEN_COOKIE_NAME)?.value
+  );
   const hasCookieAuth = hasAccessCookie || hasRefreshCookie;
 
   if (hasAuthHeader && !hasCookieAuth) {
@@ -220,7 +222,11 @@ export function verifyRequestCsrf(
 
   // If no auth cookie AND no CSRF cookie exists yet (e.g. first visit to public auth endpoint), permit initiation
   if (!hasCookieAuth && !cookieToken) {
-    return { valid: true, code: 'CSRF_SKIPPED', reason: 'Unauthenticated initial public interaction' };
+    return {
+      valid: true,
+      code: 'CSRF_SKIPPED',
+      reason: 'Unauthenticated initial public interaction',
+    };
   }
 
   // 6. Double Submit Cookie Verification
@@ -259,5 +265,9 @@ export function verifyRequestCsrf(
     };
   }
 
-  return { valid: true, code: 'CSRF_VALID', reason: 'Anti-CSRF token and origin verified successfully' };
+  return {
+    valid: true,
+    code: 'CSRF_VALID',
+    reason: 'Anti-CSRF token and origin verified successfully',
+  };
 }

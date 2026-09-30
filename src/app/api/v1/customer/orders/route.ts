@@ -15,14 +15,9 @@ export async function GET(req: NextRequest) {
     const actor = authenticateRequest(req);
     const { searchParams } = new URL(req.url);
 
-    const query = ListCustomerOrdersQuerySchema.parse(
-      Object.fromEntries(searchParams.entries())
-    );
+    const query = ListCustomerOrdersQuerySchema.parse(Object.fromEntries(searchParams.entries()));
 
-    const result = await customerDashboardService.listCustomerOrders(
-      actor.userId,
-      query
-    );
+    const result = await customerDashboardService.listCustomerOrders(actor.userId, query);
 
     return NextResponse.json(
       {

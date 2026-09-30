@@ -78,7 +78,8 @@ export default function CartPage() {
   const loadCart = async () => {
     setIsLoading(true);
     try {
-      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const guestToken =
+        typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
       const headers: Record<string, string> = {};
       if (guestToken) {
         headers['x-guest-cart-token'] = guestToken;
@@ -109,18 +110,20 @@ export default function CartPage() {
         setAppliedCoupon(null);
       }
 
-      setItems((body.data?.items ?? []).map((item: any) => ({
-        id: item.id,
-        sellerId: item.sellerId,
-        sellerName: item.sellerName || item.seller?.businessName || '',
-        productTitle: item.productTitle || item.variant?.product?.title || '',
-        variantTitle: item.variantTitle || item.variant?.title || '',
-        sku: item.sku || item.variant?.sku || '',
-        imageUrl: item.imageUrl || item.variant?.imageUrl || undefined,
-        pricePoisha: BigInt(item.pricePoisha),
-        productPoint: item.productPoint || 0,
-        quantity: item.quantity,
-      })));
+      setItems(
+        (body.data?.items ?? []).map((item: any) => ({
+          id: item.id,
+          sellerId: item.sellerId,
+          sellerName: item.sellerName || item.seller?.businessName || '',
+          productTitle: item.productTitle || item.variant?.product?.title || '',
+          variantTitle: item.variantTitle || item.variant?.title || '',
+          sku: item.sku || item.variant?.sku || '',
+          imageUrl: item.imageUrl || item.variant?.imageUrl || undefined,
+          pricePoisha: BigInt(item.pricePoisha),
+          productPoint: item.productPoint || 0,
+          quantity: item.quantity,
+        }))
+      );
       setError(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to load your cart');
@@ -190,7 +193,8 @@ export default function CartPage() {
   const totalShippingFeePoisha = sellerPackages.reduce((acc, p) => acc + p.shippingFee, 0n);
   const discountPoisha = appliedCoupon?.discountPoisha ?? 0n;
   const estimatedGrandTotalPoisha =
-    (subtotalPoisha > discountPoisha ? subtotalPoisha - discountPoisha : 0n) + totalShippingFeePoisha;
+    (subtotalPoisha > discountPoisha ? subtotalPoisha - discountPoisha : 0n) +
+    totalShippingFeePoisha;
 
   // Discrete Product Points (STRICT: independent integer loyalty units)
   const totalProductPoints = items.reduce(
@@ -206,7 +210,8 @@ export default function CartPage() {
     setIsApplyingCoupon(true);
     setError(null);
     try {
-      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const guestToken =
+        typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (guestToken) {
         headers['x-guest-cart-token'] = guestToken;
@@ -251,7 +256,8 @@ export default function CartPage() {
   const handleRemoveCoupon = async () => {
     setIsApplyingCoupon(true);
     try {
-      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const guestToken =
+        typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
       const headers: Record<string, string> = {};
       if (guestToken) {
         headers['x-guest-cart-token'] = guestToken;
@@ -280,7 +286,8 @@ export default function CartPage() {
     setIsRevalidating(true);
     setError(null);
     try {
-      const guestToken = typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
+      const guestToken =
+        typeof window !== 'undefined' ? localStorage.getItem('alifworld_guest_cart_token') : null;
       const headers: Record<string, string> = {};
       if (guestToken) {
         headers['x-guest-cart-token'] = guestToken;
@@ -316,7 +323,8 @@ export default function CartPage() {
     setBusyItem(id);
     try {
       const response = await csrfFetch(`/api/v1/cart/items/${encodeURIComponent(id)}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: item.quantity + delta }),
       });
       const body = await response.json();
@@ -333,7 +341,9 @@ export default function CartPage() {
   const removeItem = async (id: string) => {
     setBusyItem(id);
     try {
-      const response = await csrfFetch(`/api/v1/cart/items/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      const response = await csrfFetch(`/api/v1/cart/items/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error?.message || 'Unable to remove item');
       checkoutAttempt.current = null;
@@ -456,8 +466,18 @@ export default function CartPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && <div role="alert" className="mb-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error} <button type="button" onClick={() => void loadCart()} className="underline">Retry loading cart</button></div>}
-        {(isLoadingUser || isLoading) ? (
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+          >
+            {error}{' '}
+            <button type="button" onClick={() => void loadCart()} className="underline">
+              Retry loading cart
+            </button>
+          </div>
+        )}
+        {isLoadingUser || isLoading ? (
           <p role="status">Loading cart...</p>
         ) : orderCreated ? (
           <div className="max-w-2xl mx-auto bg-white border border-green-200 rounded-2xl p-8 text-center shadow-sm">
@@ -466,12 +486,14 @@ export default function CartPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Order placed</h1>
             <p className="text-gray-600 mb-4">
-              Your order <span className="font-semibold text-gray-900">#{orderCreated}</span> was recorded. Payment and fulfillment are pending.
+              Your order <span className="font-semibold text-gray-900">#{orderCreated}</span> was
+              recorded. Payment and fulfillment are pending.
             </p>
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 inline-flex items-center gap-3">
               <Sparkles className="w-5 h-5 text-[#1B5E20]" />
               <span className="text-sm font-semibold text-[#1B5E20]">
-                {totalProductPoints} Product Points (PP) recorded with the order. Posting is subject to approved eligibility rules.
+                {totalProductPoints} Product Points (PP) recorded with the order. Posting is subject
+                to approved eligibility rules.
               </span>
             </div>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
@@ -535,7 +557,8 @@ export default function CartPage() {
                     </span>
                   </div>
                   <div className="text-blue-700">
-                    Pricing and quantities are locked directly from your approved B2B negotiation quote.
+                    Pricing and quantities are locked directly from your approved B2B negotiation
+                    quote.
                   </div>
                 </div>
               )}
@@ -545,7 +568,8 @@ export default function CartPage() {
                   <div className="space-y-0.5 text-xs">
                     <div className="font-bold text-amber-900">Guest Shopping Cart</div>
                     <div className="text-amber-700">
-                      Sign in to permanently save your items, earn Product Points, and access corporate B2B pricing.
+                      Sign in to permanently save your items, earn Product Points, and access
+                      corporate B2B pricing.
                     </div>
                   </div>
                   <button
@@ -566,12 +590,16 @@ export default function CartPage() {
                     Review Cart ({items.length} {items.length === 1 ? 'item' : 'items'})
                   </h2>
                   <span className="text-xs text-gray-500 font-medium">
-                    {sellerPackages.length} {sellerPackages.length === 1 ? 'Seller Package' : 'Seller Packages'}
+                    {sellerPackages.length}{' '}
+                    {sellerPackages.length === 1 ? 'Seller Package' : 'Seller Packages'}
                   </span>
                 </div>
 
                 {sellerPackages.map((pkg) => (
-                  <div key={pkg.sellerId} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
+                  <div
+                    key={pkg.sellerId}
+                    className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4"
+                  >
                     {/* Package Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-100">
                       <div className="flex items-center gap-2">
@@ -600,7 +628,8 @@ export default function CartPage() {
                     {!pkg.qualifiesFree && pkg.neededForFree > 0n && (
                       <div className="p-2.5 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs text-emerald-900 flex items-center justify-between gap-2">
                         <span>
-                          Add <strong>{formatBdt(pkg.neededForFree)}</strong> more from this seller for <strong>FREE Delivery</strong>!
+                          Add <strong>{formatBdt(pkg.neededForFree)}</strong> more from this seller
+                          for <strong>FREE Delivery</strong>!
                         </span>
                         <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider whitespace-nowrap">
                           Threshold: ৳2,000
@@ -611,7 +640,10 @@ export default function CartPage() {
                     {/* Package Items */}
                     <div className="divide-y divide-gray-100">
                       {pkg.items.map((item) => (
-                        <div key={item.id} className="py-4 flex gap-4 items-start first:pt-0 last:pb-0">
+                        <div
+                          key={item.id}
+                          className="py-4 flex gap-4 items-start first:pt-0 last:pb-0"
+                        >
                           {item.imageUrl ? (
                             <Image
                               unoptimized
@@ -622,7 +654,10 @@ export default function CartPage() {
                               className="w-20 h-20 object-cover rounded-xl border border-gray-100 flex-shrink-0"
                             />
                           ) : (
-                            <span className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400" aria-hidden="true">
+                            <span
+                              className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400"
+                              aria-hidden="true"
+                            >
                               <ShoppingBag className="w-6 h-6" />
                             </span>
                           )}
@@ -631,15 +666,17 @@ export default function CartPage() {
                             <h3 className="text-sm font-semibold text-gray-900 truncate">
                               {item.productTitle}
                             </h3>
-                            <p className="text-xs text-gray-500 mb-2">Variant: {item.variantTitle}</p>
+                            <p className="text-xs text-gray-500 mb-2">
+                              Variant: {item.variantTitle}
+                            </p>
 
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-sm font-bold text-[#1B5E20]">
                                 {formatBdt(item.pricePoisha)}
                               </span>
                               <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <Sparkles className="w-3 h-3 text-amber-600" />
-                                +{item.productPoint * item.quantity} PP
+                                <Sparkles className="w-3 h-3 text-amber-600" />+
+                                {item.productPoint * item.quantity} PP
                               </span>
                             </div>
                           </div>
@@ -701,19 +738,43 @@ export default function CartPage() {
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-slate-900">
-                      Zone: {division === 'DHAKA' ? 'Metro Dhaka (Fast Track)' : `${division} Division (Nationwide Transit)`}
+                      Zone:{' '}
+                      {division === 'DHAKA'
+                        ? 'Metro Dhaka (Fast Track)'
+                        : `${division} Division (Nationwide Transit)`}
                     </span>
                     <span className="text-emerald-700 font-bold">
-                      {subtotalPoisha > 5000000n ? '⚠️ Prepayment Required (> ৳50,000)' : '✓ COD Available'}
+                      {subtotalPoisha > 5000000n
+                        ? '⚠️ Prepayment Required (> ৳50,000)'
+                        : '✓ COD Available'}
                     </span>
                   </div>
                   <div className="text-slate-600 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
-                    <span>Base Rate: <strong className="text-slate-800">{division === 'DHAKA' ? '৳60.00' : '৳120.00'}</strong> (Free over ৳2,000/seller)</span>
-                    <span>Order Cutoff: <strong className="text-slate-800">2:00 PM (Asia/Dhaka)</strong></span>
+                    <span>
+                      Base Rate:{' '}
+                      <strong className="text-slate-800">
+                        {division === 'DHAKA' ? '৳60.00' : '৳120.00'}
+                      </strong>{' '}
+                      (Free over ৳2,000/seller)
+                    </span>
+                    <span>
+                      Order Cutoff: <strong className="text-slate-800">2:00 PM (Asia/Dhaka)</strong>
+                    </span>
                   </div>
                   <div className="text-slate-500 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
-                    <span>Couriers: <strong className="text-slate-700">Pathao Express • Steadfast • RedX • AlifExpress Fleet</strong></span>
-                    <span>Promise SLA: <strong className="text-slate-700">{division === 'DHAKA' ? '1-2 Business Days' : '2-4 Business Days'} (Excl. Friday)</strong></span>
+                    <span>
+                      Couriers:{' '}
+                      <strong className="text-slate-700">
+                        Pathao Express • Steadfast • RedX • AlifExpress Fleet
+                      </strong>
+                    </span>
+                    <span>
+                      Promise SLA:{' '}
+                      <strong className="text-slate-700">
+                        {division === 'DHAKA' ? '1-2 Business Days' : '2-4 Business Days'} (Excl.
+                        Friday)
+                      </strong>
+                    </span>
                   </div>
                 </div>
 
@@ -763,7 +824,9 @@ export default function CartPage() {
                       onChange={(e) => setDivision(e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1B5E20] focus:outline-none bg-white font-medium"
                     >
-                      <option value="DHAKA">Dhaka Division (৳60 Shipping / Same Day Dispatch)</option>
+                      <option value="DHAKA">
+                        Dhaka Division (৳60 Shipping / Same Day Dispatch)
+                      </option>
                       <option value="CHITTAGONG">Chittagong Division (৳120 Shipping)</option>
                       <option value="RAJSHAHI">Rajshahi Division (৳120 Shipping)</option>
                       <option value="KHULNA">Khulna Division (৳120 Shipping)</option>
@@ -775,8 +838,19 @@ export default function CartPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1" htmlFor="shipping-district">District</label>
-                    <input id="shipping-district" required value={district} onChange={(event) => setDistrict(event.target.value)} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl" />
+                    <label
+                      className="block text-xs font-semibold text-gray-700 mb-1"
+                      htmlFor="shipping-district"
+                    >
+                      District
+                    </label>
+                    <input
+                      id="shipping-district"
+                      required
+                      value={district}
+                      onChange={(event) => setDistrict(event.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl"
+                    />
                   </div>
 
                   <div>
@@ -834,7 +908,8 @@ export default function CartPage() {
                   <div className="flex justify-between text-gray-600">
                     <span className="flex items-center gap-1.5">
                       <Truck className="w-4 h-4 text-gray-400" />
-                      Delivery ({sellerPackages.length} {sellerPackages.length === 1 ? 'Package' : 'Packages'})
+                      Delivery ({sellerPackages.length}{' '}
+                      {sellerPackages.length === 1 ? 'Package' : 'Packages'})
                     </span>
                     <span className="font-semibold text-gray-900">
                       {totalShippingFeePoisha === 0n ? (
@@ -861,7 +936,9 @@ export default function CartPage() {
                       <div className="flex items-center gap-2">
                         <Tag className="w-3.5 h-3.5 text-emerald-600" />
                         <span className="font-bold text-emerald-900">{appliedCoupon.code}</span>
-                        <span className="text-emerald-700">({formatBdt(appliedCoupon.discountPoisha)} off)</span>
+                        <span className="text-emerald-700">
+                          ({formatBdt(appliedCoupon.discountPoisha)} off)
+                        </span>
                       </div>
                       <button
                         type="button"
@@ -900,7 +977,9 @@ export default function CartPage() {
                     disabled={isRevalidating}
                     className="text-[11px] text-gray-500 hover:text-[#1B5E20] font-semibold underline flex items-center gap-1"
                   >
-                    {isRevalidating ? 'Checking live stock & prices...' : '⟳ Recheck live prices & inventory'}
+                    {isRevalidating
+                      ? 'Checking live stock & prices...'
+                      : '⟳ Recheck live prices & inventory'}
                   </button>
                 </div>
 
@@ -918,7 +997,8 @@ export default function CartPage() {
                         {totalProductPoints} Product Points (PP)
                       </p>
                       <p className="text-[11px] text-amber-700/90 mt-0.5 leading-snug">
-                        Product Points are independent of BDT. Eligibility for posting requires an approved rule.
+                        Product Points are independent of BDT. Eligibility for posting requires an
+                        approved rule.
                       </p>
                     </div>
                   </div>
@@ -1021,7 +1101,9 @@ export default function CartPage() {
                       className="mt-0.5 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20]"
                     />
                     <span className="text-[11px] leading-tight">
-                      I agree to the <strong className="text-slate-800">Terms & Conditions (v2026.1)</strong> and <strong className="text-slate-800">Privacy Policy (v2026.1)</strong>.
+                      I agree to the{' '}
+                      <strong className="text-slate-800">Terms & Conditions (v2026.1)</strong> and{' '}
+                      <strong className="text-slate-800">Privacy Policy (v2026.1)</strong>.
                     </span>
                   </label>
 
@@ -1033,7 +1115,11 @@ export default function CartPage() {
                       className="mt-0.5 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20]"
                     />
                     <span className="text-[11px] leading-tight">
-                      I acknowledge the <strong className="text-slate-800">7-Day Return & Refund Policy (v2026.1)</strong>.
+                      I acknowledge the{' '}
+                      <strong className="text-slate-800">
+                        7-Day Return & Refund Policy (v2026.1)
+                      </strong>
+                      .
                     </span>
                   </label>
 
@@ -1046,7 +1132,8 @@ export default function CartPage() {
                         className="mt-0.5 rounded border-gray-300 text-[#1B5E20] focus:ring-[#1B5E20]"
                       />
                       <span className="text-[11px] leading-tight text-emerald-800 font-medium">
-                        I commit to accepting the parcel upon doorstep delivery and paying the exact cash amount.
+                        I commit to accepting the parcel upon doorstep delivery and paying the exact
+                        cash amount.
                       </span>
                     </label>
                   )}

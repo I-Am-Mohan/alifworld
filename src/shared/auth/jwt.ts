@@ -1,20 +1,15 @@
 /**
  * AlifWorld Native Cryptographic JWT Engine
- * 
+ *
  * Provides RFC 7519 compliant JSON Web Token signing and verification using HMAC-SHA256 (HS256).
  * Features constant-time signature comparison to eliminate timing attack vectors.
- * 
+ *
  * Invariants: ADR-0031, OWASP Token Standards
  */
 
 import { createHmac, timingSafeEqual, createHash } from 'crypto';
 import { UnauthorizedError } from '@/shared/errors/app-error';
-import {
-  AccessTokenClaims,
-  RefreshTokenClaims,
-  TOKEN_POLICIES,
-  ClientType,
-} from './token-policy';
+import { AccessTokenClaims, RefreshTokenClaims, TOKEN_POLICIES, ClientType } from './token-policy';
 import { generateId } from '@/shared/utils/id';
 
 function base64UrlEncode(input: string | Buffer): string {
@@ -63,9 +58,7 @@ export function signJwt<T extends object>(
   const encodedPayload = base64UrlEncode(JSON.stringify(finalPayload));
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
 
-  const signature = createHmac('sha256', secret)
-    .update(signatureInput)
-    .digest('base64url');
+  const signature = createHmac('sha256', secret).update(signatureInput).digest('base64url');
 
   return `${signatureInput}.${signature}`;
 }
@@ -89,9 +82,7 @@ export function verifyJwt<T extends object>(
   const [encodedHeader, encodedPayload, receivedSignature] = parts;
   const signatureInput = `${encodedHeader}.${encodedPayload}`;
 
-  const expectedSignature = createHmac('sha256', secret)
-    .update(signatureInput)
-    .digest('base64url');
+  const expectedSignature = createHmac('sha256', secret).update(signatureInput).digest('base64url');
 
   const receivedSigBuf = Buffer.from(receivedSignature);
   const expectedSigBuf = Buffer.from(expectedSignature);

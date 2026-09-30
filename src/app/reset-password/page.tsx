@@ -9,14 +9,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ResetPasswordPage({
-  searchParams,
-}: {
-  searchParams: { email?: string };
-}) {
+export default function ResetPasswordPage({ searchParams }: { searchParams: { email?: string } }) {
   return (
-    <ResetPasswordForm
-      email={typeof searchParams.email === 'string' ? searchParams.email : ''}
-    />
+    <ResetPasswordForm email={typeof searchParams.email === 'string' ? searchParams.email : ''} />
   );
 }

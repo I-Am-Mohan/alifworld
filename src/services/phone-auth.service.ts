@@ -1,11 +1,11 @@
 /**
  * AlifWorld Phone-First OTP Authentication & Registration Service
- * 
+ *
  * Supports the mobile-first customer authentication and onboarding flows:
  * 1. Login: Phone Number -> OTP verification -> Instant Session
  * 2. Unregistered Detection: Phone Submit -> If not found, prompt to Register or Try Another
  * 3. Register: Phone Number -> OTP verification -> First/Last Name -> Password Setup -> Optional Details (Address, Birthday, Gender) -> Instant Session
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, ADR-0033, ADR-0034
  */
 
@@ -29,9 +29,7 @@ import {
   maskBangladeshPhone,
   BangladeshMobileOperator,
 } from '@/shared/utils/phone';
-import {
-  validateBangladeshAddress,
-} from '@/shared/geo/bangladesh-geo';
+import { validateBangladeshAddress } from '@/shared/geo/bangladesh-geo';
 
 export const PHONE_AUTH_CONSTANTS = {
   LOGIN_PURPOSE: 'PHONE_LOGIN',
@@ -156,10 +154,9 @@ export class PhoneAuthService {
     const user = await this.userRepo.findUserByPhone(phone);
 
     if (!user) {
-      throw new NotFoundError(
-        'No account found with this mobile number. Please register first.',
-        { phone }
-      );
+      throw new NotFoundError('No account found with this mobile number. Please register first.', {
+        phone,
+      });
     }
 
     if (user.status === 'SUSPENDED') {
@@ -399,10 +396,7 @@ export class PhoneAuthService {
     }
 
     // 1. Cooldown check
-    const latestOtp = await this.otpRepo.getLatestOtp(
-      phone,
-      PHONE_AUTH_CONSTANTS.REGISTER_PURPOSE
-    );
+    const latestOtp = await this.otpRepo.getLatestOtp(phone, PHONE_AUTH_CONSTANTS.REGISTER_PURPOSE);
     if (latestOtp) {
       const elapsedSeconds = Math.floor(
         (Date.now() - new Date(latestOtp.createdAt).getTime()) / 1000
@@ -571,10 +565,9 @@ export class PhoneAuthService {
         streetAddress: params.address || undefined,
       });
       if (!geoCheck.isValid) {
-        throw new ValidationError(
-          `Invalid address details: ${geoCheck.errors.join('; ')}`,
-          { errors: geoCheck.errors }
-        );
+        throw new ValidationError(`Invalid address details: ${geoCheck.errors.join('; ')}`, {
+          errors: geoCheck.errors,
+        });
       }
     }
 

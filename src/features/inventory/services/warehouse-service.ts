@@ -1,15 +1,21 @@
 /**
  * AlifWorld Warehouse Service
- * 
+ *
  * Domain service managing warehouses across Bangladesh divisions, platform fulfillment hubs,
  * and seller-affiliated logistics centers with multi-tenant isolation.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
 
 import { WarehouseRepository } from '../repositories/warehouse-repository';
-import { CreateWarehouseSchema, UpdateWarehouseSchema, CreateWarehouseInput, UpdateWarehouseInput, CreateWarehouseRawInput } from '../validators';
+import {
+  CreateWarehouseSchema,
+  UpdateWarehouseSchema,
+  CreateWarehouseInput,
+  UpdateWarehouseInput,
+  CreateWarehouseRawInput,
+} from '../validators';
 import { WarehouseModel } from '../types';
 import { AuthorizationError, ConflictError, NotFoundError } from '@/shared/errors/app-error';
 import { ActorContext } from '@/shared/authz';
@@ -27,7 +33,10 @@ export class WarehouseService {
     return false;
   }
 
-  public async createWarehouse(rawInput: CreateWarehouseRawInput, actor?: ActorContext | any): Promise<WarehouseModel> {
+  public async createWarehouse(
+    rawInput: CreateWarehouseRawInput,
+    actor?: ActorContext | any
+  ): Promise<WarehouseModel> {
     const validated = CreateWarehouseSchema.parse(rawInput);
 
     // Multi-tenant check via WarehousePolicy / Actor check
@@ -35,7 +44,9 @@ export class WarehouseService {
       const isAdmin = this.isActorAdmin(actor);
       if (!isAdmin) {
         if (!actor.sellerId) {
-          throw new AuthorizationError('Only authorized sellers or platform administrators can create warehouses.');
+          throw new AuthorizationError(
+            'Only authorized sellers or platform administrators can create warehouses.'
+          );
         }
         if (validated.isPlatformHub) {
           throw new AuthorizationError('Sellers cannot create platform fulfillment hubs.');
@@ -101,7 +112,11 @@ export class WarehouseService {
     if (actor) {
       const isAdmin = this.isActorAdmin(actor);
       if (!isAdmin && actor.sellerId) {
-        if (warehouse.sellerId && warehouse.sellerId !== actor.sellerId && !warehouse.isPlatformHub) {
+        if (
+          warehouse.sellerId &&
+          warehouse.sellerId !== actor.sellerId &&
+          !warehouse.isPlatformHub
+        ) {
           throw new AuthorizationError('Unauthorized to access this warehouse.');
         }
       }
@@ -143,6 +158,10 @@ export class WarehouseService {
       throw new AuthorizationError('Unauthorized to delete this warehouse.');
     }
 
-    await this.warehouseRepo.softDelete(id, existing.version, actor.userId ?? actor.sellerId ?? 'system');
+    await this.warehouseRepo.softDelete(
+      id,
+      existing.version,
+      actor.userId ?? actor.sellerId ?? 'system'
+    );
   }
 }

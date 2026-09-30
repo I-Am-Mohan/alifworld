@@ -1,7 +1,14 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
-import { GET as listWishlistsRoute, POST as createWishlistRoute } from '@/app/api/v1/customer/wishlists/route';
-import { GET as getWishlistRoute, DELETE as deleteWishlistRoute } from '@/app/api/v1/customer/wishlists/[id]/route';
+import {
+  GET as listWishlistsRoute,
+  POST as createWishlistRoute,
+} from '@/app/api/v1/customer/wishlists/route';
+import {
+  GET as getWishlistRoute,
+  DELETE as deleteWishlistRoute,
+} from '@/app/api/v1/customer/wishlists/[id]/route';
 import { POST as addItemRoute } from '@/app/api/v1/customer/wishlists/[id]/items/route';
 import { DELETE as removeItemRoute } from '@/app/api/v1/customer/wishlists/[id]/items/[itemId]/route';
 import { POST as shareWishlistRoute } from '@/app/api/v1/customer/wishlists/[id]/share/route';
@@ -66,7 +73,10 @@ describe('Milestone 123: Wishlist & Share-Safe Links REST API Integration Tests'
         addedAt: new Date().toISOString(),
       },
     });
-    spyOn(wishlistService, 'removeItemFromWishlist').mockResolvedValue({ ...mockWishlist, itemCount: 0 });
+    spyOn(wishlistService, 'removeItemFromWishlist').mockResolvedValue({
+      ...mockWishlist,
+      itemCount: 0,
+    });
     spyOn(wishlistService, 'generateShareLink').mockResolvedValue({
       shareToken: 'wsh_tok_123',
       shareUrl: 'https://alifworld.com/wishlist/shared/wsh_tok_123',
@@ -76,7 +86,9 @@ describe('Milestone 123: Wishlist & Share-Safe Links REST API Integration Tests'
   });
 
   it('GET /api/v1/customer/wishlists lists customer wishlists', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/wishlists', { method: 'GET' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/wishlists', {
+      method: 'GET',
+    });
     const res = await listWishlistsRoute(req);
     const body = await res.json();
 
@@ -136,7 +148,9 @@ describe('Milestone 123: Wishlist & Share-Safe Links REST API Integration Tests'
       method: 'GET',
     });
 
-    const res = await getSharedWishlistRoute(req, { params: Promise.resolve({ token: 'wsh_tok_123' }) });
+    const res = await getSharedWishlistRoute(req, {
+      params: Promise.resolve({ token: 'wsh_tok_123' }),
+    });
     const body = await res.json();
 
     expect(res.status).toBe(200);

@@ -19,7 +19,9 @@ interface SellerQuestionItem {
 }
 
 export default function SellerQuestionsPortalPage() {
-  const [filterAnswered, setFilterAnswered] = useState<'all' | 'unanswered' | 'answered'>('unanswered');
+  const [filterAnswered, setFilterAnswered] = useState<'all' | 'unanswered' | 'answered'>(
+    'unanswered'
+  );
   const [search, setSearch] = useState('');
   const [selectedQuestion, setSelectedQuestion] = useState<SellerQuestionItem | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -33,7 +35,7 @@ export default function SellerQuestionsPortalPage() {
       authorDisplayName: 'Tanvir H.',
       question: 'এই ফোনটিতে কি অফিশিয়াল ১ বছরের ওয়ারেন্টি পাওয়া যাবে?',
       isAnswered: false,
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      createdAt: '2026-09-30T09:00:00.000Z',
     },
     {
       id: 'q_sel_02',
@@ -42,9 +44,9 @@ export default function SellerQuestionsPortalPage() {
       authorDisplayName: 'Nusrat J.',
       question: 'Does the box include the fast charging adapter and cable?',
       isAnswered: true,
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      createdAt: '2026-09-29T10:00:00.000Z',
       answer: 'Yes! The original retail box includes a 33W fast charger and Type-C cable.',
-      answeredAt: new Date(Date.now() - 43200000).toISOString(),
+      answeredAt: '2026-09-29T22:00:00.000Z',
     },
     {
       id: 'q_sel_03',
@@ -53,7 +55,7 @@ export default function SellerQuestionsPortalPage() {
       authorDisplayName: 'Sabbir A.',
       question: 'Is this compatible with Samsung Galaxy A-series devices?',
       isAnswered: false,
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
+      createdAt: '2026-09-30T08:00:00.000Z',
     },
   ]);
 
@@ -118,7 +120,8 @@ export default function SellerQuestionsPortalPage() {
             Customer Pre-Sale Inquiries (Q&A)
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Respond to prospective customer questions about your products to increase conversion and trust.
+            Respond to prospective customer questions about your products to increase conversion and
+            trust.
           </p>
         </div>
 
@@ -127,7 +130,9 @@ export default function SellerQuestionsPortalPage() {
             <button
               onClick={() => setFilterAnswered('unanswered')}
               className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-                filterAnswered === 'unanswered' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-600'
+                filterAnswered === 'unanswered'
+                  ? 'bg-white shadow text-slate-900 font-bold'
+                  : 'text-slate-600'
               }`}
             >
               <Clock className="w-3.5 h-3.5 text-amber-500" />
@@ -136,7 +141,9 @@ export default function SellerQuestionsPortalPage() {
             <button
               onClick={() => setFilterAnswered('answered')}
               className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-                filterAnswered === 'answered' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-600'
+                filterAnswered === 'answered'
+                  ? 'bg-white shadow text-slate-900 font-bold'
+                  : 'text-slate-600'
               }`}
             >
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
@@ -145,7 +152,9 @@ export default function SellerQuestionsPortalPage() {
             <button
               onClick={() => setFilterAnswered('all')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
-                filterAnswered === 'all' ? 'bg-white shadow text-slate-900 font-bold' : 'text-slate-600'
+                filterAnswered === 'all'
+                  ? 'bg-white shadow text-slate-900 font-bold'
+                  : 'text-slate-600'
               }`}
             >
               All ({questions.length})
@@ -174,10 +183,15 @@ export default function SellerQuestionsPortalPage() {
           </div>
         ) : (
           filtered.map((item) => (
-            <Card key={item.id} className="p-5 border border-slate-200 bg-white space-y-3 rounded-xl hover:border-slate-300 transition-all">
+            <Card
+              key={item.id}
+              className="p-5 border border-slate-200 bg-white space-y-3 rounded-xl hover:border-slate-300 transition-all"
+            >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                 <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Product:</span>{' '}
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    Product:
+                  </span>{' '}
                   <span className="text-xs font-extrabold text-slate-900">{item.productTitle}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -208,7 +222,8 @@ export default function SellerQuestionsPortalPage() {
                   <span className="text-xs font-bold text-slate-900">{item.question}</span>
                 </div>
                 <div className="text-[11px] text-slate-400 pl-4">
-                  Asked by <strong className="text-slate-600">{item.authorDisplayName}</strong> (Customer PII Redacted)
+                  Asked by <strong className="text-slate-600">{item.authorDisplayName}</strong>{' '}
+                  (Customer PII Redacted)
                 </div>
               </div>
 
@@ -219,7 +234,10 @@ export default function SellerQuestionsPortalPage() {
                     <span>✓ Your Official Store Answer:</span>
                     {item.answeredAt && (
                       <span className="text-slate-400 font-normal">
-                        {new Date(item.answeredAt).toLocaleDateString('en-BD', { month: 'short', day: 'numeric' })}
+                        {new Date(item.answeredAt).toLocaleDateString('en-BD', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
                       </span>
                     )}
                   </div>
@@ -252,7 +270,8 @@ export default function SellerQuestionsPortalPage() {
               <div>
                 <h3 className="font-extrabold text-sm text-slate-900">Official Store Answer</h3>
                 <p className="text-[11px] text-slate-500">
-                  Responding to: <strong className="text-slate-700">{selectedQuestion.productTitle}</strong>
+                  Responding to:{' '}
+                  <strong className="text-slate-700">{selectedQuestion.productTitle}</strong>
                 </p>
               </div>
               <button

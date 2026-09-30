@@ -69,7 +69,10 @@ export default function CollectionLandingPage() {
       </header>
 
       {/* Main Container */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6"
+      >
         {/* Collection Hero Showcase */}
         <div className="p-8 rounded-2xl bg-gradient-to-r from-amber-900 via-orange-900 to-amber-950 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-md">
           <div className="space-y-3 max-w-xl">
@@ -87,14 +90,13 @@ export default function CollectionLandingPage() {
             </h1>
 
             <p className="text-xs sm:text-sm text-amber-100 leading-relaxed font-normal">
-              {landingData?.collection.description || 'Exclusive curated catalog showcase offering verified quality and bonus rewards.'}
+              {landingData?.collection.description ||
+                'Exclusive curated catalog showcase offering verified quality and bonus rewards.'}
             </p>
           </div>
 
           <div className="bg-white/10 backdrop-blur-sm p-5 rounded-2xl text-center shrink-0 border border-white/10">
-            <div className="text-3xl font-black text-amber-300">
-              {landingData?.totalCount || 0}
-            </div>
+            <div className="text-3xl font-black text-amber-300">{landingData?.totalCount || 0}</div>
             <div className="text-[11px] text-amber-200 uppercase font-bold tracking-wider mt-1">
               {isBn ? 'বাছাইকৃত পণ্য' : 'Curated Items'}
             </div>
@@ -113,7 +115,9 @@ export default function CollectionLandingPage() {
               {isBn ? 'এই কালেকশনে কোনো পণ্য নেই' : 'No items currently in this collection'}
             </h3>
             <p className="text-xs text-slate-500">
-              {isBn ? 'শীঘ্রই নতুন পণ্য যোগ করা হবে।' : 'Check back soon for upcoming campaign launches.'}
+              {isBn
+                ? 'শীঘ্রই নতুন পণ্য যোগ করা হবে।'
+                : 'Check back soon for upcoming campaign launches.'}
             </p>
           </div>
         ) : (

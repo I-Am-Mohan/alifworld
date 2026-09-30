@@ -1,7 +1,15 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
-import { POST as createWarehouseRoute, GET as listWarehousesRoute } from '@/app/api/v1/warehouses/route';
-import { GET as getWarehouseRoute, PUT as updateWarehouseRoute, DELETE as deleteWarehouseRoute } from '@/app/api/v1/warehouses/[id]/route';
+import {
+  POST as createWarehouseRoute,
+  GET as listWarehousesRoute,
+} from '@/app/api/v1/warehouses/route';
+import {
+  GET as getWarehouseRoute,
+  PUT as updateWarehouseRoute,
+  DELETE as deleteWarehouseRoute,
+} from '@/app/api/v1/warehouses/[id]/route';
 import { WarehouseService } from '@/features/inventory/services/warehouse-service';
 import { NextRequest } from 'next/server';
 
@@ -70,7 +78,7 @@ describe('Milestone 101: Warehouse & Fulfillment Locations API Integration Tests
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer admin-token',
+        Authorization: 'Bearer admin-token',
       },
       body: JSON.stringify({
         name: 'Sylhet Regional Depot',
@@ -97,7 +105,7 @@ describe('Milestone 101: Warehouse & Fulfillment Locations API Integration Tests
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer admin-token',
+        Authorization: 'Bearer admin-token',
       },
       body: JSON.stringify({
         name: 'Bad Division Hub',
@@ -141,7 +149,7 @@ describe('Milestone 101: Warehouse & Fulfillment Locations API Integration Tests
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer admin-token',
+        Authorization: 'Bearer admin-token',
       },
       body: JSON.stringify({
         version: 1,
@@ -162,7 +170,7 @@ describe('Milestone 101: Warehouse & Fulfillment Locations API Integration Tests
     const req = new NextRequest('http://localhost:3000/api/v1/warehouses/wh_dhk_001', {
       method: 'DELETE',
       headers: {
-        'Authorization': 'Bearer admin-token',
+        Authorization: 'Bearer admin-token',
       },
     });
 

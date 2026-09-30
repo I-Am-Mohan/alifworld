@@ -13,7 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const actor = authenticateRequest(req);
     const id = (await params).id;
     const parsed = SellerApplicationIdSchema.safeParse(id);
-    if (!parsed.success) throw new ValidationError('Invalid seller application identifier.', parsed.error.flatten());
+    if (!parsed.success)
+      throw new ValidationError('Invalid seller application identifier.', parsed.error.flatten());
     await defaultPolicyEngine.assert(actor, 'seller_application:review', { type: 'SELLER', id });
     const application = await service.getForAdmin(id);
     return NextResponse.json({ success: true, data: application }, { status: 200 });

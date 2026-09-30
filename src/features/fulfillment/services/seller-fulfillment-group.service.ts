@@ -19,6 +19,7 @@ import {
   NotFoundError,
   ValidationError,
   ConflictError,
+  AuthorizationError,
 } from '@/shared/errors/app-error';
 import { auditService } from '@/shared/audit';
 import {
@@ -34,6 +35,7 @@ import {
 import { sellerFulfillmentGroupRepository } from '../repositories/seller-fulfillment-group.repository';
 import { courierDispatchService } from '@/features/shipping/services/courier-dispatch.service';
 import { CourierCode } from '@/features/shipping/types/courier.types';
+import { orderTransitionService } from '@/features/orders/state-machines/order-transition.service';
 
 export class SellerFulfillmentGroupService {
   private db = prisma;
@@ -71,80 +73,24 @@ export class SellerFulfillmentGroupService {
     groupId: string,
     sellerId: string,
     nextStatus: FulfillmentGroupStatus,
-    options: { actorId?: string; reason?: string } = {}
+    options: {
+      actorId?: string;
+      actorRole?: 'ADMIN' | 'SELLER';
+      reason?: string;
+      idempotencyKey?: string;
+    } = {}
   ): Promise<SellerFulfillmentGroupDTO> {
-    // 1. Fetch group within strict seller scope
-    const group = await this.repo.findGroupByIdAndSellerId(groupId, sellerId);
-
-    // 2. Validate finite state machine transition
-    const allowedTransitions = FULFILLMENT_GROUP_TRANSITIONS[group.status] || [];
-    if (!allowedTransitions.includes(nextStatus)) {
-      throw new ConflictError(
-        `Invalid status transition from '${group.status}' to '${nextStatus}'. Allowed transitions: [${allowedTransitions.join(', ')}]`,
-        { currentStatus: group.status, requestedStatus: nextStatus }
-      );
-    }
-
-    // 3. Update status in database
-    const isDelivered = nextStatus === 'DELIVERED';
-    const deliveredAt = isDelivered ? new Date() : undefined;
-
-    const updated = await this.repo.updateStatus(groupId, sellerId, nextStatus, {
-      deliveredAt,
-      version: group.version,
+    if (!options.actorId) throw new AuthorizationError('Fulfillment transition actor required.');
+    await orderTransitionService.transitionFulfillmentGroupStatus({
+      groupId,
+      sellerId,
+      nextStatus,
+      actorId: options.actorId,
+      actorRole: options.actorRole || 'SELLER',
+      reason: options.reason,
+      idempotencyKey: options.idempotencyKey,
     });
-
-    // 4. Record order status history
-    await (this.db as any).orderStatusHistory.create({
-      data: {
-        id: generatePrefixedId(ENTITY_PREFIXES.ORDER_STATUS_HISTORY),
-        orderId: group.orderId,
-        status: nextStatus,
-        reason:
-          options.reason ||
-          `Merchant updated fulfillment group ${group.groupNumber} to ${nextStatus}`,
-        actorId: options.actorId || sellerId,
-        actorRole: 'SELLER',
-      },
-    });
-
-    // 5. Emit Outbox Event for Asynchronous Processing
-    await (this.db as any).outboxEvent.create({
-      data: {
-        id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX),
-        eventType: 'fulfillment_group.status_changed',
-        aggregateType: 'SELLER_FULFILLMENT_GROUP',
-        aggregateId: groupId,
-        payload: {
-          groupId,
-          groupNumber: group.groupNumber,
-          orderId: group.orderId,
-          sellerId,
-          previousStatus: group.status,
-          newStatus: nextStatus,
-          reason: options.reason || null,
-        },
-      },
-    });
-
-    // 6. Audit Logging
-    await auditService.logBusinessEvent({
-      action: 'FULFILLMENT_GROUP_STATUS_CHANGED',
-      resource: 'SELLER_FULFILLMENT_GROUP',
-      resourceId: groupId,
-      actorId: options.actorId || sellerId,
-      actorRole: 'SELLER',
-      metadata: {
-        groupId,
-        groupNumber: group.groupNumber,
-        sellerId,
-        fromStatus: group.status,
-        toStatus: nextStatus,
-        reason: options.reason || null,
-      },
-    });
-
-    return updated;
+    return this.repo.findGroupByIdAndSellerId(groupId, sellerId);
   }
 
   /**
@@ -161,15 +107,12 @@ export class SellerFulfillmentGroupService {
     trackingNumber: string;
     labelUrl?: string | null;
   }> {
+    if (!actorId) throw new AuthorizationError('Dispatch actor required.');
     // 1. Fetch group within strict seller scope
     const group = await this.repo.findGroupByIdAndSellerId(groupId, sellerId);
 
     // 2. Validate that group is ready for dispatch
-    const validDispatchStatuses: FulfillmentGroupStatus[] = [
-      'ACCEPTED',
-      'PACKING',
-      'READY_FOR_PICKUP',
-    ];
+    const validDispatchStatuses: FulfillmentGroupStatus[] = ['READY_FOR_PICKUP'];
 
     if (!validDispatchStatuses.includes(group.status)) {
       throw new ConflictError(
@@ -179,8 +122,7 @@ export class SellerFulfillmentGroupService {
 
     // 3. Compute total weight from items if not provided
     const totalWeight =
-      input.weightGrams ||
-      group.items.reduce((sum, item) => sum + item.quantity * 300, 0);
+      input.weightGrams || group.items.reduce((sum, item) => sum + item.quantity * 300, 0);
 
     // 4. Invoke Courier Dispatch Service
     const consignmentResult = await courierDispatchService.createConsignment(
@@ -202,27 +144,18 @@ export class SellerFulfillmentGroupService {
         isPrepaid: false,
         specialInstructions: input.specialInstructions,
       },
-      actorId || sellerId
+      actorId
     );
 
     // 5. Update courier details and advance status to HANDED_OVER_TO_COURIER
-    const updated = await this.repo.updateCourierDetails(groupId, sellerId, {
+    await this.repo.updateCourierDetails(groupId, sellerId, {
       courierProvider: input.courierProvider,
       consignmentId: consignmentResult.consignmentId,
       trackingNumber: consignmentResult.trackingNumber,
       pickupDate: input.pickupDate ? new Date(input.pickupDate) : new Date(),
     });
 
-    // Advance status to HANDED_OVER_TO_COURIER
-    const transitioned = await this.transitionGroupStatus(
-      groupId,
-      sellerId,
-      'HANDED_OVER_TO_COURIER',
-      {
-        actorId,
-        reason: `Dispatched to ${input.courierProvider} with Consignment ID: ${consignmentResult.consignmentId}`,
-      }
-    );
+    const transitioned = await this.repo.findGroupByIdAndSellerId(groupId, sellerId);
 
     return {
       group: transitioned,

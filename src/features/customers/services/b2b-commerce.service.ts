@@ -153,10 +153,7 @@ export class B2BCommerceService {
       return null;
     }
 
-    return this.mapOrganizationToDTO(
-      membership.organization,
-      membership.role as BuyerMemberRole
-    );
+    return this.mapOrganizationToDTO(membership.organization, membership.role as BuyerMemberRole);
   }
 
   /**
@@ -549,11 +546,7 @@ export class B2BCommerceService {
   /**
    * Retrieves an RFQ by ID enforcing authorization and tenant boundary.
    */
-  public async getRfqById(
-    rfqId: string,
-    userId: string,
-    sellerId?: string
-  ): Promise<B2BRfqDTO> {
+  public async getRfqById(rfqId: string, userId: string, sellerId?: string): Promise<B2BRfqDTO> {
     const rfq = await (this.db as any).b2bRfq.findFirst({
       where: { id: rfqId, deletedAt: null },
       include: {
@@ -1327,7 +1320,9 @@ export class B2BCommerceService {
         itemsSnapshot: v.itemsSnapshot,
         paymentTerms: v.paymentTerms as PaymentTerms,
         notes: v.notes,
-        createdAt: v.createdAt?.toISOString?.() || (typeof v.createdAt === 'string' ? v.createdAt : new Date().toISOString()),
+        createdAt:
+          v.createdAt?.toISOString?.() ||
+          (typeof v.createdAt === 'string' ? v.createdAt : new Date().toISOString()),
       })),
       organization: quote.organization,
       seller: quote.seller,

@@ -10,21 +10,10 @@
 
 import { BangladeshDivisionCode, DeliveryZone, CourierProviderCode } from './serviceability.types';
 
-export type ShippingMethodCode =
-  | 'STANDARD'
-  | 'EXPRESS'
-  | 'SAME_DAY'
-  | 'NEXT_DAY'
-  | 'HEAVY_FREIGHT';
+export type ShippingMethodCode = 'STANDARD' | 'EXPRESS' | 'SAME_DAY' | 'NEXT_DAY' | 'HEAVY_FREIGHT';
 
 export type ShippingClassCode =
-  | 'STANDARD'
-  | 'FRAGILE'
-  | 'HEAVY'
-  | 'BULK'
-  | 'HAZMAT'
-  | 'PERISHABLE'
-  | 'DIGITAL';
+  'STANDARD' | 'FRAGILE' | 'HEAVY' | 'BULK' | 'HAZMAT' | 'PERISHABLE' | 'DIGITAL';
 
 export type PromiseConfidenceLevel = 'GUARANTEED' | 'HIGH' | 'ESTIMATED';
 

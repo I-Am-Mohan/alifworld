@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * Retrieves public seller store profile, business policies, and catalog products
  * scoped strictly to the merchant's sellerId.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
     const searchParams = req.nextUrl.searchParams;

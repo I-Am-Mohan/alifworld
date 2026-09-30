@@ -1,8 +1,8 @@
 /**
  * AlifWorld Product Media Repository
- * 
+ *
  * Manages gallery visual assets, permanent S3 keys, and primary image flags.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0025
  */
@@ -28,18 +28,21 @@ export class ProductMediaRepository {
     return list.map((m: any) => this.mapToModel(m));
   }
 
-  public async create(productId: string, data: {
-    mediaType?: MediaType;
-    url: string;
-    altText?: string | null;
-    altTextBn?: string | null;
-    isPrimary?: boolean;
-    displayOrder?: number;
-    fileSize?: number | null;
-    mimeType?: string | null;
-    width?: number | null;
-    height?: number | null;
-  }): Promise<ProductMediaModel> {
+  public async create(
+    productId: string,
+    data: {
+      mediaType?: MediaType;
+      url: string;
+      altText?: string | null;
+      altTextBn?: string | null;
+      isPrimary?: boolean;
+      displayOrder?: number;
+      fileSize?: number | null;
+      mimeType?: string | null;
+      width?: number | null;
+      height?: number | null;
+    }
+  ): Promise<ProductMediaModel> {
     const id = generatePrefixedId(ENTITY_PREFIXES.MEDIA);
 
     // If marked as primary, unmark existing primary media for this product

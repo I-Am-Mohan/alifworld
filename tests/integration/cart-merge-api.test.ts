@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import * as authzModule from '@/shared/authz';
 import {
   GET as getCartRoute,
@@ -15,6 +15,7 @@ import { cartService } from '@/features/cart/services/cart.service';
 import { NextRequest } from 'next/server';
 
 describe('Milestone 127: Cart & Safe Merge REST API Integration Tests', () => {
+  afterEach(() => mock.restore());
   const customerActor = {
     userId: 'usr_customer_01',
     roles: ['CUSTOMER'],

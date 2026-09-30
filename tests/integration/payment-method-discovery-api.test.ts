@@ -7,8 +7,9 @@
  * 3. POST /api/v1/payments/webhooks/[gateway] - signature verification & webhook deduplication
  */
 
-import { describe, it, expect, beforeEach, afterEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, afterAll, spyOn } from 'bun:test';
 import * as authzModule from '@/shared/authz';
+import { prisma } from '@/shared/database/prisma';
 import {
   GET as getPaymentMethodsRoute,
   POST as discoverPaymentMethodsRoute,
@@ -20,6 +21,17 @@ import { NextRequest } from 'next/server';
 
 describe('Milestone 138: Payment Method Discovery & Selection REST API Integration Tests', () => {
   let authSpy: any;
+  const createdEventIds: string[] = [];
+
+  afterAll(async () => {
+    if (createdEventIds.length > 0) {
+      await prisma.paymentWebhookLog
+        .deleteMany({
+          where: { externalEventId: { in: createdEventIds } },
+        })
+        .catch(() => {});
+    }
+  });
 
   const customerActor = {
     userId: 'usr_customer_01',
@@ -162,6 +174,7 @@ describe('Milestone 138: Payment Method Discovery & Selection REST API Integrati
   describe('3. POST /api/v1/payments/webhooks/[gateway]', () => {
     it('ingests and records payment gateway webhook callback', async () => {
       const testEventId = `ev_test_${Date.now()}`;
+      createdEventIds.push(testEventId);
 
       const req = new NextRequest('http://localhost:3000/api/v1/payments/webhooks/bkash', {
         method: 'POST',

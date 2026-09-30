@@ -10,12 +10,7 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { AuthTokenService, UserAuthDetails } from '@/services/auth-token.service';
 import { SessionRepository } from '@/repositories/session.repository';
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  hashToken,
-  verifyJwt,
-} from '@/shared/auth/jwt';
+import { generateAccessToken, generateRefreshToken, hashToken, verifyJwt } from '@/shared/auth/jwt';
 import { RefreshTokenClaims } from '@/shared/auth/token-policy';
 import { UnauthorizedError, TokenReuseDetectedError } from '@/shared/errors/app-error';
 
@@ -56,12 +51,15 @@ describe('Rotating Refresh Token Families & Reuse Detection (Milestone 035)', ()
     mockSessionRepo = {
       parseFamilyMetadata: (session: any) => {
         try {
-          if (!session.deviceInfo) return { familyId: 'fam_default', generation: 0, consumedTokenHashes: [] };
+          if (!session.deviceInfo)
+            return { familyId: 'fam_default', generation: 0, consumedTokenHashes: [] };
           const parsed = JSON.parse(session.deviceInfo);
           return {
             familyId: parsed.familyId || 'fam_default',
             generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
-            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes) ? parsed.consumedTokenHashes : [],
+            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes)
+              ? parsed.consumedTokenHashes
+              : [],
           };
         } catch {
           return { familyId: 'fam_default', generation: 0, consumedTokenHashes: [] };

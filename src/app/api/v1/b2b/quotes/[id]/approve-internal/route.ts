@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/b2b/quotes/[id]/approve-internal
  * Organization Admin or Approver grants internal approval for a quote exceeding purchaser spending limits.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;

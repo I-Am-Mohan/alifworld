@@ -20,7 +20,10 @@ export async function GET(req: NextRequest) {
     let role: 'BUYER' | 'SELLER' | 'ADMIN' = 'BUYER';
     if (roleParam === 'SELLER' || actor.sellerId) {
       role = 'SELLER';
-    } else if (roleParam === 'ADMIN' && (actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN'))) {
+    } else if (
+      roleParam === 'ADMIN' &&
+      (actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN'))
+    ) {
       role = 'ADMIN';
     }
 

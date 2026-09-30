@@ -215,9 +215,7 @@ export class ProductReviewService {
           variant: { select: { id: true, title: true } },
           media: { orderBy: { displayOrder: 'asc' } },
           product: { include: { seller: { select: { businessName: true } } } },
-          votes: currentUserId
-            ? { where: { userId: currentUserId } }
-            : false,
+          votes: currentUserId ? { where: { userId: currentUserId } } : false,
         },
       }),
       (this.db as any).productReview.count({ where }),

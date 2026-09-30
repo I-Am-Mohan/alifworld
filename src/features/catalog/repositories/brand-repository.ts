@@ -1,9 +1,9 @@
 /**
  * AlifWorld Brand Registry Repository
- * 
+ *
  * Encapsulates database queries for approved brands, trademark verification,
  * and brand authority.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0025
  */
@@ -28,7 +28,11 @@ export class BrandRepository {
     return brand ? this.mapToModel(brand) : null;
   }
 
-  public async findAll(options?: { isActive?: boolean; isVerified?: boolean; approvalStatus?: string }): Promise<BrandModel[]> {
+  public async findAll(options?: {
+    isActive?: boolean;
+    isVerified?: boolean;
+    approvalStatus?: string;
+  }): Promise<BrandModel[]> {
     const where: any = { deletedAt: null };
     if (options?.isActive !== undefined) {
       where.isActive = options.isActive;

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Customer Email Verification & Resend Controls Service
- * 
+ *
  * Manages 6-digit verification code evaluation, lockout counters (max 3 attempts),
  * 60-second resend cooldowns, hourly rate limits, and email verification updates.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, ADR-0032, ADR-0033
  */
 
@@ -44,7 +44,12 @@ export class EmailVerificationService {
   private userRepo: UserRepository;
   private prismaClient?: any;
 
-  constructor(otpRepo?: OtpRepository, userRepo?: UserRepository, prisma?: any) {
+  constructor(
+    otpRepo?: OtpRepository,
+    userRepo?: UserRepository,
+    prisma?: any,
+    private readonly sendEmail: typeof sendEmailViaSmtp = sendEmailViaSmtp
+  ) {
     this.otpRepo = otpRepo || new OtpRepository();
     this.userRepo = userRepo || new UserRepository();
     this.prismaClient = prisma;
@@ -224,9 +229,7 @@ export class EmailVerificationService {
     // 4. Generate fresh 6-digit numeric verification code
     const rawVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const tokenHash = hashToken(rawVerificationCode);
-    const expiresAt = new Date(
-      Date.now() + EMAIL_VERIFICATION_CONSTANTS.CODE_TTL_SECONDS * 1000
-    );
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_CONSTANTS.CODE_TTL_SECONDS * 1000);
 
     await this.prisma.$transaction(async (tx: any) => {
       // Create OTP token
@@ -279,7 +282,7 @@ export class EmailVerificationService {
     });
 
     // Dispatch email via SMTP if configured
-    sendEmailViaSmtp({
+    this.sendEmail({
       to: cleanEmail,
       subject: 'AlifWorld Email Verification Code',
       html: `
@@ -299,7 +302,7 @@ export class EmailVerificationService {
 
     return {
       success: true,
-      message: 'A 6-digit verification code has been sent to your email.',
+      message: 'If an account exists with this email, a verification code has been sent.',
       cooldownSeconds: EMAIL_VERIFICATION_CONSTANTS.RESEND_COOLDOWN_SECONDS,
       ...(isDev && { devVerificationCode: rawVerificationCode }),
     };

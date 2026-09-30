@@ -19,10 +19,7 @@ function resolveSellerId(actor: any): string {
  * GET /api/v1/seller/fulfillment-groups/[id]/manifest
  * Retrieves printable packing slip and warehouse manifest data for a seller fulfillment group.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

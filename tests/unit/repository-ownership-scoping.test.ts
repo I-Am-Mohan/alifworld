@@ -1,6 +1,6 @@
 /**
  * Unit Tests: Repository-Level Ownership Scoping & Invariant Assertion
- * 
+ *
  * Verifies BaseRepository, CartRepository, and OrderRepository ownership assertions:
  * 1. assertOwnership() utility behavior
  * 2. buildOwnerWhere() query scoping
@@ -8,7 +8,7 @@
  * 4. BaseRepository.buildActorScopedWhere() multi-role query partitioning
  * 5. CartRepository.assertCartOwnership()
  * 6. OrderRepository.assertOrderAccess() across Customer, Seller, Rider, and Admin
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 043, Milestone 047
  */
 
@@ -274,7 +274,7 @@ describe('Repository Ownership Scoping & Assertion Suite (Milestone 047)', () =>
       expect(() => orderRepo.assertOrderAccess(mockOrder, customerAlice)).not.toThrow();
     });
 
-    it('denies customer from accessing another customer\'s order (OWNERSHIP_VIOLATION)', () => {
+    it("denies customer from accessing another customer's order (OWNERSHIP_VIOLATION)", () => {
       expect(() => orderRepo.assertOrderAccess(mockOrder, customerBob)).toThrow(AuthorizationError);
     });
 

@@ -1,10 +1,6 @@
 import { describe, expect, it, beforeEach } from 'bun:test';
 import { ProductReviewService } from '@/features/reviews/services/product-review.service';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 
 class MockPrismaReviewDb {
   public reviews: any[] = [];
@@ -98,9 +94,8 @@ class MockPrismaReviewDb {
   public productReviewVote = {
     findFirst: async ({ where }: any) => {
       return (
-        this.reviewVotes.find(
-          (v) => v.reviewId === where.reviewId && v.userId === where.userId
-        ) || null
+        this.reviewVotes.find((v) => v.reviewId === where.reviewId && v.userId === where.userId) ||
+        null
       );
     },
     create: async ({ data }: any) => {
@@ -365,9 +360,9 @@ describe('Milestone 125: Verified-Purchase Reviews, Ratings & Media Unit Tests',
       });
 
       // Self-voting must fail
-      await expect(
-        service.voteReview('rev_101', 'usr_customer_01', true)
-      ).rejects.toThrow(ValidationError);
+      await expect(service.voteReview('rev_101', 'usr_customer_01', true)).rejects.toThrow(
+        ValidationError
+      );
 
       // Other customer votes helpful
       const votes = await service.voteReview('rev_101', 'usr_customer_02', true);

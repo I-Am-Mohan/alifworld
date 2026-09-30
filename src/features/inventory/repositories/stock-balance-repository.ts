@@ -1,9 +1,9 @@
 /**
  * AlifWorld Stock Balance Repository
- * 
+ *
  * Encapsulates inventory balances per warehouse/variant, atomic balance updates,
  * OCC version checks, and availability calculations.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
@@ -30,7 +30,10 @@ export class StockBalanceRepository {
     return record ? this.mapToModel(record) : null;
   }
 
-  public async findByWarehouseAndVariant(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async findByWarehouseAndVariant(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     const record = await (prisma as any).stockBalance.findFirst({
       where: { warehouseId, variantId, deletedAt: null },
       include: {
@@ -167,13 +170,19 @@ export class StockBalanceRepository {
       throw new ConflictError(`Invalid inventory state: onHand cannot be negative (${newOnHand}).`);
     }
     if (newReserved < 0) {
-      throw new ConflictError(`Invalid inventory state: reserved cannot be negative (${newReserved}).`);
+      throw new ConflictError(
+        `Invalid inventory state: reserved cannot be negative (${newReserved}).`
+      );
     }
     if (newDamaged < 0) {
-      throw new ConflictError(`Invalid inventory state: damaged cannot be negative (${newDamaged}).`);
+      throw new ConflictError(
+        `Invalid inventory state: damaged cannot be negative (${newDamaged}).`
+      );
     }
     if (newQuarantined < 0) {
-      throw new ConflictError(`Invalid inventory state: quarantined cannot be negative (${newQuarantined}).`);
+      throw new ConflictError(
+        `Invalid inventory state: quarantined cannot be negative (${newQuarantined}).`
+      );
     }
 
     const available = newOnHand - newReserved - newDamaged - newQuarantined;
@@ -259,32 +268,38 @@ export class StockBalanceRepository {
       deletedBy: raw.deletedBy,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
-      warehouse: raw.warehouse ? {
-        id: raw.warehouse.id,
-        sellerId: raw.warehouse.sellerId,
-        name: raw.warehouse.name,
-        code: raw.warehouse.code,
-        division: raw.warehouse.division,
-        district: raw.warehouse.district,
-        upazila: raw.warehouse.upazila,
-        addressLine: raw.warehouse.addressLine,
-        postalCode: raw.warehouse.postalCode,
-        isPlatformHub: raw.warehouse.isPlatformHub,
-        isActive: raw.warehouse.isActive,
-        version: raw.warehouse.version,
-        createdAt: raw.warehouse.createdAt,
-        updatedAt: raw.warehouse.updatedAt,
-      } : undefined,
-      variant: raw.variant ? {
-        id: raw.variant.id,
-        sku: raw.variant.sku,
-        title: raw.variant.title,
-        product: raw.variant.product ? {
-          id: raw.variant.product.id,
-          title: raw.variant.product.title,
-          sellerId: raw.variant.product.sellerId,
-        } : undefined,
-      } : undefined,
+      warehouse: raw.warehouse
+        ? {
+            id: raw.warehouse.id,
+            sellerId: raw.warehouse.sellerId,
+            name: raw.warehouse.name,
+            code: raw.warehouse.code,
+            division: raw.warehouse.division,
+            district: raw.warehouse.district,
+            upazila: raw.warehouse.upazila,
+            addressLine: raw.warehouse.addressLine,
+            postalCode: raw.warehouse.postalCode,
+            isPlatformHub: raw.warehouse.isPlatformHub,
+            isActive: raw.warehouse.isActive,
+            version: raw.warehouse.version,
+            createdAt: raw.warehouse.createdAt,
+            updatedAt: raw.warehouse.updatedAt,
+          }
+        : undefined,
+      variant: raw.variant
+        ? {
+            id: raw.variant.id,
+            sku: raw.variant.sku,
+            title: raw.variant.title,
+            product: raw.variant.product
+              ? {
+                  id: raw.variant.product.id,
+                  title: raw.variant.product.title,
+                  sellerId: raw.variant.product.sellerId,
+                }
+              : undefined,
+          }
+        : undefined,
     };
   }
 }

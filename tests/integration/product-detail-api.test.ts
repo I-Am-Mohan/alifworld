@@ -64,9 +64,12 @@ describe('Milestone 117: Product Detail REST API Integration Tests', () => {
   });
 
   it('GET /api/v1/catalog/products/[slug] returns permanent redirect instruction for historical slug', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/catalog/products/walton-primo-s8-old', {
-      method: 'GET',
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/catalog/products/walton-primo-s8-old',
+      {
+        method: 'GET',
+      }
+    );
 
     const res = await getProductDetailRoute(req, {
       params: Promise.resolve({ id: 'walton-primo-s8-old' }),

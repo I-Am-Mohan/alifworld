@@ -25,7 +25,8 @@ function LegacyNewProductPage() {
           </div>
           <h1 className="text-3xl font-black">Create Product Listing</h1>
           <p className="text-xs text-neutral-400 mt-1">
-            Publish products to AlifWorld with integer poisha pricing, independent Product Points, and taxonomy tagging.
+            Publish products to AlifWorld with integer poisha pricing, independent Product Points,
+            and taxonomy tagging.
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -79,7 +80,10 @@ function LegacyNewProductPage() {
                 </label>
                 <div className="flex rounded-lg border border-neutral-700 bg-neutral-800 overflow-hidden text-xs">
                   <span className="px-3 py-2 bg-neutral-900 text-neutral-500 font-mono">
-                    {(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/^https?:\/\//, '').replace(/\/$/, '')}/products/
+                    {(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+                      .replace(/^https?:\/\//, '')
+                      .replace(/\/$/, '')}
+                    /products/
                   </span>
                   <input
                     type="text"
@@ -106,8 +110,13 @@ function LegacyNewProductPage() {
           <Card className="border-neutral-800 bg-neutral-900/40">
             <CardHeader className="border-b border-neutral-800 pb-3">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-bold text-white">Pricing & Rewards Strategy</CardTitle>
-                <Badge variant="outline" className="border-brand-orange text-brand-orange text-[10px]">
+                <CardTitle className="text-base font-bold text-white">
+                  Pricing & Rewards Strategy
+                </CardTitle>
+                <Badge
+                  variant="outline"
+                  className="border-brand-orange text-brand-orange text-[10px]"
+                >
                   Independent Value Invariant
                 </Badge>
               </div>
@@ -119,7 +128,9 @@ function LegacyNewProductPage() {
                     Selling Price (BDT) *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-neutral-400 font-bold text-sm">৳</span>
+                    <span className="absolute left-3 top-2 text-neutral-400 font-bold text-sm">
+                      ৳
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -128,7 +139,8 @@ function LegacyNewProductPage() {
                     />
                   </div>
                   <p className="text-[11px] text-neutral-500 mt-1">
-                    Stored internally in minor units: <span className="font-mono text-brand-orange">2199000 poisha</span>
+                    Stored internally in minor units:{' '}
+                    <span className="font-mono text-brand-orange">2199000 poisha</span>
                   </p>
                 </div>
 
@@ -137,7 +149,9 @@ function LegacyNewProductPage() {
                     Compare-at MSRP Price (Optional)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-neutral-400 font-bold text-sm">৳</span>
+                    <span className="absolute left-3 top-2 text-neutral-400 font-bold text-sm">
+                      ৳
+                    </span>
                     <input
                       type="number"
                       step="0.01"
@@ -145,7 +159,9 @@ function LegacyNewProductPage() {
                       className="w-full pl-8 pr-3 py-2 rounded-lg border border-neutral-700 bg-neutral-800 text-sm text-white font-mono focus:outline-none focus:border-brand-orange"
                     />
                   </div>
-                  <p className="text-[11px] text-neutral-500 mt-1">Cross-out original price displayed to buyers.</p>
+                  <p className="text-[11px] text-neutral-500 mt-1">
+                    Cross-out original price displayed to buyers.
+                  </p>
                 </div>
               </div>
 
@@ -155,7 +171,9 @@ function LegacyNewProductPage() {
                   <label className="text-xs font-bold text-white flex items-center gap-1.5">
                     <span>🪙 Product Points Awarded to Buyer</span>
                   </label>
-                  <span className="text-[10px] text-brand-orange font-bold uppercase">Points Invariant</span>
+                  <span className="text-[10px] text-brand-orange font-bold uppercase">
+                    Points Invariant
+                  </span>
                 </div>
                 <input
                   type="number"
@@ -163,7 +181,9 @@ function LegacyNewProductPage() {
                   className="w-full px-3 py-2 rounded-lg border border-neutral-700 bg-neutral-800 text-sm text-white font-mono focus:outline-none focus:border-brand-orange"
                 />
                 <p className="text-[11px] text-neutral-400 mt-2">
-                  <strong className="text-white">Note:</strong> Product price and Product Points are separate independent values. Do not infer a conversion rate. Points are credited to buyer wallets upon final delivery confirmation.
+                  <strong className="text-white">Note:</strong> Product price and Product Points are
+                  separate independent values. Do not infer a conversion rate. Points are credited
+                  to buyer wallets upon final delivery confirmation.
                 </p>
               </div>
             </CardContent>
@@ -204,7 +224,9 @@ function LegacyNewProductPage() {
             </CardHeader>
             <CardContent className="p-5 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">Category *</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                  Category *
+                </label>
                 <select className="w-full px-3 py-2 rounded-lg border border-neutral-700 bg-neutral-800 text-xs text-white focus:outline-none focus:border-brand-orange">
                   <option value="cat_phones">Smartphones & Tablets (5% NBR VAT)</option>
                   <option value="cat_audio">Audio & Headphones (15% NBR VAT)</option>
@@ -254,7 +276,9 @@ function LegacyNewProductPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">Barcode / EAN / UPC</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                  Barcode / EAN / UPC
+                </label>
                 <input
                   type="text"
                   placeholder="8941234567890"
@@ -274,7 +298,9 @@ function LegacyNewProductPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-300 mb-1">Warranty Information</label>
+                <label className="block text-xs font-semibold text-neutral-300 mb-1">
+                  Warranty Information
+                </label>
                 <input
                   type="text"
                   placeholder="1 Year Official Brand Warranty"

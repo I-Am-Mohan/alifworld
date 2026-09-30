@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/b2b/quotes/[id]
  * Retrieves single quote details with full version and item snapshots.
  */
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;

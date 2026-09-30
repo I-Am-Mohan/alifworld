@@ -28,10 +28,7 @@ function extractActorOrGuest(req: NextRequest): {
   return { userId, guestCartToken };
 }
 
-export async function PATCH(
-  req: NextRequest,
-  props: { params: Promise<{ itemId: string }> }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ itemId: string }> }) {
   try {
     const { userId, guestCartToken } = extractActorOrGuest(req);
     const { itemId } = await props.params;
@@ -58,19 +55,12 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  props: { params: Promise<{ itemId: string }> }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ itemId: string }> }) {
   try {
     const { userId, guestCartToken } = extractActorOrGuest(req);
     const { itemId } = await props.params;
 
-    const updatedCart = await cartService.removeItem(
-      itemId,
-      userId,
-      guestCartToken
-    );
+    const updatedCart = await cartService.removeItem(itemId, userId, guestCartToken);
 
     return NextResponse.json({ success: true, data: updatedCart }, { status: 200 });
   } catch (error) {

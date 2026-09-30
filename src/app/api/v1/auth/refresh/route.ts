@@ -13,10 +13,10 @@ const policies = getRateLimitPolicies();
 
 /**
  * POST /api/v1/auth/refresh
- * 
+ *
  * Rotates a single-use refresh token within an authenticated token family.
  * Validates family lineage and detects token replay/reuse attacks.
- * 
+ *
  * Rate-limited to 30 requests per minute.
  */
 export async function POST(req: NextRequest) {

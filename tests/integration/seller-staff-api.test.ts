@@ -1,6 +1,6 @@
 /**
  * Integration Tests: Seller Staff Roles, Invitations & Scoped Access REST APIs
- * 
+ *
  * Tests /api/v1/seller/staff and /api/v1/seller/staff/invite:
  * 1. 401 Unauthorized when unauthenticated
  * 2. 403 Forbidden when Customer tries to access or manage staff
@@ -8,13 +8,17 @@
  * 4. 403 Forbidden when staff without staff:manage permission tries to add/delete staff
  * 5. 422 Unprocessable Entity when validation fails
  * 6. Super Admin global operational access across tenants
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0021, ADR-0022, ADR-0024, Milestone 045
  */
 
 import { describe, it, expect } from 'bun:test';
 import { NextRequest } from 'next/server';
-import { GET as getStaff, POST as addStaff, DELETE as removeStaff } from '@/app/api/v1/seller/staff/route';
+import {
+  GET as getStaff,
+  POST as addStaff,
+  DELETE as removeStaff,
+} from '@/app/api/v1/seller/staff/route';
 import { POST as inviteStaff } from '@/app/api/v1/seller/staff/invite/route';
 import { generateAccessToken } from '@/shared/auth/jwt';
 import { SystemRoleCode } from '@/features/identity/types';
@@ -79,23 +83,31 @@ describe('Seller Staff REST API Integration (Milestone 045)', () => {
 
   describe('GET /api/v1/seller/staff', () => {
     it('returns 401 Unauthorized without auth token', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}`);
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}`
+      );
       const res = await getStaff(req);
       expect(res.status).toBe(401);
     });
 
     it('returns 403 Forbidden when Customer attempts to view store staff', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}`, {
-        headers: { authorization: CUSTOMER_AUTH },
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}`,
+        {
+          headers: { authorization: CUSTOMER_AUTH },
+        }
+      );
       const res = await getStaff(req);
       expect(res.status).toBe(403);
     });
 
     it('returns 403 Forbidden when Merchant Dhaka tries to view Merchant Chittagong staff', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_CTG}`, {
-        headers: { authorization: SELLER_DHAKA_OWNER_AUTH },
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_CTG}`,
+        {
+          headers: { authorization: SELLER_DHAKA_OWNER_AUTH },
+        }
+      );
       const res = await getStaff(req);
       expect(res.status).toBe(403);
 
@@ -242,27 +254,36 @@ describe('Seller Staff REST API Integration (Milestone 045)', () => {
 
   describe('DELETE /api/v1/seller/staff', () => {
     it('returns 401 Unauthorized without auth token', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}&userId=usr_123`, {
-        method: 'DELETE',
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}&userId=usr_123`,
+        {
+          method: 'DELETE',
+        }
+      );
       const res = await removeStaff(req);
       expect(res.status).toBe(401);
     });
 
     it('returns 403 Forbidden when Customer attempts to remove staff', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}&userId=usr_1j7x4b9e8m02k3fc`, {
-        method: 'DELETE',
-        headers: { authorization: CUSTOMER_AUTH },
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_DHAKA}&userId=usr_1j7x4b9e8m02k3fc`,
+        {
+          method: 'DELETE',
+          headers: { authorization: CUSTOMER_AUTH },
+        }
+      );
       const res = await removeStaff(req);
       expect(res.status).toBe(403);
     });
 
     it('returns 403 Forbidden when Merchant Dhaka attempts to remove Merchant Chittagong staff', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_CTG}&userId=usr_1j7x4b9e8m02k3fc`, {
-        method: 'DELETE',
-        headers: { authorization: SELLER_DHAKA_OWNER_AUTH },
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/staff?sellerId=${STORE_CTG}&userId=usr_1j7x4b9e8m02k3fc`,
+        {
+          method: 'DELETE',
+          headers: { authorization: SELLER_DHAKA_OWNER_AUTH },
+        }
+      );
       const res = await removeStaff(req);
       expect(res.status).toBe(403);
     });

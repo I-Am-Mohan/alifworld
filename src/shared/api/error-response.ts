@@ -16,7 +16,10 @@ export function localizedErrorMessage(
     const translated = formatServerMessage(
       messageKey,
       Object.fromEntries(
-        Object.entries(params).map(([name, value]) => [name, typeof value === 'bigint' ? value.toString() : value])
+        Object.entries(params).map(([name, value]) => [
+          name,
+          typeof value === 'bigint' ? value.toString() : value,
+        ])
       ),
       locale
     );
@@ -31,7 +34,10 @@ export function localizedErrorMessage(
   const defaultTranslated = formatServerMessage(
     defaultKey,
     Object.fromEntries(
-      Object.entries(params).map(([name, value]) => [name, typeof value === 'bigint' ? value.toString() : value])
+      Object.entries(params).map(([name, value]) => [
+        name,
+        typeof value === 'bigint' ? value.toString() : value,
+      ])
     ),
     locale
   );
@@ -39,7 +45,9 @@ export function localizedErrorMessage(
   return defaultTranslated === defaultKey ? code : defaultTranslated;
 }
 
-export function validationDetails(error: z.ZodError): Array<{ path: string; code: string; message: string }> {
+export function validationDetails(
+  error: z.ZodError
+): Array<{ path: string; code: string; message: string }> {
   return error.issues.map((issue) => ({
     path: issue.path.join('.'),
     code: issue.code,
@@ -47,7 +55,11 @@ export function validationDetails(error: z.ZodError): Array<{ path: string; code
   }));
 }
 
-export function errorResponse(req: NextRequest, error: unknown, fallbackMessage = 'An unexpected error occurred'): NextResponse {
+export function errorResponse(
+  req: NextRequest,
+  error: unknown,
+  fallbackMessage = 'An unexpected error occurred'
+): NextResponse {
   const locale = getServerLocale(req.headers);
   if (error instanceof AppError) {
     const message = localizedErrorMessage(

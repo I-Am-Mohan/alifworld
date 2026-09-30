@@ -221,7 +221,12 @@ export class CheckoutOrchestratorService {
       for (const item of items) {
         const variant = item.variant;
 
-        if (!variant || variant.deletedAt || variant.product?.deletedAt || variant.product?.status !== 'PUBLISHED') {
+        if (
+          !variant ||
+          variant.deletedAt ||
+          variant.product?.deletedAt ||
+          variant.product?.status !== 'PUBLISHED'
+        ) {
           throw new ValidationError(
             `Product item '${item.variant?.product?.title || 'Unknown'}' is no longer published.`
           );
@@ -230,7 +235,11 @@ export class CheckoutOrchestratorService {
         // Live warehouse stock balance check
         const totalAvailableStock = (variant.stockBalances || []).reduce(
           (sum: number, sb: any) =>
-            sum + Math.max(0, (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)),
+            sum +
+            Math.max(
+              0,
+              (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)
+            ),
           0
         );
 
@@ -247,7 +256,7 @@ export class CheckoutOrchestratorService {
         // Discrete Product Points snapshot
         const unitProductPoint = isB2BOrder
           ? item.productPoint || 0
-          : variant.productPoint ?? variant.product.productPoint ?? 0;
+          : (variant.productPoint ?? variant.product.productPoint ?? 0);
         const lineProductPoints = unitProductPoint * item.quantity;
 
         // NBR standard VAT calculation (15% standard or taxRatePercent override)
@@ -279,16 +288,14 @@ export class CheckoutOrchestratorService {
       }
 
       // Per-seller shipping fee calculation via authoritative shipping rate engine
-      const sellerQuote = shippingQuote?.sellerQuotes?.find(
-        (sq: any) => sq.sellerId === sellerId
-      );
+      const sellerQuote = shippingQuote?.sellerQuotes?.find((sq: any) => sq.sellerId === sellerId);
 
       const qualifiesForFreeShipping = groupSubtotalPoisha >= FREE_SHIPPING_THRESHOLD_POISHA;
       const groupShippingFeePoisha = sellerQuote
         ? BigInt(sellerQuote.activeRate.finalRatePoisha)
         : qualifiesForFreeShipping
-        ? 0n
-        : baseShippingRate;
+          ? 0n
+          : baseShippingRate;
 
       const courierProvider =
         sellerQuote?.activeRate?.courierProvider || (isInsideDhaka ? 'IN_HOUSE' : 'STEADFAST');
@@ -457,7 +464,9 @@ export class CheckoutOrchestratorService {
       });
 
       if (claimResult.count !== 1) {
-        throw new ConflictError('Cart was modified concurrently or is no longer available for checkout.');
+        throw new ConflictError(
+          'Cart was modified concurrently or is no longer available for checkout.'
+        );
       }
 
       // 5b. Customer Wallet Balance Payment Processing (if selected)
@@ -512,7 +521,8 @@ export class CheckoutOrchestratorService {
           shippingPostalCode: checkout.shippingPostalCode || null,
           billingAddress: checkout.billingAddress || null,
           customerNotes: checkout.customerNotes || null,
-          ruleVersion: b2bQuote?.rewardsRuleVersion || shippingQuote?.appliedRuleVersion || 'v1.0.0',
+          ruleVersion:
+            b2bQuote?.rewardsRuleVersion || shippingQuote?.appliedRuleVersion || 'v1.0.0',
           version: 1,
         },
       });

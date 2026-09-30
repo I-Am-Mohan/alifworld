@@ -1,9 +1,9 @@
 /**
  * Customer Cart Checkout API Route
- * 
+ *
  * Enforces strict object-level cart ownership, idempotency key replay safety,
  * server-side recomputation, and multi-vendor seller fulfillment group partitioning.
- * 
+ *
  * Invariants: ADR-0003, ADR-0010, ADR-0022, ADR-0027, Milestone 131
  */
 
@@ -64,4 +64,3 @@ export async function POST(req: NextRequest) {
     return errorResponse(req, error);
   }
 }
-

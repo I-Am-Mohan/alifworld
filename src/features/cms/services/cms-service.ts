@@ -1,9 +1,9 @@
 /**
  * AlifWorld CMS Storefront Service
- * 
+ *
  * Orchestrates published homepage layout, hero banners, feature highlight blocks,
  * and localized content delivery for customer discovery.
- * 
+ *
  * Invariants: ADR-0001, ADR-0003, ADR-0016, ADR-0022
  */
 
@@ -17,10 +17,7 @@ import {
   HomeSection,
   HeroBanner,
 } from '../types';
-import {
-  UpdateHomepageLayoutSchema,
-  UpdateHomepageLayoutInput,
-} from '../validators';
+import { UpdateHomepageLayoutSchema, UpdateHomepageLayoutInput } from '../validators';
 
 const DEFAULT_BANNERS: HeroBanner[] = [
   {
@@ -145,10 +142,20 @@ const DEFAULT_SECTIONS: HomeSection[] = [
     data: {
       categories: [
         { name: 'Smartphones', nameBn: 'স্মার্টফোন', slug: 'smartphones', count: 120 },
-        { name: 'Audio & Wearables', nameBn: 'অডিও ও পরিধানযোগ্য', slug: 'audio-wearables', count: 85 },
+        {
+          name: 'Audio & Wearables',
+          nameBn: 'অডিও ও পরিধানযোগ্য',
+          slug: 'audio-wearables',
+          count: 85,
+        },
         { name: 'Fashion & Clothing', nameBn: 'ফ্যাশন ও পোশাক', slug: 'fashion', count: 340 },
         { name: 'Groceries & Staples', nameBn: 'মুদি ও খাদ্যপণ্য', slug: 'groceries', count: 450 },
-        { name: 'Home Appliances', nameBn: 'গৃহস্থালী যন্ত্রপাতি', slug: 'home-appliances', count: 90 },
+        {
+          name: 'Home Appliances',
+          nameBn: 'গৃহস্থালী যন্ত্রপাতি',
+          slug: 'home-appliances',
+          count: 90,
+        },
       ],
     },
   },
@@ -188,7 +195,9 @@ export class CmsService {
    * Retrieves the published storefront homepage layout localized for the given language.
    * If not yet seeded in DB, returns high-fidelity fallback layout.
    */
-  public async getStorefrontHomepage(locale: 'en-BD' | 'bn-BD' = 'en-BD'): Promise<LocalizedHomepage> {
+  public async getStorefrontHomepage(
+    locale: 'en-BD' | 'bn-BD' = 'en-BD'
+  ): Promise<LocalizedHomepage> {
     try {
       const cmsRecord = await this.db.cmsContent.findFirst({
         where: {
@@ -207,7 +216,8 @@ export class CmsService {
 
       // Check if there is a locale-specific translation payload
       let sections: HomeSection[] = DEFAULT_SECTIONS;
-      const translation = cmsRecord.translations?.find((t: any) => t.locale === locale) ||
+      const translation =
+        cmsRecord.translations?.find((t: any) => t.locale === locale) ||
         cmsRecord.translations?.find((t: any) => t.locale === 'en-BD');
 
       if (translation && translation.body && Array.isArray((translation.body as any).sections)) {

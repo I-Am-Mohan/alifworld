@@ -14,17 +14,12 @@ export const dynamic = 'force-dynamic';
  * Public endpoint to list approved questions and official answers for a product.
  * Redacts customer personal details for zero PII leakage.
  */
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await props.params;
     const { searchParams } = new URL(req.url);
 
-    const query = ListProductQuestionsQuerySchema.parse(
-      Object.fromEntries(searchParams.entries())
-    );
+    const query = ListProductQuestionsQuerySchema.parse(Object.fromEntries(searchParams.entries()));
 
     let currentUserId: string | undefined;
     try {
@@ -34,11 +29,7 @@ export async function GET(
       // Unauthenticated public request
     }
 
-    const result = await productQnaService.getProductQuestions(
-      id,
-      query,
-      currentUserId
-    );
+    const result = await productQnaService.getProductQuestions(id, query, currentUserId);
 
     return NextResponse.json(
       {
@@ -62,10 +53,7 @@ export async function GET(
  * POST /api/v1/catalog/products/[id]/questions
  * Submits a customer inquiry on a product.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
@@ -76,10 +64,7 @@ export async function POST(
       productId: id,
     });
 
-    const question = await productQnaService.createQuestion(
-      actor.userId,
-      validatedInput
-    );
+    const question = await productQnaService.createQuestion(actor.userId, validatedInput);
 
     return NextResponse.json(
       {

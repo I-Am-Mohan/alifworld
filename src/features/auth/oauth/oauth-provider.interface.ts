@@ -1,8 +1,8 @@
 /**
  * Federated OAuth Identity Provider Interfaces
- * 
+ *
  * Defines standard contract for third-party identity providers (Google, Facebook, Apple).
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 039
  */
 

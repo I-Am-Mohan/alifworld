@@ -1,9 +1,9 @@
 /**
  * AlifWorld Search Indexer Service
- * 
+ *
  * Manages full catalog reindexing, batch document transformation,
  * and real-time incremental synchronizations driven by catalog and inventory mutations.
- * 
+ *
  * References:
  * - docs/architecture/catalog-taxonomy-products-and-media.md
  * - docs/architecture/scope-boundaries-and-domain-map.md

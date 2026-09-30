@@ -34,25 +34,30 @@ export default function AdminPromosPage() {
   const [discountValue, setDiscountValue] = useState(10);
   const [minOrderSubtotalBDT, setMinOrderSubtotalBDT] = useState(0);
 
-  const loadPromos = React.useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/v1/admin/promotions');
-      const json = await res.json();
-      if (json.success) {
-        setPromotions(json.data);
-      } else {
-        setError(json.error?.message || 'Failed to fetch promotions');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Error loading promotions');
-    } finally {
-      setLoading(false);
-    }
+  const loadPromos = React.useCallback((signal?: AbortSignal) => {
+    return fetch('/api/v1/admin/promotions', { signal })
+      .then(async (res) => {
+        const json = await res.json().catch(() => null);
+        if (json?.success) {
+          setPromotions(json.data || []);
+          setError(null);
+        } else {
+          setError(json?.error?.message || 'Failed to fetch promotions');
+        }
+      })
+      .catch((err: any) => {
+        if (signal?.aborted) return;
+        setError(err.message || 'Error loading promotions');
+      })
+      .finally(() => {
+        if (!signal?.aborted) setLoading(false);
+      });
   }, []);
 
   useEffect(() => {
-    loadPromos();
+    const controller = new AbortController();
+    void loadPromos(controller.signal);
+    return () => controller.abort();
   }, [loadPromos]);
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -99,7 +104,8 @@ export default function AdminPromosPage() {
             Promotions & Funding Attribution
           </h1>
           <p className="text-sm text-slate-500">
-            Configure platform, seller, and co-funded voucher campaigns with authoritative money splits.
+            Configure platform, seller, and co-funded voucher campaigns with authoritative money
+            splits.
           </p>
         </div>
         <button
@@ -112,7 +118,9 @@ export default function AdminPromosPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">{error}</div>
+        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">
+          {error}
+        </div>
       )}
 
       {loading ? (
@@ -142,7 +150,9 @@ export default function AdminPromosPage() {
                 promotions.map((promo) => (
                   <tr key={promo.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30">
                     <td className="p-3 font-mono font-bold text-indigo-600">{promo.code}</td>
-                    <td className="p-3 font-medium text-slate-900 dark:text-white">{promo.title}</td>
+                    <td className="p-3 font-medium text-slate-900 dark:text-white">
+                      {promo.title}
+                    </td>
                     <td className="p-3">{promo.promotionType}</td>
                     <td className="p-3">
                       <span
@@ -150,8 +160,8 @@ export default function AdminPromosPage() {
                           promo.fundingType === 'PLATFORM_FUNDED'
                             ? 'bg-blue-100 text-blue-700'
                             : promo.fundingType === 'SELLER_FUNDED'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-purple-100 text-purple-700'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-purple-100 text-purple-700'
                         }`}
                       >
                         {promo.fundingType}
@@ -161,7 +171,9 @@ export default function AdminPromosPage() {
                       {Number(promo.sellerSharePercent)}% / {Number(promo.platformSharePercent)}%
                     </td>
                     <td className="p-3 font-medium">
-                      {promo.promotionType === 'PERCENTAGE' ? `${promo.discountValue}%` : `৳${promo.discountValue}`}
+                      {promo.promotionType === 'PERCENTAGE'
+                        ? `${promo.discountValue}%`
+                        : `৳${promo.discountValue}`}
                     </td>
                     <td className="p-3">
                       <span className="px-2 py-0.5 text-xs font-medium rounded bg-emerald-100 text-emerald-800">
@@ -179,7 +191,9 @@ export default function AdminPromosPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-800 rounded-lg max-w-lg w-full p-6 space-y-4 shadow-xl border">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Promotion & Funding Split</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Create Promotion & Funding Split
+            </h2>
             <form onSubmit={handleCreate} className="space-y-4 text-sm">
               <div>
                 <label className="block font-medium mb-1">Coupon Code</label>
@@ -233,7 +247,9 @@ export default function AdminPromosPage() {
               </div>
 
               <div className="space-y-2 border-t pt-3">
-                <label className="block font-semibold text-slate-900 dark:text-white">Funding Source & Attribution</label>
+                <label className="block font-semibold text-slate-900 dark:text-white">
+                  Funding Source & Attribution
+                </label>
                 <select
                   value={fundingType}
                   onChange={(e) => {

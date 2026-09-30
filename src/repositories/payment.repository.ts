@@ -1,14 +1,18 @@
 /**
  * Payment & Refund Repository
- * 
+ *
  * Manages customer payments, digital gateway authorizations, idempotency boundaries,
  * raw webhook logs, and item-level partial refunds with financial validation.
- * 
+ *
  * Reference: docs/architecture/payments-refunds-commissions-settlements-and-payouts.md
  * Invariants: ADR-0003, ADR-0022, ADR-0028
  */
 
-import { BaseRepository, parseOffsetPagination, formatPaginatedResult } from '@/shared/database/base-repository';
+import {
+  BaseRepository,
+  parseOffsetPagination,
+  formatPaginatedResult,
+} from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { NotFoundError, ConflictError, ValidationError } from '@/shared/errors/app-error';
 
@@ -137,7 +141,9 @@ export class PaymentRepository extends BaseRepository {
         where: { id: paymentId },
         data: {
           status,
-          ...(options.gatewayTransactionId ? { gatewayTransactionId: options.gatewayTransactionId } : {}),
+          ...(options.gatewayTransactionId
+            ? { gatewayTransactionId: options.gatewayTransactionId }
+            : {}),
           ...(options.gatewayPayload ? { gatewayPayload: options.gatewayPayload } : {}),
           ...(options.failureReason ? { failureReason: options.failureReason, failedAt: now } : {}),
           ...(status === 'AUTHORIZED' ? { authorizedAt: now } : {}),
@@ -179,7 +185,8 @@ export class PaymentRepository extends BaseRepository {
       return {
         capturedPoisha,
         refundedPoisha,
-        availableRefundPoisha: availableRefundPoisha > BigInt(0) ? availableRefundPoisha : BigInt(0),
+        availableRefundPoisha:
+          availableRefundPoisha > BigInt(0) ? availableRefundPoisha : BigInt(0),
       };
     }, 'PaymentRepository.getRefundableBalance');
   }
@@ -275,7 +282,8 @@ export class PaymentRepository extends BaseRepository {
 
         // Update payment status (PARTIALLY_REFUNDED or REFUNDED)
         const newTotalRefunded = alreadyRefunded + input.amountPoisha;
-        const newPaymentStatus = newTotalRefunded >= capturedPoisha ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
+        const newPaymentStatus =
+          newTotalRefunded >= capturedPoisha ? 'REFUNDED' : 'PARTIALLY_REFUNDED';
         await (tx as any).payment.update({
           where: { id: input.paymentId },
           data: { status: newPaymentStatus },
@@ -329,7 +337,10 @@ export class PaymentRepository extends BaseRepository {
   /**
    * Updates webhook log processing status.
    */
-  async updateWebhookLogStatus(logId: string, status: 'VERIFIED' | 'PROCESSED' | 'INVALID_SIGNATURE' | 'DUPLICATE') {
+  async updateWebhookLogStatus(
+    logId: string,
+    status: 'VERIFIED' | 'PROCESSED' | 'INVALID_SIGNATURE' | 'DUPLICATE'
+  ) {
     return this.executeSafe(async () => {
       return (this.db as any).paymentWebhookLog.update({
         where: { id: logId },

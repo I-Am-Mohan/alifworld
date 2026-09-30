@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface AdminQuarantineItemView {
   id: string;
@@ -65,8 +72,8 @@ export default function AdminRmaInspectionPage() {
             result === 'PASSED_RESTOCK'
               ? ('RESTOCKED' as const)
               : result === 'FAILED_DAMAGED'
-              ? ('DAMAGED' as const)
-              : ('WRITE_OFF' as const);
+                ? ('DAMAGED' as const)
+                : ('WRITE_OFF' as const);
           setToastMessage(
             result === 'PASSED_RESTOCK'
               ? `✓ QC Inspection PASSED for '${item.rmaNumber}'. Restocked ${item.quarantinedQty} units to available inventory.`
@@ -129,7 +136,8 @@ export default function AdminRmaInspectionPage() {
             <CardTitle className="text-sm font-bold text-slate-900 flex items-center justify-between">
               <span>Quarantined Returned Items Awaiting Inspection</span>
               <Badge className="bg-purple-600 text-white font-mono text-[10px]">
-                {quarantinedItems.filter((i) => i.inspectionStatus === 'PENDING_INSPECTION').length} Items to Inspect
+                {quarantinedItems.filter((i) => i.inspectionStatus === 'PENDING_INSPECTION').length}{' '}
+                Items to Inspect
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -173,7 +181,8 @@ export default function AdminRmaInspectionPage() {
                     <TableCell>
                       <div className="font-bold text-slate-900 text-xs">{item.rmaNumber}</div>
                       <div className="text-[10px] font-mono text-slate-500">
-                        <span className="text-slate-700 font-bold">{item.sellerName}</span> ({item.orderId})
+                        <span className="text-slate-700 font-bold">{item.sellerName}</span> (
+                        {item.orderId})
                       </div>
                     </TableCell>
                     <TableCell>
@@ -201,7 +210,9 @@ export default function AdminRmaInspectionPage() {
                           </Button>
                         </div>
                       ) : (
-                        <span className="text-[11px] font-bold text-slate-500">{item.inspectionStatus}</span>
+                        <span className="text-[11px] font-bold text-slate-500">
+                          {item.inspectionStatus}
+                        </span>
                       )}
                     </TableCell>
                   </TableRow>

@@ -94,9 +94,7 @@ export class RuleBasedShippingRateProvider implements IShippingRateProvider {
   /**
    * Calculates rate options and delivery promises for a seller shipment package.
    */
-  public async calculateRates(
-    request: ProviderRateRequest
-  ): Promise<ShippingRateOptionDTO[]> {
+  public async calculateRates(request: ProviderRateRequest): Promise<ShippingRateOptionDTO[]> {
     const {
       destinationZone,
       packageWeight,
@@ -195,16 +193,11 @@ export class RuleBasedShippingRateProvider implements IShippingRateProvider {
       sellerHandlingDays !== undefined
         ? sellerHandlingDays
         : matchedRule
-        ? matchedRule.handlingDays
-        : zoneDefaults.handlingDays;
-    const transitDaysMin = matchedRule
-      ? matchedRule.transitDaysMin
-      : zoneDefaults.transitDaysMin;
-    const transitDaysMax = matchedRule
-      ? matchedRule.transitDaysMax
-      : zoneDefaults.transitDaysMax;
-    const cutoffTime =
-      orderCutoffTime || (matchedRule ? matchedRule.cutoffTime : '14:00');
+          ? matchedRule.handlingDays
+          : zoneDefaults.handlingDays;
+    const transitDaysMin = matchedRule ? matchedRule.transitDaysMin : zoneDefaults.transitDaysMin;
+    const transitDaysMax = matchedRule ? matchedRule.transitDaysMax : zoneDefaults.transitDaysMax;
+    const cutoffTime = orderCutoffTime || (matchedRule ? matchedRule.cutoffTime : '14:00');
     const courier = matchedRule?.courierProvider || zoneDefaults.defaultCourier;
     const ruleVersion = matchedRule?.ruleVersion || 'v1.0.0';
 
@@ -220,18 +213,13 @@ export class RuleBasedShippingRateProvider implements IShippingRateProvider {
     // 2. Shipping Class Surcharges
     let classSurchargePoisha = 0;
     const hasFragile = items.some((i) => i.shippingClass === 'FRAGILE');
-    const hasHeavy =
-      items.some((i) => i.shippingClass === 'HEAVY') || packageWeight.isOverweight;
+    const hasHeavy = items.some((i) => i.shippingClass === 'HEAVY') || packageWeight.isOverweight;
 
     if (hasFragile) {
-      classSurchargePoisha += matchedRule
-        ? Number(matchedRule.fragileSurchargePoisha || 0)
-        : 5000; // ৳50.00
+      classSurchargePoisha += matchedRule ? Number(matchedRule.fragileSurchargePoisha || 0) : 5000; // ৳50.00
     }
     if (hasHeavy) {
-      classSurchargePoisha += matchedRule
-        ? Number(matchedRule.heavySurchargePoisha || 0)
-        : 10000; // ৳100.00
+      classSurchargePoisha += matchedRule ? Number(matchedRule.heavySurchargePoisha || 0) : 10000; // ৳100.00
     }
 
     // 3. Free Shipping Qualification
@@ -253,9 +241,7 @@ export class RuleBasedShippingRateProvider implements IShippingRateProvider {
     });
 
     const isCodAllowed = matchedRule ? matchedRule.isCodAllowed : true;
-    const maxCodPoisha = matchedRule
-      ? Number(matchedRule.maxCodAmountPoisha || 5000000)
-      : 5000000;
+    const maxCodPoisha = matchedRule ? Number(matchedRule.maxCodAmountPoisha || 5000000) : 5000000;
 
     const rateOptions: ShippingRateOptionDTO[] = [
       {
@@ -319,9 +305,7 @@ export class RuleBasedShippingRateProvider implements IShippingRateProvider {
         const sameDayBaseRatePoisha = baseRatePoisha + 9000; // ৳90 extra for same-day
         const sameDayGrossPoisha =
           sameDayBaseRatePoisha + weightSurchargePoisha + classSurchargePoisha;
-        const sameDayFinalRatePoisha = qualifiesForFreeShipping
-          ? 9000
-          : sameDayGrossPoisha;
+        const sameDayFinalRatePoisha = qualifiesForFreeShipping ? 9000 : sameDayGrossPoisha;
 
         const sameDayPromise = calculateDeliveryPromise({
           asOfDate,
@@ -360,13 +344,10 @@ export class RuleBasedShippingRateProvider implements IShippingRateProvider {
   /**
    * Estimates delivery promise for a given destination and item configuration.
    */
-  public async estimatePromise(
-    request: ProviderRateRequest
-  ): Promise<DeliveryPromiseSnapshotDTO> {
+  public async estimatePromise(request: ProviderRateRequest): Promise<DeliveryPromiseSnapshotDTO> {
     const rates = await this.calculateRates(request);
     const preferred = request.preferredMethod || 'STANDARD';
-    const chosen =
-      rates.find((r) => r.methodCode === preferred) || rates[0];
+    const chosen = rates.find((r) => r.methodCode === preferred) || rates[0];
 
     return chosen.deliveryPromise;
   }

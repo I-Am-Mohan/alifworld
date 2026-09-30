@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/b2b/quotes/[id]/accept
  * Buyer accepts a negotiated quote before expiration.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
@@ -21,11 +18,7 @@ export async function POST(
     const body = await req.json().catch(() => ({}));
     const validatedInput = AcceptQuoteSchema.parse(body);
 
-    const accepted = await b2bCommerceService.acceptQuote(
-      id,
-      actor.userId,
-      validatedInput
-    );
+    const accepted = await b2bCommerceService.acceptQuote(id, actor.userId, validatedInput);
 
     return NextResponse.json(
       {

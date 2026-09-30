@@ -134,9 +134,9 @@ describe('Milestone 123: Wishlists and Share-Safe Links Unit Tests', () => {
     it('prevents customer B from viewing or mutating customer A wishlist', async () => {
       const defaultList = await service.getDefaultWishlist('usr_customer_01');
 
-      expect(
-        service.getWishlistById('usr_stranger_99', defaultList.id)
-      ).rejects.toThrow(AuthorizationError);
+      expect(service.getWishlistById('usr_stranger_99', defaultList.id)).rejects.toThrow(
+        AuthorizationError
+      );
 
       expect(
         service.addItemToWishlist('usr_stranger_99', defaultList.id, {
@@ -148,9 +148,9 @@ describe('Milestone 123: Wishlists and Share-Safe Links Unit Tests', () => {
     it('prevents deleting primary default wishlist', async () => {
       const defaultList = await service.getDefaultWishlist('usr_customer_01');
 
-      expect(
-        service.deleteWishlist('usr_customer_01', defaultList.id)
-      ).rejects.toThrow(ConflictError);
+      expect(service.deleteWishlist('usr_customer_01', defaultList.id)).rejects.toThrow(
+        ConflictError
+      );
     });
 
     it('allows deleting custom wishlist', async () => {

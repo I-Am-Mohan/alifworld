@@ -1,9 +1,9 @@
 /**
  * AlifWorld Order & Fulfillment Authorization Policy
- * 
+ *
  * Enforces customer object-ownership, seller fulfillment-group tenant isolation,
  * delivery rider handovers, and administrative management.
- * 
+ *
  * Invariants: ADR-0003, ADR-0010, ADR-0022, ADR-0023, Milestone 042
  */
 
@@ -19,24 +19,41 @@ export class OrderPolicy implements IPolicy {
     const isPlatformAdmin = actor.roles.includes(SystemRoleCode.ADMIN);
     const isCustomer = actor.roles.includes(SystemRoleCode.CUSTOMER);
     const isRider = actor.roles.includes(SystemRoleCode.RIDER);
-    const isSeller = actor.roles.includes(SystemRoleCode.SELLER_OWNER) || actor.roles.includes(SystemRoleCode.SELLER_STAFF);
+    const isSeller =
+      actor.roles.includes(SystemRoleCode.SELLER_OWNER) ||
+      actor.roles.includes(SystemRoleCode.SELLER_STAFF);
 
     // 1. Super Administrator Global Bypass
     if (isSuperAdmin) {
-      return { granted: true, code: 'GRANTED', reason: 'Super Administrator holds global order access.', policyName: this.name };
+      return {
+        granted: true,
+        code: 'GRANTED',
+        reason: 'Super Administrator holds global order access.',
+        policyName: this.name,
+      };
     }
 
     // 2. Read Action Evaluation
     if (action === 'read' || action === 'orders:read') {
       // Platform admin can view all orders globally
       if (isPlatformAdmin) {
-        return { granted: true, code: 'GRANTED', reason: 'Administrator authorized to inspect orders.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Administrator authorized to inspect orders.',
+          policyName: this.name,
+        };
       }
 
       // Customer reading own order
       if (isCustomer && resource.ownerId) {
         if (resource.ownerId === actor.userId) {
-          return { granted: true, code: 'GRANTED', reason: 'Customer accessing own order.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Customer accessing own order.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -50,7 +67,12 @@ export class OrderPolicy implements IPolicy {
       // Seller reading order belonging to their fulfillment group
       if (isSeller && resource.sellerId) {
         if (actor.sellerId === resource.sellerId) {
-          return { granted: true, code: 'GRANTED', reason: 'Seller accessing order in their fulfillment group.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Seller accessing order in their fulfillment group.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -64,7 +86,12 @@ export class OrderPolicy implements IPolicy {
       // Delivery Rider assigned to order
       if (isRider && resource.data?.riderId) {
         if (resource.data.riderId === actor.userId) {
-          return { granted: true, code: 'GRANTED', reason: 'Delivery rider accessing assigned fulfillment shipment.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Delivery rider accessing assigned fulfillment shipment.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -75,7 +102,12 @@ export class OrderPolicy implements IPolicy {
       }
 
       if (actor.permissions.includes('orders:read') && !isCustomer && !isSeller) {
-        return { granted: true, code: 'GRANTED', reason: 'Operator authorized to inspect orders.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Operator authorized to inspect orders.',
+          policyName: this.name,
+        };
       }
 
       return {
@@ -89,19 +121,39 @@ export class OrderPolicy implements IPolicy {
     // 3. Order Processing & Fulfillment (manage)
     if (action === 'manage' || action === 'orders:manage') {
       if (isPlatformAdmin) {
-        return { granted: true, code: 'GRANTED', reason: 'Admin authorized to manage orders.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Admin authorized to manage orders.',
+          policyName: this.name,
+        };
       }
 
       if (isSeller && resource.sellerId && actor.sellerId === resource.sellerId) {
-        return { granted: true, code: 'GRANTED', reason: 'Seller authorized to process fulfillment group.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Seller authorized to process fulfillment group.',
+          policyName: this.name,
+        };
       }
 
       if (isRider && resource.data?.riderId === actor.userId) {
-        return { granted: true, code: 'GRANTED', reason: 'Rider authorized to complete delivery status updates.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Rider authorized to complete delivery status updates.',
+          policyName: this.name,
+        };
       }
 
       if (actor.permissions.includes('orders:manage') && !isCustomer && !isSeller) {
-        return { granted: true, code: 'GRANTED', reason: 'Operator authorized to manage orders.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Operator authorized to manage orders.',
+          policyName: this.name,
+        };
       }
 
       return {
@@ -115,7 +167,12 @@ export class OrderPolicy implements IPolicy {
     // 4. Order Cancellation (cancel)
     if (action === 'cancel' || action === 'orders:cancel') {
       if (isPlatformAdmin || actor.permissions.includes('orders:cancel')) {
-        return { granted: true, code: 'GRANTED', reason: 'Admin authorized to cancel orders.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Admin authorized to cancel orders.',
+          policyName: this.name,
+        };
       }
 
       // Customer attempting to cancel another customer's order
@@ -141,7 +198,12 @@ export class OrderPolicy implements IPolicy {
             policyName: this.name,
           };
         }
-        return { granted: true, code: 'GRANTED', reason: 'Customer cancelling eligible pending order.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Customer cancelling eligible pending order.',
+          policyName: this.name,
+        };
       }
 
       return {
@@ -155,7 +217,12 @@ export class OrderPolicy implements IPolicy {
     // 5. Refund Issuance (refund)
     if (action === 'refund' || action === 'orders:refund') {
       if (isPlatformAdmin || actor.permissions.includes('orders:refund')) {
-        return { granted: true, code: 'GRANTED', reason: 'Admin authorized to issue order refunds.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Admin authorized to issue order refunds.',
+          policyName: this.name,
+        };
       }
       return {
         granted: false,

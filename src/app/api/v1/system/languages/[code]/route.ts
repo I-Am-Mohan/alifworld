@@ -11,16 +11,16 @@ const i18nService = new I18nService();
 
 /**
  * PATCH /api/v1/system/languages/[code]
- * 
+ *
  * Updates a language (activate/deactivate, name, wordForLanguage, etc.).
  */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      id: 'I18N_LANGUAGE_REGISTRY',
+    });
     const { code } = await params;
     const body = await req.json().catch(() => ({}));
 
@@ -64,16 +64,16 @@ export async function PATCH(
 
 /**
  * DELETE /api/v1/system/languages/[code]
- * 
+ *
  * Removes a non-default language from the system.
  */
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
     const actor = authenticateRequest(_req);
-    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      id: 'I18N_LANGUAGE_REGISTRY',
+    });
     const { code } = await params;
 
     const updatedConfig = await i18nService.deleteLanguage(code);

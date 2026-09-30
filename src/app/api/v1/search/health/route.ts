@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/v1/search/health
  * Health and degraded-mode readiness probe for storefront search engines.
- * 
+ *
  * Returns:
  * - status: 'HEALTHY' | 'DEGRADED' | 'DOWN'
  * - primaryEngine: 'meilisearch'

@@ -10,13 +10,20 @@ export const dynamic = 'force-dynamic';
 const service = new TranslationQaService();
 const messageQuerySchema = z.object({
   locale: z.string().min(2).max(20),
-  key: z.string().regex(/^[A-Za-z0-9_.-]+$/).min(1).max(200),
+  key: z
+    .string()
+    .regex(/^[A-Za-z0-9_.-]+$/)
+    .min(1)
+    .max(200),
 });
 
 export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'LOCALIZATION_QA' });
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      id: 'LOCALIZATION_QA',
+    });
 
     const parsed = messageQuerySchema.safeParse({
       locale: req.nextUrl.searchParams.get('locale'),
@@ -24,7 +31,14 @@ export async function GET(req: NextRequest) {
     });
     if (!parsed.success) {
       return NextResponse.json(
-        { success: false, error: { code: 'VALIDATION_FAILED', message: 'A valid locale and translation key are required', details: parsed.error.flatten() } },
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'A valid locale and translation key are required',
+            details: parsed.error.flatten(),
+          },
+        },
         { status: 422 }
       );
     }

@@ -1,6 +1,6 @@
 /**
  * Unit Tests: Server-Side Object-Level Authorization & Ownership Verification
- * 
+ *
  * Tests ObjectAuthorizationService:
  * 1. OwnershipRelation classification (DIRECT_OWNER, TENANT_OWNER, TENANT_STAFF, ASSIGNED_ACTOR, PLATFORM_ADMIN, PLATFORM_SUPER_ADMIN, PUBLIC, NONE)
  * 2. Account lifecycle enforcement (SUSPENDED / DELETED accounts blocked)
@@ -10,7 +10,7 @@
  * 6. Product catalog public browsing vs merchant-isolated draft authoring
  * 7. Wallet double-entry isolation and Gate-05 Maker-Checker dual authorization
  * 8. Dynamic metadata resolver integration and NotFoundError dispatch
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Gate-05, Milestone 047
  */
 
@@ -237,7 +237,7 @@ describe('Object-Level Authorization & Ownership Verification Suite (Milestone 0
       expect(decision.relation).toBe('DIRECT_OWNER');
     });
 
-    it('strictly forbids a customer from reading another customer\'s order (OWNERSHIP_VIOLATION)', async () => {
+    it("strictly forbids a customer from reading another customer's order (OWNERSHIP_VIOLATION)", async () => {
       const decision = await service.evaluate({
         action: 'read',
         actor: customerBob,

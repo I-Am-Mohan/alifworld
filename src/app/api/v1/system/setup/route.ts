@@ -185,10 +185,14 @@ export async function GET() {
       try {
         const parsed = JSON.parse(configMap.PLATFORM_CURRENCIES);
         if (!Array.isArray(parsed)) {
-          configMap.PLATFORM_CURRENCIES = JSON.stringify(parseCurrencies(configMap.PLATFORM_CURRENCIES));
+          configMap.PLATFORM_CURRENCIES = JSON.stringify(
+            parseCurrencies(configMap.PLATFORM_CURRENCIES)
+          );
         }
       } catch {
-        configMap.PLATFORM_CURRENCIES = JSON.stringify(parseCurrencies(configMap.PLATFORM_CURRENCIES));
+        configMap.PLATFORM_CURRENCIES = JSON.stringify(
+          parseCurrencies(configMap.PLATFORM_CURRENCIES)
+        );
       }
     }
 
@@ -222,7 +226,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: { code: 'VALIDATION_FAILED', message: 'Payload must be a settings key-value object' },
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'Payload must be a settings key-value object',
+          },
         },
         { status: 422 }
       );
@@ -240,9 +247,10 @@ export async function POST(req: NextRequest) {
       async (tx: any) => {
         for (const [key, rawValue] of Object.entries(body)) {
           if (typeof key !== 'string' || key.length === 0) continue;
-          const value = typeof rawValue === 'object' && rawValue !== null
-            ? JSON.stringify(rawValue)
-            : String(rawValue);
+          const value =
+            typeof rawValue === 'object' && rawValue !== null
+              ? JSON.stringify(rawValue)
+              : String(rawValue);
 
           await tx.systemConfig.upsert({
             where: { key },

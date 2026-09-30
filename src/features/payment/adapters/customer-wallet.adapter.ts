@@ -14,7 +14,10 @@ import {
 } from '../types/payment-method.types';
 import { BasePaymentAdapter } from './base-payment.adapter';
 
-export class CustomerWalletPaymentAdapter extends BasePaymentAdapter implements IPaymentGatewayAdapter {
+export class CustomerWalletPaymentAdapter
+  extends BasePaymentAdapter
+  implements IPaymentGatewayAdapter
+{
   public readonly code: PaymentGatewayCode = 'CUSTOMER_WALLET';
   public readonly name = 'AlifWorld Customer Wallet';
   public readonly category: PaymentMethodCategory = 'WALLET';

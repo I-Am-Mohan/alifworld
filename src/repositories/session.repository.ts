@@ -1,9 +1,9 @@
 /**
  * AlifWorld User Authentication & Session Repository
- * 
+ *
  * Manages persisted user sessions, refresh token hashes, client device records,
  * and token version invalidation counters.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031
  */
 
@@ -46,7 +46,9 @@ export class SessionRepository {
           return {
             familyId: parsed.familyId,
             generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
-            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes) ? parsed.consumedTokenHashes : [],
+            consumedTokenHashes: Array.isArray(parsed.consumedTokenHashes)
+              ? parsed.consumedTokenHashes
+              : [],
             rawDeviceInfo: parsed.rawDeviceInfo ?? null,
           };
         }
@@ -189,7 +191,7 @@ export class SessionRepository {
 
     const updatedMetadata: SessionFamilyMetadata = {
       ...metadata,
-      generation: newGeneration ?? (metadata.generation + 1),
+      generation: newGeneration ?? metadata.generation + 1,
       consumedTokenHashes: trimmedConsumed,
     };
 
@@ -250,7 +252,11 @@ export class SessionRepository {
   /**
    * Revokes all active sessions for a user EXCEPT a specified session (e.g. "log out of other devices").
    */
-  async revokeOtherUserSessions(userId: string, exceptSessionId: string, reason = 'REVOKED_OTHER_SESSIONS') {
+  async revokeOtherUserSessions(
+    userId: string,
+    exceptSessionId: string,
+    reason = 'REVOKED_OTHER_SESSIONS'
+  ) {
     return this.prisma.userSession.updateMany({
       where: {
         userId,

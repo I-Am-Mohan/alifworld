@@ -64,13 +64,10 @@ export const CalculateShippingRatesSchema = z
     items: z.array(ShippingItemInputSchema).optional(),
     shippingMethod: ShippingMethodCodeEnum.optional().default('STANDARD'),
   })
-  .refine(
-    (data) => Boolean(data.cartId) || (Array.isArray(data.items) && data.items.length > 0),
-    {
-      message: 'Either cartId or a non-empty items array must be provided.',
-      path: ['cartId'],
-    }
-  );
+  .refine((data) => Boolean(data.cartId) || (Array.isArray(data.items) && data.items.length > 0), {
+    message: 'Either cartId or a non-empty items array must be provided.',
+    path: ['cartId'],
+  });
 
 export const CalculateShippingPromiseSchema = z.object({
   destinationDivision: z.string().min(2, 'Destination division is required'),

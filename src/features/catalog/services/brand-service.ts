@@ -1,8 +1,8 @@
 /**
  * AlifWorld Brand Registry Service
- * 
+ *
  * Orchestrates brand creation, trademark approvals, and registry governance.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0025
  */
@@ -26,7 +26,9 @@ export class BrandService {
 
     const existingSlug = await this.brandRepo.findBySlug(input.slug);
     if (existingSlug) {
-      throw new ConflictError(`Brand slug '${input.slug}' is already registered.`, { slug: input.slug });
+      throw new ConflictError(`Brand slug '${input.slug}' is already registered.`, {
+        slug: input.slug,
+      });
     }
 
     const brand = await this.brandRepo.create({
@@ -87,18 +89,57 @@ export class BrandService {
     return updated;
   }
 
-  public async approveBrand(adminUserId: string, id: string, expectedVersion: number): Promise<BrandModel> {
+  public async approveBrand(
+    adminUserId: string,
+    id: string,
+    expectedVersion: number
+  ): Promise<BrandModel> {
     await this.assertAdminAccess(adminUserId);
-    const updated = await this.brandRepo.update(id, expectedVersion, { isVerified: true, approvalStatus: 'APPROVED', rejectionReason: null, reviewedBy: adminUserId, reviewedAt: new Date(), isActive: true });
-    await (prisma as any).auditLog.create({ data: { actorId: adminUserId, action: 'BRAND_APPROVED', resource: 'Brand', resourceId: id, metadata: { status: 'APPROVED' } } });
+    const updated = await this.brandRepo.update(id, expectedVersion, {
+      isVerified: true,
+      approvalStatus: 'APPROVED',
+      rejectionReason: null,
+      reviewedBy: adminUserId,
+      reviewedAt: new Date(),
+      isActive: true,
+    });
+    await (prisma as any).auditLog.create({
+      data: {
+        actorId: adminUserId,
+        action: 'BRAND_APPROVED',
+        resource: 'Brand',
+        resourceId: id,
+        metadata: { status: 'APPROVED' },
+      },
+    });
     return updated;
   }
 
-  public async rejectBrand(adminUserId: string, id: string, expectedVersion: number, reason: string): Promise<BrandModel> {
+  public async rejectBrand(
+    adminUserId: string,
+    id: string,
+    expectedVersion: number,
+    reason: string
+  ): Promise<BrandModel> {
     await this.assertAdminAccess(adminUserId);
-    if (!reason || reason.trim().length < 5) throw new ConflictError('A descriptive rejection reason is required.');
-    const updated = await this.brandRepo.update(id, expectedVersion, { isVerified: false, approvalStatus: 'REJECTED', rejectionReason: reason.trim(), reviewedBy: adminUserId, reviewedAt: new Date() });
-    await (prisma as any).auditLog.create({ data: { actorId: adminUserId, action: 'BRAND_REJECTED', resource: 'Brand', resourceId: id, metadata: { status: 'REJECTED', reason: reason.trim() } } });
+    if (!reason || reason.trim().length < 5)
+      throw new ConflictError('A descriptive rejection reason is required.');
+    const updated = await this.brandRepo.update(id, expectedVersion, {
+      isVerified: false,
+      approvalStatus: 'REJECTED',
+      rejectionReason: reason.trim(),
+      reviewedBy: adminUserId,
+      reviewedAt: new Date(),
+    });
+    await (prisma as any).auditLog.create({
+      data: {
+        actorId: adminUserId,
+        action: 'BRAND_REJECTED',
+        resource: 'Brand',
+        resourceId: id,
+        metadata: { status: 'REJECTED', reason: reason.trim() },
+      },
+    });
     return updated;
   }
 

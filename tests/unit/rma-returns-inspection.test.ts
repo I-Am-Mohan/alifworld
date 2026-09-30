@@ -29,7 +29,10 @@ class MockStockBalanceRepo extends StockBalanceRepository {
     return this.balances.get(id) ?? null;
   }
 
-  public async findByWarehouseAndVariant(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async findByWarehouseAndVariant(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     for (const bal of this.balances.values()) {
       if (bal.warehouseId === warehouseId && bal.variantId === variantId) {
         return bal;
@@ -107,7 +110,11 @@ class MockReservationRepo extends StockReservationRepository {}
 class MockMovementRepo extends StockMovementRepository {
   public movements: any[] = [];
   public async record(input: any): Promise<any> {
-    const mvt = { id: `mvt_${Math.random().toString(36).substring(2, 8)}`, ...input, createdAt: new Date() };
+    const mvt = {
+      id: `mvt_${Math.random().toString(36).substring(2, 8)}`,
+      ...input,
+      createdAt: new Date(),
+    };
     this.movements.push(mvt);
     return mvt;
   }

@@ -8,7 +8,13 @@ const service = new CollectionService();
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const collection = await service.getPublishedBySlug((await params).slug);
-    if (!collection) return NextResponse.json({ success: false, error: { code: 'NOT_FOUND', message: 'Collection not found.' } }, { status: 404 });
+    if (!collection)
+      return NextResponse.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'Collection not found.' } },
+        { status: 404 }
+      );
     return NextResponse.json({ success: true, data: collection });
-  } catch (error) { return errorResponse(req, error, 'Failed to load collection'); }
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load collection');
+  }
 }

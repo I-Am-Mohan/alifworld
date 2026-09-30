@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as getMovementsRoute } from '@/app/api/v1/inventory/movements/route';
 import { InventoryService } from '@/features/inventory/services/inventory-service';
@@ -42,7 +43,9 @@ describe('Milestone 103: Stock Movement Ledger API Integration Tests', () => {
   });
 
   it('GET /api/v1/inventory/movements returns HTTP 200 with paginated stock movement ledger', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/inventory/movements?warehouseId=wh_dhk_001&page=1&limit=20');
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/inventory/movements?warehouseId=wh_dhk_001&page=1&limit=20'
+    );
     const res = await getMovementsRoute(req);
 
     expect(res.status).toBe(200);

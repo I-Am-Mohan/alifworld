@@ -1,8 +1,8 @@
 /**
  * AlifWorld Search Validators
- * 
+ *
  * Strict Zod schemas for storefront query requests, indexation payloads, and filters.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022
  */
 

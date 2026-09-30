@@ -11,10 +11,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/customer/wishlists/[id]/share
  * Generates or revokes a cryptographic share-safe link for a customer wishlist.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

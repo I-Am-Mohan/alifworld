@@ -31,14 +31,9 @@ import { z } from 'zod';
 // ==============================================================================
 
 export const clientEnvSchema = z.object({
-  NEXT_PUBLIC_APP_URL: z
-    .string()
-    .url()
-    .default('http://localhost:3000'),
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 
-  NEXT_PUBLIC_CDN_URL: z
-    .string()
-    .default(''),
+  NEXT_PUBLIC_CDN_URL: z.string().default(''),
 });
 
 export type ClientEnv = z.infer<typeof clientEnvSchema>;
@@ -58,70 +53,36 @@ export const serverEnvSchema = clientEnvSchema.extend({
   // Core Application Runtime
   // --------------------------------------------------------------------------
 
-  NODE_ENV: z
-    .enum(['development', 'test', 'production'])
-    .default('development'),
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
-  APP_ENV: z
-    .enum(['local', 'development', 'staging', 'production'])
-    .default('local'),
+  APP_ENV: z.enum(['local', 'development', 'staging', 'production']).default('local'),
 
-  PORT: z
-    .coerce
-    .number()
-    .int()
-    .positive()
-    .default(3000),
+  PORT: z.coerce.number().int().positive().default(3000),
 
-  APP_URL: z
-    .string()
-    .url()
-    .default('http://localhost:3000'),
+  APP_URL: z.string().url().default('http://localhost:3000'),
 
-  API_URL: z
-    .string()
-    .url()
-    .default('http://localhost:3000/api/v1'),
+  API_URL: z.string().url().default('http://localhost:3000/api/v1'),
 
   // --------------------------------------------------------------------------
   // PostgreSQL / Prisma
   // --------------------------------------------------------------------------
 
-  DATABASE_URL: z
-    .string()
-    .min(1, 'DATABASE_URL is required'),
+  DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
-  DATABASE_POOL_MIN: z
-    .coerce
-    .number()
-    .int()
-    .nonnegative()
-    .default(2),
+  DATABASE_POOL_MIN: z.coerce.number().int().nonnegative().default(2),
 
-  DATABASE_POOL_MAX: z
-    .coerce
-    .number()
-    .int()
-    .positive()
-    .default(10),
+  DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 
   // --------------------------------------------------------------------------
   // Redis / Cache / Locks / BullMQ
   // --------------------------------------------------------------------------
 
-  REDIS_URL: z
-    .string()
-    .min(1, 'REDIS_URL is required'),
+  REDIS_URL: z.string().min(1, 'REDIS_URL is required'),
 
-  REDIS_KEY_PREFIX: z
-    .string()
-    .default('alif:'),
+  REDIS_KEY_PREFIX: z.string().default('alif:'),
 
   REDIS_TLS_ENABLED: z
-    .preprocess(
-      (value) => value === 'true' || value === true,
-      z.boolean()
-    )
+    .preprocess((value) => value === 'true' || value === true, z.boolean())
     .default(false),
 
   // --------------------------------------------------------------------------
@@ -130,159 +91,85 @@ export const serverEnvSchema = clientEnvSchema.extend({
 
   JWT_SECRET: z
     .string()
-    .min(
-      32,
-      'JWT_SECRET must be at least 32 characters for HMAC SHA-256 security'
-    ),
+    .min(32, 'JWT_SECRET must be at least 32 characters for HMAC SHA-256 security'),
 
-  JWT_EXPIRES_IN: z
-    .string()
-    .default('7d'),
+  JWT_EXPIRES_IN: z.string().default('7d'),
 
-  REFRESH_TOKEN_EXPIRES_IN: z
-    .string()
-    .default('30d'),
+  REFRESH_TOKEN_EXPIRES_IN: z.string().default('30d'),
 
-  SESSION_SECRET: z
-    .string()
-    .min(
-      32,
-      'SESSION_SECRET must be at least 32 characters'
-    ),
+  SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
 
-  COOKIE_DOMAIN: z
-    .string()
-    .default('localhost'),
+  COOKIE_DOMAIN: z.string().default('localhost'),
 
   COOKIE_SECURE: z
-    .preprocess(
-      (value) => value === 'true' || value === true,
-      z.boolean()
-    )
+    .preprocess((value) => value === 'true' || value === true, z.boolean())
     .default(false),
 
   // --------------------------------------------------------------------------
   // Rate Limiting
   // --------------------------------------------------------------------------
 
-  RATE_LIMIT_GLOBAL_WINDOW_MS: z
-    .coerce
-    .number()
-    .int()
-    .positive()
-    .default(60000),
+  RATE_LIMIT_GLOBAL_WINDOW_MS: z.coerce.number().int().positive().default(60000),
 
-  RATE_LIMIT_GLOBAL_MAX_REQUESTS: z
-    .coerce
-    .number()
-    .int()
-    .positive()
-    .default(100),
+  RATE_LIMIT_GLOBAL_MAX_REQUESTS: z.coerce.number().int().positive().default(100),
 
-  RATE_LIMIT_AUTH_MAX_ATTEMPTS: z
-    .coerce
-    .number()
-    .int()
-    .positive()
-    .default(5),
+  RATE_LIMIT_AUTH_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
 
-  RATE_LIMIT_SMS_OTP_MAX_PER_HOUR: z
-    .coerce
-    .number()
-    .int()
-    .positive()
-    .default(3),
+  RATE_LIMIT_SMS_OTP_MAX_PER_HOUR: z.coerce.number().int().positive().default(3),
 
   // --------------------------------------------------------------------------
   // OAuth Identity Providers
   // --------------------------------------------------------------------------
 
-  GOOGLE_CLIENT_ID: z
-    .string()
-    .optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
 
-  GOOGLE_CLIENT_SECRET: z
-    .string()
-    .optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 
-  FACEBOOK_APP_ID: z
-    .string()
-    .optional(),
+  FACEBOOK_APP_ID: z.string().optional(),
 
-  FACEBOOK_APP_SECRET: z
-    .string()
-    .optional(),
+  FACEBOOK_APP_SECRET: z.string().optional(),
 
   // --------------------------------------------------------------------------
   // Object Storage (S3 / R2)
   // --------------------------------------------------------------------------
 
-  STORAGE_PROVIDER: z
-    .enum(['AWS_S3', 'CLOUDFLARE_R2'])
-    .optional(),
+  STORAGE_PROVIDER: z.enum(['AWS_S3', 'CLOUDFLARE_R2']).optional(),
 
-  S3_BUCKET_NAME: z
-    .string()
-    .optional(),
+  S3_BUCKET_NAME: z.string().optional(),
 
-  S3_REGION: z
-    .string()
-    .optional(),
+  S3_REGION: z.string().optional(),
 
-  S3_ENDPOINT: z
-    .string()
-    .optional(),
+  S3_ENDPOINT: z.string().optional(),
 
   S3_FORCE_PATH_STYLE: z
-    .preprocess(
-      (value) => value === 'true' || value === true,
-      z.boolean()
-    )
+    .preprocess((value) => value === 'true' || value === true, z.boolean())
     .optional(),
 
-  S3_ACCESS_KEY_ID: z
-    .string()
-    .optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
 
-  S3_SECRET_ACCESS_KEY: z
-    .string()
-    .optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
 
-  S3_PUBLIC_BASE_URL: z
-    .string()
-    .optional(),
+  S3_PUBLIC_BASE_URL: z.string().optional(),
 
-  R2_ACCOUNT_ID: z
-    .string()
-    .optional(),
+  R2_ACCOUNT_ID: z.string().optional(),
 
   // --------------------------------------------------------------------------
   // Encryption Keys
   // --------------------------------------------------------------------------
 
-  PAYOUT_PROFILE_ENCRYPTION_KEY: z
-    .string()
-    .optional(),
+  PAYOUT_PROFILE_ENCRYPTION_KEY: z.string().optional(),
 
   // --------------------------------------------------------------------------
   // Observability / Logging / Telemetry
   // --------------------------------------------------------------------------
 
-  LOG_LEVEL: z
-    .enum(['debug', 'info', 'warn', 'error'])
-    .default('info'),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 
-  LOG_FORMAT: z
-    .enum(['json', 'pretty'])
-    .default('json'),
+  LOG_FORMAT: z.enum(['json', 'pretty']).default('json'),
 
-  SENTRY_DSN: z
-    .string()
-    .optional(),
+  SENTRY_DSN: z.string().optional(),
 
-  OTEL_EXPORTER_OTLP_ENDPOINT: z
-    .string()
-    .optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
@@ -306,10 +193,7 @@ export function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEY_PATTERNS.some((pattern) => pattern.test(key));
 }
 
-export function redactSecret(
-  key: string,
-  value: unknown
-): string {
+export function redactSecret(key: string, value: unknown): string {
   if (value === undefined || value === null) {
     return '[UNSET]';
   }
@@ -321,9 +205,7 @@ export function redactSecret(
   return String(value);
 }
 
-function formatZodErrors(
-  issues: z.ZodIssue[]
-): string {
+function formatZodErrors(issues: z.ZodIssue[]): string {
   return issues
     .map((issue) => {
       const path = issue.path.join('.');
@@ -337,10 +219,10 @@ function formatZodErrors(
 // ==============================================================================
 
 export function validateClientEnv(
-  input: Record<string, unknown> =
-    (typeof process !== 'undefined'
-      ? process.env
-      : {}) as Record<string, unknown>
+  input: Record<string, unknown> = (typeof process !== 'undefined' ? process.env : {}) as Record<
+    string,
+    unknown
+  >
 ): ClientEnv {
   const result = clientEnvSchema.safeParse(input);
 
@@ -362,10 +244,10 @@ export function validateClientEnv(
 // ==============================================================================
 
 export function validateServerEnv(
-  input: Record<string, unknown> =
-    (typeof process !== 'undefined'
-      ? process.env
-      : {}) as Record<string, unknown>
+  input: Record<string, unknown> = (typeof process !== 'undefined' ? process.env : {}) as Record<
+    string,
+    unknown
+  >
 ): ServerEnv {
   // Server environment must never be validated in the browser.
   if (typeof window !== 'undefined') {
@@ -409,27 +291,24 @@ export const clientEnv: ClientEnv = validateClientEnv();
  */
 let cachedServerEnv: ServerEnv | null = null;
 
-export const env: ServerEnv = new Proxy(
-  {} as ServerEnv,
-  {
-    get(_target, prop: string | symbol) {
-      if (typeof window !== 'undefined') {
-        throw new Error(
-          `[Security Violation] Attempted to read server environment ` +
-            `variable '${String(prop)}' on the client. ` +
-            `Only NEXT_PUBLIC_* variables may be accessed in browser ` +
-            `code via clientEnv.`
-        );
-      }
+export const env: ServerEnv = new Proxy({} as ServerEnv, {
+  get(_target, prop: string | symbol) {
+    if (typeof window !== 'undefined') {
+      throw new Error(
+        `[Security Violation] Attempted to read server environment ` +
+          `variable '${String(prop)}' on the client. ` +
+          `Only NEXT_PUBLIC_* variables may be accessed in browser ` +
+          `code via clientEnv.`
+      );
+    }
 
-      if (!cachedServerEnv) {
-        cachedServerEnv = validateServerEnv();
-      }
+    if (!cachedServerEnv) {
+      cachedServerEnv = validateServerEnv();
+    }
 
-      return cachedServerEnv[prop as keyof ServerEnv];
-    },
-  }
-);
+    return cachedServerEnv[prop as keyof ServerEnv];
+  },
+});
 
 /**
  * Returns the lazily validated server environment.

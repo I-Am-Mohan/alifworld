@@ -1,9 +1,9 @@
 /**
  * AlifWorld Immutable Audit Log Repository
- * 
+ *
  * Provides append-only persistence, multi-parameter historical querying,
  * pagination, and strict immutability invariant enforcement.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0031, Milestone 040, Milestone 049
  */
 

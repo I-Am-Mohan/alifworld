@@ -55,7 +55,8 @@ export class PaperflyCourierAdapter extends BaseCourierAdapter implements ICouri
       maxCodAmountPoisha: 3000000, // ৳30,000 max COD
       estimatedDaysMin: 2,
       estimatedDaysMax: 5,
-      message: 'Paperfly provides extensive doorstep delivery across all 495+ upazilas of Bangladesh.',
+      message:
+        'Paperfly provides extensive doorstep delivery across all 495+ upazilas of Bangladesh.',
     };
   }
 

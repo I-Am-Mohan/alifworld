@@ -10,10 +10,22 @@ const service = new CollectionService();
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const actor = authenticateRequest(req); const id = (await params).id;
+    const actor = authenticateRequest(req);
+    const id = (await params).id;
     await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id });
     const parsed = CollectionProductsSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid collection products.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.replaceProducts(actor.userId, id, parsed.data.version, parsed.data.productIds) });
-  } catch (error) { return errorResponse(req, error, 'Failed to replace collection products'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid collection products.', parsed.error.flatten());
+    return NextResponse.json({
+      success: true,
+      data: await service.replaceProducts(
+        actor.userId,
+        id,
+        parsed.data.version,
+        parsed.data.productIds
+      ),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to replace collection products');
+  }
 }

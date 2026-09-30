@@ -11,10 +11,7 @@
  * - CUSTOMER_WALLET: AlifWorld Customer Wallet balance
  */
 
-import {
-  IPaymentGatewayAdapter,
-  PaymentGatewayCode,
-} from '../types/payment-method.types';
+import { IPaymentGatewayAdapter, PaymentGatewayCode } from '../types/payment-method.types';
 import { BkashPaymentAdapter } from './bkash.adapter';
 import { NagadPaymentAdapter } from './nagad.adapter';
 import { SslCommerzPaymentAdapter } from './sslcommerz.adapter';

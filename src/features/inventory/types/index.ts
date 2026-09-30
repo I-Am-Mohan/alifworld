@@ -1,9 +1,9 @@
 /**
  * AlifWorld Warehouse & Inventory Domain Types
- * 
+ *
  * Defines type contracts for warehouses, stock balances, atomic reservations,
  * movement ledgers, and inventory availability invariants.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */

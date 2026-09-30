@@ -10,14 +10,17 @@ const i18nService = new I18nService();
 
 /**
  * PATCH /api/v1/system/languages/default
- * 
+ *
  * Sets the system-wide default language for all new visitors.
  * Request body: { "defaultLocale": "bn" } or { "defaultLocale": "en" }
  */
 export async function PATCH(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      id: 'I18N_LANGUAGE_REGISTRY',
+    });
     const body = await req.json().catch(() => ({}));
     const { defaultLocale } = body;
 

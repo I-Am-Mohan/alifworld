@@ -36,9 +36,7 @@ export class InHouseCourierAdapter extends BaseCourierAdapter implements ICourie
     district: string,
     upazila?: string | null
   ): Promise<CourierServiceabilityDTO> {
-    const isDhakaMetro =
-      division.toUpperCase() === 'DHAKA' &&
-      district.toUpperCase() === 'DHAKA';
+    const isDhakaMetro = division.toUpperCase() === 'DHAKA' && district.toUpperCase() === 'DHAKA';
 
     return {
       isServiceable: isDhakaMetro,

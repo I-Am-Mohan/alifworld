@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
     const parsed = CustomerAddressInputSchema.safeParse(await req.json());
-    if (!parsed.success) throw new ValidationError('Invalid Bangladesh address payload.', parsed.error.flatten());
+    if (!parsed.success)
+      throw new ValidationError('Invalid Bangladesh address payload.', parsed.error.flatten());
     const address = await service.create(actor.userId, parsed.data);
     return NextResponse.json({ success: true, data: address }, { status: 201 });
   } catch (error: any) {
@@ -29,8 +30,9 @@ export async function POST(req: NextRequest) {
 }
 
 function toErrorResponse(error: any, fallbackMessage: string) {
-  const normalized = error instanceof AppError
-    ? error
-    : new ValidationError(error instanceof Error ? error.message : fallbackMessage);
+  const normalized =
+    error instanceof AppError
+      ? error
+      : new ValidationError(error instanceof Error ? error.message : fallbackMessage);
   return NextResponse.json(normalized.toJSON(), { status: normalized.statusCode });
 }

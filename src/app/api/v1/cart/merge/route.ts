@@ -25,10 +25,7 @@ export async function POST(req: NextRequest) {
 
     const validatedInput = MergeGuestCartSchema.parse(payload);
 
-    const result = await cartService.mergeGuestCart(
-      actor.userId,
-      validatedInput.guestCartToken
-    );
+    const result = await cartService.mergeGuestCart(actor.userId, validatedInput.guestCartToken);
 
     const response = NextResponse.json(
       {

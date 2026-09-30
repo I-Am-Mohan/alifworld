@@ -1,16 +1,21 @@
 /**
  * AlifWorld Category Taxonomy Service
- * 
+ *
  * Orchestrates category creation, hierarchical nesting, slug conflict validation,
  * and NBR VAT rate assignments.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0025
  */
 
 import { CategoryRepository } from '../repositories/category-repository';
 import { UserRoleAssignmentRepository } from '@/features/identity/repositories/user-role-assignment-repository';
-import { ConflictError, NotFoundError, AuthorizationError, ValidationError } from '@/shared/errors/app-error';
+import {
+  ConflictError,
+  NotFoundError,
+  AuthorizationError,
+  ValidationError,
+} from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
 import { CategoryModel } from '../types';
 import { CreateCategoryInput, UpdateCategoryInput } from '../validators';
@@ -22,12 +27,17 @@ export class CategoryService {
     private readonly roleAssignmentRepo: UserRoleAssignmentRepository = new UserRoleAssignmentRepository()
   ) {}
 
-  public async createCategory(adminUserId: string, input: CreateCategoryInput): Promise<CategoryModel> {
+  public async createCategory(
+    adminUserId: string,
+    input: CreateCategoryInput
+  ): Promise<CategoryModel> {
     await this.assertAdminAccess(adminUserId);
 
     const existingSlug = await this.categoryRepo.findBySlug(input.slug);
     if (existingSlug) {
-      throw new ConflictError(`Category slug '${input.slug}' is already in use.`, { slug: input.slug });
+      throw new ConflictError(`Category slug '${input.slug}' is already in use.`, {
+        slug: input.slug,
+      });
     }
 
     if (input.parentId) {
@@ -118,7 +128,8 @@ export class CategoryService {
       bucket.push({ ...category, children: [] });
       byParent.set(key, bucket);
     }
-    const attach = (nodes: CategoryModel[]): CategoryModel[] => nodes.map((node) => ({ ...node, children: attach(byParent.get(node.id) || []) }));
+    const attach = (nodes: CategoryModel[]): CategoryModel[] =>
+      nodes.map((node) => ({ ...node, children: attach(byParent.get(node.id) || []) }));
     return attach(byParent.get(null) || []);
   }
 
@@ -130,7 +141,8 @@ export class CategoryService {
     let currentId: string | null = parentId;
     const visited = new Set<string>();
     while (currentId) {
-      if (currentId === categoryId) throw new ValidationError('A category cannot be moved below one of its descendants.');
+      if (currentId === categoryId)
+        throw new ValidationError('A category cannot be moved below one of its descendants.');
       if (visited.has(currentId)) throw new ValidationError('Category hierarchy contains a cycle.');
       visited.add(currentId);
       const current = await this.categoryRepo.findById(currentId);

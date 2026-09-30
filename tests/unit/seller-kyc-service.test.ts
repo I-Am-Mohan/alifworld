@@ -215,8 +215,8 @@ describe('SellerKycService Unit Tests', () => {
 
     const service = new SellerKycService(mockKycRepo, mockSellerRepo, mockRoleRepo);
 
-    expect(
-      service.getSecureDocumentViewUrl('usr_intruder_99', 'kyc_doc_001')
-    ).rejects.toThrow(AuthorizationError);
+    expect(service.getSecureDocumentViewUrl('usr_intruder_99', 'kyc_doc_001')).rejects.toThrow(
+      AuthorizationError
+    );
   });
 });

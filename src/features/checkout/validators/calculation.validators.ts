@@ -29,12 +29,9 @@ export const CheckoutCalculationInputSchema = z
     couponCode: z.string().trim().max(64).optional().nullable(),
     shippingMethod: ShippingMethodCodeEnum.default('STANDARD'),
   })
-  .refine(
-    (data) => Boolean(data.cartId) || (Array.isArray(data.items) && data.items.length > 0),
-    {
-      message: 'Either cartId or a non-empty items array must be provided.',
-      path: ['cartId'],
-    }
-  );
+  .refine((data) => Boolean(data.cartId) || (Array.isArray(data.items) && data.items.length > 0), {
+    message: 'Either cartId or a non-empty items array must be provided.',
+    path: ['cartId'],
+  });
 
 export type CheckoutCalculationInput = z.infer<typeof CheckoutCalculationInputSchema>;

@@ -14,16 +14,44 @@ describe('Wallets, Points, Rewards, Ranks & Immutable Ledgers (Milestone 029)', 
   describe('Double-Entry Balance Conservation & Zero-Sum Invariant', () => {
     it('verifies exact balance when sum of debits equals sum of credits', () => {
       const postings = [
-        { account: '5010-PROMOTIONAL-REWARDS-EXPENSE', direction: 'DEBIT', amountPoisha: BigInt(100000) },
-        { account: '2010-CUSTOMER-MAIN-LIABILITY', direction: 'CREDIT', amountPoisha: BigInt(50000) },
-        { account: '2020-CUSTOMER-SHOPPING-LIABILITY', direction: 'CREDIT', amountPoisha: BigInt(20000) },
-        { account: '2030-CUSTOMER-GOODLUCK-LIABILITY', direction: 'CREDIT', amountPoisha: BigInt(15000) },
-        { account: '2040-CUSTOMER-CHARITY-LIABILITY', direction: 'CREDIT', amountPoisha: BigInt(5000) },
-        { account: '4020-SERVICE-CHARGE-REVENUE', direction: 'CREDIT', amountPoisha: BigInt(10000) },
+        {
+          account: '5010-PROMOTIONAL-REWARDS-EXPENSE',
+          direction: 'DEBIT',
+          amountPoisha: BigInt(100000),
+        },
+        {
+          account: '2010-CUSTOMER-MAIN-LIABILITY',
+          direction: 'CREDIT',
+          amountPoisha: BigInt(50000),
+        },
+        {
+          account: '2020-CUSTOMER-SHOPPING-LIABILITY',
+          direction: 'CREDIT',
+          amountPoisha: BigInt(20000),
+        },
+        {
+          account: '2030-CUSTOMER-GOODLUCK-LIABILITY',
+          direction: 'CREDIT',
+          amountPoisha: BigInt(15000),
+        },
+        {
+          account: '2040-CUSTOMER-CHARITY-LIABILITY',
+          direction: 'CREDIT',
+          amountPoisha: BigInt(5000),
+        },
+        {
+          account: '4020-SERVICE-CHARGE-REVENUE',
+          direction: 'CREDIT',
+          amountPoisha: BigInt(10000),
+        },
       ];
 
-      const debits = postings.filter((p) => p.direction === 'DEBIT').reduce((acc, p) => acc + p.amountPoisha, BigInt(0));
-      const credits = postings.filter((p) => p.direction === 'CREDIT').reduce((acc, p) => acc + p.amountPoisha, BigInt(0));
+      const debits = postings
+        .filter((p) => p.direction === 'DEBIT')
+        .reduce((acc, p) => acc + p.amountPoisha, BigInt(0));
+      const credits = postings
+        .filter((p) => p.direction === 'CREDIT')
+        .reduce((acc, p) => acc + p.amountPoisha, BigInt(0));
 
       expect(debits).toBe(BigInt(100000));
       expect(credits).toBe(BigInt(100000));
@@ -42,19 +70,19 @@ describe('Wallets, Points, Rewards, Ranks & Immutable Ledgers (Milestone 029)', 
     it('calculates 50/20/15/5/10 customer reward split exactly with zero leakage', () => {
       const basisPoisha = BigInt(100000); // ৳1,000.00
       const splits = {
-        MAIN: 5000,           // 50%
-        SHOPPING: 2000,       // 20%
-        GOOD_LUCK: 1500,      // 15%
-        CHARITY: 500,         // 5%
+        MAIN: 5000, // 50%
+        SHOPPING: 2000, // 20%
+        GOOD_LUCK: 1500, // 15%
+        CHARITY: 500, // 5%
         SERVICE_CHARGE: 1000, // 10%
       };
 
       const result = service.calculateRewardSplit(basisPoisha, splits);
 
-      expect(result.allocations.MAIN).toBe(BigInt(50000));          // ৳500.00
-      expect(result.allocations.SHOPPING).toBe(BigInt(20000));      // ৳200.00
-      expect(result.allocations.GOOD_LUCK).toBe(BigInt(15000));     // ৳150.00
-      expect(result.allocations.CHARITY).toBe(BigInt(5000));        // ৳50.00
+      expect(result.allocations.MAIN).toBe(BigInt(50000)); // ৳500.00
+      expect(result.allocations.SHOPPING).toBe(BigInt(20000)); // ৳200.00
+      expect(result.allocations.GOOD_LUCK).toBe(BigInt(15000)); // ৳150.00
+      expect(result.allocations.CHARITY).toBe(BigInt(5000)); // ৳50.00
       expect(result.allocations.SERVICE_CHARGE).toBe(BigInt(10000)); // ৳100.00
       expect(result.totalAllocatedPoisha).toBe(basisPoisha);
       expect(result.residualPoisha).toBe(BigInt(0));

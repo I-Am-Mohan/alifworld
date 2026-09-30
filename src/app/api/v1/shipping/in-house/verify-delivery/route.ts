@@ -26,10 +26,7 @@ export async function POST(req: NextRequest) {
 
     const validatedInput = VerifyInHouseDeliverySchema.parse(payload);
 
-    const result = await courierDispatchService.verifyInHouseDelivery(
-      validatedInput,
-      actor.userId
-    );
+    const result = await courierDispatchService.verifyInHouseDelivery(validatedInput, actor.userId);
 
     return NextResponse.json({
       success: true,

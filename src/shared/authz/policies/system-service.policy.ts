@@ -1,10 +1,10 @@
 /**
  * AlifWorld System Service & Background Worker Authorization Policy
- * 
+ *
  * Enforces strict security boundaries around internal automated daemons,
  * transactional outbox processing, BullMQ jobs, webhook ingestion, and
  * financial reconciliation routines.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0013, ADR-0022, Milestone 046
  */
 
@@ -30,7 +30,8 @@ export class SystemServicePolicy implements IPolicy {
       return {
         granted: true,
         code: 'GRANTED',
-        reason: 'Super Administrator holds emergency execution privileges for internal system services.',
+        reason:
+          'Super Administrator holds emergency execution privileges for internal system services.',
         policyName: this.name,
       };
     }
@@ -57,7 +58,12 @@ export class SystemServicePolicy implements IPolicy {
       case 'outbox:process':
       case 'events:relay': {
         if (isSystemService || actor.permissions.includes('system:outbox:process')) {
-          return { granted: true, code: 'GRANTED', reason: 'System worker authorized to relay outbox events.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'System worker authorized to relay outbox events.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -70,7 +76,12 @@ export class SystemServicePolicy implements IPolicy {
       case 'job:execute':
       case 'cron:run': {
         if (isSystemService || actor.permissions.includes('system:service:execute')) {
-          return { granted: true, code: 'GRANTED', reason: 'Internal scheduler authorized to execute job.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Internal scheduler authorized to execute job.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -82,8 +93,17 @@ export class SystemServicePolicy implements IPolicy {
 
       case 'webhook:ingest': {
         // Payment gateway or courier webhook ingestion
-        if (isSystemService || actor.permissions.includes('system:service:execute') || actor.roles.includes(SystemRoleCode.ADMIN)) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to ingest and process verified external webhook.', policyName: this.name };
+        if (
+          isSystemService ||
+          actor.permissions.includes('system:service:execute') ||
+          actor.roles.includes(SystemRoleCode.ADMIN)
+        ) {
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Authorized to ingest and process verified external webhook.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -96,7 +116,12 @@ export class SystemServicePolicy implements IPolicy {
       case 'reconciliation:run': {
         // Financial or inventory reconciliation batch
         if (isSystemService || actor.permissions.includes('system:reconcile')) {
-          return { granted: true, code: 'GRANTED', reason: 'Reconciliation daemon authorized to run ledger checks.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Reconciliation daemon authorized to run ledger checks.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,
@@ -108,7 +133,12 @@ export class SystemServicePolicy implements IPolicy {
 
       case 'cache:purge': {
         if (isSystemService || actor.roles.includes(SystemRoleCode.ADMIN)) {
-          return { granted: true, code: 'GRANTED', reason: 'Authorized to purge internal distributed cache.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Authorized to purge internal distributed cache.',
+            policyName: this.name,
+          };
         }
         return {
           granted: false,

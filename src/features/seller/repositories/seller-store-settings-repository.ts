@@ -1,8 +1,8 @@
 /**
  * AlifWorld Seller Store Settings Repository
- * 
+ *
  * Manages store profile settings, logistics addresses, and courier preferences.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0006, ADR-0022, ADR-0024
  */

@@ -118,7 +118,9 @@ export class SteadfastCourierAdapter extends BaseCourierAdapter implements ICour
           }
         }
       } catch (err: any) {
-        console.warn(`[SteadfastCourierAdapter] Live API call failed, falling back: ${err.message}`);
+        console.warn(
+          `[SteadfastCourierAdapter] Live API call failed, falling back: ${err.message}`
+        );
       }
     }
 

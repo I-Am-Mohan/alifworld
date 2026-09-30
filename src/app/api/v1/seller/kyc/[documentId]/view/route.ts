@@ -6,7 +6,10 @@ import { SellerKycService } from '@/features/seller/services/seller-kyc-service'
 export const dynamic = 'force-dynamic';
 const service = new SellerKycService();
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ documentId: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ documentId: string }> }
+) {
   try {
     const actor = authenticateRequest(req);
     const { documentId } = await params;

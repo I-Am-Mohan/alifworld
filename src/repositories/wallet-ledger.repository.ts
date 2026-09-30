@@ -1,9 +1,9 @@
 /**
  * AlifWorld Double-Entry Wallet & Ledger Repository
- * 
+ *
  * Manages multi-account wallets, formal chart of accounts, and balanced
  * double-entry journal transactions strictly conserving Sum(Debits) == Sum(Credits).
- * 
+ *
  * Invariants: ADR-0022, ADR-0028, ADR-0029, Integer Poisha precision
  */
 
@@ -22,7 +22,13 @@ export interface JournalPostingInput {
 
 export interface RecordJournalParams {
   description: string;
-  referenceType: 'ORDER_PAYMENT' | 'REWARD_DISTRIBUTION' | 'REFUND_ADJUSTMENT' | 'SETTLEMENT_CLEARING' | 'WITHDRAWAL' | 'MANUAL_AUDIT';
+  referenceType:
+    | 'ORDER_PAYMENT'
+    | 'REWARD_DISTRIBUTION'
+    | 'REFUND_ADJUSTMENT'
+    | 'SETTLEMENT_CLEARING'
+    | 'WITHDRAWAL'
+    | 'MANUAL_AUDIT';
   referenceId?: string | null;
   totalPoisha: bigint;
   idempotencyKey?: string | null;
@@ -110,7 +116,12 @@ export class WalletLedgerRepository {
   /**
    * Finds or provisions a chart of account by its code.
    */
-  async getOrCreateAccount(code: string, name: string, type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE', description?: string) {
+  async getOrCreateAccount(
+    code: string,
+    name: string,
+    type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE',
+    description?: string
+  ) {
     let account = await this.prisma.ledgerAccount.findUnique({
       where: { code },
     });
@@ -155,7 +166,9 @@ export class WalletLedgerRepository {
 
     for (const post of params.postings) {
       if (post.amountPoisha <= BigInt(0)) {
-        throw new ValidationError('Posting amount must be strictly positive integer poisha', { amount: post.amountPoisha.toString() });
+        throw new ValidationError('Posting amount must be strictly positive integer poisha', {
+          amount: post.amountPoisha.toString(),
+        });
       }
       if (post.direction === 'DEBIT') {
         sumDebits += post.amountPoisha;
@@ -165,10 +178,13 @@ export class WalletLedgerRepository {
     }
 
     if (sumDebits !== sumCredits) {
-      throw new ValidationError('Double-entry accounting invariant violated: Total Debits must equal Total Credits', {
-        sumDebits: sumDebits.toString(),
-        sumCredits: sumCredits.toString(),
-      });
+      throw new ValidationError(
+        'Double-entry accounting invariant violated: Total Debits must equal Total Credits',
+        {
+          sumDebits: sumDebits.toString(),
+          sumCredits: sumCredits.toString(),
+        }
+      );
     }
 
     if (sumDebits !== params.totalPoisha) {
@@ -205,7 +221,9 @@ export class WalletLedgerRepository {
         });
 
         if (!account) {
-          throw new NotFoundError(`Ledger account '${p.accountCode}' does not exist in chart of accounts`);
+          throw new NotFoundError(
+            `Ledger account '${p.accountCode}' does not exist in chart of accounts`
+          );
         }
 
         const postingId = generateId(ID_PREFIXES.LEDGER_POSTING);
@@ -243,11 +261,14 @@ export class WalletLedgerRepository {
 
           const newAvailable = wallet.availablePoisha + balanceDelta;
           if (newAvailable < BigInt(0)) {
-            throw new ConflictError(`Insufficient wallet balance: operation would result in negative available balance (${newAvailable} poisha)`, {
-              walletId: p.walletId,
-              currentAvailable: wallet.availablePoisha.toString(),
-              attemptedDebit: p.amountPoisha.toString(),
-            });
+            throw new ConflictError(
+              `Insufficient wallet balance: operation would result in negative available balance (${newAvailable} poisha)`,
+              {
+                walletId: p.walletId,
+                currentAvailable: wallet.availablePoisha.toString(),
+                attemptedDebit: p.amountPoisha.toString(),
+              }
+            );
           }
 
           await tx.wallet.update({

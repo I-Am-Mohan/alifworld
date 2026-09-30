@@ -8,7 +8,7 @@ const phoneAuthService = new PhoneAuthService();
 
 /**
  * POST /api/v1/auth/phone/complete-registration
- * 
+ *
  * Completes customer onboarding after phone OTP verification:
  * Creates user, provisions 4 segregated wallets and point account,
  * saves optional profile details (address, birthday, gender),

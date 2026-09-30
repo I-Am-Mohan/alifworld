@@ -1,19 +1,30 @@
 /**
  * AlifWorld Seller Repository
- * 
+ *
  * Manages Seller entities, slug lookups, status transitions,
  * and paginated merchant queries.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0021, ADR-0022, ADR-0024
  */
 
-import { BaseRepository, parseOffsetPagination, formatPaginatedResult, PaginatedResponse } from '@/shared/database/base-repository';
+import {
+  BaseRepository,
+  parseOffsetPagination,
+  formatPaginatedResult,
+  PaginatedResponse,
+} from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { nextVersion } from '@/shared/database/lifecycle';
 import { NotFoundError, ConflictError } from '@/shared/errors/app-error';
 import { getServerEnv } from '@/shared/config/environment';
-import { PublicSellerProfile, SellerModel, SellerProfile, SellerStatus, SellerFilterOptions } from '../types';
+import {
+  PublicSellerProfile,
+  SellerModel,
+  SellerProfile,
+  SellerStatus,
+  SellerFilterOptions,
+} from '../types';
 
 export interface CreateSellerData {
   id?: string;
@@ -63,10 +74,15 @@ export class SellerRepository extends BaseRepository {
     }, 'SellerRepository.findBySlug');
   }
 
-  public async findVerifiedPublicBySlug(slug: string): Promise<import('../types').PublicSellerProfile | null> {
+  public async findVerifiedPublicBySlug(
+    slug: string
+  ): Promise<import('../types').PublicSellerProfile | null> {
     return this.executeSafe(async () => {
       const seller = await (this.db as any).seller.findFirst({
-        where: this.whereNotDeleted({ slug: slug.trim().toLowerCase(), status: SellerStatus.VERIFIED }),
+        where: this.whereNotDeleted({
+          slug: slug.trim().toLowerCase(),
+          status: SellerStatus.VERIFIED,
+        }),
         select: {
           id: true,
           businessName: true,
@@ -75,14 +91,34 @@ export class SellerRepository extends BaseRepository {
           verifiedAt: true,
           settings: {
             where: { deletedAt: null },
-            select: { logoUrl: true, bannerUrl: true, logoObjectKey: true, bannerObjectKey: true, storeDescription: true, shippingPolicy: true, returnPolicy: true, cancellationPolicy: true, publicEmailEnabled: true, publicPhoneEnabled: true, publicPickupAddressEnabled: true, supportEmail: true, supportPhone: true, pickupAddress: true, vacationMode: true, vacationMessage: true },
+            select: {
+              logoUrl: true,
+              bannerUrl: true,
+              logoObjectKey: true,
+              bannerObjectKey: true,
+              storeDescription: true,
+              shippingPolicy: true,
+              returnPolicy: true,
+              cancellationPolicy: true,
+              publicEmailEnabled: true,
+              publicPhoneEnabled: true,
+              publicPickupAddressEnabled: true,
+              supportEmail: true,
+              supportPhone: true,
+              pickupAddress: true,
+              vacationMode: true,
+              vacationMessage: true,
+            },
           },
         },
       });
       if (!seller) return null;
       const publicBase = (getServerEnv().S3_PUBLIC_BASE_URL ?? '').replace(/\/$/, '');
-      const publicAssetUrl = (key?: string | null, fallback?: string | null) => key ? `${publicBase}/${key}` : fallback || null;
-      const publicPickupAddress = seller.settings?.publicPickupAddressEnabled ? seller.settings?.pickupAddress ?? null : null;
+      const publicAssetUrl = (key?: string | null, fallback?: string | null) =>
+        key ? `${publicBase}/${key}` : fallback || null;
+      const publicPickupAddress = seller.settings?.publicPickupAddressEnabled
+        ? (seller.settings?.pickupAddress ?? null)
+        : null;
       return {
         id: seller.id,
         businessName: seller.businessName,
@@ -95,8 +131,12 @@ export class SellerRepository extends BaseRepository {
         shippingPolicy: seller.settings?.shippingPolicy ?? null,
         returnPolicy: seller.settings?.returnPolicy ?? null,
         cancellationPolicy: seller.settings?.cancellationPolicy ?? null,
-        supportEmail: seller.settings?.publicEmailEnabled ? seller.settings?.supportEmail ?? null : null,
-        supportPhone: seller.settings?.publicPhoneEnabled ? seller.settings?.supportPhone ?? null : null,
+        supportEmail: seller.settings?.publicEmailEnabled
+          ? (seller.settings?.supportEmail ?? null)
+          : null,
+        supportPhone: seller.settings?.publicPhoneEnabled
+          ? (seller.settings?.supportPhone ?? null)
+          : null,
         pickupAddress: publicPickupAddress,
         vacationMode: seller.settings?.vacationMode ?? false,
         vacationMessage: seller.settings?.vacationMessage ?? null,
@@ -144,7 +184,11 @@ export class SellerRepository extends BaseRepository {
   /**
    * Updates a seller record with optimistic concurrency validation.
    */
-  public async update(id: string, expectedVersion: number, data: UpdateSellerData): Promise<SellerModel> {
+  public async update(
+    id: string,
+    expectedVersion: number,
+    data: UpdateSellerData
+  ): Promise<SellerModel> {
     return this.executeSafe(async () => {
       const existing = await this.findById(id);
       if (!existing) {
@@ -168,7 +212,11 @@ export class SellerRepository extends BaseRepository {
   /**
    * Soft-deletes a seller entity.
    */
-  public async softDelete(id: string, expectedVersion: number, actorId?: string): Promise<SellerModel> {
+  public async softDelete(
+    id: string,
+    expectedVersion: number,
+    actorId?: string
+  ): Promise<SellerModel> {
     return this.executeSafe(async () => {
       this.assertCanDelete('Seller');
 

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Central Audit Logging Service
- * 
+ *
  * Manages append-only security logs, redaction-safe metadata, request tracing,
  * before/after state diffs, and non-blocking failure tolerance.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 040, NIST SP 800-63B
  */
 

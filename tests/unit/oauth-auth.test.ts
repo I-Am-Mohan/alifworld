@@ -245,7 +245,10 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
 
     it('exchanges code for mock tokens in test/mock environment', async () => {
       const provider = new GoogleOAuthProvider('mock_client', 'mock_secret');
-      const tokens = await provider.exchangeCode('mock_auth_code', 'http://localhost:3000/callback');
+      const tokens = await provider.exchangeCode(
+        'mock_auth_code',
+        'http://localhost:3000/callback'
+      );
 
       expect(tokens.accessToken).toBeDefined();
       expect(tokens.accessToken).toContain('mock_google_access');
@@ -267,7 +270,9 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
 
     it('verifies Flutter native ID token', async () => {
       const provider = new GoogleOAuthProvider('mock_client', 'mock_secret');
-      const profile = await provider.verifyToken('mock_token:flutter.google@gmail.com:sub_flutter_999:Flutter Google User');
+      const profile = await provider.verifyToken(
+        'mock_token:flutter.google@gmail.com:sub_flutter_999:Flutter Google User'
+      );
 
       expect(profile.provider).toBe('GOOGLE');
       expect(profile.email).toBe('flutter.google@gmail.com');
@@ -308,7 +313,9 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
 
     it('verifies Flutter native Facebook access token', async () => {
       const provider = new FacebookOAuthProvider('mock_app_id', 'mock_secret');
-      const profile = await provider.verifyToken('mock_token:fb.flutter@facebook.com:sub_fb_flutter_555:Flutter FB User');
+      const profile = await provider.verifyToken(
+        'mock_token:fb.flutter@facebook.com:sub_fb_flutter_555:Flutter FB User'
+      );
 
       expect(profile.provider).toBe('FACEBOOK');
       expect(profile.email).toBe('fb.flutter@facebook.com');
@@ -324,11 +331,7 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
     beforeEach(() => {
       mockPrisma = new MockPrismaClient();
       mockTokenService = new MockAuthTokenService();
-      oauthService = new OAuthService(
-        mockTokenService as any,
-        mockPrisma,
-        TEST_SECRET
-      );
+      oauthService = new OAuthService(mockTokenService as any, mockPrisma, TEST_SECRET);
     });
 
     it('generates cryptographic signed state and verifies successfully', () => {
@@ -352,17 +355,15 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
     it('rejects state with provider mismatch', () => {
       const { state, nonce } = oauthService.generateState('GOOGLE', '/', 'WEB');
 
-      expect(() => oauthService.verifyState(state, 'FACEBOOK', nonce)).toThrow(
-        UnauthorizedError
-      );
+      expect(() => oauthService.verifyState(state, 'FACEBOOK', nonce)).toThrow(UnauthorizedError);
     });
 
     it('rejects state with cookie nonce mismatch', () => {
       const { state } = oauthService.generateState('GOOGLE', '/', 'WEB');
 
-      expect(() =>
-        oauthService.verifyState(state, 'GOOGLE', 'wrong_nonce_from_attacker')
-      ).toThrow(UnauthorizedError);
+      expect(() => oauthService.verifyState(state, 'GOOGLE', 'wrong_nonce_from_attacker')).toThrow(
+        UnauthorizedError
+      );
     });
 
     it('rejects expired state token', () => {
@@ -375,7 +376,10 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
       };
 
       const payloadBase64 = Buffer.from(JSON.stringify(expiredPayload)).toString('base64url');
-      const sig = crypto.createHmac('sha256', TEST_SECRET).update(payloadBase64).digest('base64url');
+      const sig = crypto
+        .createHmac('sha256', TEST_SECRET)
+        .update(payloadBase64)
+        .digest('base64url');
       const expiredState = `${payloadBase64}.${sig}`;
 
       expect(() => oauthService.verifyState(expiredState, 'GOOGLE')).toThrow(UnauthorizedError);
@@ -390,11 +394,7 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
     beforeEach(() => {
       mockPrisma = new MockPrismaClient();
       mockTokenService = new MockAuthTokenService();
-      oauthService = new OAuthService(
-        mockTokenService as any,
-        mockPrisma,
-        TEST_SECRET
-      );
+      oauthService = new OAuthService(mockTokenService as any, mockPrisma, TEST_SECRET);
     });
 
     it('provisions new customer with 4 segregated wallets, point account, and audit log on first OAuth signup', async () => {
@@ -437,7 +437,7 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
       expect(mockPrisma.auditLogs.length).toBe(1);
       expect(mockPrisma.auditLogs[0].action).toBe('OAUTH_USER_REGISTERED');
       expect(mockPrisma.outboxEvents.length).toBe(1);
-      expect(mockPrisma.outboxEvents[0].topic).toBe('customer.registered');
+      expect(mockPrisma.outboxEvents[0].eventType).toBe('auth.customer_registered');
     });
 
     it('automatically links OAuth account to existing user by verified email', async () => {
@@ -532,11 +532,7 @@ describe('Federated OAuth Authentication Architecture (Milestone 039)', () => {
     beforeEach(() => {
       mockPrisma = new MockPrismaClient();
       mockTokenService = new MockAuthTokenService();
-      oauthService = new OAuthService(
-        mockTokenService as any,
-        mockPrisma,
-        TEST_SECRET
-      );
+      oauthService = new OAuthService(mockTokenService as any, mockPrisma, TEST_SECRET);
     });
 
     it('verifies Flutter native Google ID token and returns session and Bearer tokens', async () => {

@@ -6,11 +6,7 @@
  * Invariant: Recovery tokens are single-use, cryptographic, and expire according to policy.
  */
 
-export type AbandonedCheckoutStatus =
-  | 'ABANDONED'
-  | 'NOTIFIED'
-  | 'RECOVERED'
-  | 'EXPIRED';
+export type AbandonedCheckoutStatus = 'ABANDONED' | 'NOTIFIED' | 'RECOVERED' | 'EXPIRED';
 
 export interface AbandonedCheckoutDTO {
   id: string;

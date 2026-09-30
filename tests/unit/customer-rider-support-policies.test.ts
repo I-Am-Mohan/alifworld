@@ -1,13 +1,13 @@
 /**
  * Unit Tests: Customer, Rider, Support, and System-Service Authorization Policies (Milestone 046)
- * 
+ *
  * Verifies:
  * 1. CustomerPolicy: Self-service ownership, PII minimization, and privilege escalation barriers
  * 2. RiderPolicy: Assignment leases, atomic acceptance (double-assignment prevention), status updates, telemetry
  * 3. SupportPolicy: Inquiry pipeline, ticket privacy, thread messaging, and maker-checker financial restrictions
  * 4. SystemServicePolicy: Internal daemon boundaries, worker execution, webhook ingestion, reconciliation
  * 5. PolicyEngine declarative integration and resource aliasing
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0013, ADR-0022, ADR-0023, Milestone 046
  */
 

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Search Indexing Background Worker
- * 
+ *
  * Processes asynchronous catalog search indexing jobs from BullMQ.
  * Handles full catalog rebuilds, incremental product synchronizations, and outbox event batching.
- * 
+ *
  * References:
  * - docs/architecture/local-development-infrastructure-profiles.md
  * - docs/decisions/0025-model-catalog-taxonomy-products-variants-and-media.md
@@ -44,7 +44,9 @@ export class SearchIndexingWorker {
             throw new Error('productId is required for SYNC_PRODUCT job');
           }
           const result = await this.indexer.syncProductIndex(jobData.productId);
-          console.info(`[SearchWorker] SYNC_PRODUCT completed: ${result.action} for ${jobData.productId}`);
+          console.info(
+            `[SearchWorker] SYNC_PRODUCT completed: ${result.action} for ${jobData.productId}`
+          );
           return result;
         }
 
@@ -64,7 +66,9 @@ export class SearchIndexingWorker {
             return { processed: 0 };
           }
           const result = await this.indexer.processOutboxEvents(jobData.events);
-          console.info(`[SearchWorker] PROCESS_OUTBOX_EVENT completed: ${result.processed} events processed`);
+          console.info(
+            `[SearchWorker] PROCESS_OUTBOX_EVENT completed: ${result.processed} events processed`
+          );
           return result;
         }
 

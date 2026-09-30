@@ -1,6 +1,6 @@
 /**
  * Comprehensive Unit Tests: Server-Side Authorization Policy Engine (Milestone 042)
- * 
+ *
  * Verifies:
  * 1. UserPolicy: Self-ownership, privilege escalation prevention, admin actions
  * 2. SellerPolicy: Multi-tenant store isolation, cross-tenant denial, SuperAdmin bypass
@@ -9,7 +9,7 @@
  * 5. WalletPolicy: Wallet privacy, double-entry ledger posting, Gate-05 maker-checker dual authorization
  * 6. RolePolicy: Role delegation barriers, SuperAdmin escalation prevention, tenant scoping
  * 7. PolicyEngine: Lifecycle suspension check, fallback permission evaluation, audit trail integration
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0021, ADR-0022, ADR-0023, Milestone 042
  */
 
@@ -378,7 +378,11 @@ describe('Authorization Policy Engine Suite (Milestone 042)', () => {
         },
       };
 
-      const decMissingChecker = walletPolicy.evaluate(financeAdmin, 'payout', highValuePayoutWithoutChecker);
+      const decMissingChecker = walletPolicy.evaluate(
+        financeAdmin,
+        'payout',
+        highValuePayoutWithoutChecker
+      );
       expect(decMissingChecker.granted).toBe(false);
       expect(decMissingChecker.code).toBe('MAKER_CHECKER_REQUIRED');
 
@@ -470,7 +474,9 @@ describe('Authorization Policy Engine Suite (Milestone 042)', () => {
       expect(dec.code).toBe('ACCOUNT_SUSPENDED');
 
       // assert() must throw AuthorizationError
-      await expect(engine.assert(suspendedActor, 'read', resource)).rejects.toThrow(AuthorizationError);
+      await expect(engine.assert(suspendedActor, 'read', resource)).rejects.toThrow(
+        AuthorizationError
+      );
     });
 
     it('assert() logs an immutable audit event on authorization failure', async () => {
@@ -515,9 +521,13 @@ describe('Authorization Policy Engine Suite (Milestone 042)', () => {
         },
       };
 
-      await expect(engine.assert(financeAdmin, 'adjust', highValueAdjustment)).rejects.toThrow(ComplianceGateError);
+      await expect(engine.assert(financeAdmin, 'adjust', highValueAdjustment)).rejects.toThrow(
+        ComplianceGateError
+      );
 
-      const audit = mockAuditService.loggedEntries.find((e) => e.action === 'AUTHZ_MAKER_CHECKER_REQUIRED');
+      const audit = mockAuditService.loggedEntries.find(
+        (e) => e.action === 'AUTHZ_MAKER_CHECKER_REQUIRED'
+      );
       expect(audit).toBeDefined();
       expect(audit.resource).toBe('WALLET');
     });

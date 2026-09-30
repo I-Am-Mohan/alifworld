@@ -20,7 +20,13 @@ export async function POST(req: NextRequest) {
     const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
     if (!isAdmin) {
       return NextResponse.json(
-        { success: false, error: { code: 'FORBIDDEN', message: 'Only administrators can test SMTP configurations.' } },
+        {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'Only administrators can test SMTP configurations.',
+          },
+        },
         { status: 403 }
       );
     }

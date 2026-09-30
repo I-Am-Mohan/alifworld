@@ -1,9 +1,9 @@
 /**
  * AlifWorld Search Subsystem Domain Types & Contracts
- * 
+ *
  * Defines the vendor-neutral SearchService interface, indexed document shapes,
  * query filter options, and degraded-mode resilience status.
- * 
+ *
  * References:
  * - docs/architecture/scope-boundaries-and-domain-map.md
  * - docs/architecture/non-functional-requirements-and-slos.md
@@ -36,12 +36,7 @@ export interface SearchDocument {
 }
 
 export type SearchSortOption =
-  | 'relevance'
-  | 'price_asc'
-  | 'price_desc'
-  | 'newest'
-  | 'rating'
-  | 'points_desc';
+  'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'rating' | 'points_desc';
 
 export interface SearchQueryOptions {
   query: string;

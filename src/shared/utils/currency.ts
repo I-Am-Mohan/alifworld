@@ -19,13 +19,20 @@ function asPoisha(value: Poisha | bigint | number): bigint {
   return BigInt(value);
 }
 
-function formatMinorUnits(minorUnits: bigint, fractionDigits: number, locale: 'bn-BD' | 'en-BD'): string {
+function formatMinorUnits(
+  minorUnits: bigint,
+  fractionDigits: number,
+  locale: 'bn-BD' | 'en-BD'
+): string {
   const negative = minorUnits < 0n;
   const absolute = negative ? -minorUnits : minorUnits;
   const divisor = 10n ** BigInt(fractionDigits);
   const whole = absolute / divisor;
-  const fraction = fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
-  const formattedWhole = new Intl.NumberFormat(locale === 'bn-BD' ? 'en-US' : 'en-US').format(whole);
+  const fraction =
+    fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
+  const formattedWhole = new Intl.NumberFormat(locale === 'bn-BD' ? 'en-US' : 'en-US').format(
+    whole
+  );
   const result = `${negative ? '-' : ''}${formattedWhole}${fraction}`;
   return locale === 'bn-BD' ? toBengaliNumerals(result) : result;
 }
@@ -67,8 +74,6 @@ export function serializeBigInt<T>(data: T): T {
     return data;
   }
   return JSON.parse(
-    JSON.stringify(data, (_, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    )
+    JSON.stringify(data, (_, value) => (typeof value === 'bigint' ? value.toString() : value))
   );
 }

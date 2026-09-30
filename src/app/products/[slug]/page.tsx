@@ -7,7 +7,10 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ProductDetailResult, ProductVariantDetail } from '@/features/catalog/services/product-detail.service';
+import {
+  ProductDetailResult,
+  ProductVariantDetail,
+} from '@/features/catalog/services/product-detail.service';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -20,7 +23,9 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [locale, setLocale] = useState<'en-BD' | 'bn-BD'>('en-BD');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'shipping'>('description');
+  const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'shipping'>(
+    'description'
+  );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,17 +57,18 @@ export default function ProductDetailPage() {
 
   const isBn = locale === 'bn-BD';
   const displayTitle = isBn && product?.titleBn ? product.titleBn : product?.title;
-  const displayDescription = isBn && product?.descriptionBn ? product.descriptionBn : product?.description;
+  const displayDescription =
+    isBn && product?.descriptionBn ? product.descriptionBn : product?.description;
 
   const currentPriceFormatted = selectedVariant
     ? selectedVariant.priceBdtFormatted
     : product?.basePriceBdtFormatted;
 
-  const currentPoints = selectedVariant
-    ? selectedVariant.productPoint
-    : product?.productPoint || 0;
+  const currentPoints = selectedVariant ? selectedVariant.productPoint : product?.productPoint || 0;
 
-  const inStock = selectedVariant ? selectedVariant.inStock : product?.variants?.some((v) => v.inStock);
+  const inStock = selectedVariant
+    ? selectedVariant.inStock
+    : product?.variants?.some((v) => v.inStock);
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-slate-900 flex flex-col justify-between">
@@ -111,16 +117,26 @@ export default function ProductDetailPage() {
       </header>
 
       {/* Main PDP Layout */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8"
+      >
         {/* Breadcrumb Navigation */}
         {product?.breadcrumbs && (
-          <nav aria-label="Breadcrumbs" className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+          <nav
+            aria-label="Breadcrumbs"
+            className="flex items-center space-x-2 text-xs text-slate-500 font-medium"
+          >
             {product.breadcrumbs.map((crumb, idx) => (
               <React.Fragment key={crumb.href || idx}>
                 {idx > 0 && <span>/</span>}
                 <Link
                   href={crumb.href || '/'}
-                  className={idx === product.breadcrumbs.length - 1 ? 'font-bold text-slate-900' : 'hover:underline'}
+                  className={
+                    idx === product.breadcrumbs.length - 1
+                      ? 'font-bold text-slate-900'
+                      : 'hover:underline'
+                  }
                 >
                   {crumb.label}
                 </Link>
@@ -140,7 +156,9 @@ export default function ProductDetailPage() {
               {isBn ? 'পণ্যটি খুঁজে পাওয়া যায়নি' : 'Product Not Found'}
             </h3>
             <p className="text-xs text-slate-500">
-              {isBn ? 'পণ্যটি অপসারিত হতে পারে অ��বা লিংকটি সঠিক নয়।' : 'The requested product could not be located.'}
+              {isBn
+                ? 'পণ্যটি অপসারিত হতে পারে অ��বা লিংকটি সঠিক নয়।'
+                : 'The requested product could not be located.'}
             </p>
             <Link
               href="/search"
@@ -177,7 +195,9 @@ export default function ProductDetailPage() {
                         key={m.id || idx}
                         onClick={() => setActiveMediaIndex(idx)}
                         className={`w-16 h-16 rounded-xl border-2 transition-all shrink-0 flex items-center justify-center bg-white text-xs ${
-                          idx === activeMediaIndex ? 'border-[#FF6A00] shadow-sm' : 'border-slate-200 opacity-60'
+                          idx === activeMediaIndex
+                            ? 'border-[#FF6A00] shadow-sm'
+                            : 'border-slate-200 opacity-60'
                         }`}
                       >
                         📷 {idx + 1}
@@ -215,7 +235,9 @@ export default function ProductDetailPage() {
                     <span>(24 reviews)</span>
                     <span>•</span>
                     <Link href={`/categories/${product.category.slug}`} className="hover:underline">
-                      {isBn && product.category.nameBn ? product.category.nameBn : product.category.name}
+                      {isBn && product.category.nameBn
+                        ? product.category.nameBn
+                        : product.category.name}
                     </Link>
                   </div>
                 </div>
@@ -223,7 +245,9 @@ export default function ProductDetailPage() {
                 {/* Pricing & Product Point Reward Box */}
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2">
                   <div className="flex items-baseline space-x-3">
-                    <div className="text-3xl font-black text-slate-900">৳{currentPriceFormatted}</div>
+                    <div className="text-3xl font-black text-slate-900">
+                      ৳{currentPriceFormatted}
+                    </div>
                     {product.compareAtPriceBdtFormatted && (
                       <div className="text-sm font-semibold text-slate-400 line-through">
                         ৳{product.compareAtPriceBdtFormatted}
@@ -235,7 +259,11 @@ export default function ProductDetailPage() {
                   <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FF6A00]/10 border border-[#FF6A00]/30 text-[#FF6A00] text-xs font-black">
                     <span>★ +{currentPoints} Product Points</span>
                     <span className="text-[10px] text-slate-500 font-normal">
-                      ({isBn ? 'অর্ডার সমাপ্তির পর ওয়ালেটে জমা হবে' : 'Credited upon order completion'})
+                      (
+                      {isBn
+                        ? 'অর্ডার সমাপ্তির পর ওয়ালেটে জমা হবে'
+                        : 'Credited upon order completion'}
+                      )
                     </span>
                   </div>
                 </div>
@@ -300,7 +328,9 @@ export default function ProductDetailPage() {
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center border border-slate-300 rounded-lg bg-white">
                       <button
-                        onClick={() => setQuantity(Math.max(product.minOrderQuantity, quantity - 1))}
+                        onClick={() =>
+                          setQuantity(Math.max(product.minOrderQuantity, quantity - 1))
+                        }
                         className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100"
                       >
                         -
@@ -316,7 +346,11 @@ export default function ProductDetailPage() {
 
                     <Button
                       disabled={!inStock}
-                      onClick={() => showToast(`Added ${quantity}x ${selectedVariant?.title || displayTitle} to cart!`)}
+                      onClick={() =>
+                        showToast(
+                          `Added ${quantity}x ${selectedVariant?.title || displayTitle} to cart!`
+                        )
+                      }
                       className={`flex-1 py-3 text-xs font-bold ${
                         inStock
                           ? 'bg-[#FF6A00] hover:bg-[#E55F00] text-white shadow-sm'
@@ -331,8 +365,12 @@ export default function ProductDetailPage() {
                 {/* Merchant Card */}
                 <Card className="p-4 border border-slate-200 bg-white flex items-center justify-between shadow-xs">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Sold & Fulfilled by</span>
-                    <div className="font-bold text-xs text-slate-900">{product.seller.storeName}</div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">
+                      Sold & Fulfilled by
+                    </span>
+                    <div className="font-bold text-xs text-slate-900">
+                      {product.seller.storeName}
+                    </div>
                   </div>
                   <Link
                     href={`/search?sellerId=${product.seller.id}`}
@@ -379,7 +417,9 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div className="flex justify-between py-2 border-b border-slate-100">
                     <span className="text-slate-500">Brand</span>
-                    <span className="font-bold text-slate-800">{product.brand?.name || 'Generic'}</span>
+                    <span className="font-bold text-slate-800">
+                      {product.brand?.name || 'Generic'}
+                    </span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-100">
                     <span className="text-slate-500">Category</span>
@@ -387,11 +427,15 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-100">
                     <span className="text-slate-500">Warranty</span>
-                    <span className="font-bold text-slate-800">{product.warranty || 'Standard Warranty'}</span>
+                    <span className="font-bold text-slate-800">
+                      {product.warranty || 'Standard Warranty'}
+                    </span>
                   </div>
                   <div className="flex justify-between py-2 border-b border-slate-100">
                     <span className="text-slate-500">Minimum Order Qty</span>
-                    <span className="font-bold text-slate-800">{product.minOrderQuantity} units</span>
+                    <span className="font-bold text-slate-800">
+                      {product.minOrderQuantity} units
+                    </span>
                   </div>
                 </div>
               )}
@@ -403,7 +447,8 @@ export default function ProductDetailPage() {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 font-medium">
-          AlifWorld Localized Storefront • Multi-Variant Selection, BDT Pricing & Verified Warranties
+          AlifWorld Localized Storefront • Multi-Variant Selection, BDT Pricing & Verified
+          Warranties
         </div>
       </footer>
     </div>

@@ -40,25 +40,37 @@ describe('Milestone 101: Warehouse & Fulfillment Location Management Unit Tests'
         WarehousePolicy.canCreateWarehouse(adminActor, { isPlatformHub: true, sellerId: null })
       ).toBe(true);
       expect(
-        WarehousePolicy.canCreateWarehouse(adminActor, { isPlatformHub: false, sellerId: 'sel-store-aaaa-1111' })
+        WarehousePolicy.canCreateWarehouse(adminActor, {
+          isPlatformHub: false,
+          sellerId: 'sel-store-aaaa-1111',
+        })
       ).toBe(true);
     });
 
     it('allows SELLER to create merchant warehouse for own store', () => {
       expect(
-        WarehousePolicy.canCreateWarehouse(sellerActorA, { isPlatformHub: false, sellerId: 'sel-store-aaaa-1111' })
+        WarehousePolicy.canCreateWarehouse(sellerActorA, {
+          isPlatformHub: false,
+          sellerId: 'sel-store-aaaa-1111',
+        })
       ).toBe(true);
     });
 
     it('prohibits SELLER from creating platform hubs', () => {
       expect(
-        WarehousePolicy.canCreateWarehouse(sellerActorA, { isPlatformHub: true, sellerId: 'sel-store-aaaa-1111' })
+        WarehousePolicy.canCreateWarehouse(sellerActorA, {
+          isPlatformHub: true,
+          sellerId: 'sel-store-aaaa-1111',
+        })
       ).toBe(false);
     });
 
     it('prohibits SELLER from creating warehouse for another sellerId', () => {
       expect(
-        WarehousePolicy.canCreateWarehouse(sellerActorA, { isPlatformHub: false, sellerId: 'sel-store-bbbb-2222' })
+        WarehousePolicy.canCreateWarehouse(sellerActorA, {
+          isPlatformHub: false,
+          sellerId: 'sel-store-bbbb-2222',
+        })
       ).toBe(false);
     });
 

@@ -7,34 +7,9 @@
  * Invariant: Sellers cannot control commissions, protected payouts, or another seller's objects.
  */
 
-export type FulfillmentGroupStatus =
-  | 'PENDING'
-  | 'ACCEPTED'
-  | 'PACKING'
-  | 'READY_FOR_PICKUP'
-  | 'HANDED_OVER_TO_COURIER'
-  | 'IN_TRANSIT'
-  | 'DELIVERED'
-  | 'CANCELLED'
-  | 'REJECTED';
-
-/**
- * Valid lifecycle state transitions for seller fulfillment groups.
- */
-export const FULFILLMENT_GROUP_TRANSITIONS: Record<
-  FulfillmentGroupStatus,
-  FulfillmentGroupStatus[]
-> = {
-  PENDING: ['ACCEPTED', 'REJECTED'],
-  ACCEPTED: ['PACKING', 'CANCELLED'],
-  PACKING: ['READY_FOR_PICKUP', 'CANCELLED'],
-  READY_FOR_PICKUP: ['HANDED_OVER_TO_COURIER', 'CANCELLED'],
-  HANDED_OVER_TO_COURIER: ['IN_TRANSIT', 'DELIVERED'],
-  IN_TRANSIT: ['DELIVERED'],
-  DELIVERED: [], // Terminal state
-  CANCELLED: [], // Terminal state
-  REJECTED: [], // Terminal state
-};
+import type { FulfillmentGroupStatus } from '@/features/orders/state-machines/order-state-machine';
+export { FULFILLMENT_GROUP_TRANSITIONS } from '@/features/orders/state-machines/order-state-machine';
+export type { FulfillmentGroupStatus };
 
 export interface FulfillmentGroupItemDTO {
   id: string;

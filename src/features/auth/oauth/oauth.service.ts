@@ -1,10 +1,10 @@
 /**
  * AlifWorld Federated OAuth Orchestration Service
- * 
+ *
  * Manages OAuth 2.0 lifecycle, HMAC-SHA256 anti-CSRF state verification,
  * federated identity linking to local user accounts, atomic customer provisioning
  * (segregated 4 wallets + Point account), and token issuance.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 039, NIST SP 800-63B
  */
 
@@ -123,7 +123,10 @@ export class OAuthService {
     const sigBuf = Buffer.from(signature);
     const expectedSigBuf = Buffer.from(expectedSignature);
 
-    if (sigBuf.length !== expectedSigBuf.length || !crypto.timingSafeEqual(sigBuf, expectedSigBuf)) {
+    if (
+      sigBuf.length !== expectedSigBuf.length ||
+      !crypto.timingSafeEqual(sigBuf, expectedSigBuf)
+    ) {
       throw new UnauthorizedError('OAuth state signature verification failed (anti-CSRF breach)');
     }
 
@@ -459,7 +462,9 @@ export class OAuthService {
               accessToken: tokens?.accessToken,
               refreshToken: tokens?.refreshToken,
               scope: tokens?.scope,
-              metadata: profile.rawProfile ? JSON.parse(JSON.stringify(profile.rawProfile)) : undefined,
+              metadata: profile.rawProfile
+                ? JSON.parse(JSON.stringify(profile.rawProfile))
+                : undefined,
             },
           });
 

@@ -70,7 +70,8 @@ export const en = {
     title: 'KYC and legal compliance',
     dashboard: 'Seller dashboard',
     privateStorage: 'Encrypted private storage boundary',
-    privateStorageDescription: 'Documents are stored as private S3 objects and opened only through 15-minute signed URLs. Every view is audited.',
+    privateStorageDescription:
+      'Documents are stored as private S3 objects and opened only through 15-minute signed URLs. Every view is audited.',
     sellerId: 'Seller ID',
     documentNumber: 'Document number (optional)',
     upload: 'Upload document',
@@ -175,7 +176,8 @@ export const en = {
     hero: {
       collectionBadge: 'Premium Collection 2026',
       title: 'Timeless Elegance & Contemporary Fashion',
-      subtitle: "Your neighborhood's fastest delivery service. We bring everything you need, right to your doorstep in minutes.",
+      subtitle:
+        "Your neighborhood's fastest delivery service. We bring everything you need, right to your doorstep in minutes.",
       shopNow: 'Shop Now',
       exploreDeals: 'Explore Deals',
       verifiedStores: 'Verified Stores',
@@ -280,7 +282,8 @@ export const en = {
       pumaCasualDesc: 'Casual Canvas Slip-Ons — all-day relaxed walk comfort memory insole.',
     },
     footer: {
-      slogan: "Your neighborhood's fastest delivery service. We bring everything you need, right to your doorstep in minutes.",
+      slogan:
+        "Your neighborhood's fastest delivery service. We bring everything you need, right to your doorstep in minutes.",
       quickLinks: 'QUICK LINKS',
       aboutUs: 'About Us',
       faqs: 'FAQs',
@@ -315,7 +318,8 @@ export const en = {
     changeNumber: 'Change number',
     verifyAndLogin: 'Verify & Sign In',
     unregisteredTitle: 'Account Not Found',
-    unregisteredDesc: 'No account exists with {phone}. Would you like to create a new account or try another number?',
+    unregisteredDesc:
+      'No account exists with {phone}. Would you like to create a new account or try another number?',
     continueToRegister: 'Continue to Register',
     tryAnotherNumber: 'Login with another number',
     stepName: 'Your Name',
@@ -393,7 +397,8 @@ export const en = {
     errInvalidCreds: 'Invalid credentials',
     errRegFailed: 'Registration completion failed',
     securityAlertTitle: 'Security Alert: Session Revoked',
-    securityAlertBreach: 'A security anomaly was detected (token reuse attempt). To protect your account, all active sessions have been revoked. Please sign in again with your credentials.',
+    securityAlertBreach:
+      'A security anomaly was detected (token reuse attempt). To protect your account, all active sessions have been revoked. Please sign in again with your credentials.',
     sessionExpired: 'Your session has expired. Please sign in again.',
     sessionRefreshed: 'Session refreshed successfully.',
     dismiss: 'Dismiss',
@@ -409,8 +414,10 @@ export const en = {
     logoutOtherDevices: 'Log out from other devices',
     logoutAllDevices: 'Log out from all devices',
     confirmLogoutDevice: 'Are you sure you want to log out this device?',
-    confirmLogoutOthers: 'Are you sure you want to log out from all other devices? You will remain signed in on this device.',
-    confirmLogoutAll: 'Are you sure you want to log out from all devices everywhere? You will need to sign in again.',
+    confirmLogoutOthers:
+      'Are you sure you want to log out from all other devices? You will remain signed in on this device.',
+    confirmLogoutAll:
+      'Are you sure you want to log out from all devices everywhere? You will need to sign in again.',
     deviceRevokedSuccess: 'Device logged out successfully',
     otherDevicesRevokedSuccess: 'All other devices logged out successfully',
     allDevicesRevokedSuccess: 'All devices logged out. Redirecting...',
@@ -420,7 +427,8 @@ export const en = {
     passwordSecurity: 'Password Security',
     changePassword: 'Change password',
     changePasswordSubtitle: 'Update your password and sign out every active device.',
-    passwordSignOutNotice: 'For your security, changing your password signs you out on every device.',
+    passwordSignOutNotice:
+      'For your security, changing your password signs you out on every device.',
     currentPassword: 'Current password',
     newPassword: 'New password',
     updatePassword: 'Update password',
@@ -433,23 +441,27 @@ export const en = {
     passwordChangedSuccess: 'Password updated. Signing you out securely...',
     forgotPassword: 'Forgot password?',
     forgotPasswordTitle: 'Reset your password',
-    forgotPasswordDesc: 'Enter your account email. If it matches an account, we will queue a secure reset link.',
+    forgotPasswordDesc:
+      'Enter your account email. If it matches an account, we will queue a secure reset link.',
     emailAddress: 'Email address',
     sendResetLink: 'Send reset link',
-    resetRequestAccepted: 'If an account exists for this email, reset instructions are on their way.',
+    resetRequestAccepted:
+      'If an account exists for this email, reset instructions are on their way.',
     resetRequestFailed: 'We could not queue reset instructions. Please try again.',
     backToSignIn: 'Back to password sign in',
     openDevResetLink: 'Open local reset link',
     createNewPassword: 'Create a new password',
     createNewPasswordDesc: 'This secure link can be used once and expires after 15 minutes.',
-    passwordRequirements: 'Use 8–128 characters with uppercase, lowercase, a number, and a symbol. Commonly breached passwords are blocked.',
+    passwordRequirements:
+      'Use 8–128 characters with uppercase, lowercase, a number, and a symbol. Commonly breached passwords are blocked.',
     resetPassword: 'Reset password',
     passwordResetFailed: 'We could not reset your password. Please try again.',
     resetLinkInvalidTitle: 'Reset link unavailable',
     resetLinkInvalid: 'This password reset link is invalid, expired, or has already been used.',
     requestAnotherReset: 'Request another reset link',
     passwordResetCompleteTitle: 'Password reset complete',
-    passwordResetCompleteDesc: 'Every active session has been signed out. Use your new password to sign in again.',
+    passwordResetCompleteDesc:
+      'Every active session has been signed out. Use your new password to sign in again.',
     loadingResetLink: 'Checking reset link',
   },
   language: {
@@ -471,7 +483,8 @@ export const en = {
     identifierPasswordRequired: 'Please provide your administrative identifier and password.',
     unauthorized: 'Access denied. Your account does not have administrative privileges.',
     dashboard: 'Platform Operations Dashboard',
-    dashboardDesc: 'Real-time overview of Bangladesh e-commerce commerce, merchants, and financial ledgers.',
+    dashboardDesc:
+      'Real-time overview of Bangladesh e-commerce commerce, merchants, and financial ledgers.',
     totalGmv: 'Total Platform GMV',
     activeSellers: 'Active Merchants',
     users: 'Registered Users',
@@ -508,13 +521,15 @@ export const en = {
     currencyPositionSwitched: 'Position for {name} switched to {position}',
     testSmsDispatched: 'Test SMS dispatched to {phone} via {provider}!',
     sellerApplicationsTitle: 'Seller applications',
-    sellerApplicationsDescription: 'Review submitted merchant applications and activate approved stores.',
+    sellerApplicationsDescription:
+      'Review submitted merchant applications and activate approved stores.',
     sellerApplicationsLoadFailed: 'Unable to load seller applications.',
     sellerApplicationReviewFailed: 'Unable to update the seller application.',
     sellerApplicationReviewSuccess: 'Seller application updated successfully.',
     sellerApplicationEmpty: 'No seller applications match the current filters.',
     sellerLifecycleTitle: 'Seller lifecycle controls',
-    sellerLifecycleDescription: 'Suspend, restrict, or reactivate a seller with an optimistic version and an auditable reason.',
+    sellerLifecycleDescription:
+      'Suspend, restrict, or reactivate a seller with an optimistic version and an auditable reason.',
     sellerLifecycleFailed: 'Unable to update seller lifecycle status.',
     suspend: 'Suspend',
     restrict: 'Restrict',
@@ -522,7 +537,8 @@ export const en = {
     applyLifecycle: 'Apply status',
     lifecycleReason: 'Required reason (minimum 5 characters)',
     kycReviewTitle: 'KYC review queue',
-    kycReviewDescription: 'Review private seller documents without exposing storage keys or document contents.',
+    kycReviewDescription:
+      'Review private seller documents without exposing storage keys or document contents.',
     kycReviewEmpty: 'No pending KYC documents.',
     kycReviewLoadFailed: 'Unable to load the KYC review queue.',
     kycReviewFailed: 'Unable to update the KYC document.',
@@ -539,7 +555,8 @@ export const en = {
     markUnderReview: 'Mark under review',
     reasonRequired: 'A review reason is required for this decision.',
     localizationQaTitle: 'Localization Catalog QA',
-    localizationQaDescription: 'Review parity, placeholders, empty values, and translation expansion warnings.',
+    localizationQaDescription:
+      'Review parity, placeholders, empty values, and translation expansion warnings.',
     localizationQaRun: 'Run QA Check',
     localizationQaLoadFailed: 'Unable to load localization QA results.',
     localizationQaPassed: 'No catalog QA issues were found.',
@@ -552,4 +569,3 @@ export const en = {
     },
   },
 };
-

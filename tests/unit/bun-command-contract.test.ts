@@ -70,11 +70,11 @@ describe('Milestone 017: Bun Command Contract', () => {
 
   describe('Database, Worker & OpenAPI Script Contract', () => {
     it('defines Prisma database operations', () => {
-      expect(scripts['db:generate']).toBe('prisma generate');
-      expect(scripts['db:migrate']).toBe('prisma migrate dev');
-      expect(scripts['db:migrate:deploy']).toBe('prisma migrate deploy');
+      expect(scripts['db:generate']).toContain('prisma generate');
+      expect(scripts['db:migrate']).toContain('prisma migrate dev');
+      expect(scripts['db:migrate:deploy']).toContain('prisma migrate deploy');
       expect(scripts['db:seed']).toContain('prisma/seed.ts');
-      expect(scripts['db:studio']).toBe('prisma studio');
+      expect(scripts['db:studio']).toContain('prisma studio');
     });
 
     it('defines worker execution script', () => {

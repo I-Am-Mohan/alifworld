@@ -1,9 +1,9 @@
 /**
  * AlifWorld Warehouse & Inventory Zod Validators
- * 
+ *
  * Strict validation for warehouse setups, stock intake, atomic reservations,
  * and ledger adjustments.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0016, ADR-0022, ADR-0026
  */
@@ -105,9 +105,12 @@ export type ExpireStaleReservationsInput = z.infer<typeof ExpireStaleReservation
 export const AdjustStockSchema = z.object({
   stockBalanceId: z.string().min(4, 'Stock balance ID is required'),
   movementType: z.enum([MovementType.ADJUST, MovementType.DAMAGE, MovementType.WRITE_OFF]),
-  quantityDelta: z.number().int().refine((val) => val !== 0, {
-    message: 'Quantity delta cannot be zero',
-  }),
+  quantityDelta: z
+    .number()
+    .int()
+    .refine((val) => val !== 0, {
+      message: 'Quantity delta cannot be zero',
+    }),
   reason: z.string().min(5, 'Mandatory audit reason required for manual inventory adjustments'),
 });
 
@@ -136,16 +139,18 @@ export const QueryStockMovementsSchema = z.object({
   variantId: z.string().optional(),
   stockBalanceId: z.string().optional(),
   sellerId: z.string().optional(),
-  movementType: z.enum([
-    MovementType.RECEIVE,
-    MovementType.RESERVE,
-    MovementType.RELEASE,
-    MovementType.COMMIT,
-    MovementType.ADJUST,
-    MovementType.RETURN,
-    MovementType.DAMAGE,
-    MovementType.WRITE_OFF,
-  ]).optional(),
+  movementType: z
+    .enum([
+      MovementType.RECEIVE,
+      MovementType.RESERVE,
+      MovementType.RELEASE,
+      MovementType.COMMIT,
+      MovementType.ADJUST,
+      MovementType.RETURN,
+      MovementType.DAMAGE,
+      MovementType.WRITE_OFF,
+    ])
+    .optional(),
   sourceType: z.nativeEnum(SourceType).optional(),
   sourceId: z.string().optional(),
   startDate: z.coerce.date().optional(),
@@ -221,7 +226,9 @@ export const ReceiveRmaReturnSchema = z.object({
   warehouseId: z.string().min(4, 'Warehouse ID is required'),
   variantId: z.string().min(4, 'Product Variant ID is required'),
   quantity: z.number().int().min(1, 'Quantity must be at least 1 unit'),
-  initialDisposition: z.enum(['QUARANTINE_INSPECTION', 'RESTOCK_AVAILABLE', 'MARK_DAMAGED']).default('QUARANTINE_INSPECTION'),
+  initialDisposition: z
+    .enum(['QUARANTINE_INSPECTION', 'RESTOCK_AVAILABLE', 'MARK_DAMAGED'])
+    .default('QUARANTINE_INSPECTION'),
   customerReason: z.string().max(255).optional().nullable(),
 });
 

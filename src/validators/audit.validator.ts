@@ -1,9 +1,9 @@
 /**
  * Audit Log Query & Search Validation Schemas
- * 
+ *
  * Enforces strict typing, pagination constraints, and date parsing for
  * administrative audit trail exploration.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 049
  */
 

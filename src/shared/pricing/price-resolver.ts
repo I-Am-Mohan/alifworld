@@ -72,7 +72,9 @@ export class MOQViolationError extends Error {
   public readonly requestedQuantity: number;
 
   constructor(minOrderQuantity: number, requestedQuantity: number) {
-    super(`Requested quantity (${requestedQuantity}) is below minimum order quantity (${minOrderQuantity})`);
+    super(
+      `Requested quantity (${requestedQuantity}) is below minimum order quantity (${minOrderQuantity})`
+    );
     this.name = 'MOQViolationError';
     this.minOrderQuantity = minOrderQuantity;
     this.requestedQuantity = requestedQuantity;
@@ -89,7 +91,14 @@ export class MOQViolationError extends Error {
  * 4. Pure integer poisha calculations with 0 floating point errors.
  */
 export function resolveEffectivePrice(input: ResolvePriceInput): ResolvedPriceResult {
-  const { variant, product, quantity, buyerSegment = null, activeRules = [], now = new Date() } = input;
+  const {
+    variant,
+    product,
+    quantity,
+    buyerSegment = null,
+    activeRules = [],
+    now = new Date(),
+  } = input;
   const channel = input.channel || 'RETAIL';
 
   if (quantity < 1) {
@@ -130,7 +139,11 @@ export function resolveEffectivePrice(input: ResolvePriceInput): ResolvedPriceRe
     if (quantity < rule.minQuantity) {
       return false;
     }
-    if (rule.maxQuantity !== null && rule.maxQuantity !== undefined && quantity > rule.maxQuantity) {
+    if (
+      rule.maxQuantity !== null &&
+      rule.maxQuantity !== undefined &&
+      quantity > rule.maxQuantity
+    ) {
       return false;
     }
 
@@ -155,7 +168,11 @@ export function resolveEffectivePrice(input: ResolvePriceInput): ResolvedPriceRe
 
   if (bestRule) {
     rawUnitPricePoisha = bestRule.pricePoisha;
-    compareAtPricePoisha = bestRule.compareAtPricePoisha ?? variant.compareAtPricePoisha ?? product?.compareAtPricePoisha ?? null;
+    compareAtPricePoisha =
+      bestRule.compareAtPricePoisha ??
+      variant.compareAtPricePoisha ??
+      product?.compareAtPricePoisha ??
+      null;
     appliedPriceListId = bestRule.priceList.id;
     appliedPriceListCode = bestRule.priceList.code;
     if (bestRule.productPointOverride !== null && bestRule.productPointOverride !== undefined) {

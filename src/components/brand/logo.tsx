@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export interface AlifLogoProps {
   /** Size variant */
@@ -25,22 +26,32 @@ export function AlifLogo({
     xl: 'h-18 w-auto',
   };
 
+  const sizePixels = {
+    sm: { width: 96, height: 32 },
+    md: { width: 132, height: 44 },
+    lg: { width: 168, height: 56 },
+    xl: { width: 216, height: 72 },
+  };
+
   const imageElement = (
-    <img
+    <Image
       src="/logo.png"
       alt="AlifWorld"
+      width={sizePixels[size].width}
+      height={sizePixels[size].height}
+      priority
       className={`object-contain transition-transform duration-200 select-none ${sizeClasses[size]}`}
     />
   );
 
   const wrappedContent = inverted ? (
-    <div className={`inline-flex items-center bg-white rounded-xl px-2.5 py-1 shadow-sm ${className}`}>
+    <div
+      className={`inline-flex items-center bg-white rounded-xl px-2.5 py-1 shadow-sm ${className}`}
+    >
       {imageElement}
     </div>
   ) : (
-    <div className={`inline-flex items-center ${className}`}>
-      {imageElement}
-    </div>
+    <div className={`inline-flex items-center ${className}`}>{imageElement}</div>
   );
 
   if (href) {

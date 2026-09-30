@@ -1,8 +1,8 @@
 /**
  * AlifWorld Server-Side Authorization Policy Subsystem Barrel Export
- * 
+ *
  * Exposes core policy engine, domain policies, guard helpers, and types.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 042
  */
 

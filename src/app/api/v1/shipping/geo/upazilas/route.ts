@@ -12,9 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const query = GeoUpazilasQuerySchema.parse(
-      Object.fromEntries(searchParams.entries())
-    );
+    const query = GeoUpazilasQuerySchema.parse(Object.fromEntries(searchParams.entries()));
 
     const upazilas = await deliveryServiceabilityService.listUpazilas(
       query.districtId,

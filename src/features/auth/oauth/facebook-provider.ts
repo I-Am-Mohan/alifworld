@@ -1,9 +1,9 @@
 /**
  * Facebook OAuth 2.0 Identity Provider (Graph API v19.0)
- * 
+ *
  * Implements code exchange, user profile retrieval, and mobile access token verification
  * conforming to IOAuthProvider contract.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 039
  */
 
@@ -29,11 +29,7 @@ export class FacebookOAuthProvider implements IOAuthProvider {
   }
 
   private get isMock(): boolean {
-    return (
-      !this.appId ||
-      this.appId.startsWith('mock_') ||
-      process.env.NODE_ENV === 'test'
-    );
+    return !this.appId || this.appId.startsWith('mock_') || process.env.NODE_ENV === 'test';
   }
 
   /**

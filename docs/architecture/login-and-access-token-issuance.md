@@ -44,7 +44,7 @@ sequenceDiagram
     else Credentials Valid
         Service->>UserRepo: updateLastLogin(userId)
         Service->>TokenService: issueTokenPair({ user, clientType, deviceInfo, ip, userAgent })
-        
+
         Note over TokenService,SessionRepo: Create Session & Issue Tokens
         TokenService->>SessionRepo: createSession({ userId, sessionToken, clientType, ... })
         SessionRepo->>DB: INSERT into user_sessions
@@ -87,14 +87,14 @@ sequenceDiagram
     else Token Present
         API->>Service: getCurrentUser(token)
         Service->>Service: verifyJwt<AccessTokenClaims>(token)
-        
+
         alt Signature Invalid or Expired
             Service-->>API: 401 Unauthorized
             API-->>Client: HTTP 401 Unauthorized
         else Signature Valid
             Service->>DB: Query User by ID (include wallets, pointAccount, roles)
             DB-->>Service: User with balance accounts
-            
+
             alt user.tokenVersion != claims.tokenVersion
                 Note over Service: Session Kill-Switch Triggered
                 Service-->>API: 401 Unauthorized ("Session has expired or credentials changed")
@@ -112,6 +112,7 @@ sequenceDiagram
 ## 4. Multi-Tenant Seller Scoping Resolution
 
 During authentication, `AuthLoginService` evaluates user relationships to dynamically resolve merchant tenant scoping:
+
 1. **Seller Owner**: If `user.ownedSellers.length > 0`, extracts `ownedSellers[0].id`.
 2. **Seller Staff**: If `user.sellerStaff.length > 0`, extracts `sellerStaff[0].sellerId`.
 3. **Role Assignment Scoping**: If `user.roleAssignments` contains a `sellerId` override, binds that tenant ID.
@@ -122,6 +123,7 @@ During authentication, `AuthLoginService` evaluates user relationships to dynami
 ## 5. Concurrent Session Management Policy
 
 To protect customer wallets, reward points, and merchant store configurations from account sharing and unauthorized access:
+
 - **Maximum Concurrent Sessions**: Configured as `TOKEN_POLICIES.MAX_ACTIVE_SESSIONS_PER_USER = 5`.
 - **Enforcement**: Upon successful login, `SessionRepository.enforceSessionLimit` queries all non-revoked sessions for that user sorted by `lastActiveAt DESC`.
 - **Surplus Eviction**: If active sessions > 5, surplus oldest sessions are updated to `isRevoked = true`, `revokedReason = 'EXCEEDED_MAX_CONCURRENT_SESSIONS'`.
@@ -243,7 +245,7 @@ To match the high-end Golden Amber (`#F59E0B`) and Brand Orange (`#FF6A00`) aest
 ```mermaid
 flowchart TD
     Start([User clicks Account / Login / Register]) --> ModalOpen[Launch AuthModal Overlay]
-    
+
     subgraph Login Flow
         ModalOpen --> L1[Enter Mobile Number: +8801XXXXXXXXX]
         L1 --> L2{POST /api/v1/auth/phone/check}
@@ -252,14 +254,14 @@ flowchart TD
         L4 --> L5{POST /api/v1/auth/phone/verify-login}
         L5 -- Verified --> L6[Issue HttpOnly Cookies & Bearer Tokens]
         L6 --> L7[Instant Login & Close Overlay]
-        
+
         L2 -- Unregistered --> LPrompt[Screen: User Not Registered]
         LPrompt --> OptA[Option A: Continue to Register with current number]
         LPrompt --> OptB[Option B: Login with another number]
         OptA --> R2[Dispatch Register OTP]
         OptB --> L1
     end
-    
+
     subgraph Registration Wizard Flow
         R1[Enter Mobile Number] --> R2
         R2 --> R3[Enter OTP & Verify: POST /api/v1/auth/phone/verify-register]
@@ -274,6 +276,7 @@ flowchart TD
 ```
 
 ### 7.1 Key Endpoints
+
 1. `POST /api/v1/auth/phone/check`: Queries user existence by normalized Bangladesh mobile number.
 2. `POST /api/v1/auth/phone/send-otp`: Dispatches 6-digit OTP with 60s cooldown and 3/hr rate limits.
 3. `POST /api/v1/auth/phone/verify-login`: Verifies login OTP, creates user session, sets cookies, and returns tokens.
@@ -281,9 +284,9 @@ flowchart TD
 5. `POST /api/v1/auth/phone/complete-registration`: Atomically creates user, provisions 4 segregated wallets (`MAIN`, `SHOPPING`, `GOOD_LUCK`, `CHARITY`), assigns `CUSTOMER` role, establishes session, and returns tokens.
 
 ### 7.2 Overlay UX Highlights
+
 - **Backdrop Blur & Smooth Step Animation**: Delicately slides between verification steps without jarring reloads.
 - **Bilingual Switcher**: Instant one-click toggle between Bengali (`বাংলা`) and English.
 - **Smart Phone Input**: Supports both raw `01XXXXXXXXX` and E.164 `+8801XXXXXXXXX` prefixes.
 - **Password Transparency**: Explicit guidance text informs the user to remember their password for subsequent logins.
 - **Frictionless Optional Demographics**: Address, division, birthday, and gender can be specified or skipped with a single click.
-

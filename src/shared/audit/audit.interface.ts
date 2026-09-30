@@ -1,9 +1,9 @@
 /**
  * AlifWorld Immutable Audit Trail Interface & Action Constants
- * 
+ *
  * Captures actor, action, resource, before/after redaction-safe diffs,
  * request IDs, IP, user-agent, and timestamps for compliance and security forensics.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, NIST SP 800-63B, Milestone 040
  */
 

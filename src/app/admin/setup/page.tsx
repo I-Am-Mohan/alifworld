@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Sliders,
@@ -31,11 +31,17 @@ import {
   Coins,
 } from 'lucide-react';
 import { useI18n } from '@/i18n/context';
-import { CurrencyConfig, DEFAULT_CURRENCIES, parseCurrencies, formatCurrencyAmount } from '@/shared/types/currency';
+import {
+  CurrencyConfig,
+  DEFAULT_CURRENCIES,
+  parseCurrencies,
+  formatCurrencyAmount,
+} from '@/shared/types/currency';
 import { LanguageDefinition } from '@/i18n/types';
 import { csrfFetch } from '@/shared/security/csrf-client';
 
-type SetupTab = 'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'smtp' | 'compliance' | 'features';
+type SetupTab =
+  'localization' | 'storage' | 'payments' | 'couriers' | 'sms' | 'smtp' | 'compliance' | 'features';
 
 export default function AdminSetupPage() {
   const { t } = useI18n();
@@ -61,7 +67,13 @@ export default function AdminSetupPage() {
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState<string | null>(null);
   const [qaReport, setQaReport] = useState<{
-    summary: { missing: number; extra: number; placeholderMismatch: number; empty: number; expansion: number };
+    summary: {
+      missing: number;
+      extra: number;
+      placeholderMismatch: number;
+      empty: number;
+      expansion: number;
+    };
     issues: Array<{ type: string; key: string }>;
     expansionIssues: Array<{ key: string; ratio: number; limit: number }>;
   } | null>(null);
@@ -135,17 +147,92 @@ export default function AdminSetupPage() {
     SMTP_FROM_NAME: 'AlifWorld Notifications',
     SMTP_FROM_EMAIL: 'noreply@alifworld.com',
     COMPLIANCE_FIELDS_CONFIG: JSON.stringify([
-      { id: 'tradeLicenseNumber', name: 'Trade License Number', type: 'TEXT', regex: '^[A-Za-z0-9_-]{3,50}$', hint: 'Issued by municipal City Corporation or Paurashava', required: true },
-      { id: 'binNumber', name: 'NBR BIN (VAT Registration Number)', type: 'NUMBER', regex: '^\\d{9,13}$', hint: '13-digit Business Identification Number', required: false },
-      { id: 'tinNumber', name: 'e-TIN (Taxpayer Identification Number)', type: 'NUMBER', regex: '^\\d{12}$', hint: '12-digit e-TIN number', required: false },
+      {
+        id: 'tradeLicenseNumber',
+        name: 'Trade License Number',
+        type: 'TEXT',
+        regex: '^[A-Za-z0-9_-]{3,50}$',
+        hint: 'Issued by municipal City Corporation or Paurashava',
+        required: true,
+      },
+      {
+        id: 'binNumber',
+        name: 'NBR BIN (VAT Registration Number)',
+        type: 'NUMBER',
+        regex: '^\\d{9,13}$',
+        hint: '13-digit Business Identification Number',
+        required: false,
+      },
+      {
+        id: 'tinNumber',
+        name: 'e-TIN (Taxpayer Identification Number)',
+        type: 'NUMBER',
+        regex: '^\\d{12}$',
+        hint: '12-digit e-TIN number',
+        required: false,
+      },
     ]),
     KYC_DOCUMENTS_CONFIG: JSON.stringify([
-      { id: 'TRADE_LICENSE', name: 'Trade License Copy', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Valid municipal trade license document', required: true },
-      { id: 'NID_FRONT', name: 'National ID (NID) Front', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'Smart Card or original NID front photo', required: true },
-      { id: 'NID_BACK', name: 'National ID (NID) Back', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'NID back photo showing residential address', required: true },
-      { id: 'BIN_CERTIFICATE', name: 'NBR BIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'VAT Registration certificate', required: false },
-      { id: 'BANK_CHEQUE_LEAF', name: 'Bank Cheque Leaf', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.pdf', minSizeKb: 10, maxSizeKb: 5120, hint: 'Cancelled cheque leaf for bank payout verification', required: false },
-      { id: 'TIN_CERTIFICATE', name: 'e-TIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Tax identification dossier document', required: false },
+      {
+        id: 'TRADE_LICENSE',
+        name: 'Trade License Copy',
+        type: 'FILE',
+        allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+        minSizeKb: 10,
+        maxSizeKb: 10240,
+        hint: 'Valid municipal trade license document',
+        required: true,
+      },
+      {
+        id: 'NID_FRONT',
+        name: 'National ID (NID) Front',
+        type: 'FILE',
+        allowedExtensions: '.jpg,.jpeg,.png,.webp',
+        minSizeKb: 10,
+        maxSizeKb: 5120,
+        hint: 'Smart Card or original NID front photo',
+        required: true,
+      },
+      {
+        id: 'NID_BACK',
+        name: 'National ID (NID) Back',
+        type: 'FILE',
+        allowedExtensions: '.jpg,.jpeg,.png,.webp',
+        minSizeKb: 10,
+        maxSizeKb: 5120,
+        hint: 'NID back photo showing residential address',
+        required: true,
+      },
+      {
+        id: 'BIN_CERTIFICATE',
+        name: 'NBR BIN Certificate',
+        type: 'FILE',
+        allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+        minSizeKb: 10,
+        maxSizeKb: 10240,
+        hint: 'VAT Registration certificate',
+        required: false,
+      },
+      {
+        id: 'BANK_CHEQUE_LEAF',
+        name: 'Bank Cheque Leaf',
+        type: 'FILE',
+        allowedExtensions: '.jpg,.jpeg,.png,.pdf',
+        minSizeKb: 10,
+        maxSizeKb: 5120,
+        hint: 'Cancelled cheque leaf for bank payout verification',
+        required: false,
+      },
+      {
+        id: 'TIN_CERTIFICATE',
+        name: 'e-TIN Certificate',
+        type: 'FILE',
+        allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+        minSizeKb: 10,
+        maxSizeKb: 10240,
+        hint: 'Tax identification dossier document',
+        required: false,
+      },
     ]),
     FEATURE_COD_ENABLED: 'true',
     FEATURE_POINTS_REWARDS_ENABLED: 'true',
@@ -157,31 +244,47 @@ export default function AdminSetupPage() {
     FEATURE_CART_TTL_AUTO_CANCEL: 'true',
   });
 
-  const loadLanguages = async () => {
-    try {
-      setLoadingLanguages(true);
-      const res = await fetch('/api/v1/system/languages');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data) {
-          setLanguages(json.data.languages || []);
-          if (json.data.defaultLocale) {
-            updateSetting('PLATFORM_DEFAULT_LOCALE', json.data.defaultLocale);
+  const updateSetting = useCallback((key: string, value: string) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const toggleSetting = useCallback((key: string) => {
+    setSettings((prev) => ({ ...prev, [key]: prev[key] === 'true' ? 'false' : 'true' }));
+  }, []);
+
+  const toggleSecret = useCallback((field: string) => {
+    setRevealedSecrets((prev) => ({ ...prev, [field]: !prev[field] }));
+  }, []);
+
+  const loadLanguages = useCallback(
+    (signal?: AbortSignal) => {
+      return fetch('/api/v1/system/languages', { signal })
+        .then(async (res) => {
+          if (res.ok) {
+            const json = await res.json().catch(() => null);
+            if (json?.success && json.data) {
+              setLanguages(json.data.languages || []);
+              if (json.data.defaultLocale) {
+                updateSetting('PLATFORM_DEFAULT_LOCALE', json.data.defaultLocale);
+              }
+            }
           }
-        }
-      }
-    } catch {
-      // Fallback silently to defaults
-    } finally {
-      setLoadingLanguages(false);
-    }
-  };
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (!signal?.aborted) setLoadingLanguages(false);
+        });
+    },
+    [updateSetting]
+  );
 
   const loadLocalizationQa = async () => {
     try {
       setQaLoading(true);
       setQaError(null);
-      const res = await fetch('/api/v1/admin/localization/qa?referenceLocale=en-BD&targetLocale=bn-BD');
+      const res = await fetch(
+        '/api/v1/admin/localization/qa?referenceLocale=en-BD&targetLocale=bn-BD'
+      );
       const json = await res.json().catch(() => null);
       if (!res.ok || !json?.success) {
         throw new Error(json?.error?.message || t('admin.localizationQaLoadFailed'));
@@ -194,44 +297,33 @@ export default function AdminSetupPage() {
     }
   };
 
-  // Fetch settings and database languages on mount
-  useEffect(() => {
-    async function loadSetup() {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/v1/system/setup');
+  const loadSetup = useCallback((signal?: AbortSignal) => {
+    return fetch('/api/v1/system/setup', { signal })
+      .then(async (res) => {
         if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
+          const json = await res.json().catch(() => null);
+          if (json?.success && json.data) {
             setSettings((prev) => ({ ...prev, ...json.data }));
           }
         }
-      } catch {
-        // Fallback to default state
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadSetup();
-    loadLanguages();
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!signal?.aborted) setLoading(false);
+      });
   }, []);
+
+  // Fetch settings and database languages on mount
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadSetup(controller.signal);
+    void loadLanguages(controller.signal);
+    return () => controller.abort();
+  }, [loadSetup, loadLanguages]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
-  };
-
-  const updateSetting = (key: string, value: string) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const toggleSetting = (key: string) => {
-    const current = settings[key] === 'true';
-    updateSetting(key, current ? 'false' : 'true');
-  };
-
-  const toggleSecret = (field: string) => {
-    setRevealedSecrets((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const handleSaveAll = async () => {
@@ -521,7 +613,8 @@ export default function AdminSetupPage() {
             Platform Master Setup &amp; Governance
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Configure regional boundaries, storage, financial payment rails, courier credentials, SMS providers, and feature flags.
+            Configure regional boundaries, storage, financial payment rails, courier credentials,
+            SMS providers, and feature flags.
           </p>
         </div>
 
@@ -568,12 +661,13 @@ export default function AdminSetupPage() {
                   <span>Regional &amp; Localization Parameters</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Platform business timezone, dynamic database-managed languages, and 3-option multi-currency settings.
+                  Platform business timezone, dynamic database-managed languages, and 3-option
+                  multi-currency settings.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={loadLanguages}
+                onClick={() => void loadLanguages()}
                 disabled={loadingLanguages}
                 className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shrink-0"
               >
@@ -594,7 +688,9 @@ export default function AdminSetupPage() {
                   onChange={(e) => updateSetting('PLATFORM_TIMEZONE', e.target.value)}
                   className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
                 >
-                  <option value="Asia/Dhaka">Asia/Dhaka (GMT+06:00 - Bangladesh Authoritative)</option>
+                  <option value="Asia/Dhaka">
+                    Asia/Dhaka (GMT+06:00 - Bangladesh Authoritative)
+                  </option>
                   <option value="UTC">UTC (Coordinated Universal Time)</option>
                   <option value="Asia/Kolkata">Asia/Kolkata (GMT+05:30 - India Standard)</option>
                   <option value="Asia/Singapore">Asia/Singapore (GMT+08:00)</option>
@@ -603,7 +699,8 @@ export default function AdminSetupPage() {
                   <option value="America/New_York">America/New_York (EST)</option>
                 </select>
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  All accounting cycles, order settlement windows, and daily club ranks calculate at midnight Dhaka time.
+                  All accounting cycles, order settlement windows, and daily club ranks calculate at
+                  midnight Dhaka time.
                 </span>
               </div>
 
@@ -620,7 +717,8 @@ export default function AdminSetupPage() {
                   {languages.length > 0 ? (
                     languages.map((l) => (
                       <option key={l.code} value={l.code}>
-                        {l.name} ({l.nativeName}) — [{l.code}] {l.isDefault ? '• ACTIVE DEFAULT' : ''}
+                        {l.name} ({l.nativeName}) — [{l.code}]{' '}
+                        {l.isDefault ? '• ACTIVE DEFAULT' : ''}
                       </option>
                     ))
                   ) : (
@@ -631,7 +729,8 @@ export default function AdminSetupPage() {
                   )}
                 </select>
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  System default locale stored in PostgreSQL <code className="text-amber-700 font-mono">system_configs</code> table.
+                  System default locale stored in PostgreSQL{' '}
+                  <code className="text-amber-700 font-mono">system_configs</code> table.
                 </span>
               </div>
             </div>
@@ -645,7 +744,8 @@ export default function AdminSetupPage() {
                     <span>Supported Platform Languages (Database Controlled)</span>
                   </h3>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Dynamic language registry managed in the database. Active languages automatically power the customer storefront language switcher.
+                    Dynamic language registry managed in the database. Active languages
+                    automatically power the customer storefront language switcher.
                   </p>
                 </div>
                 <button
@@ -770,7 +870,9 @@ export default function AdminSetupPage() {
                         <div>
                           <div className="flex items-center space-x-2">
                             <span className="text-sm font-black text-slate-900">{l.name}</span>
-                            <span className="text-xs text-slate-600 font-semibold">({l.nativeName})</span>
+                            <span className="text-xs text-slate-600 font-semibold">
+                              ({l.nativeName})
+                            </span>
                           </div>
                           <div className="flex items-center space-x-2 mt-1">
                             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-mono font-bold text-slate-700 uppercase">
@@ -812,7 +914,9 @@ export default function AdminSetupPage() {
                               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           } ${isDefault ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${l.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${l.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
+                          />
                           <span>{l.isActive ? 'Active' : 'Inactive'}</span>
                         </button>
 
@@ -840,7 +944,9 @@ export default function AdminSetupPage() {
                     <ShieldAlert className="w-4 h-4 text-amber-600" />
                     <span>{t('admin.localizationQaTitle')}</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{t('admin.localizationQaDescription')}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {t('admin.localizationQaDescription')}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -852,25 +958,44 @@ export default function AdminSetupPage() {
                   <span>{t('admin.localizationQaRun')}</span>
                 </button>
               </div>
-              {qaError && <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3">{qaError}</p>}
+              {qaError && (
+                <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3">
+                  {qaError}
+                </p>
+              )}
               {qaReport && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                     {Object.entries(qaReport.summary).map(([key, value]) => (
                       <div key={key} className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">{t(`admin.localizationQa.${key}`)}</p>
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                          {t(`admin.localizationQa.${key}`)}
+                        </p>
                         <p className="text-lg font-black text-slate-900">{value}</p>
                       </div>
                     ))}
                   </div>
                   {qaReport.issues.length === 0 && qaReport.expansionIssues.length === 0 ? (
-                    <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3">{t('admin.localizationQaPassed')}</p>
+                    <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                      {t('admin.localizationQaPassed')}
+                    </p>
                   ) : (
                     <div className="max-h-48 overflow-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
-                      {[...qaReport.issues.map((issue) => ({ key: issue.key, detail: issue.type })), ...qaReport.expansionIssues.map((issue) => ({ key: issue.key, detail: `${issue.ratio}x` }))].map((issue) => (
-                        <div key={`${issue.detail}-${issue.key}`} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                      {[
+                        ...qaReport.issues.map((issue) => ({ key: issue.key, detail: issue.type })),
+                        ...qaReport.expansionIssues.map((issue) => ({
+                          key: issue.key,
+                          detail: `${issue.ratio}x`,
+                        })),
+                      ].map((issue) => (
+                        <div
+                          key={`${issue.detail}-${issue.key}`}
+                          className="flex items-center justify-between gap-3 px-3 py-2 text-xs"
+                        >
                           <code className="text-slate-700 truncate">{issue.key}</code>
-                          <span className="text-amber-700 font-semibold shrink-0">{issue.detail}</span>
+                          <span className="text-amber-700 font-semibold shrink-0">
+                            {issue.detail}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -887,7 +1012,9 @@ export default function AdminSetupPage() {
                   <span>Currency Management (3 Configurable Options)</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  Manage platform settlement currencies with 3 required specifications: <strong>1. Currency Name (Code)</strong>, <strong>2. Currency Symbol</strong>, and <strong>3. Position (Left vs Right)</strong>.
+                  Manage platform settlement currencies with 3 required specifications:{' '}
+                  <strong>1. Currency Name (Code)</strong>, <strong>2. Currency Symbol</strong>, and{' '}
+                  <strong>3. Position (Left vs Right)</strong>.
                 </p>
               </div>
 
@@ -904,12 +1031,16 @@ export default function AdminSetupPage() {
                   >
                     {currencies.map((curr) => (
                       <option key={curr.name} value={curr.name}>
-                        {curr.name} ({curr.symbol}) — Symbol on {curr.position === 'left' ? `Left (${curr.symbol} 100)` : `Right (100 ${curr.symbol})`}
+                        {curr.name} ({curr.symbol}) — Symbol on{' '}
+                        {curr.position === 'left'
+                          ? `Left (${curr.symbol} 100)`
+                          : `Right (100 ${curr.symbol})`}
                       </option>
                     ))}
                   </select>
                   <span className="text-[11px] text-slate-400 mt-1 block">
-                    Authoritative base unit. Order snapshots, ledger postings, and wallet balances are denominated in this currency.
+                    Authoritative base unit. Order snapshots, ledger postings, and wallet balances
+                    are denominated in this currency.
                   </span>
                 </div>
 
@@ -1009,8 +1140,12 @@ export default function AdminSetupPage() {
                             </div>
                             <div>
                               <div className="flex items-center space-x-2">
-                                <span className="text-sm font-black text-slate-900">{curr.name}</span>
-                                <span className="text-xs text-slate-500 font-semibold font-mono">({curr.symbol})</span>
+                                <span className="text-sm font-black text-slate-900">
+                                  {curr.name}
+                                </span>
+                                <span className="text-xs text-slate-500 font-semibold font-mono">
+                                  ({curr.symbol})
+                                </span>
                               </div>
                               <span className="text-xs font-bold text-slate-700 mt-0.5 block">
                                 {formatCurrencyAmount(1250, curr)}
@@ -1045,7 +1180,10 @@ export default function AdminSetupPage() {
                             <ArrowLeftRight className="w-3 h-3 text-slate-500" />
                             <span>
                               Position: {curr.position === 'left' ? 'Left' : 'Right'} (
-                              {curr.position === 'left' ? `${curr.symbol} 100` : `100 ${curr.symbol}`})
+                              {curr.position === 'left'
+                                ? `${curr.symbol} 100`
+                                : `100 ${curr.symbol}`}
+                              )
                             </span>
                           </button>
 
@@ -1074,9 +1212,12 @@ export default function AdminSetupPage() {
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-base font-black text-slate-900">S3 Cloud Storage &amp; Asset Delivery</h2>
+              <h2 className="text-base font-black text-slate-900">
+                S3 Cloud Storage &amp; Asset Delivery
+              </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Configure permanent media storage for product photos, seller KYC documents, banners, and digital invoices.
+                Configure permanent media storage for product photos, seller KYC documents, banners,
+                and digital invoices.
               </p>
             </div>
 
@@ -1087,10 +1228,20 @@ export default function AdminSetupPage() {
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { id: 'AMAZON_S3', name: 'Amazon S3 (AWS)', desc: 'High-availability AWS cloud object storage' },
-                  { id: 'CLOUDFLARE_R2', name: 'Cloudflare R2', desc: 'Zero-egress fee high-speed S3-compatible storage' },
+                  {
+                    id: 'AMAZON_S3',
+                    name: 'Amazon S3 (AWS)',
+                    desc: 'High-availability AWS cloud object storage',
+                  },
+                  {
+                    id: 'CLOUDFLARE_R2',
+                    name: 'Cloudflare R2',
+                    desc: 'Zero-egress fee high-speed S3-compatible storage',
+                  },
                 ].map((prov) => {
-                  const isSelected = settings.STORAGE_PROVIDER === prov.id || (prov.id === 'AMAZON_S3' && settings.STORAGE_PROVIDER === 'AWS_S3');
+                  const isSelected =
+                    settings.STORAGE_PROVIDER === prov.id ||
+                    (prov.id === 'AMAZON_S3' && settings.STORAGE_PROVIDER === 'AWS_S3');
                   return (
                     <button
                       key={prov.id}
@@ -1118,7 +1269,9 @@ export default function AdminSetupPage() {
               /* Cloudflare R2 Specific Fields */
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Bucket Name *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    R2 Bucket Name *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_R2_BUCKET || ''}
@@ -1129,7 +1282,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Cloudflare Account ID *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Cloudflare Account ID *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_R2_ACCOUNT_ID || ''}
@@ -1137,7 +1292,10 @@ export default function AdminSetupPage() {
                       const accountId = e.target.value.trim();
                       updateSetting('STORAGE_R2_ACCOUNT_ID', accountId);
                       if (accountId && !settings.STORAGE_R2_ENDPOINT) {
-                        updateSetting('STORAGE_R2_ENDPOINT', `https://${accountId}.r2.cloudflarestorage.com`);
+                        updateSetting(
+                          'STORAGE_R2_ENDPOINT',
+                          `https://${accountId}.r2.cloudflarestorage.com`
+                        );
                       }
                     }}
                     placeholder="e.g. 0123456789abcdef0123456789abcdef"
@@ -1146,10 +1304,17 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 S3 API Endpoint URL *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    R2 S3 API Endpoint URL *
+                  </label>
                   <input
                     type="text"
-                    value={settings.STORAGE_R2_ENDPOINT || (settings.STORAGE_R2_ACCOUNT_ID ? `https://${settings.STORAGE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : '')}
+                    value={
+                      settings.STORAGE_R2_ENDPOINT ||
+                      (settings.STORAGE_R2_ACCOUNT_ID
+                        ? `https://${settings.STORAGE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+                        : '')
+                    }
                     onChange={(e) => updateSetting('STORAGE_R2_ENDPOINT', e.target.value)}
                     placeholder="https://<ACCOUNT_ID>.r2.cloudflarestorage.com"
                     className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs outline-none focus:border-amber-500 focus:bg-white font-mono"
@@ -1157,7 +1322,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Public Custom Domain / Base URL *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    R2 Public Custom Domain / Base URL *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_R2_CDN_URL || ''}
@@ -1168,7 +1335,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Access Key ID *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    R2 Access Key ID *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_R2_ACCESS_KEY || ''}
@@ -1179,7 +1348,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">R2 Secret Access Key *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    R2 Secret Access Key *
+                  </label>
                   <div className="relative">
                     <input
                       type={revealedSecrets.r2Secret ? 'text' : 'password'}
@@ -1193,7 +1364,11 @@ export default function AdminSetupPage() {
                       onClick={() => toggleSecret('r2Secret')}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
                     >
-                      {revealedSecrets.r2Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {revealedSecrets.r2Secret ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1202,7 +1377,9 @@ export default function AdminSetupPage() {
               /* AWS S3 Specific Fields */
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS S3 Bucket Name *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    AWS S3 Bucket Name *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_S3_BUCKET}
@@ -1213,7 +1390,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS Region *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    AWS Region *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_S3_REGION}
@@ -1224,7 +1403,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS S3 Custom Endpoint URL (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    AWS S3 Custom Endpoint URL (Optional)
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_S3_ENDPOINT}
@@ -1235,7 +1416,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Public CDN / Base URL *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Public CDN / Base URL *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_S3_CDN_URL}
@@ -1246,7 +1429,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS Access Key ID *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    AWS Access Key ID *
+                  </label>
                   <input
                     type="text"
                     value={settings.STORAGE_S3_ACCESS_KEY}
@@ -1256,7 +1441,9 @@ export default function AdminSetupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">AWS Secret Access Key *</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    AWS Secret Access Key *
+                  </label>
                   <div className="relative">
                     <input
                       type={revealedSecrets.s3Secret ? 'text' : 'password'}
@@ -1269,7 +1456,11 @@ export default function AdminSetupPage() {
                       onClick={() => toggleSecret('s3Secret')}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
                     >
-                      {revealedSecrets.s3Secret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {revealedSecrets.s3Secret ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1290,7 +1481,9 @@ export default function AdminSetupPage() {
                   bK
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">bKash Direct Payment Gateway</h3>
+                  <h3 className="text-base font-black text-slate-900">
+                    bKash Direct Payment Gateway
+                  </h3>
                   <p className="text-xs text-slate-500">
                     Tokenized checkout, immediate capture, and instant IPN webhook verification.
                   </p>
@@ -1314,7 +1507,9 @@ export default function AdminSetupPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Environment Mode</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Environment Mode
+                </label>
                 <select
                   value={settings.PAYMENT_BKASH_ENV}
                   onChange={(e) => updateSetting('PAYMENT_BKASH_ENV', e.target.value)}
@@ -1336,7 +1531,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">bKash App Secret</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  bKash App Secret
+                </label>
                 <div className="relative">
                   <input
                     type={revealedSecrets.bkashSecret ? 'text' : 'password'}
@@ -1349,13 +1546,19 @@ export default function AdminSetupPage() {
                     onClick={() => toggleSecret('bkashSecret')}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 p-1"
                   >
-                    {revealedSecrets.bkashSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    {revealedSecrets.bkashSecret ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">bKash Merchant Username</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  bKash Merchant Username
+                </label>
                 <input
                   type="text"
                   value={settings.PAYMENT_BKASH_USERNAME}
@@ -1384,9 +1587,12 @@ export default function AdminSetupPage() {
                   NG
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Nagad Direct Payment Gateway</h3>
+                  <h3 className="text-base font-black text-slate-900">
+                    Nagad Direct Payment Gateway
+                  </h3>
                   <p className="text-xs text-slate-500">
-                    Bangladesh Post Office digital payments, asymmetric key signing, and transaction verification.
+                    Bangladesh Post Office digital payments, asymmetric key signing, and transaction
+                    verification.
                   </p>
                 </div>
               </div>
@@ -1408,7 +1614,9 @@ export default function AdminSetupPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Environment Mode</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Environment Mode
+                </label>
                 <select
                   value={settings.PAYMENT_NAGAD_ENV}
                   onChange={(e) => updateSetting('PAYMENT_NAGAD_ENV', e.target.value)}
@@ -1420,7 +1628,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nagad Merchant ID</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nagad Merchant ID
+                </label>
                 <input
                   type="text"
                   value={settings.PAYMENT_NAGAD_MERCHANT_ID}
@@ -1430,7 +1640,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nagad Public Key</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nagad Public Key
+                </label>
                 <input
                   type="text"
                   value={settings.PAYMENT_NAGAD_PUBLIC_KEY}
@@ -1453,7 +1665,8 @@ export default function AdminSetupPage() {
                 Default Primary Logistics Dispatcher
               </h3>
               <p className="text-xs text-amber-800 mt-0.5">
-                Default courier assigned to new seller fulfillment groups unless merchant selects an alternative.
+                Default courier assigned to new seller fulfillment groups unless merchant selects an
+                alternative.
               </p>
             </div>
             <select
@@ -1476,7 +1689,9 @@ export default function AdminSetupPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Pathao Courier Integration</h4>
-                  <p className="text-[11px] text-slate-500">Nationwide doorstep parcel delivery and cash on delivery return.</p>
+                  <p className="text-[11px] text-slate-500">
+                    Nationwide doorstep parcel delivery and cash on delivery return.
+                  </p>
                 </div>
               </div>
               <button
@@ -1496,7 +1711,9 @@ export default function AdminSetupPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Environment</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Environment
+                </label>
                 <select
                   value={settings.COURIER_PATHAO_ENV}
                   onChange={(e) => updateSetting('COURIER_PATHAO_ENV', e.target.value)}
@@ -1516,7 +1733,9 @@ export default function AdminSetupPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Client Secret</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Client Secret
+                </label>
                 <input
                   type="password"
                   value={settings.COURIER_PATHAO_CLIENT_SECRET}
@@ -1525,7 +1744,9 @@ export default function AdminSetupPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Default Store ID</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Default Store ID
+                </label>
                 <input
                   type="text"
                   value={settings.COURIER_PATHAO_STORE_ID}
@@ -1545,7 +1766,9 @@ export default function AdminSetupPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">RedX Logistics</h4>
-                  <p className="text-[11px] text-slate-500">Fast nationwide courier coverage with automated tracking API.</p>
+                  <p className="text-[11px] text-slate-500">
+                    Fast nationwide courier coverage with automated tracking API.
+                  </p>
                 </div>
               </div>
               <button
@@ -1565,7 +1788,9 @@ export default function AdminSetupPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Environment</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Environment
+                </label>
                 <select
                   value={settings.COURIER_REDX_ENV}
                   onChange={(e) => updateSetting('COURIER_REDX_ENV', e.target.value)}
@@ -1576,7 +1801,9 @@ export default function AdminSetupPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Access Token</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Access Token
+                </label>
                 <input
                   type="password"
                   value={settings.COURIER_REDX_ACCESS_TOKEN}
@@ -1585,7 +1812,9 @@ export default function AdminSetupPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Pickup Store ID</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Pickup Store ID
+                </label>
                 <input
                   type="text"
                   value={settings.COURIER_REDX_STORE_ID}
@@ -1605,7 +1834,9 @@ export default function AdminSetupPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Steadfast Courier</h4>
-                  <p className="text-[11px] text-slate-500">Reliable COD payments and divisional express shipping.</p>
+                  <p className="text-[11px] text-slate-500">
+                    Reliable COD payments and divisional express shipping.
+                  </p>
                 </div>
               </div>
               <button
@@ -1617,7 +1848,9 @@ export default function AdminSetupPage() {
               >
                 <span
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    settings.COURIER_STEADFAST_ENABLED === 'true' ? 'translate-x-5' : 'translate-x-0'
+                    settings.COURIER_STEADFAST_ENABLED === 'true'
+                      ? 'translate-x-5'
+                      : 'translate-x-0'
                   }`}
                 />
               </button>
@@ -1625,7 +1858,9 @@ export default function AdminSetupPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Environment</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Environment
+                </label>
                 <select
                   value={settings.COURIER_STEADFAST_ENV}
                   onChange={(e) => updateSetting('COURIER_STEADFAST_ENV', e.target.value)}
@@ -1645,7 +1880,9 @@ export default function AdminSetupPage() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">Secret Key</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Secret Key
+                </label>
                 <input
                   type="password"
                   value={settings.COURIER_STEADFAST_SECRET_KEY}
@@ -1663,9 +1900,12 @@ export default function AdminSetupPage() {
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-base font-black text-slate-900">SMS Gateway &amp; OTP Provider</h2>
+              <h2 className="text-base font-black text-slate-900">
+                SMS Gateway &amp; OTP Provider
+              </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Select your preferred Bangladesh or International SMS telecom provider for customer OTP verification and order dispatch alerts.
+                Select your preferred Bangladesh or International SMS telecom provider for customer
+                OTP verification and order dispatch alerts.
               </p>
             </div>
 
@@ -1679,9 +1919,21 @@ export default function AdminSetupPage() {
                   { id: 'GREENWEB', name: 'Greenweb BD', sub: 'High delivery rate for GP/BL/Robi' },
                   { id: 'ALPHA_SMS', name: 'Alpha SMS', sub: 'Popular BD masking OTP gateway' },
                   { id: 'BULKSMS_BD', name: 'BulkSMS BD', sub: 'Bangladesh API with DLR support' },
-                  { id: 'BANGLALINK', name: 'Banglalink Corporate', sub: 'Direct MNO telecom gateway' },
-                  { id: 'GRAMEENPHONE', name: 'Grameenphone ECAC', sub: 'GP corporate SMS gateway' },
-                  { id: 'TWILIO', name: 'Twilio Cloud SMS', sub: 'Global international SMS fallback' },
+                  {
+                    id: 'BANGLALINK',
+                    name: 'Banglalink Corporate',
+                    sub: 'Direct MNO telecom gateway',
+                  },
+                  {
+                    id: 'GRAMEENPHONE',
+                    name: 'Grameenphone ECAC',
+                    sub: 'GP corporate SMS gateway',
+                  },
+                  {
+                    id: 'TWILIO',
+                    name: 'Twilio Cloud SMS',
+                    sub: 'Global international SMS fallback',
+                  },
                   { id: 'DISABLED', name: 'Mock Dev Mode', sub: 'Logs OTP to console / outbox' },
                 ].map((p) => {
                   const isSelected = settings.SMS_GATEWAY_PROVIDER === p.id;
@@ -1700,7 +1952,9 @@ export default function AdminSetupPage() {
                         <span className="text-xs font-bold text-slate-900">{p.name}</span>
                         {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />}
                       </div>
-                      <span className="text-[10px] text-slate-500 leading-tight block">{p.sub}</span>
+                      <span className="text-[10px] text-slate-500 leading-tight block">
+                        {p.sub}
+                      </span>
                     </button>
                   );
                 })}
@@ -1710,7 +1964,9 @@ export default function AdminSetupPage() {
             {/* Provider Configuration Fields */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">API Key / Token</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  API Key / Token
+                </label>
                 <input
                   type="text"
                   value={settings.SMS_GATEWAY_API_KEY}
@@ -1720,7 +1976,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Approved Sender / Masking ID</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Approved Sender / Masking ID
+                </label>
                 <input
                   type="text"
                   value={settings.SMS_GATEWAY_SENDER_ID}
@@ -1731,7 +1989,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">API Endpoint URL</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  API Endpoint URL
+                </label>
                 <input
                   type="text"
                   value={settings.SMS_GATEWAY_ENDPOINT}
@@ -1744,9 +2004,12 @@ export default function AdminSetupPage() {
             {/* Test SMS Dispatcher Tool */}
             <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <div>
-                <span className="text-xs font-bold text-slate-900 block">Test Gateway Dispatch</span>
+                <span className="text-xs font-bold text-slate-900 block">
+                  Test Gateway Dispatch
+                </span>
                 <span className="text-[11px] text-slate-500">
-                  Send a real-time verification ping to verify credentials with {settings.SMS_GATEWAY_PROVIDER}.
+                  Send a real-time verification ping to verify credentials with{' '}
+                  {settings.SMS_GATEWAY_PROVIDER}.
                 </span>
               </div>
 
@@ -1764,7 +2027,11 @@ export default function AdminSetupPage() {
                   disabled={sendingTestSms}
                   className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-colors inline-flex items-center space-x-1.5 disabled:opacity-50 shrink-0"
                 >
-                  {sendingTestSms ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {sendingTestSms ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
                   <span>Test SMS</span>
                 </button>
               </div>
@@ -1784,7 +2051,8 @@ export default function AdminSetupPage() {
                   <span>SMTP Configuration &amp; Email Gateway</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Configure outgoing transactional email server settings for account verification, password resets, and order notifications.
+                  Configure outgoing transactional email server settings for account verification,
+                  password resets, and order notifications.
                 </p>
               </div>
 
@@ -1809,7 +2077,9 @@ export default function AdminSetupPage() {
             {/* SMTP Connection Parameters */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Server Host *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  SMTP Server Host *
+                </label>
                 <input
                   type="text"
                   value={settings.SMTP_HOST || ''}
@@ -1831,7 +2101,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Security / TLS</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Security / TLS
+                </label>
                 <select
                   value={settings.SMTP_SECURE || 'false'}
                   onChange={(e) => updateSetting('SMTP_SECURE', e.target.value)}
@@ -1843,7 +2115,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Username *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  SMTP Username *
+                </label>
                 <input
                   type="text"
                   value={settings.SMTP_USER || ''}
@@ -1854,7 +2128,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">SMTP Password *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  SMTP Password *
+                </label>
                 <div className="relative">
                   <input
                     type={revealedSecrets['smtp_pass'] ? 'text' : 'password'}
@@ -1868,13 +2144,19 @@ export default function AdminSetupPage() {
                     onClick={() => toggleSecret('smtp_pass')}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    {revealedSecrets['smtp_pass'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {revealedSecrets['smtp_pass'] ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Sender From Email *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Sender From Email *
+                </label>
                 <input
                   type="email"
                   value={settings.SMTP_FROM_EMAIL || ''}
@@ -1885,7 +2167,9 @@ export default function AdminSetupPage() {
               </div>
 
               <div className="sm:col-span-3">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Sender From Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Sender From Name
+                </label>
                 <input
                   type="text"
                   value={settings.SMTP_FROM_NAME || ''}
@@ -1899,7 +2183,9 @@ export default function AdminSetupPage() {
             {/* Test Email Dispatch Tool */}
             <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
               <div>
-                <span className="text-xs font-bold text-slate-900 block">Test SMTP Email Gateway</span>
+                <span className="text-xs font-bold text-slate-900 block">
+                  Test SMTP Email Gateway
+                </span>
                 <span className="text-[11px] text-slate-500">
                   Send a test notification email to verify SMTP credentials and connection.
                 </span>
@@ -1919,7 +2205,11 @@ export default function AdminSetupPage() {
                   disabled={sendingSmtpTest}
                   className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition-colors shrink-0 disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
                 >
-                  {sendingSmtpTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {sendingSmtpTest ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5" />
+                  )}
                   <span>{sendingSmtpTest ? 'Sending...' : 'Send Test Email'}</span>
                 </button>
               </div>
@@ -1940,7 +2230,8 @@ export default function AdminSetupPage() {
                   <span>Step 3: Document Verification Dynamic Fields Configuration</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Configure text, number, and file compliance fields required during seller onboarding step 3.
+                  Configure text, number, and file compliance fields required during seller
+                  onboarding step 3.
                 </p>
               </div>
 
@@ -1957,7 +2248,10 @@ export default function AdminSetupPage() {
                       hint: 'Custom compliance number or document identifier',
                       required: false,
                     };
-                    updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...current, newField]));
+                    updateSetting(
+                      'COMPLIANCE_FIELDS_CONFIG',
+                      JSON.stringify([...current, newField])
+                    );
                   } catch {}
                 }}
                 className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-colors shrink-0 cursor-pointer"
@@ -1977,10 +2271,15 @@ export default function AdminSetupPage() {
                 }
 
                 return fields.map((f: any, idx: number) => (
-                  <div key={f.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+                  <div
+                    key={f.id || idx}
+                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-900 flex items-center space-x-2">
-                        <span>Field #{idx + 1}: {f.name}</span>
+                        <span>
+                          Field #{idx + 1}: {f.name}
+                        </span>
                         {f.required && (
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
                             Required
@@ -2002,7 +2301,9 @@ export default function AdminSetupPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Field Name (Label) *</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Field Name (Label) *
+                        </label>
                         <input
                           type="text"
                           value={f.name || ''}
@@ -2015,7 +2316,9 @@ export default function AdminSetupPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Field Type *</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Field Type *
+                        </label>
                         <select
                           value={f.type || 'TEXT'}
                           onChange={(e) => {
@@ -2032,13 +2335,18 @@ export default function AdminSetupPage() {
 
                       {f.type === 'FILE' ? (
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Allowed Extensions</label>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                            Allowed Extensions
+                          </label>
                           <input
                             type="text"
                             value={f.allowedExtensions || '.pdf,.jpg,.jpeg,.png'}
                             onChange={(e) => {
                               fields[idx].allowedExtensions = e.target.value;
-                              updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                              updateSetting(
+                                'COMPLIANCE_FIELDS_CONFIG',
+                                JSON.stringify([...fields])
+                              );
                             }}
                             placeholder=".pdf,.jpg,.png"
                             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono outline-none focus:border-amber-500"
@@ -2046,13 +2354,18 @@ export default function AdminSetupPage() {
                         </div>
                       ) : (
                         <div>
-                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Regex Pattern</label>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                            Regex Pattern
+                          </label>
                           <input
                             type="text"
                             value={f.regex || ''}
                             onChange={(e) => {
                               fields[idx].regex = e.target.value;
-                              updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                              updateSetting(
+                                'COMPLIANCE_FIELDS_CONFIG',
+                                JSON.stringify([...fields])
+                              );
                             }}
                             placeholder="e.g. ^\d{9,13}$"
                             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-mono outline-none focus:border-amber-500"
@@ -2067,7 +2380,10 @@ export default function AdminSetupPage() {
                             checked={Boolean(f.required)}
                             onChange={(e) => {
                               fields[idx].required = e.target.checked;
-                              updateSetting('COMPLIANCE_FIELDS_CONFIG', JSON.stringify([...fields]));
+                              updateSetting(
+                                'COMPLIANCE_FIELDS_CONFIG',
+                                JSON.stringify([...fields])
+                              );
                             }}
                             className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
                           />
@@ -2077,7 +2393,9 @@ export default function AdminSetupPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Help Hint / Description</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Help Hint / Description
+                      </label>
                       <input
                         type="text"
                         value={f.hint || ''}
@@ -2104,7 +2422,8 @@ export default function AdminSetupPage() {
                   <span>Step 5: Merchant KYC Dossier Upload Configuration</span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Configure required legal document upload fields, file extensions, and file size limits (Min/Max KB).
+                  Configure required legal document upload fields, file extensions, and file size
+                  limits (Min/Max KB).
                 </p>
               </div>
 
@@ -2143,10 +2462,15 @@ export default function AdminSetupPage() {
                 }
 
                 return docs.map((d: any, idx: number) => (
-                  <div key={d.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+                  <div
+                    key={d.id || idx}
+                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-900 flex items-center space-x-2">
-                        <span>Document #{idx + 1}: {d.name}</span>
+                        <span>
+                          Document #{idx + 1}: {d.name}
+                        </span>
                         {d.required && (
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
                             Required
@@ -2168,7 +2492,9 @@ export default function AdminSetupPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Document Name *</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Document Name *
+                        </label>
                         <input
                           type="text"
                           value={d.name || ''}
@@ -2181,7 +2507,9 @@ export default function AdminSetupPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Allowed Extensions *</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Allowed Extensions *
+                        </label>
                         <input
                           type="text"
                           value={d.allowedExtensions || '.pdf,.jpg,.jpeg,.png'}
@@ -2195,7 +2523,9 @@ export default function AdminSetupPage() {
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Min / Max File Size (KB)</label>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                          Min / Max File Size (KB)
+                        </label>
                         <div className="flex items-center space-x-2">
                           <input
                             type="number"
@@ -2238,7 +2568,9 @@ export default function AdminSetupPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">Guidance Hint / Description</label>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Guidance Hint / Description
+                      </label>
                       <input
                         type="text"
                         value={d.hint || ''}
@@ -2263,9 +2595,12 @@ export default function AdminSetupPage() {
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-base font-black text-slate-900">Feature Flags &amp; Operational Toggles</h2>
+              <h2 className="text-base font-black text-slate-900">
+                Feature Flags &amp; Operational Toggles
+              </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Enable or disable operational platform capabilities with instant rollout across storefront and API.
+                Enable or disable operational platform capabilities with instant rollout across
+                storefront and API.
               </p>
             </div>
 
@@ -2322,7 +2657,9 @@ export default function AdminSetupPage() {
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold text-slate-900">{flag.title}</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{flag.desc}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                        {flag.desc}
+                      </p>
                     </div>
 
                     <button

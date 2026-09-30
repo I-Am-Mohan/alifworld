@@ -9,11 +9,7 @@
  * 5. BDT poisha formatting
  */
 
-import {
-  CourierCode,
-  ShipmentStatus,
-  TrackingTimelineEventDTO,
-} from '../types/courier.types';
+import { CourierCode, ShipmentStatus, TrackingTimelineEventDTO } from '../types/courier.types';
 import { normalizeBangladeshPhone } from '@/shared/utils/phone';
 
 export const STATUS_LABELS: Record<

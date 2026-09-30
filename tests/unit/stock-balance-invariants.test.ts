@@ -3,7 +3,12 @@ import { calculateAvailableStock } from '@/features/inventory/types';
 import { InventoryPolicy } from '@/shared/authz/policies/inventory.policy';
 import { ActorContext } from '@/shared/authz/authz.types';
 import { InventoryService } from '@/features/inventory/services/inventory-service';
-import { ConflictError, ValidationError, NotFoundError, AuthorizationError } from '@/shared/errors/app-error';
+import {
+  ConflictError,
+  ValidationError,
+  NotFoundError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
 
 describe('Milestone 102: Stock Balance Invariants & Inventory Service Unit Tests', () => {
   const adminActor: ActorContext = {
@@ -60,17 +65,27 @@ describe('Milestone 102: Stock Balance Invariants & Inventory Service Unit Tests
 
   describe('2. InventoryPolicy Authorization & Scoping', () => {
     it('allows ADMIN to read and manage all inventory stock balances', () => {
-      expect(InventoryPolicy.canReadInventory(adminActor, { sellerId: 'sel-store-aaaa-1111' })).toBe(true);
-      expect(InventoryPolicy.canManageInventory(adminActor, { sellerId: 'sel-store-aaaa-1111' })).toBe(true);
+      expect(
+        InventoryPolicy.canReadInventory(adminActor, { sellerId: 'sel-store-aaaa-1111' })
+      ).toBe(true);
+      expect(
+        InventoryPolicy.canManageInventory(adminActor, { sellerId: 'sel-store-aaaa-1111' })
+      ).toBe(true);
     });
 
     it('allows SELLER to read and manage stock balances for own seller store', () => {
-      expect(InventoryPolicy.canReadInventory(sellerActorA, { sellerId: 'sel-store-aaaa-1111' })).toBe(true);
-      expect(InventoryPolicy.canManageInventory(sellerActorA, { sellerId: 'sel-store-aaaa-1111' })).toBe(true);
+      expect(
+        InventoryPolicy.canReadInventory(sellerActorA, { sellerId: 'sel-store-aaaa-1111' })
+      ).toBe(true);
+      expect(
+        InventoryPolicy.canManageInventory(sellerActorA, { sellerId: 'sel-store-aaaa-1111' })
+      ).toBe(true);
     });
 
     it('prohibits SELLER from managing inventory for another seller tenant', () => {
-      expect(InventoryPolicy.canManageInventory(sellerActorA, { sellerId: 'sel-store-bbbb-2222' })).toBe(false);
+      expect(
+        InventoryPolicy.canManageInventory(sellerActorA, { sellerId: 'sel-store-bbbb-2222' })
+      ).toBe(false);
     });
 
     it('prohibits CUSTOMER from reading or managing inventory', () => {

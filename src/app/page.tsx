@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   MapPin,
   Search,
@@ -42,7 +43,15 @@ import { CmsHomeSections } from '@/components/store/cms-home-sections';
 // Custom Vector SVG Icons
 function BasketIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="m5 11 4-7" />
       <path d="m19 11-4-7" />
       <path d="M2 11h20" />
@@ -54,7 +63,15 @@ function BasketIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 function ArmchairIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3" />
       <path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H7v-2a2 2 0 0 0-4 0z" />
       <path d="M5 18v2" />
@@ -65,7 +82,15 @@ function ArmchairIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 function CosmeticsIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M9 13v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8" />
       <path d="M9 13h6" />
       <path d="M10 13V8h4v5" />
@@ -76,7 +101,15 @@ function CosmeticsIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 function SneakerIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3.5 13h4l2.5-4h4.5l2 4h4a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H3.5A1.5 1.5 0 0 1 2 17.5v-3A1.5 1.5 0 0 1 3.5 13z" />
       <path d="M6 13l2-4" />
       <path d="M10 9l1.5 4" />
@@ -89,7 +122,7 @@ function SneakerIcon({ className = 'w-5 h-5' }: { className?: string }) {
 function WhatsAppIcon({ className = 'w-6 h-6' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12.031 2C6.496 2 2 6.502 2 12.043c0 1.769.462 3.498 1.34 5.023L2 22l5.093-1.336a10.024 10.024 0 0 0 4.938 1.287h.004c5.535 0 10.031-4.502 10.031-10.044.001-2.68-1.04-5.199-2.933-7.094A9.972 9.972 0 0 0 12.031 2zm5.864 14.204c-.244.688-1.42 1.32-1.968 1.385-.515.061-1.189.088-3.41-.832-2.842-1.176-4.67-4.062-4.81-4.252-.142-.189-1.154-1.536-1.154-2.93 0-1.393.73-2.079.988-2.366.258-.287.562-.358.749-.358.187 0 .375.002.538.01.174.009.406-.066.634.481.244.587.834 2.037.907 2.185.073.149.122.324.024.519-.098.195-.147.316-.293.488-.146.172-.307.385-.439.517-.146.147-.298.307-.129.598.17.291.754 1.242 1.62 2.013 1.115.992 2.055 1.3 2.348 1.446.292.146.463.122.634-.073.17-.195.731-.852.926-1.144.195-.292.39-.244.658-.146.268.098 1.705.805 1.998.951.293.146.488.219.56.341.073.122.073.707-.171 1.395z"/>
+      <path d="M12.031 2C6.496 2 2 6.502 2 12.043c0 1.769.462 3.498 1.34 5.023L2 22l5.093-1.336a10.024 10.024 0 0 0 4.938 1.287h.004c5.535 0 10.031-4.502 10.031-10.044.001-2.68-1.04-5.199-2.933-7.094A9.972 9.972 0 0 0 12.031 2zm5.864 14.204c-.244.688-1.42 1.32-1.968 1.385-.515.061-1.189.088-3.41-.832-2.842-1.176-4.67-4.062-4.81-4.252-.142-.189-1.154-1.536-1.154-2.93 0-1.393.73-2.079.988-2.366.258-.287.562-.358.749-.358.187 0 .375.002.538.01.174.009.406-.066.634.481.244.587.834 2.037.907 2.185.073.149.122.324.024.519-.098.195-.147.316-.293.488-.146.172-.307.385-.439.517-.146.147-.298.307-.129.598.17.291.754 1.242 1.62 2.013 1.115.992 2.055 1.3 2.348 1.446.292.146.463.122.634-.073.17-.195.731-.852.926-1.144.195-.292.39-.244.658-.146.268.098 1.705.805 1.998.951.293.146.488.219.56.341.073.122.073.707-.171 1.395z" />
     </svg>
   );
 }
@@ -147,15 +180,23 @@ export default function CustomerStorePage() {
   }, []);
 
   useEffect(() => {
-    if (!user) {
-      setCartCount(0);
-      return;
-    }
-    fetch('/api/v1/cart', { cache: 'no-store' })
-      .then((response) => response.ok ? response.json() : null)
-      .then((body) => setCartCount(body?.data?.items?.reduce((count: number, item: { quantity: number }) => count + item.quantity, 0) ?? 0))
-      .catch(() => setCartCount(0));
+    if (!user) return;
+    const controller = new AbortController();
+    fetch('/api/v1/cart', { cache: 'no-store', signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) =>
+        setCartCount(
+          body?.data?.items?.reduce(
+            (count: number, item: { quantity: number }) => count + item.quantity,
+            0
+          ) ?? 0
+        )
+      )
+      .catch(() => undefined);
+    return () => controller.abort();
   }, [user]);
+
+  const effectiveCartCount = user ? cartCount : 0;
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -189,12 +230,36 @@ export default function CustomerStorePage() {
   const currentDivisionName = t(`store.divisions.${selectedDivisionKey}`);
 
   const categoryNav = [
-    { id: 'All', label: t('store.categories.all'), icon: <BasketIcon className="w-5 h-5 text-amber-600" /> },
-    { id: 'Furniture', label: t('store.categories.furniture'), icon: <ArmchairIcon className="w-5 h-5 text-slate-700" /> },
-    { id: 'Electronics', label: t('store.categories.electronics'), icon: <Headphones className="w-5 h-5 text-indigo-600" /> },
-    { id: 'Clothing', label: t('store.categories.clothing'), icon: <Shirt className="w-5 h-5 text-orange-600" /> },
-    { id: 'Cosmetics', label: t('store.categories.cosmetics'), icon: <CosmeticsIcon className="w-5 h-5 text-rose-500" /> },
-    { id: 'Shoes', label: t('store.categories.shoes'), icon: <SneakerIcon className="w-5 h-5 text-sky-600" /> },
+    {
+      id: 'All',
+      label: t('store.categories.all'),
+      icon: <BasketIcon className="w-5 h-5 text-amber-600" />,
+    },
+    {
+      id: 'Furniture',
+      label: t('store.categories.furniture'),
+      icon: <ArmchairIcon className="w-5 h-5 text-slate-700" />,
+    },
+    {
+      id: 'Electronics',
+      label: t('store.categories.electronics'),
+      icon: <Headphones className="w-5 h-5 text-indigo-600" />,
+    },
+    {
+      id: 'Clothing',
+      label: t('store.categories.clothing'),
+      icon: <Shirt className="w-5 h-5 text-orange-600" />,
+    },
+    {
+      id: 'Cosmetics',
+      label: t('store.categories.cosmetics'),
+      icon: <CosmeticsIcon className="w-5 h-5 text-rose-500" />,
+    },
+    {
+      id: 'Shoes',
+      label: t('store.categories.shoes'),
+      icon: <SneakerIcon className="w-5 h-5 text-sky-600" />,
+    },
   ];
 
   const topBrands = [
@@ -202,7 +267,7 @@ export default function CustomerStorePage() {
       name: 'Puma',
       renderMark: (
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-black">
-          <path d="M19.7 5.3c-.6-.6-1.5-.7-2.3-.4-1.2.5-2.2 1.3-3.1 2.3-1.4 1.5-2.6 3.2-4.1 4.6-.9.8-1.9 1.4-3 1.7-.8.2-1.6.1-2.3-.3-.4-.2-.8-.6-1.1-1-.1-.2-.4-.2-.5 0-.2.3-.3.7-.3 1.1 0 1.2.6 2.3 1.6 3 1 .7 2.2.9 3.4.6 1.3-.3 2.5-1 3.5-1.9 1.5-1.4 2.8-3 4.2-4.5.8-.9 1.7-1.6 2.7-2 .5-.2 1-.3 1.5-.1.3.1.5.3.6.6.1.3 0 .6-.2.9-.3.4-.7.7-1.1 1-.2.2-.2.5 0 .7.3.3.7.6 1.1.7.4.1.8 0 1.1-.3.4-.4.6-.9.6-1.5 0-1.4-.7-2.7-1.9-3.2z"/>
+          <path d="M19.7 5.3c-.6-.6-1.5-.7-2.3-.4-1.2.5-2.2 1.3-3.1 2.3-1.4 1.5-2.6 3.2-4.1 4.6-.9.8-1.9 1.4-3 1.7-.8.2-1.6.1-2.3-.3-.4-.2-.8-.6-1.1-1-.1-.2-.4-.2-.5 0-.2.3-.3.7-.3 1.1 0 1.2.6 2.3 1.6 3 1 .7 2.2.9 3.4.6 1.3-.3 2.5-1 3.5-1.9 1.5-1.4 2.8-3 4.2-4.5.8-.9 1.7-1.6 2.7-2 .5-.2 1-.3 1.5-.1.3.1.5.3.6.6.1.3 0 .6-.2.9-.3.4-.7.7-1.1 1-.2.2-.2.5 0 .7.3.3.7.6 1.1.7.4.1.8 0 1.1-.3.4-.4.6-.9.6-1.5 0-1.4-.7-2.7-1.9-3.2z" />
         </svg>
       ),
     },
@@ -210,7 +275,7 @@ export default function CustomerStorePage() {
       name: 'Nike',
       renderMark: (
         <svg viewBox="0 0 24 24" fill="currentColor" className="w-9 h-9 text-black">
-          <path d="M21.7 8.3c-2.3 2.5-5.6 5.3-9.7 7.2-2.6 1.2-5.3 1.8-7.7 1.8-1.7 0-3-.4-3.8-1.1-.9-.8-1.1-1.9-.7-3.1.5-1.4 1.7-2.6 3.3-3.3 1.4-.6 2.9-.8 4.3-.6-1.8.6-3.1 1.7-3.5 2.8-.4 1.1.1 2 .9 2.5.8.5 2.1.8 3.8.8 2.2 0 4.8-.6 7.4-1.8 3.7-1.8 6.7-4.4 8.7-6.8.2-.3.6-.1.4.3z"/>
+          <path d="M21.7 8.3c-2.3 2.5-5.6 5.3-9.7 7.2-2.6 1.2-5.3 1.8-7.7 1.8-1.7 0-3-.4-3.8-1.1-.9-.8-1.1-1.9-.7-3.1.5-1.4 1.7-2.6 3.3-3.3 1.4-.6 2.9-.8 4.3-.6-1.8.6-3.1 1.7-3.5 2.8-.4 1.1.1 2 .9 2.5.8.5 2.1.8 3.8.8 2.2 0 4.8-.6 7.4-1.8 3.7-1.8 6.7-4.4 8.7-6.8.2-.3.6-.1.4.3z" />
         </svg>
       ),
     },
@@ -251,9 +316,7 @@ export default function CustomerStorePage() {
     {
       name: 'Zara',
       renderMark: (
-        <div className="font-serif font-black text-sm tracking-widest text-black">
-          ZARA
-        </div>
+        <div className="font-serif font-black text-sm tracking-widest text-black">ZARA</div>
       ),
     },
     {
@@ -283,7 +346,8 @@ export default function CustomerStorePage() {
       buttonBg: 'bg-[#EA580C] hover:bg-[#C2410C]',
       iconComponent: <Luggage className="w-4 h-4 text-orange-600" />,
       bgColor: 'bg-gradient-to-r from-orange-50/70 to-amber-50/90',
-      imageUrl: 'https://images.unsplash.com/photo-1581553680321-4fffae59fccd?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1581553680321-4fffae59fccd?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: t('store.promo.healthTitle'),
@@ -293,7 +357,8 @@ export default function CustomerStorePage() {
       buttonBg: 'bg-[#0D9488] hover:bg-[#0F766E]',
       iconComponent: <HeartPulse className="w-4 h-4 text-teal-600" />,
       bgColor: 'bg-gradient-to-r from-teal-50/70 to-emerald-50/90',
-      imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: t('store.promo.electronicsTitle'),
@@ -303,7 +368,8 @@ export default function CustomerStorePage() {
       buttonBg: 'bg-[#7C3AED] hover:bg-[#6D28D9]',
       iconComponent: <Laptop className="w-4 h-4 text-purple-600" />,
       bgColor: 'bg-gradient-to-r from-purple-50/70 to-indigo-50/90',
-      imageUrl: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: t('store.promo.clothingTitle'),
@@ -313,7 +379,8 @@ export default function CustomerStorePage() {
       buttonBg: 'bg-[#EA580C] hover:bg-[#C2410C]',
       iconComponent: <Shirt className="w-4 h-4 text-orange-600" />,
       bgColor: 'bg-gradient-to-r from-amber-50/70 to-orange-50/90',
-      imageUrl: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: t('store.categories.shoes'),
@@ -323,7 +390,8 @@ export default function CustomerStorePage() {
       buttonBg: 'bg-[#0284C7] hover:bg-[#0369A1]',
       iconComponent: <SneakerIcon className="w-4 h-4 text-sky-600" />,
       bgColor: 'bg-gradient-to-r from-sky-50/70 to-blue-50/90',
-      imageUrl: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80',
     },
     {
       title: t('store.categories.skinCare'),
@@ -333,7 +401,8 @@ export default function CustomerStorePage() {
       buttonBg: 'bg-[#E11D48] hover:bg-[#BE123C]',
       iconComponent: <Sparkles className="w-4 h-4 text-rose-500" />,
       bgColor: 'bg-gradient-to-r from-rose-50/70 to-pink-50/90',
-      imageUrl: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&auto=format&fit=crop&q=80',
     },
   ];
 
@@ -390,7 +459,8 @@ export default function CustomerStorePage() {
       rating: 5.0,
       reviews: 1,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=600&auto=format&fit=crop&q=80',
     },
     {
       id: 'prd_tnf_hoodie_02',
@@ -405,7 +475,8 @@ export default function CustomerStorePage() {
       rating: 4.8,
       reviews: 24,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80',
     },
     {
       id: 'prd_zara_dress_03',
@@ -420,7 +491,8 @@ export default function CustomerStorePage() {
       rating: 4.9,
       reviews: 18,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&auto=format&fit=crop&q=80',
     },
     {
       id: 'prd_levis_jeans_04',
@@ -435,7 +507,8 @@ export default function CustomerStorePage() {
       rating: 4.7,
       reviews: 42,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1542272604-780c96856592?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1542272604-780c96856592?w=600&auto=format&fit=crop&q=80',
     },
   ];
 
@@ -453,7 +526,8 @@ export default function CustomerStorePage() {
       rating: 3.0,
       reviews: 1,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?w=600&auto=format&fit=crop&q=80',
     },
     {
       id: 'prd_woodland_shoes_06',
@@ -468,7 +542,8 @@ export default function CustomerStorePage() {
       rating: 4.9,
       reviews: 35,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=600&auto=format&fit=crop&q=80',
     },
     {
       id: 'prd_nike_air_07',
@@ -483,7 +558,8 @@ export default function CustomerStorePage() {
       rating: 4.8,
       reviews: 64,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80',
     },
     {
       id: 'prd_puma_casual_08',
@@ -498,7 +574,8 @@ export default function CustomerStorePage() {
       rating: 4.6,
       reviews: 19,
       inStock: true,
-      imageUrl: 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=600&auto=format&fit=crop&q=80',
+      imageUrl:
+        'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=600&auto=format&fit=crop&q=80',
     },
   ];
 
@@ -542,7 +619,7 @@ export default function CustomerStorePage() {
                 className="w-5 h-5 rounded-full bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 text-white flex items-center justify-center hover:scale-110 transition-transform"
               >
                 <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                 </svg>
               </a>
               <a
@@ -553,7 +630,7 @@ export default function CustomerStorePage() {
                 className="w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center hover:scale-110 transition-transform"
               >
                 <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
-                  <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                  <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                 </svg>
               </a>
               <a
@@ -613,7 +690,9 @@ export default function CustomerStorePage() {
                         showToast(t('store.divisions.locationSet', { location: div.name }));
                       }}
                       className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-amber-50 hover:text-[#D97706] transition-colors ${
-                        selectedDivisionKey === div.key ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700'
+                        selectedDivisionKey === div.key
+                          ? 'bg-amber-50 text-[#F59E0B] font-bold'
+                          : 'text-slate-700'
                       }`}
                     >
                       {div.name}
@@ -667,7 +746,11 @@ export default function CustomerStorePage() {
                 }
               }}
               className="hidden md:flex flex-col items-center group text-slate-700 hover:text-slate-950 transition-colors cursor-pointer"
-              title={user ? `${t('nav.account')}: ${user.name || t('nav.account')}` : `${t('nav.signIn')} / ${t('nav.register')}`}
+              title={
+                user
+                  ? `${t('nav.account')}: ${user.name || t('nav.account')}`
+                  : `${t('nav.signIn')} / ${t('nav.register')}`
+              }
             >
               <div className="relative">
                 <User className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
@@ -687,13 +770,15 @@ export default function CustomerStorePage() {
             >
               <div className="relative">
                 <ShoppingCart className="w-5 h-5 text-slate-700 group-hover:text-[#F59E0B] transition-colors" />
-                {cartCount > 0 && (
+                {effectiveCartCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 bg-[#F59E0B] text-black font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center shadow">
-                    {cartCount}
+                    {effectiveCartCount}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">{t('nav.cart')}</span>
+              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">
+                {t('nav.cart')}
+              </span>
             </Link>
 
             {/* Language Switcher: Positioned after cart button on desktop, and at the end on mobile! */}
@@ -739,7 +824,9 @@ export default function CustomerStorePage() {
                       showToast(t('store.divisions.locationSet', { location: div.name }));
                     }}
                     className={`text-left px-3 py-2 text-xs font-semibold rounded-lg transition-colors ${
-                      selectedDivisionKey === div.key ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700 hover:bg-slate-50'
+                      selectedDivisionKey === div.key
+                        ? 'bg-amber-50 text-[#F59E0B] font-bold'
+                        : 'text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     {div.name}
@@ -752,7 +839,10 @@ export default function CustomerStorePage() {
       </header>
 
       {/* CATEGORY ICON NAVIGATION STRIP */}
-      <nav aria-label={t('nav.categories')} className="bg-white border-b border-slate-200/80 shadow-xs">
+      <nav
+        aria-label={t('nav.categories')}
+        className="bg-white border-b border-slate-200/80 shadow-xs"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-start sm:justify-center space-x-6 sm:space-x-10 py-3 overflow-x-auto no-scrollbar">
             {categoryNav.map((cat) => {
@@ -772,7 +862,9 @@ export default function CustomerStorePage() {
                   </div>
                   <span
                     className={`text-xs mt-1 transition-colors ${
-                      isActive ? 'font-black text-slate-950' : 'font-semibold text-slate-600 group-hover:text-slate-900'
+                      isActive
+                        ? 'font-black text-slate-950'
+                        : 'font-semibold text-slate-600 group-hover:text-slate-900'
                     }`}
                   >
                     {cat.label}
@@ -795,9 +887,12 @@ export default function CustomerStorePage() {
       {/* HERO SECTION */}
       <section className="relative overflow-hidden bg-gradient-to-b from-[#E0F2FE] via-[#F0F9FF] to-[#FAF9F6]">
         <div className="absolute inset-0 z-0">
-          <img
+          <Image
             src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1600&auto=format&fit=crop&q=80"
             alt={t('store.hero.title')}
+            fill
+            priority
+            unoptimized
             className="w-full h-full object-cover object-center opacity-75 sm:opacity-90"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-sky-100/90 via-sky-50/70 to-transparent sm:from-sky-100/95 sm:via-sky-50/60" />
@@ -840,7 +935,9 @@ export default function CustomerStorePage() {
       <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.brands.title')}</h2>
+            <h2 className="text-2xl font-black text-slate-950 tracking-tight">
+              {t('store.brands.title')}
+            </h2>
             <p className="text-xs text-slate-500 mt-0.5">{t('store.brands.subtitle')}</p>
           </div>
           <button
@@ -879,10 +976,13 @@ export default function CustomerStorePage() {
               key={promo.title}
               className={`rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-row items-center justify-between p-5 sm:p-6 transition-all hover:shadow-md ${promo.bgColor}`}
             >
-              <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shrink-0 shadow-sm bg-white">
-                <img
+              <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shrink-0 shadow-sm bg-white relative">
+                <Image
                   src={promo.imageUrl}
                   alt={promo.title}
+                  width={144}
+                  height={144}
+                  unoptimized
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
               </div>
@@ -894,12 +994,8 @@ export default function CustomerStorePage() {
                 <h3 className="text-base sm:text-lg font-black text-slate-950 leading-tight">
                   {promo.title}
                 </h3>
-                <p className="text-xs text-slate-600 mt-1 leading-snug">
-                  {promo.subtitle}
-                </p>
-                <div className="text-xs font-black text-slate-900 mt-2">
-                  {promo.discount}
-                </div>
+                <p className="text-xs text-slate-600 mt-1 leading-snug">{promo.subtitle}</p>
+                <div className="text-xs font-black text-slate-900 mt-2">{promo.discount}</div>
                 <button
                   type="button"
                   onClick={() => showToast(t('store.promo.shoppingToast', { title: promo.title }))}
@@ -917,7 +1013,9 @@ export default function CustomerStorePage() {
       {/* TRENDING CATEGORIES PASTEL PILLS */}
       <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.categories.all')}</h2>
+          <h2 className="text-2xl font-black text-slate-950 tracking-tight">
+            {t('store.categories.all')}
+          </h2>
           <button
             type="button"
             onClick={() => showToast(t('store.promo.browsingCategories'))}
@@ -939,9 +1037,7 @@ export default function CustomerStorePage() {
                 <div className="font-bold text-xs text-slate-900 leading-snug line-clamp-1 group-hover:text-black">
                   {cat.name}
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
-                  {cat.count}
-                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5 font-medium">{cat.count}</div>
               </div>
               <div className="w-9 h-9 rounded-full bg-white/95 shadow-xs flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                 {cat.icon}
@@ -973,9 +1069,12 @@ export default function CustomerStorePage() {
           </div>
 
           <div className="relative w-full max-w-xl flex items-center justify-center">
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1549298916-b41d501d3772?w=900&auto=format&fit=crop&q=80"
               alt={t('store.shoeCollection.title')}
+              width={900}
+              height={400}
+              unoptimized
               className="w-full max-h-72 object-contain drop-shadow-xl"
             />
 
@@ -983,7 +1082,9 @@ export default function CustomerStorePage() {
             <div className="absolute top-4 left-4 sm:left-12 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-lg px-3 py-1.5 flex items-center space-x-2">
               <SneakerIcon className="w-4 h-4 text-amber-600" />
               <div className="text-left">
-                <div className="text-[10px] font-bold text-slate-500">{t('store.shoeCollection.trackSpikes')}</div>
+                <div className="text-[10px] font-bold text-slate-500">
+                  {t('store.shoeCollection.trackSpikes')}
+                </div>
                 <div className="text-xs font-black text-slate-900">৳4,599</div>
               </div>
             </div>
@@ -992,7 +1093,9 @@ export default function CustomerStorePage() {
             <div className="absolute bottom-4 right-4 sm:right-10 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-lg px-3 py-1.5 flex items-center space-x-2">
               <SneakerIcon className="w-4 h-4 text-slate-700" />
               <div className="text-left">
-                <div className="text-[10px] font-bold text-slate-500">{t('store.shoeCollection.platformSneakers')}</div>
+                <div className="text-[10px] font-bold text-slate-500">
+                  {t('store.shoeCollection.platformSneakers')}
+                </div>
                 <div className="text-xs font-black text-slate-900">৳4,199</div>
               </div>
             </div>
@@ -1004,7 +1107,9 @@ export default function CustomerStorePage() {
       <section id="deals-section" className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.trending.fashionTitle')}</h2>
+            <h2 className="text-2xl font-black text-slate-950 tracking-tight">
+              {t('store.trending.fashionTitle')}
+            </h2>
             <p className="text-xs text-slate-500 mt-0.5">{t('store.trending.fashionSubtitle')}</p>
           </div>
           <button
@@ -1027,9 +1132,12 @@ export default function CustomerStorePage() {
               >
                 <div>
                   <div className="relative aspect-square w-full bg-slate-50 overflow-hidden">
-                    <img
+                    <Image
                       src={product.imageUrl}
                       alt={product.title}
+                      width={300}
+                      height={300}
+                      unoptimized
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
@@ -1131,7 +1239,9 @@ export default function CustomerStorePage() {
       {/* FOOTWEAR PREMIUM COLLECTION */}
       <section className="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-slate-950 tracking-tight">{t('store.trending.footwearTitle')}</h2>
+          <h2 className="text-2xl font-black text-slate-950 tracking-tight">
+            {t('store.trending.footwearTitle')}
+          </h2>
           <button
             type="button"
             onClick={() => showToast(t('store.promo.browsingFootwear'))}
@@ -1152,9 +1262,12 @@ export default function CustomerStorePage() {
               >
                 <div>
                   <div className="relative aspect-square w-full bg-slate-50 overflow-hidden">
-                    <img
+                    <Image
                       src={product.imageUrl}
                       alt={product.title}
+                      width={300}
+                      height={300}
+                      unoptimized
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
@@ -1256,9 +1369,9 @@ export default function CustomerStorePage() {
           className="w-12 h-12 rounded-full bg-[#18181B] text-white shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center relative border border-slate-700 cursor-pointer"
         >
           <ShoppingCart className="w-5 h-5" />
-          {cartCount > 0 && (
+          {effectiveCartCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 bg-[#F59E0B] text-black font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow">
-              {cartCount}
+              {effectiveCartCount}
             </span>
           )}
         </Link>
@@ -1320,9 +1433,9 @@ export default function CustomerStorePage() {
         >
           <div className="relative">
             <ShoppingBag className="w-5 h-5" />
-            {cartCount > 0 && (
+            {effectiveCartCount > 0 && (
               <span className="absolute -top-1 -right-2 bg-[#F59E0B] text-black font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center">
-                {cartCount}
+                {effectiveCartCount}
               </span>
             )}
           </div>
@@ -1375,24 +1488,38 @@ export default function CustomerStorePage() {
               </h4>
               <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.aboutToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.aboutToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.aboutUs')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.faqsToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.faqsToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.faqs')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.storesToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.storesToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.stores')}
                   </button>
                 </li>
                 <a href="/seller/apply">
                   <li className="pt-2">
-                  <span className="text-amber-500 font-bold block mb-1.5">{t('store.footer.becomeSeller')}</span>
-                </li>
+                    <span className="text-amber-500 font-bold block mb-1.5">
+                      {t('store.footer.becomeSeller')}
+                    </span>
+                  </li>
                 </a>
               </ul>
             </div>
@@ -1404,22 +1531,38 @@ export default function CustomerStorePage() {
               </h4>
               <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.privacyToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.privacyToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.privacyPolicy')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.termsToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.termsToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.termsConditions')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.shippingToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.shippingToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.shippingPolicy')}
                   </button>
                 </li>
                 <li>
-                  <button type="button" onClick={() => showToast(t('store.promo.returnToast'))} className="hover:text-white transition-colors cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => showToast(t('store.promo.returnToast'))}
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     {t('store.footer.returnPolicy')}
                   </button>
                 </li>
@@ -1449,7 +1592,7 @@ export default function CustomerStorePage() {
                   className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
                 >
                   <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                   </svg>
                 </a>
                 <a
@@ -1460,7 +1603,7 @@ export default function CustomerStorePage() {
                   className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
                 >
                   <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                   </svg>
                 </a>
                 <a
@@ -1493,9 +1636,7 @@ export default function CustomerStorePage() {
           </div>
 
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#9CA3AF] gap-4">
-            <div>
-              {t('store.footer.copyright')}
-            </div>
+            <div>{t('store.footer.copyright')}</div>
             <div className="px-3 py-1 rounded-full bg-[#262624] text-slate-400 border border-neutral-800 font-mono text-[11px]">
               {t('store.footer.version')}
             </div>

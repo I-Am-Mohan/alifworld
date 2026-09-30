@@ -5,13 +5,14 @@
 **Deciders**: Architecture Team, Order Engineering, Multi-Vendor Operations, Compliance & Logistics  
 **Milestone Reference**: [Milestone 027](../../AlifWorld-300-Milestones/027-model-carts-orders-seller-fulfillment-groups-and-shipments.md)  
 **Phase**: Phase 03: Data Architecture  
-**Supporting Specification**: [Carts, Orders, Fulfillment Groups & Shipments Architecture](../architecture/carts-orders-fulfillment-groups-and-shipments.md)  
+**Supporting Specification**: [Carts, Orders, Fulfillment Groups & Shipments Architecture](../architecture/carts-orders-fulfillment-groups-and-shipments.md)
 
 ---
 
 ## Context and Problem Statement
 
 AlifWorld is a multi-vendor digital commerce marketplace operating in Bangladesh. Customers frequently purchase products from multiple independent merchants in a single checkout. This architectural requirement introduces critical domain challenges:
+
 1. **Single Customer Parent View vs. Strict Merchant Tenant Scoping**: Customers expect a unified checkout, single payment, and combined receipt. Conversely, merchants must never see items, financials, customer details, or logistics of other merchants (`sellerId` query-level tenancy).
 2. **Monetary Precision & Integer Poisha Accounting**: All monetary transactions across orders, line items, shipping fees, VAT, commissions, and payouts must be represented exclusively in integer minor units (poisha, where $1\text{ BDT} = 100\text{ poisha}$) to eliminate floating-point rounding errors.
 3. **Independent Product Points (PP)**: Product price and Product Points are decoupled, independent values. A conversion rate between BDT and Product Points is never inferred. Points must be snapshotted per SKU on purchase and released only after the return inspection window closes at the configured eligible status.
@@ -33,20 +34,22 @@ AlifWorld is a multi-vendor digital commerce marketplace operating in Bangladesh
 ## Considered Options
 
 1. **Monolithic Flat Order Model (Single Table with Vendor ID on Line Items)**:
-   - *Pros*: Simple single-table checkout write.
-   - *Cons*: High risk of data leakage between merchants; complex row-level security; inability to represent independent courier tracking numbers, dispatch dates, or fulfillment statuses per merchant.
+   - _Pros_: Simple single-table checkout write.
+   - _Cons_: High risk of data leakage between merchants; complex row-level security; inability to represent independent courier tracking numbers, dispatch dates, or fulfillment statuses per merchant.
 2. **Multiple Independent Customer Orders (Split at Cart Level)**:
-   - *Pros*: Natural isolation per vendor.
-   - *Cons*: Degrades customer checkout experience (multiple payments, multiple OTP authorizations, multiple gateway fees).
+   - _Pros_: Natural isolation per vendor.
+   - _Cons_: Degrades customer checkout experience (multiple payments, multiple OTP authorizations, multiple gateway fees).
 3. **Two-Tier Parent Order with Partitioned Seller Fulfillment Groups (Selected)**:
-   - *Pros*: Preserves a seamless single-payment checkout for the customer while partitioning fulfillment into isolated `SellerFulfillmentGroup` entities scoped to each merchant. Fully aligns with Bangladesh courier logistics and financial commission structures.
+   - _Pros_: Preserves a seamless single-payment checkout for the customer while partitioning fulfillment into isolated `SellerFulfillmentGroup` entities scoped to each merchant. Fully aligns with Bangladesh courier logistics and financial commission structures.
 
 ---
 
 ## Decision Outcome & Detailed Rationale
 
 ### 1. Relational Persistence Schema
+
 Added to `prisma/schema.prisma`:
+
 - `Cart`: Active and abandoned customer shopping cart sessions.
 - `CartItem`: Variant and pricing snapshots within active carts.
 - `Order`: Unified customer parent order recording gross transaction totals in integer poisha and snapshotting aggregate Product Points.
@@ -57,6 +60,7 @@ Added to `prisma/schema.prisma`:
 - `ShipmentEvent`: Append-only chronological timeline of parcel transit events.
 
 ### 2. Standardized Identifiers & Lifecycle Policies
+
 - Registered prefixes in `src/shared/utils/id.ts`:
   - `CART`: `crt`
   - `CART_ITEM`: `cit`
@@ -71,6 +75,7 @@ Added to `prisma/schema.prisma`:
   - `Cart`, `CartItem`, `Order`, `OrderItem`, `SellerFulfillmentGroup`, `Shipment`: `SOFT_DELETE`
 
 ### 3. Order Fulfillment Service & Mathematical Guarantees
+
 - Implemented `OrderFulfillmentService`:
   - Partitions cart line items by `sellerId`.
   - Calculates line subtotal: $\text{lineTotal} = \text{unitPricePoisha} \times \text{quantity}$.
@@ -85,10 +90,12 @@ Added to `prisma/schema.prisma`:
 ## Consequences & Security Impact
 
 ### Positive
+
 - Strict seller isolation prevents cross-tenant operational data leaks.
 - Zero floating-point rounding errors across checkout, commissions, and merchant payouts.
 - Full compliance with National Board of Revenue (NBR Mushak 6.3) VAT tracking per line item.
 - Complete regulatory and operational auditability with append-only status histories.
 
 ### Negative / Trade-Offs
+
 - Multi-item checkouts with multiple merchants create multiple relational records in an atomic transaction; mitigated via Prisma `$transaction` boundaries.

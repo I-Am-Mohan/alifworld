@@ -14,11 +14,7 @@
 import { randomBytes, createHash } from 'crypto';
 import { prisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
-import {
-  NotFoundError,
-  ValidationError,
-  ConflictError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, ConflictError } from '@/shared/errors/app-error';
 import { auditService } from '@/shared/audit';
 import {
   AbandonedCheckoutDTO,
@@ -38,9 +34,7 @@ export class AbandonedCheckoutRecoveryService {
   /**
    * Records or updates an abandoned cart session with a recovery token.
    */
-  public async recordAbandonedCart(
-    params: MarkCartAbandonedParams
-  ): Promise<AbandonedCheckoutDTO> {
+  public async recordAbandonedCart(params: MarkCartAbandonedParams): Promise<AbandonedCheckoutDTO> {
     const cart = await (this.db as any).cart.findFirst({
       where: { id: params.cartId, deletedAt: null },
       include: {
@@ -69,7 +63,10 @@ export class AbandonedCheckoutRecoveryService {
 
     // Generate cryptographic single-use token
     const tokenBytes = randomBytes(24).toString('hex');
-    const recoveryToken = `rec_${createHash('sha256').update(cart.id + tokenBytes).digest('hex').slice(0, 32)}`;
+    const recoveryToken = `rec_${createHash('sha256')
+      .update(cart.id + tokenBytes)
+      .digest('hex')
+      .slice(0, 32)}`;
 
     // Mark cart status as ABANDONED if currently ACTIVE
     if (cart.status === 'ACTIVE') {
@@ -149,7 +146,9 @@ export class AbandonedCheckoutRecoveryService {
       const variant = item.variant;
       if (!variant || variant.deletedAt || variant.product?.deletedAt) {
         outOfStockCount++;
-        warnings.push(`Item '${item.variant?.product?.title || 'Unknown'}' is no longer available.`);
+        warnings.push(
+          `Item '${item.variant?.product?.title || 'Unknown'}' is no longer available.`
+        );
         continue;
       }
 
@@ -170,9 +169,7 @@ export class AbandonedCheckoutRecoveryService {
       // Check seller status
       if (variant.product.seller?.settings?.vacationMode) {
         hasSellerIssues = true;
-        warnings.push(
-          `Seller '${variant.product.seller.businessName}' is currently on vacation.`
-        );
+        warnings.push(`Seller '${variant.product.seller.businessName}' is currently on vacation.`);
       }
     }
 
@@ -318,7 +315,11 @@ export class AbandonedCheckoutRecoveryService {
     }
   }
 
-  public async emitOutboxEvent(eventType: string, aggregateId: string, payload: any): Promise<void> {
+  public async emitOutboxEvent(
+    eventType: string,
+    aggregateId: string,
+    payload: any
+  ): Promise<void> {
     try {
       await (this.db as any).outboxEvent.create({
         data: {

@@ -1,9 +1,9 @@
 /**
  * AlifWorld Cryptographic Password Hashing & Complexity Validation
- * 
+ *
  * Implements PBKDF2-HMAC-SHA512 key derivation with 100,000 iterations and 32-byte salt.
  * Utilizes constant-time verification to prevent timing side-channel attacks.
- * 
+ *
  * Invariants: ADR-0031, NIST SP 800-63B Guidelines
  */
 
@@ -20,13 +20,7 @@ const HASH_IDENTIFIER = '$pbkdf2-sha512$';
  */
 export function hashPassword(plainText: string): string {
   const salt = randomBytes(32);
-  const derivedKey = pbkdf2Sync(
-    plainText,
-    salt,
-    PBKDF2_ITERATIONS,
-    PBKDF2_KEY_LEN,
-    PBKDF2_DIGEST
-  );
+  const derivedKey = pbkdf2Sync(plainText, salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LEN, PBKDF2_DIGEST);
 
   return `${HASH_IDENTIFIER}i=${PBKDF2_ITERATIONS}$${salt.toString('hex')}$${derivedKey.toString('hex')}`;
 }
@@ -50,13 +44,7 @@ export function verifyPassword(plainText: string, storedHash: string): boolean {
     const salt = Buffer.from(saltHex, 'hex');
     const originalHash = Buffer.from(originalHashHex, 'hex');
 
-    const derivedKey = pbkdf2Sync(
-      plainText,
-      salt,
-      iterations,
-      originalHash.length,
-      PBKDF2_DIGEST
-    );
+    const derivedKey = pbkdf2Sync(plainText, salt, iterations, originalHash.length, PBKDF2_DIGEST);
 
     if (derivedKey.length !== originalHash.length) {
       return false;

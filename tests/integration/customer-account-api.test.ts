@@ -1,13 +1,23 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import * as authzModule from '@/shared/authz';
-import { GET as getPreferencesRoute, PUT as putPreferencesRoute } from '@/app/api/v1/customer/preferences/route';
-import { GET as getConsentRoute, PUT as putConsentRoute } from '@/app/api/v1/customer/consent/route';
-import { GET as getSecurityRoute, POST as postSecurityRoute } from '@/app/api/v1/customer/security/route';
+import {
+  GET as getPreferencesRoute,
+  PUT as putPreferencesRoute,
+} from '@/app/api/v1/customer/preferences/route';
+import {
+  GET as getConsentRoute,
+  PUT as putConsentRoute,
+} from '@/app/api/v1/customer/consent/route';
+import {
+  GET as getSecurityRoute,
+  POST as postSecurityRoute,
+} from '@/app/api/v1/customer/security/route';
 import { GET as getOrgRoute, POST as postOrgRoute } from '@/app/api/v1/customer/organization/route';
 import { customerAccountService } from '@/features/customers/services/customer-account.service';
 import { NextRequest } from 'next/server';
 
 describe('Milestone 121: Customer Account REST API Integration Tests', () => {
+  afterEach(() => mock.restore());
   const customerActor = {
     userId: 'usr-customer-001',
     roles: ['CUSTOMER'],
@@ -103,7 +113,9 @@ describe('Milestone 121: Customer Account REST API Integration Tests', () => {
   });
 
   it('GET /api/v1/customer/preferences returns communication preferences', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/preferences', { method: 'GET' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/preferences', {
+      method: 'GET',
+    });
     const res = await getPreferencesRoute(req);
     const body = await res.json();
 
@@ -137,7 +149,9 @@ describe('Milestone 121: Customer Account REST API Integration Tests', () => {
   });
 
   it('GET /api/v1/customer/security returns account security status', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/security', { method: 'GET' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/security', {
+      method: 'GET',
+    });
     const res = await getSecurityRoute(req);
     const body = await res.json();
 
@@ -166,7 +180,9 @@ describe('Milestone 121: Customer Account REST API Integration Tests', () => {
   });
 
   it('GET /api/v1/customer/organization returns B2B organization details', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/organization', { method: 'GET' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/organization', {
+      method: 'GET',
+    });
     const res = await getOrgRoute(req);
     const body = await res.json();
 

@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * Returns authoritative NBR Mushak-6.3 tax breakdown and line snapshots for an order.
  * Enforces customer self-ownership and seller tenant authorization.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ orderId: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ orderId: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { orderId } = await params;

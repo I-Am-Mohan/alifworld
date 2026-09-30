@@ -1,6 +1,6 @@
 /**
  * Integration Tests: Negative Attack Scenarios & Penetration Test Matrix (Milestone 050)
- * 
+ *
  * Simulates adversarial attack vectors across REST API endpoints:
  * 1. Horizontal cross-tenant attacks (Merchant A -> Merchant B resources)
  * 2. Horizontal cross-user attacks (Customer A -> Customer B resources)
@@ -9,11 +9,11 @@
  * 5. Account lifecycle lockouts (Suspended & Deactivated accounts)
  * 6. State invariant inversion attacks (Modifying immutable audit records, cancelling delivered orders)
  * 7. Web perimeter attack simulations (CSRF bypass, CORS origin spoofing, UI framing)
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 050
  */
 
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, mock } from 'bun:test';
 import { NextRequest } from 'next/server';
 import { middleware } from '@/middleware';
 import { GET as getSettings, PUT as updateSettings } from '@/app/api/v1/seller/settings/route';
@@ -90,6 +90,35 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
     permissions: ['users:read', 'roles:assign', 'system:config'],
   });
 
+  let origAuditLog: any;
+  let origSellerStoreSettings: any;
+  let origOrder: any;
+  let origCart: any;
+  let origRole: any;
+  let origUser: any;
+
+  beforeAll(() => {
+    origAuditLog = (prisma as any).auditLog;
+    origSellerStoreSettings = (prisma as any).sellerStoreSettings;
+    origOrder = (prisma as any).order;
+    origCart = (prisma as any).cart;
+    origRole = (prisma as any).role;
+    origUser = (prisma as any).user;
+  });
+
+  afterAll(() => {
+    (prisma as any).auditLog = origAuditLog;
+    (prisma as any).sellerStoreSettings = origSellerStoreSettings;
+    (prisma as any).order = origOrder;
+    (prisma as any).cart = origCart;
+    (prisma as any).role = origRole;
+    (prisma as any).user = origUser;
+  });
+
+  afterEach(() => {
+    mock.restore();
+  });
+
   beforeEach(() => {
     // Mock prisma responses
     (prisma as any).auditLog = {
@@ -102,7 +131,12 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
     (prisma as any).sellerStoreSettings = {
       findFirst: async ({ where }: any) => {
         if (where.sellerId === STORE_B) {
-          return { id: 'set_2j7x4b9e8m02k3fb', sellerId: STORE_B, storeName: 'Walton Official', version: 1 };
+          return {
+            id: 'set_2j7x4b9e8m02k3fb',
+            sellerId: STORE_B,
+            storeName: 'Walton Official',
+            version: 1,
+          };
         }
         return null;
       },
@@ -159,9 +193,12 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
 
   describe('1. Horizontal Cross-Tenant Attacks (Merchant A -> Merchant B)', () => {
     it('Attack 1.1: Merchant A fails to access Merchant B settings (403 TENANT_VIOLATION)', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/settings?sellerId=${STORE_B}`, {
-        headers: { authorization: SELLER_A_AUTH },
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/settings?sellerId=${STORE_B}`,
+        {
+          headers: { authorization: SELLER_A_AUTH },
+        }
+      );
 
       const res = await getSettings(req);
       expect(res.status).toBe(403);
@@ -171,17 +208,20 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
     });
 
     it('Attack 1.2: Merchant A fails to update Merchant B settings (403 TENANT_VIOLATION)', async () => {
-      const req = new NextRequest(`http://localhost:3000/api/v1/seller/settings?sellerId=${STORE_B}`, {
-        method: 'PUT',
-        headers: {
-          authorization: SELLER_A_AUTH,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          sellerId: STORE_B,
-          version: 1,
-        }),
-      });
+      const req = new NextRequest(
+        `http://localhost:3000/api/v1/seller/settings?sellerId=${STORE_B}`,
+        {
+          method: 'PUT',
+          headers: {
+            authorization: SELLER_A_AUTH,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            sellerId: STORE_B,
+            version: 1,
+          }),
+        }
+      );
 
       const res = await updateSettings(req);
       expect(res.status).toBe(403);
@@ -339,16 +379,21 @@ describe('Negative Security Matrix & Penetration Test Suite (Milestone 050)', ()
 
   describe('4. State Invariant Inversions & Immutability Attacks', () => {
     it('Attack 4.1: Customer fails to cancel order already in DELIVERED state (403 FORBIDDEN)', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_delivered/cancel', {
-        method: 'POST',
-        headers: {
-          authorization: CUSTOMER_A_AUTH,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ reason: 'Too late cancellation' }),
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/orders/ord_alice_delivered/cancel',
+        {
+          method: 'POST',
+          headers: {
+            authorization: CUSTOMER_A_AUTH,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ reason: 'Too late cancellation' }),
+        }
+      );
 
-      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_delivered' }) });
+      const res = await cancelOrder(req, {
+        params: Promise.resolve({ id: 'ord_alice_delivered' }),
+      });
       expect(res.status).toBe(403);
 
       const json = await res.json();

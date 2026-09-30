@@ -1,9 +1,9 @@
 /**
  * Admin Audit Trail Historical Exploration API Route
- * 
+ *
  * Provides paginated, multi-parameter querying of immutable security and
  * business audit records for authorized platform operators.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 044, Milestone 049
  */
 

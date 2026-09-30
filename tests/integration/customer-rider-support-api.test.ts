@@ -1,6 +1,6 @@
 /**
  * Integration Tests: Customer, Rider, and Support REST API Endpoints (Milestone 046)
- * 
+ *
  * Verifies:
  * 1. /api/v1/support/tickets & /api/v1/support/tickets/[id]:
  *    - 401 Unauthorized when unauthenticated
@@ -13,14 +13,18 @@
  *    - 403 Forbidden when Customer attempts rider dispatch actions
  *    - Rider assignment acceptance and double-assignment prevention
  *    - Live GPS telemetry ingestion with compact mobile responses
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 046
  */
 
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { NextRequest } from 'next/server';
 import { GET as getTickets, POST as createTicket } from '@/app/api/v1/support/tickets/route';
-import { GET as getTicketById, POST as replyTicket, PATCH as resolveTicket } from '@/app/api/v1/support/tickets/[id]/route';
+import {
+  GET as getTicketById,
+  POST as replyTicket,
+  PATCH as resolveTicket,
+} from '@/app/api/v1/support/tickets/[id]/route';
 import { POST as acceptAssignment } from '@/app/api/v1/rider/assignments/route';
 import { POST as updateLocation } from '@/app/api/v1/rider/location/route';
 import { SupportTicketService } from '@/services/support-ticket.service';
@@ -162,7 +166,12 @@ describe('Customer, Rider & Support REST API Integration (Milestone 046)', () =>
       const ticketService = new SupportTicketService();
       await ticketService.createTicket(
         { userId: CUSTOMER_ALICE_ID, roles: [SystemRoleCode.CUSTOMER], permissions: [] },
-        { subject: 'Alice Ticket Subject', description: 'Detailed Alice description here.', category: 'ORDER_INQUIRY', priority: 'LOW' }
+        {
+          subject: 'Alice Ticket Subject',
+          description: 'Detailed Alice description here.',
+          category: 'ORDER_INQUIRY',
+          priority: 'LOW',
+        }
       );
 
       // Alice fetches tickets
@@ -186,7 +195,12 @@ describe('Customer, Rider & Support REST API Integration (Milestone 046)', () =>
       const ticketService = new SupportTicketService();
       const ticket = await ticketService.createTicket(
         { userId: CUSTOMER_ALICE_ID, roles: [SystemRoleCode.CUSTOMER], permissions: [] },
-        { subject: 'Private inquiry', description: 'Confidential order information.', category: 'ORDER_INQUIRY', priority: 'LOW' }
+        {
+          subject: 'Private inquiry',
+          description: 'Confidential order information.',
+          category: 'ORDER_INQUIRY',
+          priority: 'LOW',
+        }
       );
 
       // Bob attempts to inspect Alice's ticket
@@ -205,7 +219,12 @@ describe('Customer, Rider & Support REST API Integration (Milestone 046)', () =>
       const ticketService = new SupportTicketService();
       const ticket = await ticketService.createTicket(
         { userId: CUSTOMER_ALICE_ID, roles: [SystemRoleCode.CUSTOMER], permissions: [] },
-        { subject: 'Order assistance', description: 'Need help with shipment routing.', category: 'ORDER_INQUIRY', priority: 'MEDIUM' }
+        {
+          subject: 'Order assistance',
+          description: 'Need help with shipment routing.',
+          category: 'ORDER_INQUIRY',
+          priority: 'MEDIUM',
+        }
       );
 
       const req = new NextRequest(`http://localhost:3000/api/v1/support/tickets/${ticket.id}`, {

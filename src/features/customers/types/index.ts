@@ -1,9 +1,9 @@
 /**
  * AlifWorld Customer Domain Types & Contracts
- * 
+ *
  * Defines type contracts for customer profiles, communication preferences,
  * regulatory consent records, account security overviews, and B2B organization memberships.
- * 
+ *
  * Invariants: ADR-0001, ADR-0003, ADR-0006, ADR-0022
  */
 
@@ -68,5 +68,3 @@ export interface BusinessBuyerOrganization {
 export * from './wishlist.types';
 export * from './b2b.types';
 export * from './dashboard.types';
-
-

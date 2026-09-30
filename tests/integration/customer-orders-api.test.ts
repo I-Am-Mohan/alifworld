@@ -101,7 +101,9 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
         method: 'GET',
       });
 
-      const res = await getCustomerOrderRoute(req, { params: Promise.resolve({ id: 'ord_test_001' }) });
+      const res = await getCustomerOrderRoute(req, {
+        params: Promise.resolve({ id: 'ord_test_001' }),
+      });
       expect(res.status).toBe(200);
 
       const body = await res.json();
@@ -125,7 +127,9 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
         method: 'GET',
       });
 
-      const res = await getCustomerOrderRoute(req, { params: Promise.resolve({ id: 'ord_missing' }) });
+      const res = await getCustomerOrderRoute(req, {
+        params: Promise.resolve({ id: 'ord_missing' }),
+      });
       expect(res.status).toBe(404);
 
       const body = await res.json();
@@ -143,9 +147,12 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
         )
       );
 
-      const req = new NextRequest('http://localhost:3000/api/v1/customer/orders/ord_other_customer', {
-        method: 'GET',
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/customer/orders/ord_other_customer',
+        {
+          method: 'GET',
+        }
+      );
 
       const res = await getCustomerOrderRoute(req, {
         params: Promise.resolve({ id: 'ord_other_customer' }),
@@ -162,6 +169,40 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
 
   // ─── 2. POST /api/v1/customer/orders/[id]/cancel ───
   describe('2. POST /api/v1/customer/orders/[id]/cancel', () => {
+    it('rejects a missing replay key without calling cancellation', async () => {
+      const cancelSpy = spyOn(customerOrderService, 'cancelCustomerOrder');
+      try {
+        const response = await cancelCustomerOrderRoute(
+          new NextRequest('http://localhost:3000/api/v1/customer/orders/order-1/cancel', {
+            method: 'POST',
+            body: JSON.stringify({ reason: 'Customer requested cancellation' }),
+          }),
+          { params: Promise.resolve({ id: 'order-1' }) }
+        );
+        expect(response.status).toBe(422);
+        expect(cancelSpy).not.toHaveBeenCalled();
+      } finally {
+        cancelSpy.mockRestore();
+      }
+    });
+    it('rejects a customer without cancellation permission', async () => {
+      authSpy.mockReturnValue({ ...customerActor, permissions: ['orders:read'] } as any);
+      const cancelSpy = spyOn(customerOrderService, 'cancelCustomerOrder');
+      try {
+        const response = await cancelCustomerOrderRoute(
+          new NextRequest('http://localhost:3000/api/v1/customer/orders/order-1/cancel', {
+            method: 'POST',
+            headers: { 'Idempotency-Key': 'denied-cancel' },
+            body: JSON.stringify({ reason: 'Customer requested cancellation' }),
+          }),
+          { params: Promise.resolve({ id: 'order-1' }) }
+        );
+        expect(response.status).toBe(403);
+        expect(cancelSpy).not.toHaveBeenCalled();
+      } finally {
+        cancelSpy.mockRestore();
+      }
+    });
     const cancelledOrderDTO = {
       ...mockOrderDTO,
       status: 'CANCELLED',
@@ -182,11 +223,14 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
         cancelledOrderDTO as any
       );
 
-      const req = new NextRequest('http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Changed my mind about the purchase' }),
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'customer-cancel-1' },
+          body: JSON.stringify({ reason: 'Changed my mind about the purchase' }),
+        }
+      );
 
       const res = await cancelCustomerOrderRoute(req, {
         params: Promise.resolve({ id: 'ord_test_001' }),
@@ -196,16 +240,20 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
       const body = await res.json();
       expect(body.success).toBe(true);
       expect(body.data.status).toBe('CANCELLED');
+      expect(cancelSpy.mock.calls[0][3]).toBe('customer-cancel-1');
 
       cancelSpy.mockRestore();
     });
 
     it('returns 422 when cancellation reason is too short', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'No' }),
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: 'No' }),
+        }
+      );
 
       const res = await cancelCustomerOrderRoute(req, {
         params: Promise.resolve({ id: 'ord_test_001' }),
@@ -218,11 +266,14 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
     });
 
     it('returns 422 when request body is missing reason', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        }
+      );
 
       const res = await cancelCustomerOrderRoute(req, {
         params: Promise.resolve({ id: 'ord_test_001' }),
@@ -240,11 +291,17 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
         )
       );
 
-      const req = new NextRequest('http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'I want to cancel this order' }),
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': 'customer-cancel-packing',
+          },
+          body: JSON.stringify({ reason: 'I want to cancel this order' }),
+        }
+      );
 
       const res = await cancelCustomerOrderRoute(req, {
         params: Promise.resolve({ id: 'ord_test_001' }),
@@ -258,11 +315,14 @@ describe('Milestone 141: Customer Parent Order API Integration Tests', () => {
     });
 
     it('returns 422 when request body is invalid JSON', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'not-json{{{',
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/customer/orders/ord_test_001/cancel',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: 'not-json{{{',
+        }
+      );
 
       const res = await cancelCustomerOrderRoute(req, {
         params: Promise.resolve({ id: 'ord_test_001' }),

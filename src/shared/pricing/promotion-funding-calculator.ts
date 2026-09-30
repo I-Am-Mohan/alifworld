@@ -119,9 +119,15 @@ export function calculatePromotionAttribution(
 export function calculateSellerPayoutWithPromotions(
   input: SellerPayoutCalculationInput
 ): SellerPayoutCalculationResult {
-  const { subtotalPoisha, sellerDiscountPoisha, platformDiscountPoisha, sellerCommissionPoisha } = input;
+  const { subtotalPoisha, sellerDiscountPoisha, platformDiscountPoisha, sellerCommissionPoisha } =
+    input;
 
-  if (subtotalPoisha < 0n || sellerDiscountPoisha < 0n || platformDiscountPoisha < 0n || sellerCommissionPoisha < 0n) {
+  if (
+    subtotalPoisha < 0n ||
+    sellerDiscountPoisha < 0n ||
+    platformDiscountPoisha < 0n ||
+    sellerCommissionPoisha < 0n
+  ) {
     throw new Error('Monetary amounts in poisha cannot be negative');
   }
 

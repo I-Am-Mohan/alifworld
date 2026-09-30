@@ -1,9 +1,9 @@
 /**
  * AlifWorld Customer Registration Service
- * 
+ *
  * Coordinates customer signup, password strength validation, cryptographic hashing,
  * atomic wallet & points initialization, and outbox notification dispatch.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0029, ADR-0031, ADR-0032
  */
 
@@ -73,7 +73,8 @@ export class AuthRegistrationService {
       phone: user.phone,
       status: user.status,
       isEmailVerified: user.isEmailVerified,
-      message: 'Account registered successfully. A 6-digit verification code has been sent to your email.',
+      message:
+        'Account registered successfully. A 6-digit verification code has been sent to your email.',
       ...(isDev && { devVerificationCode: rawVerificationCode }),
     };
   }

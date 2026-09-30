@@ -32,29 +32,19 @@ export class ShippingRateRepository {
       deletedAt: null,
       AND: [
         // Match shipping method or ANY
-        shippingMethod
-          ? { OR: [{ shippingMethod }, { shippingMethod: 'STANDARD' }] }
-          : {},
+        shippingMethod ? { OR: [{ shippingMethod }, { shippingMethod: 'STANDARD' }] } : {},
         // Match origin zone or ANY
         originZone ? { OR: [{ originZone }, { originZone: 'ANY' }] } : {},
         // Match destination zone or ANY
-        destinationZone
-          ? { OR: [{ destinationZone }, { destinationZone: 'ANY' }] }
-          : {},
+        destinationZone ? { OR: [{ destinationZone }, { destinationZone: 'ANY' }] } : {},
         // Match seller-specific rule OR platform-wide rule (sellerId is null)
-        sellerId
-          ? { OR: [{ sellerId }, { sellerId: null }] }
-          : { sellerId: null },
+        sellerId ? { OR: [{ sellerId }, { sellerId: null }] } : { sellerId: null },
       ],
     };
 
     return (this.db as any).shippingRateRule.findMany({
       where,
-      orderBy: [
-        { priority: 'desc' },
-        { isDefault: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ priority: 'desc' }, { isDefault: 'desc' }, { createdAt: 'desc' }],
     });
   }
 
@@ -179,9 +169,7 @@ export class ShippingRateRepository {
       ...(input.baseRatePoisha !== undefined
         ? { baseRatePoisha: BigInt(input.baseRatePoisha) }
         : {}),
-      ...(input.baseWeightGrams !== undefined
-        ? { baseWeightGrams: input.baseWeightGrams }
-        : {}),
+      ...(input.baseWeightGrams !== undefined ? { baseWeightGrams: input.baseWeightGrams } : {}),
       ...(input.incrementalWeightGrams !== undefined
         ? { incrementalWeightGrams: input.incrementalWeightGrams }
         : {}),

@@ -35,9 +35,10 @@ export class ShipmentRepository {
    */
   public async createShipment(
     input: CreateShipmentDbInput,
-    initialEventDescription = 'Shipment created and registered for dispatch'
+    initialEventDescription = 'Shipment created and registered for dispatch',
+    transaction?: any
   ): Promise<any> {
-    return (this.db as any).$transaction(async (tx: any) => {
+    const persist = async (tx: any) => {
       const shipment = await tx.shipment.create({
         data: {
           id: input.id,
@@ -69,7 +70,8 @@ export class ShipmentRepository {
       });
 
       return shipment;
-    });
+    };
+    return transaction ? persist(transaction) : (this.db as any).$transaction(persist);
   }
 
   /**
@@ -173,14 +175,17 @@ export class ShipmentRepository {
       deliveredAt?: Date | null;
       consignmentId?: string | null;
       trackingNumber?: string | null;
-    } = {}
+    } = {},
+    transaction?: any
   ): Promise<any> {
-    return (this.db as any).$transaction(async (tx: any) => {
+    const persist = async (tx: any) => {
       const updateData: any = {
         status,
         version: { increment: 1 },
         ...(additionalData.shippedAt !== undefined ? { shippedAt: additionalData.shippedAt } : {}),
-        ...(additionalData.deliveredAt !== undefined ? { deliveredAt: additionalData.deliveredAt } : {}),
+        ...(additionalData.deliveredAt !== undefined
+          ? { deliveredAt: additionalData.deliveredAt }
+          : {}),
         ...(additionalData.consignmentId ? { consignmentId: additionalData.consignmentId } : {}),
         ...(additionalData.trackingNumber ? { trackingNumber: additionalData.trackingNumber } : {}),
       };
@@ -202,7 +207,8 @@ export class ShipmentRepository {
       });
 
       return updated;
-    });
+    };
+    return transaction ? persist(transaction) : (this.db as any).$transaction(persist);
   }
 
   /**

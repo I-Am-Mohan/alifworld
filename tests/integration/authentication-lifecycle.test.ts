@@ -1,6 +1,6 @@
 /**
  * Phase 04 Capstone Integration Test: Authentication Lifecycle, Audits & Rate Limits
- * 
+ *
  * Tests end-to-end authentication journeys against real domain services and models:
  * 1. Customer registration & 4-wallet provisioning
  * 2. Login, session creation & dual-client delivery (Web cookies vs Mobile Bearer)
@@ -9,7 +9,7 @@
  * 5. Password security controls (rate limits, breach prevention, session revocation)
  * 6. Distributed rate-limiting enforcement & HTTP 429 envelopes
  * 7. Append-only audit logging & zero credential leakage
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, ADR-0034, NIST SP 800-63B, Milestone 040
  */
 
@@ -650,9 +650,7 @@ describe('Authentication Lifecycle & Security Controls Integration Suite (Milest
 
       // c) Breach audit log recorded
       expect(
-        db.auditLogs.some(
-          (l) => l.action === 'SECURITY_ALERT_REFRESH_TOKEN_REUSE_DETECTED'
-        )
+        db.auditLogs.some((l) => l.action === 'SECURITY_ALERT_REFRESH_TOKEN_REUSE_DETECTED')
       ).toBe(true);
     });
   });
@@ -695,9 +693,7 @@ describe('Authentication Lifecycle & Security Controls Integration Suite (Milest
       expect(verifyPassword(newPassword, updatedUser.passwordHash)).toBe(true);
 
       // Verify audit log recorded
-      expect(
-        db.auditLogs.some((l) => l.action === 'PASSWORD_RESET_COMPLETED')
-      ).toBe(true);
+      expect(db.auditLogs.some((l) => l.action === 'PASSWORD_RESET_COMPLETED')).toBe(true);
     });
   });
 

@@ -3,7 +3,7 @@
 **Document Type**: Visual Identity, Design Token Architecture & UI Component System  
 **Phase Reference**: Phase 02 — Repository and Tooling  
 **Milestone Reference**: Milestone 014  
-**Status**: Authoritative & Mandatory  
+**Status**: Authoritative & Mandatory
 
 ---
 
@@ -12,6 +12,7 @@
 The AlifWorld visual identity is anchored directly in the updated brand specification ([`colors.md`](../../colors.md)), the official logo asset ([`logo.png`](../../logo.png)), and customer storefront UI references. It reflects an intuitive, high-conversion modern customer storefront built for nationwide e-commerce.
 
 ### 1.1 Authoritative Color Palette
+
 The platform enforces a locked palette across Web, Customer Storefront, and Mobile clients:
 
 ```
@@ -28,6 +29,7 @@ The platform enforces a locked palette across Web, Customer Storefront, and Mobi
 ```
 
 ### 1.2 Globe Logo Governance Rules
+
 - **Rule 1 (Standalone Trademark)**: The 3D globe icon is an independent brand mark.
 - **Rule 2 (No Letter Substitution)**: The globe icon must **never** be used as a substitute for the letter "O" in "ALIFWORLD".
 - **Rule 3 (Clear Space)**: The logo requires a minimum clear breathing margin equal to 50% of the globe diameter on all sides.
@@ -74,10 +76,10 @@ flowchart TD
 
 AlifWorld targets **WCAG 2.1 AA and AAA** compliance:
 
-| Foreground Color | Background Surface | Contrast Ratio | WCAG 2.1 Level | Usage Context |
-|:---|:---|:---|:---|:---|
-| **Pure Black** (`#000000`) | Golden Amber (`#F59E0B`) | **8.5 : 1** | **AAA** | Primary `Add to cart` button text |
-| **Pure White** (`#FFFFFF`) | Hero Navy (`#0A4B8C`) | **9.2 : 1** | **AAA** | Hero `Explore Now >` button text |
-| **Pure White** (`#FFFFFF`) | Deep Charcoal (`#161614`) | **19.5 : 1** | **AAA** | Footer headings, contact text |
-| **Slate Primary** (`#0F172A`) | Pure White (`#FFFFFF`) | **18.8 : 1** | **AAA** | Product title, section titles |
-| **In-Stock Green** (`#16A34A`) | Pure White (`#FFFFFF`) | **4.8 : 1** | **AA** | In-stock inventory indicators |
+| Foreground Color               | Background Surface        | Contrast Ratio | WCAG 2.1 Level | Usage Context                     |
+| :----------------------------- | :------------------------ | :------------- | :------------- | :-------------------------------- |
+| **Pure Black** (`#000000`)     | Golden Amber (`#F59E0B`)  | **8.5 : 1**    | **AAA**        | Primary `Add to cart` button text |
+| **Pure White** (`#FFFFFF`)     | Hero Navy (`#0A4B8C`)     | **9.2 : 1**    | **AAA**        | Hero `Explore Now >` button text  |
+| **Pure White** (`#FFFFFF`)     | Deep Charcoal (`#161614`) | **19.5 : 1**   | **AAA**        | Footer headings, contact text     |
+| **Slate Primary** (`#0F172A`)  | Pure White (`#FFFFFF`)    | **18.8 : 1**   | **AAA**        | Product title, section titles     |
+| **In-Stock Green** (`#16A34A`) | Pure White (`#FFFFFF`)    | **4.8 : 1**    | **AA**         | In-stock inventory indicators     |

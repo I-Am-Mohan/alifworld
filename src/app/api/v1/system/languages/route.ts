@@ -11,7 +11,7 @@ const i18nService = new I18nService();
 
 /**
  * GET /api/v1/system/languages
- * 
+ *
  * Returns the platform's supported languages, active languages list, and system default locale.
  */
 export async function GET() {
@@ -60,13 +60,16 @@ export async function GET() {
 
 /**
  * POST /api/v1/system/languages
- * 
+ *
  * Dynamically registers a new language on the platform.
  */
 export async function POST(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    await defaultPolicyEngine.assert(actor, 'system:config', { type: 'SYSTEM', id: 'I18N_LANGUAGE_REGISTRY' });
+    await defaultPolicyEngine.assert(actor, 'system:config', {
+      type: 'SYSTEM',
+      id: 'I18N_LANGUAGE_REGISTRY',
+    });
     const body = await req.json().catch(() => ({}));
     const { code, name, nativeName, wordForLanguage, direction, isActive } = body;
 

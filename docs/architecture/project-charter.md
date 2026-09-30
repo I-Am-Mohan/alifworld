@@ -7,7 +7,7 @@
 **Launch Currency**: Bangladeshi Taka (BDT, represented in integer poisha)  
 **Launch Locales**: `en-BD` (English - Bangladesh), `bn-BD` (Bangla - Bangladesh)  
 **Platform Timezone**: `Asia/Dhaka` (UTC+06:00)  
-**Architecture Model**: Single-Codebase Next.js Modular Monolith  
+**Architecture Model**: Single-Codebase Next.js Modular Monolith
 
 ---
 
@@ -28,11 +28,13 @@ AlifWorld is an enterprise multi-vendor e-commerce platform and digital commerci
 To prevent architectural drift, maintain operational simplicity, and guarantee high system reliability, the following constraints are immutable across all milestones:
 
 ### 2.1 Single-Deployable Next.js Modular Monolith
+
 - All platform capabilities—Customer Storefront, Admin Operations, Seller Center, REST APIs (`/app/api/v1`), and BullMQ background workers—reside in **one deployable Next.js application repository**.
 - Microservices, separate backend frameworks (e.g. Express/NestJS/Django), or external API gateways are strictly prohibited.
 - Modular isolation is enforced within the directory structure (`app/`, `features/`, `services/`, `repositories/`, `prisma/`, `workers/`).
 
 ### 2.2 Core Technology Stack
+
 - **Language & Runtime**: TypeScript (strict mode enabled, zero `any` policy), executed on Bun runtime.
 - **Framework**: Next.js (App Router, Server Components by default, Client Components strictly for local interactivity).
 - **API Surface**: Next.js Route Handlers strictly located under `/app/api/v1`.
@@ -43,21 +45,25 @@ To prevent architectural drift, maintain operational simplicity, and guarantee h
 - **Search & Discovery**: Meilisearch search adapter equipped with an automatic, boot-safe PostgreSQL fallback to ensure uninterrupted operation during external search engine downtime.
 
 ### 2.3 Financial Invariants & Currency Engineering
+
 - **Monetary Unit**: All monetary values are recorded exclusively in Bangladeshi Taka (BDT) as **64-bit integer minor units (poisha)**, where `1 BDT = 100 poisha`. Floating-point arithmetic for currency is strictly prohibited.
 - **Independent Product Points**: Product price (BDT) and Product Points (PP) are distinct, independent dimensions. Product Points are explicitly defined by the seller during product creation. **The system must never infer or compute an automatic conversion rate between BDT and Product Points.**
 - **Point Snapshotting**: Both product price and Product Point values are immutably snapshotted onto order items at the time of checkout. Points are accrued as `productPointSnapshot * eligibleQuantity` only when the order reaches the confirmed, non-returnable eligible order status.
 - **Double-Entry Wallet Accounting**: All financial, wallet, and point ledger entries are recorded as balanced double-entry transactions (debit = credit). Wallets never modify raw balances in place without an immutable ledger posting.
 
 ### 2.4 Business Rule Versioning & Historical Immutability
+
 - All commission splits, reward percentages, customer/seller club tiers, qualification thresholds, and period cutoffs are managed through **versioned Admin configurations**.
 - Every financial calculation, reward accrual, and commission distribution references an explicit rule configuration version ID. Historical transactions retain their original rule version and are never recalculated retrospectively.
 
 ### 2.5 Security, Authorization & Tenant Isolation
+
 - Every protected endpoint and mutation enforces server-side authentication, role-based permission evaluation, and strict seller-tenant scoping.
 - UI visibility toggles are never treated as authorization boundaries.
 - The platform enforces Super Admin vs. Admin privilege separation, seller staff scoped roles, and complete multi-tenant database query scoping.
 
 ### 2.6 Contract-Driven Mobile Integration
+
 - Route Handlers under `/app/api/v1` are designed to be consumed by Flutter mobile clients and web interfaces alike.
 - Schemas are defined in typed Zod validators that automatically produce OpenAPI documentation. Manual or divergent API documentation is forbidden.
 
@@ -77,24 +83,25 @@ Derived from the authoritative brand assets (`colors.md` and `logo.png`), the Al
 
 ### 3.1 Authoritative Color Tokens
 
-| Token Name | Hex Code | Primary UI Application |
-|:---|:---:|:---|
-| **Alif Black** | `#000000` | Main application background, primary navigation, footers, dark mode cards, high-contrast surfaces |
-| **Alif White** | `#FFFFFF` | Primary typography, logos, inverted cards, icons, high-contrast badges |
-| **Brand Orange** | `#FF6A00` | Primary interactive buttons (CTAs), focus rings, active links, accents, brand smiles |
-| **Globe Blue** | `#4F8FD9` | Primary globe body, international accents, secondary brand elements |
-| **Globe Light Blue** | `#69B7E8` | Globe landmass highlights, soft badges, subtle secondary accents |
-| **Globe Dark Blue** | `#3456A3` | Globe depth, shadow contours, dark accents |
+| Token Name           | Hex Code  | Primary UI Application                                                                            |
+| :------------------- | :-------: | :------------------------------------------------------------------------------------------------ |
+| **Alif Black**       | `#000000` | Main application background, primary navigation, footers, dark mode cards, high-contrast surfaces |
+| **Alif White**       | `#FFFFFF` | Primary typography, logos, inverted cards, icons, high-contrast badges                            |
+| **Brand Orange**     | `#FF6A00` | Primary interactive buttons (CTAs), focus rings, active links, accents, brand smiles              |
+| **Globe Blue**       | `#4F8FD9` | Primary globe body, international accents, secondary brand elements                               |
+| **Globe Light Blue** | `#69B7E8` | Globe landmass highlights, soft badges, subtle secondary accents                                  |
+| **Globe Dark Blue**  | `#3456A3` | Globe depth, shadow contours, dark accents                                                        |
 
 ### 3.2 Standardized CSS Variable Specification
+
 ```css
 :root {
   --alif-black: #000000;
-  --alif-white: #FFFFFF;
-  --alif-orange: #FF6A00;
-  --alif-globe-blue: #4F8FD9;
-  --alif-globe-light: #69B7E8;
-  --alif-globe-dark: #3456A3;
+  --alif-white: #ffffff;
+  --alif-orange: #ff6a00;
+  --alif-globe-blue: #4f8fd9;
+  --alif-globe-light: #69b7e8;
+  --alif-globe-dark: #3456a3;
 
   /* Derived functional semantics */
   --alif-bg-primary: var(--alif-black);
@@ -105,6 +112,7 @@ Derived from the authoritative brand assets (`colors.md` and `logo.png`), the Al
 ```
 
 ### 3.3 Visual Rules & Invariants
+
 1. **Foundation**: Pure black (`#000000`) and crisp white (`#FFFFFF`) form the foundational contrast.
 2. **Interactive Hierarchy**: Brand Orange (`#FF6A00`) is reserved for primary actions, critical interactive cues, and brand emphasis. It is never diluted by competing bright colors.
 3. **Globe Symbolism**: The blue globe is an authoritative emblem of global reach and connection. **The globe must never be rendered as a typographical replacement for the letter 'O'**. It sits alongside "ALIF" as a dedicated brand emblem.
@@ -114,16 +122,16 @@ Derived from the authoritative brand assets (`colors.md` and `logo.png`), the Al
 
 ## 4. User Personas & System Actors
 
-| Actor | Security Scope | Primary Responsibilities |
-|:---|:---|:---|
-| **Customer** | Scoped to own account (`customer_id`) | Browse catalog, manage carts, execute checkout, track orders, view loyalty points, participate in Customer Clubs and Star leaderboards, manage address books. |
-| **Seller** | Scoped to own tenant (`seller_id`) | Manage store profile, configure shipping/tax defaults, manage products & inventory, pack and fulfill order items, inspect seller ledger, join Seller Clubs. |
-| **Seller Staff** | Scoped to assigned store and permissions | Sub-role under seller tenant (e.g., Inventory Manager, Order Processor) with restricted capabilities. |
-| **Rider / Delivery** | Scoped to assigned deliveries (`rider_id`) | Accept available delivery tasks, record GPS checkpoints, verify pickup, deliver packages with OTP verification. |
-| **Admin** | Role-based operational access | Approve seller KYC, moderate catalog submissions, review support tickets, oversee daily operational metrics, configure platform settings. |
-| **Super Admin** | Unrestricted platform authority | Manage system administrators, configure financial rule versions, review audit logs, execute maker-checker approvals on financial ledger adjustments. |
-| **Support Agent** | Scoped to customer service queues | Handle customer disputes, view redacted order logs, process return reviews within authorization thresholds. |
-| **System Worker** | Machine token / internal identity | Process background queues (BullMQ), reconcile payments, calculate periodic club settlements, generate scheduled reports. |
+| Actor                | Security Scope                             | Primary Responsibilities                                                                                                                                      |
+| :------------------- | :----------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Customer**         | Scoped to own account (`customer_id`)      | Browse catalog, manage carts, execute checkout, track orders, view loyalty points, participate in Customer Clubs and Star leaderboards, manage address books. |
+| **Seller**           | Scoped to own tenant (`seller_id`)         | Manage store profile, configure shipping/tax defaults, manage products & inventory, pack and fulfill order items, inspect seller ledger, join Seller Clubs.   |
+| **Seller Staff**     | Scoped to assigned store and permissions   | Sub-role under seller tenant (e.g., Inventory Manager, Order Processor) with restricted capabilities.                                                         |
+| **Rider / Delivery** | Scoped to assigned deliveries (`rider_id`) | Accept available delivery tasks, record GPS checkpoints, verify pickup, deliver packages with OTP verification.                                               |
+| **Admin**            | Role-based operational access              | Approve seller KYC, moderate catalog submissions, review support tickets, oversee daily operational metrics, configure platform settings.                     |
+| **Super Admin**      | Unrestricted platform authority            | Manage system administrators, configure financial rule versions, review audit logs, execute maker-checker approvals on financial ledger adjustments.          |
+| **Support Agent**    | Scoped to customer service queues          | Handle customer disputes, view redacted order logs, process return reviews within authorization thresholds.                                                   |
+| **System Worker**    | Machine token / internal identity          | Process background queues (BullMQ), reconcile payments, calculate periodic club settlements, generate scheduled reports.                                      |
 
 ---
 

@@ -80,7 +80,8 @@ export class DiscountRuleService {
         minQuantity: input.minQuantity ?? 1,
         buyQuantity: input.buyQuantity ?? null,
         getQuantity: input.getQuantity ?? null,
-        getDiscountPercent: input.getDiscountPercent != null ? new Prisma.Decimal(input.getDiscountPercent) : null,
+        getDiscountPercent:
+          input.getDiscountPercent != null ? new Prisma.Decimal(input.getDiscountPercent) : null,
         isAutomatic: input.isAutomatic ?? true,
         fundingType: input.fundingType,
         sellerSharePercent,
@@ -124,7 +125,13 @@ export class DiscountRuleService {
 
   async listDiscountRules(
     actor: ActorContext,
-    params: { discountType?: string; isAutomatic?: boolean; status?: string; page?: number; limit?: number }
+    params: {
+      discountType?: string;
+      isAutomatic?: boolean;
+      status?: string;
+      page?: number;
+      limit?: number;
+    }
   ) {
     const isSeller = actor.roles.includes('SELLER');
     const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
@@ -207,7 +214,10 @@ export class DiscountRuleService {
         usageCount: rule.usageCount,
         status: rule.status,
         deletedAt: rule.deletedAt,
-        targets: (rule.targets || []).map((t) => ({ targetType: t.targetType, targetId: t.targetId })),
+        targets: (rule.targets || []).map((t) => ({
+          targetType: t.targetType,
+          targetId: t.targetId,
+        })),
       };
 
       const result = evaluateDiscountRule(descriptor, {

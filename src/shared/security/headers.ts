@@ -1,9 +1,9 @@
 /**
  * AlifWorld HTTP Security Headers Configuration
- * 
+ *
  * Enforces Content-Security-Policy (CSP), Strict-Transport-Security (HSTS),
  * anti-clickjacking frame controls, and restrictive Permissions-Policy.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, OWASP Secure Headers Project, Milestone 048
  */
 
@@ -31,14 +31,11 @@ export function buildContentSecurityPolicy(
   const frameAncestors = frameOptions === 'DENY' ? "'none'" : "'self'";
 
   // S3 / R2 endpoints allowed for media assets
-  const mediaOrigins = [
-    "'self'",
-    'data:',
-    'blob:',
-    'https:',
-  ].join(' ');
+  const mediaOrigins = ["'self'", 'data:', 'blob:', 'https:'].join(' ');
 
-  const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim().replace(/\/$/, '');
+  const appUrl = (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+    .trim()
+    .replace(/\/$/, '');
 
   const connectOrigins = [
     "'self'",
@@ -87,8 +84,7 @@ export function buildSecurityHeaders(
     customConfig?.frameOptions || (isOperationalPortal ? 'DENY' : 'SAMEORIGIN');
 
   const csp =
-    customConfig?.contentSecurityPolicy ||
-    buildContentSecurityPolicy(frameOptions, isProduction);
+    customConfig?.contentSecurityPolicy || buildContentSecurityPolicy(frameOptions, isProduction);
 
   const headers: Record<string, string> = {
     'X-Content-Type-Options': 'nosniff',

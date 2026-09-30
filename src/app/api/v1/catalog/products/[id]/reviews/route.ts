@@ -14,17 +14,12 @@ export const dynamic = 'force-dynamic';
  * Public endpoint to list verified customer reviews for a product.
  * Redacts customer PII and returns star ratings, comments, and media.
  */
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await props.params;
     const { searchParams } = new URL(req.url);
 
-    const query = ListProductReviewsQuerySchema.parse(
-      Object.fromEntries(searchParams.entries())
-    );
+    const query = ListProductReviewsQuerySchema.parse(Object.fromEntries(searchParams.entries()));
 
     // Optional authentication to include currentUserVote if user is logged in
     let currentUserId: string | undefined;
@@ -35,11 +30,7 @@ export async function GET(
       // Unauthenticated public request
     }
 
-    const result = await productReviewService.getProductReviews(
-      id,
-      query,
-      currentUserId
-    );
+    const result = await productReviewService.getProductReviews(id, query, currentUserId);
 
     return NextResponse.json(
       {
@@ -63,10 +54,7 @@ export async function GET(
  * POST /api/v1/catalog/products/[id]/reviews
  * Submits a verified-purchase review. Requires authenticated customer with a delivered purchase.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
@@ -77,10 +65,7 @@ export async function POST(
       productId: id,
     });
 
-    const review = await productReviewService.createReview(
-      actor.userId,
-      validatedInput
-    );
+    const review = await productReviewService.createReview(actor.userId, validatedInput);
 
     return NextResponse.json(
       {

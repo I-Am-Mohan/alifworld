@@ -13,6 +13,64 @@ interface ProductQnaSectionProps {
   locale?: 'en-BD' | 'bn-BD';
 }
 
+function buildDefaultQuestions(productId: string): ProductQuestionDTO[] {
+  return [
+    {
+      id: 'q_sample_01',
+      productId,
+      authorDisplayName: 'Naimur R.',
+      question: 'এই ফোনটিতে কি অফিশিয়াল ১ বছরের ওয়ারেন্টি পাওয়া যাবে?',
+      status: 'APPROVED',
+      isAnswered: true,
+      upvotesCount: 9,
+      createdAt: '2026-09-29T12:00:00.000Z',
+      updatedAt: '2026-09-29T12:00:00.000Z',
+      answers: [
+        {
+          id: 'ans_sample_01',
+          questionId: 'q_sample_01',
+          sellerId: 'sel_walton',
+          authorDisplayName: 'Walton Official Store',
+          answer:
+            'হ্যাঁ স্যার, এটি ১০০% অফিশিয়াল পণ্য। বাংলাদেশের য��কোনো ওয়ালটন সার্ভিস সেন্টারে ১ বছরের অফিশিয়াল ওয়ারেন্টি কার্ড সহ সেবা পাবেন।',
+          isOfficialSeller: true,
+          status: 'APPROVED',
+          upvotesCount: 7,
+          createdAt: '2026-09-29T18:00:00.000Z',
+          updatedAt: '2026-09-29T18:00:00.000Z',
+        },
+      ],
+      answersCount: 1,
+    },
+    {
+      id: 'q_sample_02',
+      productId,
+      authorDisplayName: 'Shakil A.',
+      question: 'Does the box include the fast charging adapter and cable?',
+      status: 'APPROVED',
+      isAnswered: true,
+      upvotesCount: 4,
+      createdAt: '2026-09-28T09:00:00.000Z',
+      updatedAt: '2026-09-28T09:00:00.000Z',
+      answers: [
+        {
+          id: 'ans_sample_02',
+          questionId: 'q_sample_02',
+          sellerId: 'sel_walton',
+          authorDisplayName: 'Walton Official Store',
+          answer: 'Yes! The original retail box includes a 33W fast charger and Type-C cable.',
+          isOfficialSeller: true,
+          status: 'APPROVED',
+          upvotesCount: 3,
+          createdAt: '2026-09-29T12:00:00.000Z',
+          updatedAt: '2026-09-29T12:00:00.000Z',
+        },
+      ],
+      answersCount: 1,
+    },
+  ];
+}
+
 export function ProductQnaSection({
   productId,
   initialSummary,
@@ -30,64 +88,8 @@ export function ProductQnaSection({
     }
   );
 
-  const [questions, setQuestions] = useState<ProductQuestionDTO[]>(
-    initialQuestions.length > 0
-      ? initialQuestions
-      : [
-          {
-            id: 'q_sample_01',
-            productId,
-            authorDisplayName: 'Naimur R.',
-            question: 'এই ফোনটিতে কি অফিশিয়াল ১ বছরের ওয়ারেন্টি পাওয়া যাবে?',
-            status: 'APPROVED',
-            isAnswered: true,
-            upvotesCount: 9,
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-            updatedAt: new Date(Date.now() - 86400000).toISOString(),
-            answers: [
-              {
-                id: 'ans_sample_01',
-                questionId: 'q_sample_01',
-                sellerId: 'sel_walton',
-                authorDisplayName: 'Walton Official Store',
-                answer:
-                  'হ্যাঁ স্যার, এটি ১০০% অফিশিয়াল পণ্য। বাংলাদেশের যেকোনো ওয়ালটন সার্ভিস সেন্টারে ১ বছরের অফিশিয়াল ওয়ারেন্টি কার্ড সহ সেবা পাবেন।',
-                isOfficialSeller: true,
-                status: 'APPROVED',
-                upvotesCount: 7,
-                createdAt: new Date(Date.now() - 43200000).toISOString(),
-                updatedAt: new Date(Date.now() - 43200000).toISOString(),
-              },
-            ],
-            answersCount: 1,
-          },
-          {
-            id: 'q_sample_02',
-            productId,
-            authorDisplayName: 'Shakil A.',
-            question: 'Does the box include the fast charging adapter and cable?',
-            status: 'APPROVED',
-            isAnswered: true,
-            upvotesCount: 4,
-            createdAt: new Date(Date.now() - 172800000).toISOString(),
-            updatedAt: new Date(Date.now() - 172800000).toISOString(),
-            answers: [
-              {
-                id: 'ans_sample_02',
-                questionId: 'q_sample_02',
-                sellerId: 'sel_walton',
-                authorDisplayName: 'Walton Official Store',
-                answer: 'Yes! The original retail box includes a 33W fast charger and Type-C cable.',
-                isOfficialSeller: true,
-                status: 'APPROVED',
-                upvotesCount: 3,
-                createdAt: new Date(Date.now() - 86400000).toISOString(),
-                updatedAt: new Date(Date.now() - 86400000).toISOString(),
-              },
-            ],
-            answersCount: 1,
-          },
-        ]
+  const [questions, setQuestions] = useState<ProductQuestionDTO[]>(() =>
+    initialQuestions.length > 0 ? initialQuestions : buildDefaultQuestions(productId)
   );
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,7 +123,9 @@ export function ProductQnaSection({
   const handleAskQuestion = (e: React.FormEvent) => {
     e.preventDefault();
     if (newQuestionText.trim().length < 10) {
-      showToast(isBn ? 'প্রশ্নটি কমপক্ষে ১০ অক্ষরের হতে হবে।' : 'Question must be at least 10 characters.');
+      showToast(
+        isBn ? 'প্রশ্নটি কমপক্ষে ১০ অক্ষরের হতে হবে।' : 'Question must be at least 10 characters.'
+      );
       return;
     }
 
@@ -210,7 +214,9 @@ export function ProductQnaSection({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
-              isBn ? 'প্রশ্ন বা উত্তর খুঁজুন (যেমন: ওয়ারেন্টি, চার্জার)...' : 'Search questions or answers...'
+              isBn
+                ? 'প্রশ্ন বা উত্তর খুঁজুন (যেমন: ওয়ারেন্টি, চার্জার)...'
+                : 'Search questions or answers...'
             }
             className="w-full p-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white transition-colors"
           />
@@ -258,7 +264,10 @@ export function ProductQnaSection({
           </div>
         ) : (
           filteredQuestions.map((q) => (
-            <Card key={q.id} className="p-5 border border-slate-100 bg-slate-50/40 rounded-xl space-y-3">
+            <Card
+              key={q.id}
+              className="p-5 border border-slate-100 bg-slate-50/40 rounded-xl space-y-3"
+            >
               {/* Question Row */}
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
@@ -296,7 +305,10 @@ export function ProductQnaSection({
               {q.answers.length > 0 ? (
                 <div className="pl-4 border-l-2 border-slate-200 space-y-2 mt-2">
                   {q.answers.map((ans) => (
-                    <div key={ans.id} className="p-3 bg-white border border-slate-100 rounded-lg space-y-1 text-xs">
+                    <div
+                      key={ans.id}
+                      className="p-3 bg-white border border-slate-100 rounded-lg space-y-1 text-xs"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-extrabold text-emerald-700">A:</span>
@@ -320,7 +332,10 @@ export function ProductQnaSection({
                 </div>
               ) : (
                 <div className="pl-4 text-[11px] text-amber-700 font-medium">
-                  ⏳ {isBn ? 'বিক্রেতার উত্তরের জন্য অপেক্ষমাণ...' : 'Awaiting official seller response...'}
+                  ⏳{' '}
+                  {isBn
+                    ? 'বিক্রেতার উত্তরের জন্য অপেক্ষমাণ...'
+                    : 'Awaiting official seller response...'}
                 </div>
               )}
             </Card>
@@ -354,7 +369,9 @@ export function ProductQnaSection({
             <form onSubmit={handleAskQuestion} className="space-y-4 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">
-                  {isBn ? 'আপনার প্রশ্ন (কমপক্ষে ১০ অক্ষর)' : 'Your Question (Minimum 10 characters)'}
+                  {isBn
+                    ? 'আপনার প্রশ্ন (কমপক্ষে ১০ অক্ষর)'
+                    : 'Your Question (Minimum 10 characters)'}
                 </label>
                 <textarea
                   value={newQuestionText}

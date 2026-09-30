@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { POST as reserveRoute } from '@/app/api/v1/inventory/reserve/route';
 import { InventoryService } from '@/features/inventory/services/inventory-service';
@@ -39,7 +40,11 @@ describe('Milestone 104: Atomic Stock Reservation API Integration Tests', () => 
 
     InventoryService.prototype.reserveStock = async (input: any) => ({
       reservation: { ...mockReservation, quantity: input.quantity } as any,
-      balance: { ...mockStockBalance, reserved: mockStockBalance.reserved + input.quantity, available: mockStockBalance.available - input.quantity } as any,
+      balance: {
+        ...mockStockBalance,
+        reserved: mockStockBalance.reserved + input.quantity,
+        available: mockStockBalance.available - input.quantity,
+      } as any,
     });
   });
 

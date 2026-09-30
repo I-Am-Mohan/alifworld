@@ -35,8 +35,31 @@ export function AccountSessionModal() {
   const { user, isAccountOpen, closeAccountModal, logout } = useAuthModal();
   const { t } = useI18n();
 
+  if (!isAccountOpen || !user) return null;
+
+  return (
+    <AccountSessionModalContent
+      user={user}
+      closeAccountModal={closeAccountModal}
+      logout={logout}
+      t={t}
+    />
+  );
+}
+
+function AccountSessionModalContent({
+  user,
+  closeAccountModal,
+  logout,
+  t,
+}: {
+  user: any;
+  closeAccountModal: () => void;
+  logout: () => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [loadingSessions, setLoadingSessions] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
@@ -50,33 +73,27 @@ export function AccountSessionModal() {
     }, 3500);
   };
 
-  const fetchSessions = useCallback(async () => {
-    try {
-      setLoadingSessions(true);
-      const res = await fetch('/api/v1/auth/sessions');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.data?.sessions)) {
-          setSessions(data.data.sessions);
+  const fetchSessions = useCallback((signal?: AbortSignal) => {
+    return fetch('/api/v1/auth/sessions', { signal })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data?.success && Array.isArray(data.data?.sessions)) {
+            setSessions(data.data.sessions);
+          }
         }
-      }
-    } catch {
-      // Fallback
-    } finally {
-      setLoadingSessions(false);
-    }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!signal?.aborted) setLoadingSessions(false);
+      });
   }, []);
 
   useEffect(() => {
-    if (isAccountOpen && user) {
-      fetchSessions();
-      setConfirmRevokeId(null);
-      setConfirmRevokeOthers(false);
-      setConfirmRevokeAll(false);
-    }
-  }, [isAccountOpen, user, fetchSessions]);
-
-  if (!isAccountOpen || !user) return null;
+    const controller = new AbortController();
+    void fetchSessions(controller.signal);
+    return () => controller.abort();
+  }, [fetchSessions]);
 
   const handleRevokeSingle = async (sessionId: string) => {
     try {
@@ -202,22 +219,20 @@ export function AccountSessionModal() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h4 className="text-sm font-bold text-slate-900">
-                  {t('auth.activeDevices')}
-                </h4>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {t('auth.activeDevicesSubtitle')}
-                </p>
+                <h4 className="text-sm font-bold text-slate-900">{t('auth.activeDevices')}</h4>
+                <p className="text-xs text-slate-500 mt-0.5">{t('auth.activeDevicesSubtitle')}</p>
               </div>
               <button
                 type="button"
-                onClick={fetchSessions}
+                onClick={() => void fetchSessions()}
                 disabled={loadingSessions}
                 aria-label={t('auth.refreshDevices')}
                 className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
                 title={t('auth.refreshDevices')}
               >
-                <RefreshCw className={`w-4 h-4 ${loadingSessions ? 'animate-spin text-amber-500' : ''}`} />
+                <RefreshCw
+                  className={`w-4 h-4 ${loadingSessions ? 'animate-spin text-amber-500' : ''}`}
+                />
               </button>
             </div>
 
@@ -362,7 +377,9 @@ export function AccountSessionModal() {
                   className="w-full py-2.5 px-4 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center space-x-2 transition-colors cursor-pointer"
                 >
                   <Laptop className="w-3.5 h-3.5 text-slate-500" />
-                  <span>{t('auth.logoutOtherDevices')} ({otherSessionsCount})</span>
+                  <span>
+                    {t('auth.logoutOtherDevices')} ({otherSessionsCount})
+                  </span>
                 </button>
               )}
             </div>

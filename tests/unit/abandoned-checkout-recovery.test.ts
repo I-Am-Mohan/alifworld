@@ -29,9 +29,9 @@ describe('Milestone 140: Abandoned Checkout Recovery Unit Tests', () => {
     it('rejects recovery when token does not exist with 404', async () => {
       findByTokenSpy = spyOn(abandonedCheckoutRepository, 'findByToken').mockResolvedValue(null);
 
-      expect(
-        abandonedCheckoutRecoveryService.recoverCart('rec_nonexistent_token')
-      ).rejects.toThrow('Invalid recovery token');
+      expect(abandonedCheckoutRecoveryService.recoverCart('rec_nonexistent_token')).rejects.toThrow(
+        'Invalid recovery token'
+      );
     });
 
     it('rejects recovery when recovery link has expired', async () => {
@@ -46,9 +46,9 @@ describe('Milestone 140: Abandoned Checkout Recovery Unit Tests', () => {
         expiredRecord as any
       );
 
-      expect(
-        abandonedCheckoutRecoveryService.recoverCart('rec_expired_token')
-      ).rejects.toThrow('Recovery link has expired');
+      expect(abandonedCheckoutRecoveryService.recoverCart('rec_expired_token')).rejects.toThrow(
+        'Recovery link has expired'
+      );
     });
   });
 
@@ -85,7 +85,10 @@ describe('Milestone 140: Abandoned Checkout Recovery Unit Tests', () => {
         sampleRecovery as any
       );
       updateCartSpy = spyOn(abandonedCheckoutRecoveryService, 'reactivateCart').mockResolvedValue();
-      const updateItemSpy = spyOn(abandonedCheckoutRecoveryService, 'syncCartItemPrice').mockResolvedValue();
+      const updateItemSpy = spyOn(
+        abandonedCheckoutRecoveryService,
+        'syncCartItemPrice'
+      ).mockResolvedValue();
       outboxSpy = spyOn(abandonedCheckoutRecoveryService, 'emitOutboxEvent').mockResolvedValue();
 
       const result = await abandonedCheckoutRecoveryService.recoverCart('rec_valid_token_01');

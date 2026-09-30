@@ -23,10 +23,7 @@ function assertAdmin(actor: any) {
  * GET /api/v1/admin/fulfillment-groups/[id]
  * Admin retrieves single fulfillment group details.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     assertAdmin(actor);

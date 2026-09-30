@@ -1,10 +1,6 @@
 import { describe, expect, it, beforeEach } from 'bun:test';
 import { CartService } from '@/features/cart/services/cart.service';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 
 class MockPrismaCartDb {
   public carts: any[] = [];
@@ -111,7 +107,11 @@ class MockPrismaCartDb {
     updateMany: async ({ where, data }: any) => {
       let count = 0;
       for (let idx = 0; idx < this.cartItems.length; idx++) {
-        if (where.cartId && this.cartItems[idx].cartId === where.cartId && !this.cartItems[idx].deletedAt) {
+        if (
+          where.cartId &&
+          this.cartItems[idx].cartId === where.cartId &&
+          !this.cartItems[idx].deletedAt
+        ) {
           this.cartItems[idx] = { ...this.cartItems[idx], ...data };
           count++;
         }

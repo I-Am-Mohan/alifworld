@@ -27,14 +27,16 @@ import {
 
 export default function CustomerWalletPage() {
   const { locale } = useI18n();
-  const [activeTab, setActiveTab] = useState<'overview' | 'points' | 'journal' | 'ranks'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'points' | 'journal' | 'ranks'>(
+    'overview'
+  );
 
   // Multi-wallet mock state matching Section 10 seed
   const balances = {
-    mainPoisha: BigInt(50000),      // ৳500.00
-    shoppingPoisha: BigInt(20000),  // ৳200.00
-    goodLuckPoisha: BigInt(15000),  // ৳150.00
-    charityPoisha: BigInt(5000),    // ৳50.00
+    mainPoisha: BigInt(50000), // ৳500.00
+    shoppingPoisha: BigInt(20000), // ৳200.00
+    goodLuckPoisha: BigInt(15000), // ৳150.00
+    charityPoisha: BigInt(5000), // ৳50.00
     availablePoints: 450,
     pendingPoints: 0,
     lifetimePoints: 450,
@@ -80,7 +82,9 @@ export default function CustomerWalletPage() {
           <div className="flex items-center space-x-3">
             <AlifLogo size="sm" href="/" />
             <div className="h-5 w-[1px] bg-slate-200 hidden sm:block" />
-            <span className="font-bold text-sm text-slate-800 hidden sm:block">Customer Rewards & Wallets</span>
+            <span className="font-bold text-sm text-slate-800 hidden sm:block">
+              Customer Rewards & Wallets
+            </span>
           </div>
 
           <div className="flex items-center space-x-3 text-xs">
@@ -108,13 +112,16 @@ export default function CustomerWalletPage() {
               My Wallet & Loyalty Hub
             </h1>
             <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-              Exact minor-unit poisha accounting across segregated wallets. Product Points are independent units designated per SKU with zero conversion leakage.
+              Exact minor-unit poisha accounting across segregated wallets. Product Points are
+              independent units designated per SKU with zero conversion leakage.
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
             <div className="text-right">
-              <span className="text-[11px] text-slate-400 uppercase font-mono">Customer Club Tier</span>
+              <span className="text-[11px] text-slate-400 uppercase font-mono">
+                Customer Club Tier
+              </span>
               <div className="font-black text-slate-900 flex items-center space-x-1 justify-end">
                 <Award className="w-4 h-4 text-[#F59E0B]" />
                 <span>Bronze Member</span>
@@ -205,7 +212,8 @@ export default function CustomerWalletPage() {
                 <Coins className="w-4 h-4 text-[#F59E0B]" />
               </div>
               <div className="text-2xl font-black text-slate-900 font-mono">
-                {balances.availablePoints} <span className="text-xs font-sans font-normal text-slate-500">pts</span>
+                {balances.availablePoints}{' '}
+                <span className="text-xs font-sans font-normal text-slate-500">pts</span>
               </div>
               <div className="text-[11px] text-slate-600 mt-1">Decoupled Loyalty Units</div>
             </div>
@@ -269,28 +277,35 @@ export default function CustomerWalletPage() {
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
                   <Receipt className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-800">50% Main Wallet:</span> Fully spendable across the marketplace or withdrawable to City Bank, bKash, or Nagad following minimum threshold verification.
+                    <span className="font-bold text-slate-800">50% Main Wallet:</span> Fully
+                    spendable across the marketplace or withdrawable to City Bank, bKash, or Nagad
+                    following minimum threshold verification.
                   </div>
                 </div>
 
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
                   <ShoppingBag className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-800">20% Shopping Wallet:</span> Non-withdrawable commercial store credits dedicated exclusively for cart checkouts across verified sellers.
+                    <span className="font-bold text-slate-800">20% Shopping Wallet:</span>{' '}
+                    Non-withdrawable commercial store credits dedicated exclusively for cart
+                    checkouts across verified sellers.
                   </div>
                 </div>
 
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
                   <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-800">15% Good-Luck Wallet:</span> Enters the user into weekly and monthly prize draws with verifiable transparency.
+                    <span className="font-bold text-slate-800">15% Good-Luck Wallet:</span> Enters
+                    the user into weekly and monthly prize draws with verifiable transparency.
                   </div>
                 </div>
 
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-start space-x-3">
                   <HeartHandshake className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold text-slate-800">5% Charity Pool:</span> Directly disbursed to audited social development initiatives in Bangladesh under NBR guidelines.
+                    <span className="font-bold text-slate-800">5% Charity Pool:</span> Directly
+                    disbursed to audited social development initiatives in Bangladesh under NBR
+                    guidelines.
                   </div>
                 </div>
               </div>
@@ -313,7 +328,8 @@ export default function CustomerWalletPage() {
               </div>
 
               <div className="pt-4 border-t border-slate-100 text-[11px] text-slate-400">
-                All transactions backed by balanced double-entry accounting journals with cryptographic hash auditability.
+                All transactions backed by balanced double-entry accounting journals with
+                cryptographic hash auditability.
               </div>
             </div>
           </div>
@@ -324,8 +340,13 @@ export default function CustomerWalletPage() {
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-sm text-slate-900">Chronological Product Point Stream</h3>
-                <p className="text-[11px] text-slate-500">Points are frozen at checkout and released once the return inspection window closes.</p>
+                <h3 className="font-bold text-sm text-slate-900">
+                  Chronological Product Point Stream
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Points are frozen at checkout and released once the return inspection window
+                  closes.
+                </p>
               </div>
               <div className="font-mono text-xs text-amber-800 font-bold bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
                 Current Available: {balances.availablePoints} PP
@@ -370,11 +391,16 @@ export default function CustomerWalletPage() {
         {activeTab === 'journal' && (
           <div className="space-y-4">
             {journalEntries.map((jrn) => (
-              <div key={jrn.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+              <div
+                key={jrn.id}
+                className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs"
+              >
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="font-mono font-bold text-slate-900 text-xs">{jrn.journalNumber}</span>
+                      <span className="font-mono font-bold text-slate-900 text-xs">
+                        {jrn.journalNumber}
+                      </span>
                       <span className="text-[10px] font-mono bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">
                         {jrn.referenceType}
                       </span>
@@ -383,8 +409,12 @@ export default function CustomerWalletPage() {
                   </div>
 
                   <div className="text-right font-mono">
-                    <span className="text-[10px] text-slate-400 uppercase block">Total Journal Value</span>
-                    <span className="font-bold text-sm text-slate-900">{formatBdt(jrn.totalPoisha)}</span>
+                    <span className="text-[10px] text-slate-400 uppercase block">
+                      Total Journal Value
+                    </span>
+                    <span className="font-bold text-sm text-slate-900">
+                      {formatBdt(jrn.totalPoisha)}
+                    </span>
                   </div>
                 </div>
 
@@ -394,7 +424,10 @@ export default function CustomerWalletPage() {
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
                     {jrn.breakdown.map((b, idx) => (
-                      <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col justify-between"
+                      >
                         <span className="text-[11px] text-slate-500 font-medium">{b.label}</span>
                         <div className="mt-1 font-mono font-bold text-slate-900">
                           +{formatBdt(b.amountPoisha)}
@@ -413,7 +446,9 @@ export default function CustomerWalletPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-bold text-sm text-slate-900">Customer Club Tiers (Daily Qualification)</h3>
+                <h3 className="font-bold text-sm text-slate-900">
+                  Customer Club Tiers (Daily Qualification)
+                </h3>
                 <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
                   ACTIVE
                 </span>
@@ -425,7 +460,9 @@ export default function CustomerWalletPage() {
                     <span className="font-bold text-amber-900">Bronze Club</span>
                     <p className="text-[11px] text-amber-700">Threshold: 3,000 Product Points</p>
                   </div>
-                  <span className="font-mono text-amber-800 font-bold text-xs">1.0% Pool Share</span>
+                  <span className="font-mono text-amber-800 font-bold text-xs">
+                    1.0% Pool Share
+                  </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between opacity-80">
@@ -433,7 +470,9 @@ export default function CustomerWalletPage() {
                     <span className="font-bold text-slate-800">Silver Club</span>
                     <p className="text-[11px] text-slate-500">Threshold: 4,000 Product Points</p>
                   </div>
-                  <span className="font-mono text-slate-600 font-bold text-xs">2.0% Pool Share</span>
+                  <span className="font-mono text-slate-600 font-bold text-xs">
+                    2.0% Pool Share
+                  </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between opacity-80">
@@ -441,7 +480,9 @@ export default function CustomerWalletPage() {
                     <span className="font-bold text-slate-800">Gold Club</span>
                     <p className="text-[11px] text-slate-500">Threshold: 5,000 Product Points</p>
                   </div>
-                  <span className="font-mono text-slate-600 font-bold text-xs">3.0% Pool Share</span>
+                  <span className="font-mono text-slate-600 font-bold text-xs">
+                    3.0% Pool Share
+                  </span>
                 </div>
               </div>
             </div>
@@ -460,7 +501,9 @@ export default function CustomerWalletPage() {
                     <span className="font-bold text-slate-800">Mega Star Band</span>
                     <p className="text-[11px] text-slate-500">Top 1 – 10 leaderboard rankings</p>
                   </div>
-                  <span className="font-mono text-slate-800 font-bold text-xs">1.0% Pool Allocation</span>
+                  <span className="font-mono text-slate-800 font-bold text-xs">
+                    1.0% Pool Allocation
+                  </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -468,7 +511,9 @@ export default function CustomerWalletPage() {
                     <span className="font-bold text-slate-800">Super Star Band</span>
                     <p className="text-[11px] text-slate-500">Rankings 11 – 50</p>
                   </div>
-                  <span className="font-mono text-slate-800 font-bold text-xs">1.0% Pool Allocation</span>
+                  <span className="font-mono text-slate-800 font-bold text-xs">
+                    1.0% Pool Allocation
+                  </span>
                 </div>
 
                 <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -476,7 +521,9 @@ export default function CustomerWalletPage() {
                     <span className="font-bold text-slate-800">Star Band</span>
                     <p className="text-[11px] text-slate-500">Rankings 51 – 100</p>
                   </div>
-                  <span className="font-mono text-slate-800 font-bold text-xs">1.0% Pool Allocation</span>
+                  <span className="font-mono text-slate-800 font-bold text-xs">
+                    1.0% Pool Allocation
+                  </span>
                 </div>
               </div>
             </div>

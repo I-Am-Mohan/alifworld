@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as getDashboardRoute } from '@/app/api/v1/customer/dashboard/route';
 import { GET as getOrdersRoute } from '@/app/api/v1/customer/orders/route';
@@ -145,19 +146,22 @@ describe('Milestone 130: Customer Dashboard & Notifications REST API Integration
   });
 
   it('GET and PUT /api/v1/customer/notifications/preferences manages channel matrix', async () => {
-    const getReq = new NextRequest('http://localhost:3000/api/v1/customer/notifications/preferences');
+    const getReq = new NextRequest(
+      'http://localhost:3000/api/v1/customer/notifications/preferences'
+    );
     const getRes = await getNotifPrefsRoute(getReq);
     expect(getRes.status).toBe(200);
 
-    const putReq = new NextRequest('http://localhost:3000/api/v1/customer/notifications/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        preferences: [
-          { channel: 'EMAIL', eventType: 'MARKETING_PROMOTIONS', enabled: true },
-        ],
-      }),
-    });
+    const putReq = new NextRequest(
+      'http://localhost:3000/api/v1/customer/notifications/preferences',
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preferences: [{ channel: 'EMAIL', eventType: 'MARKETING_PROMOTIONS', enabled: true }],
+        }),
+      }
+    );
     const putRes = await updateNotifPrefsRoute(putReq);
     expect(putRes.status).toBe(200);
   });
@@ -167,17 +171,23 @@ describe('Milestone 130: Customer Dashboard & Notifications REST API Integration
     const listRes = await listNotifsRoute(listReq);
     expect(listRes.status).toBe(200);
 
-    const readReq = new NextRequest('http://localhost:3000/api/v1/customer/notifications/notif_1/read', {
-      method: 'PATCH',
-    });
+    const readReq = new NextRequest(
+      'http://localhost:3000/api/v1/customer/notifications/notif_1/read',
+      {
+        method: 'PATCH',
+      }
+    );
     const readRes = await markNotifReadRoute(readReq, {
       params: Promise.resolve({ id: 'notif_1' }),
     });
     expect(readRes.status).toBe(200);
 
-    const readAllReq = new NextRequest('http://localhost:3000/api/v1/customer/notifications/read-all', {
-      method: 'POST',
-    });
+    const readAllReq = new NextRequest(
+      'http://localhost:3000/api/v1/customer/notifications/read-all',
+      {
+        method: 'POST',
+      }
+    );
     const readAllRes = await markAllNotifsReadRoute(readAllReq);
     expect(readAllRes.status).toBe(200);
   });

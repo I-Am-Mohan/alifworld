@@ -17,9 +17,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const parsedId = SellerApplicationIdSchema.safeParse(id);
     const parsedBody = submitSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsedId.success || !parsedBody.success) {
-      return NextResponse.json({ success: false, error: { code: 'VALIDATION_FAILED', message: 'A valid application identifier and version are required.' } }, { status: 422 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'A valid application identifier and version are required.',
+          },
+        },
+        { status: 422 }
+      );
     }
-    await defaultPolicyEngine.assert(actor, 'seller_application:submit', { type: 'SELLER', id, ownerId: actor.userId });
+    await defaultPolicyEngine.assert(actor, 'seller_application:submit', {
+      type: 'SELLER',
+      id,
+      ownerId: actor.userId,
+    });
     const application = await service.submit(actor.userId, id, parsedBody.data.version);
     return NextResponse.json({ success: true, data: application }, { status: 200 });
   } catch (error) {

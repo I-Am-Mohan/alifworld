@@ -1,6 +1,6 @@
 /**
  * Unit Tests: Immutable Security and Business Audit Logging
- * 
+ *
  * Verifies:
  * 1. AuditRepository append-only persistence and immutability assertions
  * 2. Multi-filter historical querying and pagination
@@ -9,7 +9,7 @@
  * 5. Sensitive data redaction engine (passwords, tokens, OTPs, PINs, card numbers)
  * 6. Non-blocking error handling (database failures never abort business logic)
  * 7. Query authorization rules (SuperAdmin and system:audit_read)
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 049, NIST SP 800-63B
  */
 

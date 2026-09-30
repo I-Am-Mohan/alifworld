@@ -7,6 +7,14 @@ export const dynamic = 'force-dynamic';
 const service = new ProductApprovalService();
 
 export async function GET(req: NextRequest) {
-  try { const actor = authenticateRequest(req); await defaultPolicyEngine.assert(actor, 'catalog:approve', { type: 'CATALOG', id: 'PRODUCT_APPROVAL_QUEUE' }); return NextResponse.json({ success: true, data: await service.pending() }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load product approval queue'); }
+  try {
+    const actor = authenticateRequest(req);
+    await defaultPolicyEngine.assert(actor, 'catalog:approve', {
+      type: 'CATALOG',
+      id: 'PRODUCT_APPROVAL_QUEUE',
+    });
+    return NextResponse.json({ success: true, data: await service.pending() });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load product approval queue');
+  }
 }

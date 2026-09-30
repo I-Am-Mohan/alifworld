@@ -1,9 +1,9 @@
 /**
  * Comprehensive Authorization and Tenancy Security Test Matrix (Milestone 050)
- * 
+ *
  * Verifies N x M Cartesian matrix mapping across all canonical system roles,
  * resources, actions, lifecycle states, tenant boundaries, and negative attack vectors.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0010, ADR-0021, ADR-0022, ADR-0023, Gate-05, Milestone 050
  */
 
@@ -72,13 +72,7 @@ describe('Comprehensive Authorization & Tenancy Security Test Matrix (Milestone 
   const OPERATIONS_AGENT: ActorContext = {
     userId: 'usr_ops_01',
     roles: [SystemRoleCode.OPERATIONS],
-    permissions: [
-      'catalog:read',
-      'orders:read',
-      'orders:manage',
-      'sellers:read',
-      'support:read',
-    ],
+    permissions: ['catalog:read', 'orders:read', 'orders:manage', 'sellers:read', 'support:read'],
     status: 'ACTIVE',
   };
 
@@ -92,7 +86,13 @@ describe('Comprehensive Authorization & Tenancy Security Test Matrix (Milestone 
   const FINANCE_OFFICER: ActorContext = {
     userId: 'usr_finance_01',
     roles: [SystemRoleCode.FINANCE],
-    permissions: ['finance:read', 'finance:ledger', 'finance:adjust', 'finance:payout', 'orders:read'],
+    permissions: [
+      'finance:read',
+      'finance:ledger',
+      'finance:adjust',
+      'finance:payout',
+      'orders:read',
+    ],
     status: 'ACTIVE',
   };
 
@@ -229,7 +229,9 @@ describe('Comprehensive Authorization & Tenancy Security Test Matrix (Milestone 
 
       expect(decision.granted).toBe(false);
       expect(decision.code).toBe('PRIVILEGE_ESCALATION');
-      expect(decision.reason).toContain('Super Administrator can modify or suspend an administrative operator');
+      expect(decision.reason).toContain(
+        'Super Administrator can modify or suspend an administrative operator'
+      );
     });
 
     it('strictly blocks Platform Admin from assigning the SUPER_ADMIN role (PRIVILEGE_ESCALATION)', async () => {

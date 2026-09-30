@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Bangladesh Phone Normalization, MNO Detection,
  * OTP Authentication, and Geographic Hierarchy
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Milestone: 038 (Design Bangladesh phone normalization and OTP authentication)
  * Invariants: ADR-0005, ADR-0023, ADR-0031, ADR-0034

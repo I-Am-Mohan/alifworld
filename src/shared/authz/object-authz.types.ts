@@ -1,9 +1,9 @@
 /**
  * AlifWorld Object-Level Authorization & Ownership Verification Types
- * 
+ *
  * Formalizes granular object ownership, merchant tenant containment,
  * lifecycle state boundaries, and actor assignment contracts.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 047
  */
 
@@ -51,14 +51,14 @@ export interface ObjectAccessIntent<TData = any> {
  * Specific ownership classification of an actor relative to an object.
  */
 export type OwnershipRelation =
-  | 'DIRECT_OWNER'       // Actor is the direct customer/user owner
-  | 'TENANT_OWNER'       // Actor is the merchant store owner of the object
-  | 'TENANT_STAFF'       // Actor is authorized staff within the object's merchant tenant
-  | 'ASSIGNED_ACTOR'     // Actor is assigned (e.g. delivery rider or support agent)
+  | 'DIRECT_OWNER' // Actor is the direct customer/user owner
+  | 'TENANT_OWNER' // Actor is the merchant store owner of the object
+  | 'TENANT_STAFF' // Actor is authorized staff within the object's merchant tenant
+  | 'ASSIGNED_ACTOR' // Actor is assigned (e.g. delivery rider or support agent)
   | 'PLATFORM_SUPER_ADMIN' // Super administrator with global privileges
-  | 'PLATFORM_ADMIN'     // Platform administrator with role/permission access
-  | 'PUBLIC'             // Publicly accessible object
-  | 'NONE';              // Actor holds no relationship or authority over the object
+  | 'PLATFORM_ADMIN' // Platform administrator with role/permission access
+  | 'PUBLIC' // Publicly accessible object
+  | 'NONE'; // Actor holds no relationship or authority over the object
 
 /**
  * Enriched authorization decision for object-level evaluations.

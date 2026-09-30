@@ -1,8 +1,8 @@
 /**
  * REST API Route Handler: /api/v1/seller/staff/invite
- * 
+ *
  * Invites a new staff member to a seller store with specific roles and permissions.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0021, ADR-0022, ADR-0024, Milestone 045
  */
 
@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
-        { success: false, error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' } },
+        {
+          success: false,
+          error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' },
+        },
         { status: 400 }
       );
     }
@@ -50,7 +53,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!actor.roles.includes('SUPER_ADMIN') && actor.sellerId !== input.sellerId) {
-      throw new AuthorizationError('Cross-tenant access denied: You cannot invite staff to another store.');
+      throw new AuthorizationError(
+        'Cross-tenant access denied: You cannot invite staff to another store.'
+      );
     }
 
     const staff = await staffService.addOrInviteStaff(actor.userId, input);

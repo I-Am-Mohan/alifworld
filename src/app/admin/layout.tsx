@@ -86,16 +86,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
   // Admin active sessions states
-  const [adminSessions, setAdminSessions] = useState<Array<{
-    id: string;
-    clientType: string;
-    deviceSummary: string;
-    ipAddress: string | null;
-    userAgent: string | null;
-    isCurrent: boolean;
-    createdAt: string;
-    lastActiveAt: string;
-  }>>([]);
+  const [adminSessions, setAdminSessions] = useState<
+    Array<{
+      id: string;
+      clientType: string;
+      deviceSummary: string;
+      ipAddress: string | null;
+      userAgent: string | null;
+      isCurrent: boolean;
+      createdAt: string;
+      lastActiveAt: string;
+    }>
+  >([]);
   const [loadingAdminSessions, setLoadingAdminSessions] = useState(false);
 
   const fetchAdminSessions = useCallback(async () => {
@@ -193,7 +195,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           : null
       );
 
-      setProfileSuccess('Profile details updated successfully! Super Admin email and details updated.');
+      setProfileSuccess(
+        'Profile details updated successfully! Super Admin email and details updated.'
+      );
       setIsEditingProfile(false);
     } catch (err: any) {
       setProfileError(err.message || 'Error saving profile details.');
@@ -237,7 +241,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         throw new Error(json.error?.message || 'Failed to change password.');
       }
 
-      setPasswordSuccess('Password changed successfully! Redirecting to sign in with your new password...');
+      setPasswordSuccess(
+        'Password changed successfully! Redirecting to sign in with your new password...'
+      );
       setTimeout(() => {
         setProfileModalOpen(false);
         router.push('/admin/login');
@@ -268,18 +274,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Fetch admin session
   useEffect(() => {
-    if (isLoginPage) {
-      setLoading(false);
-      return;
-    }
+    if (isLoginPage) return;
 
-    async function checkAuth() {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/v1/auth/me');
+    const controller = new AbortController();
+    fetch('/api/v1/auth/me', { signal: controller.signal })
+      .then(async (res) => {
         if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
+          const json = await res.json().catch(() => null);
+          if (json?.success && json.data) {
             const roles: string[] = json.data.roles || [];
             if (roles.includes('SUPER_ADMIN') || roles.includes('ADMIN')) {
               setUser({
@@ -289,21 +291,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 phone: json.data.phone,
                 roles,
               });
-              setLoading(false);
               return;
             }
           }
         }
-        // Not admin or unauthenticated
         router.push('/admin/login');
-      } catch {
+      })
+      .catch((err: any) => {
+        if (controller.signal.aborted) return;
         router.push('/admin/login');
-      } finally {
-        setLoading(false);
-      }
-    }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
 
-    checkAuth();
+    return () => controller.abort();
   }, [isLoginPage, router]);
 
   const handleLogout = async () => {
@@ -526,7 +530,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       >
                         <item.icon
                           className={`w-4 h-4 shrink-0 ${
-                            isActive ? 'text-slate-950' : 'text-slate-400 group-hover:text-slate-600'
+                            isActive
+                              ? 'text-slate-950'
+                              : 'text-slate-400 group-hover:text-slate-600'
                           }`}
                         />
                         <span className="truncate">{item.label}</span>
@@ -570,9 +576,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Main Content Viewport */}
         <main className="flex-1 h-full overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="p-4 sm:p-6 lg:p-8 w-full max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
 
@@ -594,7 +598,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-900">
-                    {profileTab === 'password' ? 'Admin Change Password' : 'Admin Profile Management'}
+                    {profileTab === 'password'
+                      ? 'Admin Change Password'
+                      : 'Admin Profile Management'}
                   </h3>
                   <p className="text-xs text-slate-500">
                     {profileTab === 'password'
@@ -698,7 +704,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Refresh sessions"
                         >
-                          <RefreshCw className={`w-3.5 h-3.5 ${loadingAdminSessions ? 'animate-spin text-amber-600' : ''}`} />
+                          <RefreshCw
+                            className={`w-3.5 h-3.5 ${loadingAdminSessions ? 'animate-spin text-amber-600' : ''}`}
+                          />
                         </button>
                       </div>
 
@@ -715,7 +723,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           </div>
                         ) : (
                           adminSessions.map((s) => (
-                            <div key={s.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                            <div
+                              key={s.id}
+                              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+                            >
                               <div className="flex items-center space-x-2.5">
                                 {s.clientType === 'MOBILE_FLUTTER' ? (
                                   <Smartphone className="w-4 h-4 text-amber-600 shrink-0" />
@@ -732,7 +743,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     )}
                                   </div>
                                   <div className="text-[10px] text-slate-500 font-mono">
-                                    {s.ipAddress || '::1'} • {s.isCurrent ? 'Active now' : new Date(s.lastActiveAt).toLocaleString('en-BD')}
+                                    {s.ipAddress || '::1'} •{' '}
+                                    {s.isCurrent
+                                      ? 'Active now'
+                                      : new Date(s.lastActiveAt).toLocaleString('en-BD')}
                                   </div>
                                 </div>
                               </div>
@@ -812,7 +826,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         className="w-full p-2.5 rounded-xl bg-white border border-slate-300 font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-400 text-xs"
                       />
                       <p className="text-[10px] text-amber-700 mt-1 font-medium">
-                        Super Admin email can be changed here. You will use this new email to sign in to the platform.
+                        Super Admin email can be changed here. You will use this new email to sign
+                        in to the platform.
                       </p>
                     </div>
 
@@ -908,7 +923,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                       className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showCurrentPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -931,7 +950,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       onClick={() => setShowNewPassword(!showNewPassword)}
                       className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -954,13 +977,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 <div className="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl text-[11px] text-amber-900 leading-relaxed">
-                  For platform security, changing the admin password will immediately secure your account and require signing in with your new credentials.
+                  For platform security, changing the admin password will immediately secure your
+                  account and require signing in with your new credentials.
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">

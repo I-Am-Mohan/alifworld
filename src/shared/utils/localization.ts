@@ -1,11 +1,11 @@
 /**
  * AlifWorld Canonical Localization & Formatting Utilities
- * 
+ *
  * Provides unified formatting for:
  * 1. BDT currency and integer poisha (৳1,250.50 / ১,২৫০.৫০ ৳)
  * 2. Bengali numerals (০-৯) vs ASCII digits (0-9)
  * 3. Asia/Dhaka timezone dates and business periods
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, Phase 06 Milestone 051
  */
 
@@ -44,10 +44,7 @@ export function formatLocalizedNumber(
 }
 
 /** Formats integer poisha exactly as BDT without converting bigint through Number. */
-export function formatLocalizedCurrency(
-  poisha: bigint | number,
-  locale: string = 'bn-BD'
-): string {
+export function formatLocalizedCurrency(poisha: bigint | number, locale: string = 'bn-BD'): string {
   const canonical = normalizeToCanonicalLocale(locale);
   const minorUnits = asSafeIntegerPoisha(poisha);
   const negative = minorUnits < 0n;

@@ -5,8 +5,13 @@
   "description": "AlifWorld Single-Application Modular Monolith E-Commerce Platform",
   "scripts": {
     "dev": "bun run scripts/run-with-env.ts next dev",
+    "dev:local": "bun run scripts/run-with-env.ts next dev",
+    "dev:production": "bun run scripts/run-with-env.ts next dev",
     "build": "bun run scripts/run-with-env.ts prisma generate && bun run scripts/run-with-env.ts next build",
+    "build:local": "bun run scripts/run-with-env.ts prisma generate && bun run scripts/run-with-env.ts next build",
+    "build:production": "bun run scripts/run-with-env.ts prisma generate && bun run scripts/run-with-env.ts next build",
     "start": "bun run scripts/run-with-env.ts next start",
+    "production:production": "bun run scripts/run-with-env.ts next start",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -16,6 +21,7 @@
     "test": "bun test",
     "test:unit": "bun test tests/unit",
     "test:integration": "bun test tests/integration",
+    "test:orders:persistence": "bun run scripts/run-with-env.ts bun test tests/integration/order-state-machine-persistence.test.ts",
     "test:e2e": "bun test tests/e2e",
     "db:generate": "bun run scripts/run-with-env.ts prisma generate",
     "db:migrate": "bun run scripts/run-with-env.ts prisma migrate dev",
@@ -27,7 +33,7 @@
     "worker": "bun run src/workers/index.ts",
     "search:reindex": "bun run scripts/reindex-search-catalog.ts",
     "openapi": "bun run scripts/generate-openapi.ts",
-    "ci:check": "bun run format:check && bun run lint && bun run typecheck && bun run test && bun run openapi && bun run build",
+    "ci:check": "bun run format:check && bun run lint && bun run typecheck && bun run test && bun run openapi && bun run build:local",
     "commitlint": "commitlint"
   },
   "dependencies": {
@@ -46,7 +52,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.6.1",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "3.25.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",

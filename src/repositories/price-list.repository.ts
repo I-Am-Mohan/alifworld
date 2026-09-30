@@ -209,7 +209,18 @@ export class PriceListRepository {
         take: limit,
         orderBy: { priceList: { startsAt: 'asc' } },
         include: {
-          priceList: { select: { id: true, code: true, name: true, channel: true, priority: true, startsAt: true, endsAt: true, sellerId: true } },
+          priceList: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              channel: true,
+              priority: true,
+              startsAt: true,
+              endsAt: true,
+              sellerId: true,
+            },
+          },
           variant: { select: { id: true, sku: true, title: true } },
           product: { select: { id: true, title: true } },
         },
@@ -229,7 +240,10 @@ export class PriceListRepository {
   /**
    * Updates base variant pricing poisha and compare-at poisha.
    */
-  async updateVariantBasePrice(variantId: string, data: { pricePoisha: bigint; compareAtPricePoisha?: bigint | null }) {
+  async updateVariantBasePrice(
+    variantId: string,
+    data: { pricePoisha: bigint; compareAtPricePoisha?: bigint | null }
+  ) {
     return this.prisma.productVariant.update({
       where: { id: variantId },
       data: {

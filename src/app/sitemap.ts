@@ -20,7 +20,9 @@ function isDisallowedUrl(url: string): boolean {
     return DISALLOW_PREFIXES.some((prefix) => {
       if (prefix === '/seller') {
         // Disallow /seller and /seller/* (merchant portal), but allow /sellers/* (public storefronts)
-        return pathname === '/seller' || pathname.startsWith('/seller/') || pathname.includes('/seller/');
+        return (
+          pathname === '/seller' || pathname.startsWith('/seller/') || pathname.includes('/seller/')
+        );
       }
       return pathname.includes(prefix);
     });

@@ -12,15 +12,34 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const actor = authenticateRequest(req);
     const productId = (await params).id;
-    return NextResponse.json({ success: true, data: await service.list(actor.userId, productId, actor.sellerId || undefined) });
-  } catch (error) { return errorResponse(req, error, 'Failed to load product variants'); }
+    return NextResponse.json({
+      success: true,
+      data: await service.list(actor.userId, productId, actor.sellerId || undefined),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load product variants');
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const parsed = CreateProductVariantSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid product variant.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.create(actor.userId, (await params).id, parsed.data, actor.sellerId || undefined) }, { status: 201 });
-  } catch (error) { return errorResponse(req, error, 'Failed to create product variant'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid product variant.', parsed.error.flatten());
+    return NextResponse.json(
+      {
+        success: true,
+        data: await service.create(
+          actor.userId,
+          (await params).id,
+          parsed.data,
+          actor.sellerId || undefined
+        ),
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to create product variant');
+  }
 }

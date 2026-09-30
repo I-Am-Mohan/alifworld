@@ -22,9 +22,7 @@ function flattenCatalog(value: CatalogValue, prefix = ''): Record<string, string
 }
 
 function getPlaceholders(value: string): string[] {
-  return [...value.matchAll(/\{([^}]+)\}/g)]
-    .map((match) => match[1])
-    .sort();
+  return [...value.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]).sort();
 }
 
 /**

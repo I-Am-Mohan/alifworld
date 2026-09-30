@@ -76,7 +76,9 @@ describe('Milestone 115: CMS-Driven Storefront Home Sections & Banners Unit Test
       expect(homeBn.locale).toBe('bn-BD');
       const hero = homeBn.sections.find((s) => s.type === 'HERO_CAROUSEL');
       expect(hero?.title).toBe('বিশেষ অফার ও ক্যাম্পেইন');
-      expect(hero?.data.banners[0].title).toBe('ওয়ালটন প্রিমো এস৮ প্রো: বাংলাদেশের নিজস্ব ফ্ল্যাগশিপ');
+      expect(hero?.data.banners[0].title).toBe(
+        'ওয়ালটন প্রিমো এস৮ প্রো: বাংলাদেশের নিজস্ব ফ্ল্যাগশিপ'
+      );
       expect(hero?.data.banners[0].ctaText).toBe('স্মার্টফোন দেখুন');
 
       const highlights = homeBn.sections.find((s) => s.type === 'FEATURE_HIGHLIGHTS');

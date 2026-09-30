@@ -8,7 +8,7 @@ const authTokenService = new AuthTokenService();
 
 /**
  * POST /api/v1/auth/token/introspect
- * 
+ *
  * RFC 7662 compliant token introspection endpoint.
  * Allows microservices, API gateways, and trusted internal services
  * to verify whether an access token is active, valid, and not revoked.

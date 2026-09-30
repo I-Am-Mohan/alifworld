@@ -1,9 +1,9 @@
 /**
  * AlifWorld Wishlist Domain Types & Contracts
- * 
+ *
  * Defines type contracts for customer saved items, custom wishlists,
  * privacy visibility settings, and share-safe public views.
- * 
+ *
  * Invariants: ADR-0001, ADR-0003, ADR-0022
  */
 

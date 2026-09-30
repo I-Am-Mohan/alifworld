@@ -20,6 +20,7 @@ import {
   NotFoundError,
   ValidationError,
   ConflictError,
+  AuthorizationError,
 } from '@/shared/errors/app-error';
 import { auditService } from '@/shared/audit';
 import {
@@ -37,6 +38,7 @@ import {
 import { courierAdapterRegistry } from '../adapters/courier-adapter.registry';
 import { shipmentRepository } from '../repositories/shipment.repository';
 import { normalizeBangladeshPhone } from '@/shared/utils/phone';
+import { orderTransitionService } from '@/features/orders/state-machines/order-transition.service';
 
 export class CourierDispatchService {
   private db = prisma;
@@ -61,12 +63,58 @@ export class CourierDispatchService {
     });
 
     if (!group) {
-      throw new NotFoundError(
-        `Seller fulfillment group '${input.fulfillmentGroupId}' not found.`
-      );
+      throw new NotFoundError(`Seller fulfillment group '${input.fulfillmentGroupId}' not found.`);
     }
 
-    if (group.status === 'DELIVERED' || group.status === 'CANCELLED') {
+    if (!actorId) throw new AuthorizationError('Dispatch actor required.');
+    const user = await this.db.user.findFirst({
+      where: { id: actorId, deletedAt: null },
+      select: { status: true },
+    });
+    if (!user || user.status !== 'ACTIVE')
+      throw new AuthorizationError('Active dispatch account required.');
+    const permissions = [
+      'orders:manage',
+      'seller:orders:manage',
+      'shipments:manage',
+      'shipments.manage',
+    ];
+    const staff = await this.db.sellerStaff.findFirst({
+      where: { sellerId: group.sellerId, userId: actorId, deletedAt: null },
+      select: { permissions: true },
+    });
+    const administrator = await this.db.userRoleAssignment.findFirst({
+      where: {
+        userId: actorId,
+        deletedAt: null,
+        role: {
+          deletedAt: null,
+          OR: [
+            { code: 'SUPER_ADMIN' },
+            {
+              code: 'ADMIN',
+              rolePermissions: {
+                some: {
+                  deletedAt: null,
+                  permission: { deletedAt: null, code: { in: permissions } },
+                },
+              },
+            },
+          ],
+        },
+      },
+      select: { id: true },
+    });
+    if (
+      !administrator &&
+      (group.seller.status !== 'VERIFIED' ||
+        (group.seller.ownerUserId !== actorId &&
+          !staff?.permissions.some((permission) => permissions.includes(permission))))
+    ) {
+      throw new AuthorizationError('Persisted seller dispatch authority required.');
+    }
+
+    if (group.status !== 'READY_FOR_PICKUP') {
       throw new ConflictError(
         `Fulfillment group '${group.groupNumber}' cannot be dispatched in status '${group.status}'.`
       );
@@ -85,6 +133,11 @@ export class CourierDispatchService {
 
     // 4. Retrieve Courier Adapter from Registry
     const adapter = this.registry.getAdapter(input.courierProvider as CourierCode);
+    if (input.courierProvider !== 'IN_HOUSE' && !adapter.isConfigured) {
+      throw new ConflictError(
+        'Courier booking is disabled until provider credentials are configured.'
+      );
+    }
 
     // 5. Invoke Courier Adapter to create Consignment
     const courierCostPoisha = Number(group.shippingFeePoisha || 0);
@@ -114,91 +167,110 @@ export class CourierDispatchService {
       shippingCostPoisha: courierCostPoisha,
       specialInstructions: input.specialInstructions || null,
     });
+    if (
+      !consignmentResult.success ||
+      (input.courierProvider !== 'IN_HOUSE' &&
+        (consignmentResult.rawResponse?.simulated === true ||
+          consignmentResult.rawResponse?.provider === input.courierProvider))
+    ) {
+      throw new ConflictError('Courier did not confirm a real booking; no shipment was persisted.');
+    }
 
     // 6. Persist Shipment Record in DB
     const initialStatus = consignmentResult.status || 'LABEL_CREATED';
-
-    const shipment = await this.repo.createShipment(
+    const shipmentId = generatePrefixedId(ENTITY_PREFIXES.SHIPMENT);
+    await orderTransitionService.transitionFulfillmentGroupStatus(
       {
-        fulfillmentGroupId: group.id,
+        groupId: group.id,
         sellerId: group.sellerId,
-        shipmentNumber,
-        courierProvider: input.courierProvider,
-        trackingNumber: consignmentResult.trackingNumber,
-        consignmentId: consignmentResult.consignmentId,
-        status: initialStatus,
-        weightGrams: input.totalWeightGrams,
-        packageCount: 1,
-        shippingCostPoisha: BigInt(courierCostPoisha),
-        recipientName: input.recipientName,
-        recipientPhone: normalizedPhone,
-        deliveryAddress: input.deliveryAddress,
-        division: input.division,
-        district: input.district,
+        nextStatus: 'HANDED_OVER_TO_COURIER',
+        actorId,
+        actorRole: administrator ? 'ADMIN' : 'SELLER',
+        idempotencyKey: `consignment:${input.courierProvider}:${consignmentResult.consignmentId}:handover`,
       },
-      `Consignment '${consignmentResult.consignmentId}' booked with ${adapter.courierName}. Initial status: ${initialStatus}.`
+      async (tx) => {
+        const shipment = await this.repo.createShipment(
+          {
+            id: shipmentId,
+            fulfillmentGroupId: group.id,
+            sellerId: group.sellerId,
+            shipmentNumber,
+            courierProvider: input.courierProvider,
+            trackingNumber: consignmentResult.trackingNumber,
+            consignmentId: consignmentResult.consignmentId,
+            status: initialStatus,
+            weightGrams: input.totalWeightGrams,
+            packageCount: 1,
+            shippingCostPoisha: BigInt(courierCostPoisha),
+            recipientName: input.recipientName,
+            recipientPhone: normalizedPhone,
+            deliveryAddress: input.deliveryAddress,
+            division: input.division,
+            district: input.district,
+          },
+          `Consignment '${consignmentResult.consignmentId}' booked with ${adapter.courierName}. Initial status: ${initialStatus}.`,
+          tx
+        );
+
+        // If IN_HOUSE, attach OTP code in a private system event for secure verification
+        if (consignmentResult.otpCode) {
+          await tx.shipmentEvent.create({
+            data: {
+              shipmentId: shipment.id,
+              status: 'ASSIGNED',
+              description: 'In-House delivery OTP generated for customer verification.',
+              carrierPayload: { otpCode: consignmentResult.otpCode },
+            },
+          });
+        }
+
+        // 7. Update Fulfillment Group status
+        await tx.sellerFulfillmentGroup.update({
+          where: { id: group.id },
+          data: {
+            courierProvider: input.courierProvider,
+            consignmentId: consignmentResult.consignmentId,
+            trackingNumber: consignmentResult.trackingNumber,
+          },
+        });
+
+        // 8. Emit Outbox Event for Logistics Coordination
+        await tx.outboxEvent.create({
+          data: {
+            id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX),
+            eventType: 'shipment.dispatched',
+            aggregateType: 'SHIPMENT',
+            aggregateId: shipment.id,
+            payload: {
+              shipmentId: shipment.id,
+              shipmentNumber,
+              fulfillmentGroupId: group.id,
+              orderId: group.orderId,
+              sellerId: group.sellerId,
+              courierProvider: input.courierProvider,
+              consignmentId: consignmentResult.consignmentId,
+              trackingNumber: consignmentResult.trackingNumber,
+              initialStatus,
+            },
+          },
+        });
+        await tx.auditLog.create({
+          data: {
+            action: 'LOGISTICS_SHIPMENT_DISPATCHED',
+            resource: 'SHIPMENT',
+            resourceId: shipmentId,
+            actorId,
+            actorRole: administrator ? 'ADMIN' : 'SELLER',
+            metadata: {
+              shipmentNumber,
+              consignmentId: consignmentResult.consignmentId,
+              courierProvider: input.courierProvider,
+              fulfillmentGroupId: group.id,
+            },
+          },
+        });
+      }
     );
-
-    // If IN_HOUSE, attach OTP code in a private system event for secure verification
-    if (consignmentResult.otpCode) {
-      await this.repo.appendEvent(shipment.id, {
-        status: 'ASSIGNED',
-        description: 'In-House delivery OTP generated for customer verification.',
-        carrierPayload: { otpCode: consignmentResult.otpCode },
-      });
-    }
-
-    // 7. Update Fulfillment Group status
-    const newGroupStatus =
-      input.courierProvider === 'IN_HOUSE' ? 'PACKING' : 'HANDED_OVER_TO_COURIER';
-
-    await (this.db as any).sellerFulfillmentGroup.update({
-      where: { id: group.id },
-      data: {
-        status: newGroupStatus,
-        courierProvider: input.courierProvider,
-        consignmentId: consignmentResult.consignmentId,
-        trackingNumber: consignmentResult.trackingNumber,
-        version: { increment: 1 },
-      },
-    });
-
-    // 8. Emit Outbox Event for Logistics Coordination
-    await (this.db as any).outboxEvent.create({
-      data: {
-        id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX),
-        eventType: 'shipment.dispatched',
-        aggregateType: 'SHIPMENT',
-        aggregateId: shipment.id,
-        payload: {
-          shipmentId: shipment.id,
-          shipmentNumber,
-          fulfillmentGroupId: group.id,
-          orderId: group.orderId,
-          sellerId: group.sellerId,
-          courierProvider: input.courierProvider,
-          consignmentId: consignmentResult.consignmentId,
-          trackingNumber: consignmentResult.trackingNumber,
-          recipientPhone: normalizedPhone,
-          initialStatus,
-        },
-      },
-    });
-
-    // 9. Audit Logging
-    await auditService.logBusinessEvent({
-      action: 'LOGISTICS_SHIPMENT_DISPATCHED',
-      resource: 'SHIPMENT',
-      resourceId: shipment.id,
-      actorId: actorId || 'system',
-      actorRole: 'SELLER',
-      metadata: {
-        shipmentNumber,
-        consignmentId: consignmentResult.consignmentId,
-        courierProvider: input.courierProvider,
-        fulfillmentGroupId: group.id,
-      },
-    });
 
     return consignmentResult;
   }
@@ -235,7 +307,7 @@ export class CourierDispatchService {
       location: e.location,
       description: e.description,
       occurredAt: e.occurredAt?.toISOString?.() || new Date(e.occurredAt).toISOString(),
-      carrierPayload: e.carrierPayload || null,
+      carrierPayload: null,
     }));
 
     const maskedPhone = (adapter as any).maskPhone(shipment.recipientPhone);
@@ -288,21 +360,9 @@ export class CourierDispatchService {
     const adapter = this.registry.getAdapter(shipment.courierProvider as CourierCode);
     const cancelResult = await adapter.cancelConsignment(consignmentId, reason);
 
-    await this.repo.updateStatusWithEvent(
-      shipment.id,
-      'CANCELLED',
-      {
-        description: `Consignment cancelled. Reason: ${reason || 'Merchant cancellation'}`,
-        location: 'Merchant Warehouse',
-      }
-    );
-
-    await (this.db as any).sellerFulfillmentGroup.update({
-      where: { id: shipment.fulfillmentGroupId },
-      data: {
-        status: 'PENDING',
-        version: { increment: 1 },
-      },
+    await this.repo.updateStatusWithEvent(shipment.id, 'CANCELLED', {
+      description: `Consignment cancelled. Reason: ${reason || 'Merchant cancellation'}`,
+      location: 'Merchant Warehouse',
     });
 
     await auditService.logBusinessEvent({
@@ -327,9 +387,11 @@ export class CourierDispatchService {
     headers?: Record<string, string>
   ): Promise<{ success: boolean; message: string; updatedShipmentId?: string }> {
     const adapter = this.registry.getAdapter(courierCode as CourierCode);
-
-    // Verify webhook signature if present
-    if (rawBody && adapter.verifyWebhookSignature) {
+    const webhookSecret = process.env[`COURIER_${courierCode}_WEBHOOK_SECRET`];
+    if (!webhookSecret || !rawBody || !adapter.verifyWebhookSignature) {
+      throw new AuthorizationError('Courier webhook verification is not configured.');
+    }
+    if (adapter.verifyWebhookSignature) {
       const isValid = adapter.verifyWebhookSignature(rawBody, headers);
       if (!isValid) {
         throw new ValidationError('Invalid courier webhook signature.');
@@ -351,31 +413,41 @@ export class CourierDispatchService {
         message: `Webhook received for untracked consignment '${event.consignmentId}'. Recorded for audit.`,
       };
     }
+    if (shipment.courierProvider !== courierCode) {
+      throw new AuthorizationError('Courier callback does not match the shipment provider.');
+    }
 
     const isDelivered = event.newStatus === 'DELIVERED';
     const deliveredAt = isDelivered ? new Date() : undefined;
 
-    await this.repo.updateStatusWithEvent(
-      shipment.id,
-      event.newStatus,
-      {
-        description: `Courier status updated via ${adapter.courierName} webhook callback. New status: ${event.newStatus}.`,
-        location: event.location,
-        carrierPayload: event.rawPayload,
-      },
-      { deliveredAt }
-    );
+    const persistShipment = (transaction?: any) =>
+      this.repo.updateStatusWithEvent(
+        shipment.id,
+        event.newStatus,
+        {
+          description: `Courier status updated via ${adapter.courierName} webhook callback. New status: ${event.newStatus}.`,
+          location: event.location,
+          carrierPayload: event.rawPayload,
+        },
+        { deliveredAt },
+        transaction
+      );
 
     // If delivered, update SellerFulfillmentGroup
     if (isDelivered) {
-      await (this.db as any).sellerFulfillmentGroup.update({
-        where: { id: shipment.fulfillmentGroupId },
-        data: {
-          status: 'DELIVERED',
-          deliveredAt: new Date(),
-          version: { increment: 1 },
+      await orderTransitionService.transitionFulfillmentGroupStatus(
+        {
+          groupId: shipment.fulfillmentGroupId,
+          sellerId: shipment.sellerId,
+          nextStatus: 'DELIVERED',
+          actorId: 'courier-system',
+          actorRole: 'SYSTEM',
+          idempotencyKey: `shipment:${shipment.id}:delivered`,
         },
-      });
+        persistShipment
+      );
+    } else {
+      await persistShipment();
     }
 
     return {
@@ -420,37 +492,42 @@ export class CourierDispatchService {
     );
     const expectedOtp = otpEvent?.carrierPayload?.otpCode;
 
-    if (expectedOtp && expectedOtp !== input.otpCode) {
+    if (!expectedOtp || expectedOtp !== input.otpCode) {
       throw new ValidationError('Invalid doorstep delivery OTP code provided.');
     }
 
     const deliveredAt = new Date();
 
-    await this.repo.updateStatusWithEvent(
-      shipment.id,
-      'DELIVERED',
-      {
-        description: `Doorstep delivery verified by Rider '${input.riderId}' with recipient OTP. ${input.deliveryNotes || ''}`,
-        location: 'Customer Doorstep',
-        carrierPayload: {
-          riderId: input.riderId,
-          recipientSignedName: input.recipientSignedName || null,
-          proofOfDeliveryPhotoUrl: input.proofOfDeliveryPhotoUrl || null,
+    const persistShipment = (transaction: any) =>
+      this.repo.updateStatusWithEvent(
+        shipment.id,
+        'DELIVERED',
+        {
+          description: `Doorstep delivery verified by Rider '${input.riderId}' with recipient OTP. ${input.deliveryNotes || ''}`,
+          location: 'Customer Doorstep',
+          carrierPayload: {
+            riderId: input.riderId,
+            recipientSignedName: input.recipientSignedName || null,
+            proofOfDeliveryPhotoUrl: input.proofOfDeliveryPhotoUrl || null,
+          },
+          occurredAt: deliveredAt,
         },
-        occurredAt: deliveredAt,
-      },
-      { deliveredAt }
-    );
+        { deliveredAt },
+        transaction
+      );
 
     // Update SellerFulfillmentGroup
-    await (this.db as any).sellerFulfillmentGroup.update({
-      where: { id: shipment.fulfillmentGroupId },
-      data: {
-        status: 'DELIVERED',
-        deliveredAt,
-        version: { increment: 1 },
+    await orderTransitionService.transitionFulfillmentGroupStatus(
+      {
+        groupId: shipment.fulfillmentGroupId,
+        sellerId: shipment.sellerId,
+        nextStatus: 'DELIVERED',
+        actorId: 'courier-system',
+        actorRole: 'SYSTEM',
+        idempotencyKey: `shipment:${shipment.id}:delivered`,
       },
-    });
+      persistShipment
+    );
 
     await auditService.logBusinessEvent({
       action: 'LOGISTICS_IN_HOUSE_DELIVERY_VERIFIED',

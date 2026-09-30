@@ -12,10 +12,7 @@ export const dynamic = 'force-dynamic';
  * Admin configures credit terms, limits, and versioned loyalty reward rules.
  * Invariant: Credit terms remain disabled until explicitly approved here.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.roles.includes('ADMIN') && !actor.roles.includes('SUPER_ADMIN')) {

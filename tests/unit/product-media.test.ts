@@ -10,6 +10,8 @@ describe('Milestone 085 product media policies', () => {
 
   it('rejects unsupported types and oversized media', () => {
     expect(() => validateProductMediaFile('IMAGE', 'application/pdf', 1024)).toThrow();
-    expect(() => validateProductMediaFile('VIDEO', 'video/mp4', PRODUCT_MEDIA_LIMITS.VIDEO_MAX_BYTES + 1)).toThrow();
+    expect(() =>
+      validateProductMediaFile('VIDEO', 'video/mp4', PRODUCT_MEDIA_LIMITS.VIDEO_MAX_BYTES + 1)
+    ).toThrow();
   });
 });

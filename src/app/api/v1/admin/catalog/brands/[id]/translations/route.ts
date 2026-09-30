@@ -9,15 +9,32 @@ export const dynamic = 'force-dynamic';
 const service = new TaxonomySeoService();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try { authenticateRequest(req); const id = (await params).id; return NextResponse.json({ success: true, data: await service.getBrandTranslation(id, req.nextUrl.searchParams.get('locale') || undefined) }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load brand translation'); }
+  try {
+    authenticateRequest(req);
+    const id = (await params).id;
+    return NextResponse.json({
+      success: true,
+      data: await service.getBrandTranslation(
+        id,
+        req.nextUrl.searchParams.get('locale') || undefined
+      ),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load brand translation');
+  }
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const parsed = BrandTranslationWriteSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid brand translation.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.upsertBrandTranslation(actor.userId, (await params).id, parsed.data) });
-  } catch (error) { return errorResponse(req, error, 'Failed to save brand translation'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid brand translation.', parsed.error.flatten());
+    return NextResponse.json({
+      success: true,
+      data: await service.upsertBrandTranslation(actor.userId, (await params).id, parsed.data),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to save brand translation');
+  }
 }

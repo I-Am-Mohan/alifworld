@@ -12,11 +12,19 @@ export async function GET(req: NextRequest) {
     const actor = authenticateRequest(req);
     const sellerId = req.nextUrl.searchParams.get('sellerId') || actor.sellerId;
     if (!sellerId) throw new AuthorizationError('Seller tenant context is required.');
-    await defaultPolicyEngine.assert(actor, 'staff:read', { type: 'SELLER', id: sellerId, sellerId });
-    if (!actor.roles.includes('SUPER_ADMIN') && actor.sellerId !== sellerId) throw new AuthorizationError('Cross-tenant access denied.');
+    await defaultPolicyEngine.assert(actor, 'staff:read', {
+      type: 'SELLER',
+      id: sellerId,
+      sellerId,
+    });
+    if (!actor.roles.includes('SUPER_ADMIN') && actor.sellerId !== sellerId)
+      throw new AuthorizationError('Cross-tenant access denied.');
     const page = Math.max(1, Number(req.nextUrl.searchParams.get('page') || 1));
     const limit = Math.min(100, Math.max(1, Number(req.nextUrl.searchParams.get('limit') || 50)));
-    return NextResponse.json({ success: true, data: await service.listActivity(sellerId, page, limit) });
+    return NextResponse.json({
+      success: true,
+      data: await service.listActivity(sellerId, page, limit),
+    });
   } catch (error) {
     return errorResponse(req, error, 'Failed to load seller staff activity');
   }

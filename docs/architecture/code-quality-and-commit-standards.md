@@ -3,7 +3,7 @@
 **Document Type**: Architectural Standard & Developer Guide  
 **Milestone Reference**: [Milestone 015](../../AlifWorld-300-Milestones/015-configure-linting-formatting-type-checking-and-commit-quality.md)  
 **Status**: Active / Approved  
-**Related Decision**: [ADR-0015](../decisions/0015-linting-formatting-and-commit-quality.md)  
+**Related Decision**: [ADR-0015](../decisions/0015-linting-formatting-and-commit-quality.md)
 
 ---
 
@@ -12,6 +12,7 @@
 The AlifWorld platform is developed as a single-application modular monolith. To maintain high code quality, consistency, and traceability across customer storefront, seller portal, admin backoffice, worker jobs, and REST APIs, strict automated verification standards are enforced across the repository.
 
 This standard establishes:
+
 1. **ESLint**: Automated static analysis enforcing Next.js Core Web Vitals, React best practices, and clean TypeScript syntax.
 2. **Prettier**: Deterministic code formatting with zero style debate.
 3. **TypeScript**: Strict type checking with zero tolerated errors and forbidden untyped escapes.
@@ -26,9 +27,7 @@ The repository uses ESLint (`.eslintrc.json`) extending `next/core-web-vitals` w
 
 ```json
 {
-  "extends": [
-    "next/core-web-vitals"
-  ],
+  "extends": ["next/core-web-vitals"],
   "rules": {
     "prefer-const": "error",
     "no-var": "error",
@@ -54,6 +53,7 @@ The repository uses ESLint (`.eslintrc.json`) extending `next/core-web-vitals` w
 ```
 
 ### Key Rules
+
 - **No `var` (`no-var: error`)**: All variables must be declared with `const` or `let`.
 - **Prefer `const` (`prefer-const: error`)**: Unreassigned variables must be declared with `const`.
 - **React Hooks Rules**: Full compliance with React hook execution lifecycle and exhaustive dependency arrays.
@@ -79,7 +79,9 @@ Formatting is enforced uniformly using Prettier (`.prettierrc.json`):
 ```
 
 ### File Exclusions (`.prettierignore`)
+
 Automated formatting is strictly excluded from:
+
 - Build artifacts and caches (`node_modules/`, `.next/`, `dist/`, `out/`, `build/`, `coverage/`).
 - Package lockfiles (`bun.lockb`, `package-lock.json`, etc.).
 - Design references (`UI References/`).
@@ -90,6 +92,7 @@ Automated formatting is strictly excluded from:
 ## 4. Strict TypeScript Verification
 
 TypeScript configuration (`tsconfig.json`) enforces maximum compiler strictness:
+
 - `"strict": true`
 - `"noImplicitAny": true`
 - `"strictNullChecks": true`
@@ -101,6 +104,7 @@ TypeScript configuration (`tsconfig.json`) enforces maximum compiler strictness:
 - `"noEmit": true` (used during `bun run typecheck`)
 
 ### Strict Guidelines:
+
 - **Zero Placeholder Policy**: Never use `any` as an escape hatch; create well-defined Zod schemas and TypeScript interfaces.
 - **No `@ts-ignore` or `@ts-nocheck`**: Forbidden in production source code. If third-party types are incomplete, supply declaration files under `src/types/`.
 
@@ -111,11 +115,13 @@ TypeScript configuration (`tsconfig.json`) enforces maximum compiler strictness:
 AlifWorld follows the [Conventional Commits](https://www.conventionalcommits.org/) specification enforced via Commitlint (`commitlint.config.js`).
 
 ### Format
+
 ```
 <type>(<scope>): <subject>
 ```
 
 ### Types
+
 - `feat`: A new user-facing feature or domain capability.
 - `ft`: Feature milestone commit shorthand.
 - `fix`: A bug fix or defect correction.
@@ -130,6 +136,7 @@ AlifWorld follows the [Conventional Commits](https://www.conventionalcommits.org
 - `revert`: Reverting a previous commit.
 
 ### Approved Scopes
+
 - `auth` / `identity`: User authentication, session management, roles, and permissions.
 - `seller`: Seller onboarding, seller portal, store management.
 - `admin`: Backoffice management, configuration, audits, compliance.
@@ -152,24 +159,25 @@ AlifWorld follows the [Conventional Commits](https://www.conventionalcommits.org
 
 The following quality commands are registered in `package.json`:
 
-| Command | Purpose |
-| :--- | :--- |
-| `bun run lint` | Runs ESLint across all source files with zero-warning tolerance (`--max-warnings 0`). |
-| `bun run lint:fix` | Runs ESLint with automated fixes for lint violations. |
-| `bun run format` | Runs Prettier write mode to format the codebase. |
-| `bun run format:check` | Verifies that all files conform to Prettier formatting rules without modifying them. |
-| `bun run typecheck` | Compiles TypeScript with `tsc --noEmit` to verify type safety. |
-| `bun run quality` | Runs both linting and type checking in a single command. |
-| `bun run test` | Executes the Bun test runner suite. |
-| `bun run build:local` | Generates Next.js production build output. |
+| Command                | Purpose                                                                               |
+| :--------------------- | :------------------------------------------------------------------------------------ |
+| `bun run lint`         | Runs ESLint across all source files with zero-warning tolerance (`--max-warnings 0`). |
+| `bun run lint:fix`     | Runs ESLint with automated fixes for lint violations.                                 |
+| `bun run format`       | Runs Prettier write mode to format the codebase.                                      |
+| `bun run format:check` | Verifies that all files conform to Prettier formatting rules without modifying them.  |
+| `bun run typecheck`    | Compiles TypeScript with `tsc --noEmit` to verify type safety.                        |
+| `bun run quality`      | Runs both linting and type checking in a single command.                              |
+| `bun run test`         | Executes the Bun test runner suite.                                                   |
+| `bun run build:local`  | Generates Next.js production build output.                                            |
 
 ---
 
 ## 7. Protection of Reference Assets
 
-Visual reference materials located in `UI References/` are user-provided design artifacts containing layouts, screenshots, and visual specifications. 
+Visual reference materials located in `UI References/` are user-provided design artifacts containing layouts, screenshots, and visual specifications.
 
 ### Operational Rules:
+
 1. **Never Reformat**: `UI References/` is excluded from Prettier and ESLint.
 2. **Never Overwrite**: Files within `UI References/` must not be renamed, moved, or deleted by automated scripts.
 3. **Traceability**: UI components created in `src/components/` must cite corresponding references in `UI References/` when implementing screen designs.

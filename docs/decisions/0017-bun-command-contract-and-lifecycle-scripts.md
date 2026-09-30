@@ -4,7 +4,7 @@
 **Date**: 2026-09-22  
 **Deciders**: AlifWorld Architecture & DevOps Team  
 **Milestone Reference**: [Milestone 017](../../AlifWorld-300-Milestones/017-implement-the-required-bun-command-contract.md)  
-**Supporting Specification**: [Bun Command Contract Specification](../architecture/bun-command-contract-and-lifecycle-scripts.md)  
+**Supporting Specification**: [Bun Command Contract Specification](../architecture/bun-command-contract-and-lifecycle-scripts.md)
 
 ---
 
@@ -32,6 +32,7 @@ A formal Architecture Decision Record is required to lock this lifecycle command
 The AlifWorld engineering architecture formally adopts the **Bun Command Contract and Lifecycle Scripts Standard**:
 
 ### 1. Mandatory Core Lifecycle Scripts in `package.json`
+
 - `dev:local`: `next dev` (standard local development server).
 - `dev:production`: `NODE_ENV=production next dev` (simulates production runtime behavior in development).
 - `build:local`: `next build` (local test build).
@@ -39,6 +40,7 @@ The AlifWorld engineering architecture formally adopts the **Bun Command Contrac
 - `production:production`: `next start -p 3000` (**Hard Invariant**: strictly executes compiled output; never calls `next dev`).
 
 ### 2. Quality and Verification Scripts
+
 - `lint`: `eslint . --max-warnings 0` (zero-warning tolerance).
 - `lint:fix`: `eslint . --fix` (automated lint repair).
 - `format`: `prettier --write .` (code formatting).
@@ -47,12 +49,14 @@ The AlifWorld engineering architecture formally adopts the **Bun Command Contrac
 - `quality`: `bun run lint && bun run typecheck` (pre-commit quality gate).
 
 ### 3. Granular Test Suite Scripts
+
 - `test`: `bun test` (full test suite).
 - `test:unit`: `bun test tests/unit` (unit tests).
 - `test:integration`: `bun test tests/integration` (integration tests).
 - `test:e2e`: `bun test tests/e2e` (end-to-end tests).
 
 ### 4. Persistence and Migration Lifecycle
+
 - `db:generate`: `prisma generate`.
 - `db:migrate`: `prisma migrate dev`.
 - `db:migrate:deploy`: `prisma migrate deploy`.
@@ -60,6 +64,7 @@ The AlifWorld engineering architecture formally adopts the **Bun Command Contrac
 - `db:studio`: `prisma studio`.
 
 ### 5. Worker Cluster and OpenAPI Contracts
+
 - `worker`: `bun run src/workers/index.ts` (starts background job cluster with graceful shutdown).
 - `openapi`: `bun run scripts/generate-openapi.ts` (generates OpenAPI 3.1 schema JSON).
 
@@ -68,10 +73,12 @@ The AlifWorld engineering architecture formally adopts the **Bun Command Contrac
 ## Consequences
 
 ### Positive:
+
 - Establishes a predictable, deterministic operational contract across all development, testing, and deployment stages.
 - Guarantees that `production:production` executes compiled artifacts with production optimizations.
 - Provides unified tooling for database migrations and worker cluster management.
 - Enforces contract compliance via automated unit tests in `tests/unit/bun-command-contract.test.ts`.
 
 ### Negative:
+
 - All CI/CD workflows and deployment configurations must strictly call the standardized Bun script names.

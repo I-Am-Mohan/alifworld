@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { bn } from '@/i18n/translations/bn';
 import { en } from '@/i18n/translations/en';
 import { formatLocalizedText } from '@/shared/utils/localization';
-import { getTransactionalTemplate, renderNotificationTemplate, shouldDeliverNotification } from '@/features/notifications/notification-contract';
+import {
+  getTransactionalTemplate,
+  renderNotificationTemplate,
+  shouldDeliverNotification,
+} from '@/features/notifications/notification-contract';
 import { notificationIdempotencyKey } from '@/features/notifications/notification-service';
 import { validationDetails, localizedErrorMessage } from '@/shared/api/error-response';
 import { UnauthorizedError } from '@/shared/errors/app-error';
@@ -17,13 +21,23 @@ describe('Milestone 058 localized errors and notifications', () => {
   it('keeps localized error catalogs available in both launch locales', () => {
     expect(en.errors.VALIDATION_FAILED).toBeTruthy();
     expect(bn.errors.VALIDATION_FAILED).toBeTruthy();
-    expect(formatLocalizedText(en.transactional.emailVerificationBody, { code: '123456' })).toContain('123456');
-    expect(formatLocalizedText(bn.transactional.emailVerificationBody, { code: '123456' })).toContain('123456');
+    expect(
+      formatLocalizedText(en.transactional.emailVerificationBody, { code: '123456' })
+    ).toContain('123456');
+    expect(
+      formatLocalizedText(bn.transactional.emailVerificationBody, { code: '123456' })
+    ).toContain('123456');
   });
 
   it('preserves specific error fallback messages over generic error code keys when messageKey is omitted', () => {
     const error = new UnauthorizedError('Invalid email/phone or password');
-    const msg = localizedErrorMessage(error.errorCode, error.message, 'en-BD', {}, error.messageKey);
+    const msg = localizedErrorMessage(
+      error.errorCode,
+      error.message,
+      'en-BD',
+      {},
+      error.messageKey
+    );
     expect(msg).toBe('Invalid email/phone or password');
   });
 
@@ -31,7 +45,10 @@ describe('Milestone 058 localized errors and notifications', () => {
     const result = z.object({ email: z.string().email() }).safeParse({ email: 'invalid' });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(validationDetails(result.error)[0]).toMatchObject({ path: 'email', code: 'invalid_string' });
+      expect(validationDetails(result.error)[0]).toMatchObject({
+        path: 'email',
+        code: 'invalid_string',
+      });
     }
   });
 
@@ -66,6 +83,8 @@ describe('Milestone 058 localized errors and notifications', () => {
       eventId: 'ord_123',
     };
     expect(notificationIdempotencyKey(input)).toBe(notificationIdempotencyKey({ ...input }));
-    expect(notificationIdempotencyKey(input)).not.toBe(notificationIdempotencyKey({ ...input, eventId: 'ord_456' }));
+    expect(notificationIdempotencyKey(input)).not.toBe(
+      notificationIdempotencyKey({ ...input, eventId: 'ord_456' })
+    );
   });
 });

@@ -2,9 +2,10 @@
 
 ## 1. Executive Summary
 
-Milestone 030 completes **Phase 03: Data Architecture** for the AlifWorld platform. Over the course of Milestones 021 through 030, the relational data model expanded into **49 canonical Prisma models** structured across 8 operational domains. 
+Milestone 030 completes **Phase 03: Data Architecture** for the AlifWorld platform. Over the course of Milestones 021 through 030, the relational data model expanded into **49 canonical Prisma models** structured across 8 operational domains.
 
 This specification establishes the authoritative engineering contracts, operational procedures, and automation tooling governing:
+
 1. **The 49-Model Catalog & Lifecycle Classification** (`IMMUTABLE`, `SOFT_DELETE`, `EPHEMERAL`).
 2. **Expand-and-Contract Zero-Downtime Migration Protocols** for production PostgreSQL clusters.
 3. **Forward-Fix Rollback Playbooks** ensuring zero data destruction or transaction loss.
@@ -17,17 +18,17 @@ This specification establishes the authoritative engineering contracts, operatio
 
 The AlifWorld persistence tier consists of exactly 49 relational Prisma models segregated across 8 modular domains:
 
-| Domain Module | Models Count | Canonical Prisma Models | Primary ID Prefix | Primary Lifecycle |
-|---|:---:|---|---|---|
-| **System & Health** | 4 | `SystemConfig`, `HealthProbe`, `OutboxEvent`, `AuditLog` | `cfg_`, `prb_`, `obx_`, `aud_` | Mixed |
-| **IAM & Multi-Tenancy** | 5 | `User`, `Role`, `Permission`, `UserRoleAssignment`, `RolePermission` | `usr_`, `rol_`, `prm_`, `ura_`, `rpm_` | `SOFT_DELETE` |
-| **Seller & Storefront** | 4 | `Seller`, `SellerStaff`, `SellerKycDocument`, `SellerStoreSettings` | `sel_`, `stf_`, `kyc_`, `set_` | `SOFT_DELETE` |
-| **Product Catalog & Media** | 6 | `Category`, `Brand`, `Product`, `ProductVariant`, `ProductMedia`, `ProductSlugHistory` | `cat_`, `brd_`, `prd_`, `var_`, `med_`, `slg_` | Mixed |
-| **Multi-Warehouse Inventory**| 4 | `Warehouse`, `StockBalance`, `StockReservation`, `StockMovementLedger` | `wrh_`, `stk_`, `res_`, `mvt_` | Mixed |
-| **Carts, Orders & Logistics** | 8 | `Cart`, `CartItem`, `Order`, `SellerFulfillmentGroup`, `OrderItem`, `OrderStatusHistory`, `Shipment`, `ShipmentEvent` | `crt_`, `cit_`, `ord_`, `sfg_`, `ori_`, `osh_`, `shp_`, `she_` | Mixed |
-| **Payments & Settlements** | 7 | `Payment`, `Refund`, `RefundItem`, `CommissionLedger`, `SellerSettlement`, `SellerPayout`, `PaymentWebhookLog` | `pay_`, `ref_`, `rfi_`, `com_`, `stl_`, `pyo_`, `pwl_` | Mixed |
-| **Wallets, Points & Ledgers** | 11 | `Wallet`, `LedgerAccount`, `LedgerJournal`, `LedgerPosting`, `PointAccount`, `PointEvent`, `RewardRule`, `RewardAllocation`, `RankDefinition`, `UserRank`, `LeaderboardSnapshot` | `wal_`, `lac_`, `jrn_`, `pos_`, `pac_`, `pev_`, `rwr_`, `rwa_`, `rnk_`, `urk_`, `lbs_` | Mixed |
-| **Total** | **49** | | | |
+| Domain Module                 | Models Count | Canonical Prisma Models                                                                                                                                                          | Primary ID Prefix                                                                      | Primary Lifecycle |
+| ----------------------------- | :----------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------- |
+| **System & Health**           |      4       | `SystemConfig`, `HealthProbe`, `OutboxEvent`, `AuditLog`                                                                                                                         | `cfg_`, `prb_`, `obx_`, `aud_`                                                         | Mixed             |
+| **IAM & Multi-Tenancy**       |      5       | `User`, `Role`, `Permission`, `UserRoleAssignment`, `RolePermission`                                                                                                             | `usr_`, `rol_`, `prm_`, `ura_`, `rpm_`                                                 | `SOFT_DELETE`     |
+| **Seller & Storefront**       |      4       | `Seller`, `SellerStaff`, `SellerKycDocument`, `SellerStoreSettings`                                                                                                              | `sel_`, `stf_`, `kyc_`, `set_`                                                         | `SOFT_DELETE`     |
+| **Product Catalog & Media**   |      6       | `Category`, `Brand`, `Product`, `ProductVariant`, `ProductMedia`, `ProductSlugHistory`                                                                                           | `cat_`, `brd_`, `prd_`, `var_`, `med_`, `slg_`                                         | Mixed             |
+| **Multi-Warehouse Inventory** |      4       | `Warehouse`, `StockBalance`, `StockReservation`, `StockMovementLedger`                                                                                                           | `wrh_`, `stk_`, `res_`, `mvt_`                                                         | Mixed             |
+| **Carts, Orders & Logistics** |      8       | `Cart`, `CartItem`, `Order`, `SellerFulfillmentGroup`, `OrderItem`, `OrderStatusHistory`, `Shipment`, `ShipmentEvent`                                                            | `crt_`, `cit_`, `ord_`, `sfg_`, `ori_`, `osh_`, `shp_`, `she_`                         | Mixed             |
+| **Payments & Settlements**    |      7       | `Payment`, `Refund`, `RefundItem`, `CommissionLedger`, `SellerSettlement`, `SellerPayout`, `PaymentWebhookLog`                                                                   | `pay_`, `ref_`, `rfi_`, `com_`, `stl_`, `pyo_`, `pwl_`                                 | Mixed             |
+| **Wallets, Points & Ledgers** |      11      | `Wallet`, `LedgerAccount`, `LedgerJournal`, `LedgerPosting`, `PointAccount`, `PointEvent`, `RewardRule`, `RewardAllocation`, `RankDefinition`, `UserRank`, `LeaderboardSnapshot` | `wal_`, `lac_`, `jrn_`, `pos_`, `pac_`, `pev_`, `rwr_`, `rwa_`, `rnk_`, `urk_`, `lbs_` | Mixed             |
+| **Total**                     |    **49**    |                                                                                                                                                                                  |                                                                                        |                   |
 
 ---
 
@@ -38,11 +39,11 @@ To prevent accidental data loss and enforce compliance with Bangladesh national 
 ```mermaid
 flowchart TD
     Entity[Database Entity] --> PolicyCheck{Lifecycle Policy}
-    
+
     PolicyCheck -->|IMMUTABLE| Immut[Append-Only Ledger<br/>17 Models]
     PolicyCheck -->|SOFT_DELETE| Soft[Audit-Preserved<br/>30 Models]
     PolicyCheck -->|EPHEMERAL| Ephem[Transient TTL<br/>2 Models]
-    
+
     Immut --> ImmutRule["• Prohibit DELETE & UPDATE<br/>• Corrections via Reversal Records<br/>• Permanent Legal Audit Trail"]
     Soft --> SoftRule["• Set deletedAt = now()<br/>• Filtered from active queries<br/>• Preserves relational integrity"]
     Ephem --> EphemRule["• Hard DELETE permitted<br/>• 30-day abandoned cart purge<br/>• No financial/audit obligations"]
@@ -88,6 +89,7 @@ sequenceDiagram
 ```
 
 ### Zero-Downtime Rules
+
 1. **Never rename columns in-place**: Create the new column, dual-write, backfill, migrate reads, and drop the legacy column in a subsequent release.
 2. **Never add non-null columns without defaults**: All new columns must either be nullable or have a database-level default.
 3. **Non-blocking index creation**: Large table indexes must use `CREATE INDEX CONCURRENTLY` to avoid exclusive write table locks.
@@ -101,12 +103,12 @@ Destructive operations such as `prisma migrate reset` are strictly prohibited in
 
 ### Incident Recovery Matrix
 
-| Incident Type | Immediate Mitigation | Resolution Action |
-|---|---|---|
-| **Application Crash Loop after Deployment** | Roll back Kubernetes Deployment to previous Docker image | The database remains backward-compatible due to Expand phase. Fix application code in new release. |
-| **Faulty Migration (Syntax/Constraint Issue)** | Cancel migration pipeline immediately | Author a forward-fix migration (`YYYYMMDDHHMMSS_forward_fix_...`) that reverts or fixes the constraint. |
-| **Corrupted Data Backfill** | Pause the backfill worker job | Run compensating data correction script within an audited `AuditLog` transaction. |
-| **Lock Contention / Slow Migration Query** | Terminate blocking backend PID via `pg_terminate_backend()` | Re-run query with non-blocking parameters or during scheduled low-traffic window. |
+| Incident Type                                  | Immediate Mitigation                                        | Resolution Action                                                                                       |
+| ---------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Application Crash Loop after Deployment**    | Roll back Kubernetes Deployment to previous Docker image    | The database remains backward-compatible due to Expand phase. Fix application code in new release.      |
+| **Faulty Migration (Syntax/Constraint Issue)** | Cancel migration pipeline immediately                       | Author a forward-fix migration (`YYYYMMDDHHMMSS_forward_fix_...`) that reverts or fixes the constraint. |
+| **Corrupted Data Backfill**                    | Pause the backfill worker job                               | Run compensating data correction script within an audited `AuditLog` transaction.                       |
+| **Lock Contention / Slow Migration Query**     | Terminate blocking backend PID via `pg_terminate_backend()` | Re-run query with non-blocking parameters or during scheduled low-traffic window.                       |
 
 ---
 
@@ -115,6 +117,7 @@ Destructive operations such as `prisma migrate reset` are strictly prohibited in
 The seed script (`prisma/seed.ts`) is designed to run repeatedly without side-effects or errors.
 
 ### Upsert-Only Architecture Across 10 Sections
+
 1. **System Configuration**: Upserts global platform keys (`APP_NAME`, `PLATFORM_COMMISSION_BPS`, `DEFAULT_CURRENCY`).
 2. **Health Probes**: Records bootstrap readiness probes.
 3. **Core Permissions**: 38 standardized permissions (`users:read`, `catalog:write`, etc.).

@@ -4,7 +4,7 @@
 **Phase Reference**: Phase 01 — Governance and Architecture  
 **Milestone Reference**: [Milestone 003](../../AlifWorld-300-Milestones/003-scope-boundaries-and-modular-domain-map.md)  
 **Architecture Model**: Single-Codebase Next.js Modular Monolith  
-**Status**: Authoritative & Accepted  
+**Status**: Authoritative & Accepted
 
 ---
 
@@ -36,6 +36,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
 ```
 
 ### Core Modular Monolith Invariants:
+
 1. **No Cross-Domain Direct Table Mutations**: Domain services must never write to Prisma tables owned by another domain. All state mutations cross boundaries via public Domain Service interfaces or asynchronous Outbox Events.
 2. **Thin Route Handlers**: Route Handlers (`app/api/v1/*`) only validate HTTP requests using Zod, authenticate/authorize callers, invoke a single Domain Service, and serialize the response.
 3. **Repository Encapsulation**: SQL queries and Prisma data access are strictly contained in `repositories/*`. Domain services never construct raw database queries.
@@ -46,6 +47,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
 ## 2. Bounded Context Specifications
 
 ### 2.1 Identity, Authentication & Access Management (IAM)
+
 - **Scope**: User account lifecycles, authentication, credential hashing, rotating refresh token families, Bangladesh phone normalization, SMS OTP, Google/Apple OAuth, role-based access control (RBAC), and session revocation.
 - **Key Entities**: `User`, `UserCredential`, `Session`, `RefreshTokenFamily`, `Role`, `Permission`, `UserRoleAssignment`, `OtpRequest`.
 - **States**: `ACTIVE`, `PENDING_VERIFICATION`, `SUSPENDED`, `DELETED`.
@@ -55,6 +57,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Bangladesh phone numbers strictly normalized to E.164 standard (`+8801XXXXXXXXX`).
 
 ### 2.2 Seller Management & Multi-Tenant KYC
+
 - **Scope**: Seller registration, multi-step KYC submission (trade license, NID, bank check leaf), Admin verification workflow, public store profile, store settings, and staff delegation.
 - **Key Entities**: `Seller`, `SellerKycDocument`, `SellerStoreProfile`, `SellerBankDetail`, `SellerStaff`.
 - **States**: `DRAFT`, `SUBMITTED`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `SUSPENDED`, `INACTIVE`.
@@ -64,6 +67,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - KYC documents stored with signed private S3 URLs; never exposed publicly.
 
 ### 2.3 Catalog Taxonomy & Brand Authority
+
 - **Scope**: Hierarchical categories, approved brand registries, attribute sets, variant option definitions, product drafts, versioned product edits, and catalog moderation.
 - **Key Entities**: `Category`, `Brand`, `Attribute`, `AttributeValue`, `Product`, `ProductVariant`, `ProductMedia`.
 - **States**: `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `PUBLISHED`, `ARCHIVED`.
@@ -72,6 +76,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Every sellable product must define both a BDT price (poisha) and an explicit, seller-defined Product Point value.
 
 ### 2.4 Pricing, Discounts, VAT & Promotion Engine
+
 - **Scope**: Server-side authoritative pricing calculations, compare-at prices, channel pricing, Bangladesh VAT rules, coupon lifecycles, and promotion stacking.
 - **Key Entities**: `PriceSnapshot`, `TaxRule`, `DiscountRule`, `Coupon`, `CouponRedemption`.
 - **Invariants**:
@@ -80,6 +85,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Historical order prices are immutable snapshots; price changes never alter placed orders.
 
 ### 2.5 Multi-Warehouse Inventory & Atomic Reservations
+
 - **Scope**: Multi-location warehouse inventory, on-hand, reserved, available, damaged, and quarantine balances, atomic stock reservations, and stock movement ledgers.
 - **Key Entities**: `Warehouse`, `InventoryItem`, `StockBalance`, `StockReservation`, `StockMovementLedger`.
 - **States**: `AVAILABLE`, `RESERVED`, `COMMITTED`, `RELEASED`, `QUARANTINED`, `WRITTEN_OFF`.
@@ -89,6 +95,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Every stock delta writes an immutable entry to `StockMovementLedger`.
 
 ### 2.6 Search, Discovery & Fallback Engine
+
 - **Scope**: Product indexing, typo-tolerant search, facet filtering, sorting, collection pages, and automatic PostgreSQL full-text search fallback during Meilisearch outages.
 - **Key Entities**: `SearchIndexSyncJob`, `SearchSynonym`, `Collection`.
 - **Invariants**:
@@ -96,6 +103,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Index updates execute asynchronously via BullMQ workers triggered by catalog events.
 
 ### 2.7 Customer Experience, Carts & Engagement
+
 - **Scope**: Customer profiles, address book (Bangladesh divisions, districts, upazilas), wishlists, product reviews with verified purchase badges, Q&A moderation, and carts.
 - **Key Entities**: `CustomerProfile`, `CustomerAddress`, `Wishlist`, `ProductReview`, `ProductQuestion`, `Cart`, `CartItem`.
 - **Invariants**:
@@ -103,6 +111,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Cart line items revalidate price, stock availability, and seller eligibility prior to checkout transition.
 
 ### 2.8 Checkout Orchestration & Shipping Logistics
+
 - **Scope**: Idempotent checkout sessions, multi-seller shipment grouping, delivery serviceability checks, Bangladesh courier adapters (Pathao, Steadfast, RedX, Paperfly, In-house), and COD limits.
 - **Key Entities**: `CheckoutSession`, `ShipmentGroup`, `ShippingRate`, `CourierAdapterConfig`.
 - **Invariants**:
@@ -111,6 +120,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Cash on Delivery (COD) verifies fraud risk scoring and order value thresholds before acceptance.
 
 ### 2.9 Orders, Fulfillment & RMA Engine
+
 - **Scope**: Parent customer orders, seller fulfillment sub-orders, state machines, pack/handover workflows, tracking numbers, customer cancellations, returns, inspections, and refunds.
 - **Key Entities**: `Order`, `OrderItem`, `SellerFulfillmentOrder`, `Shipment`, `ReturnRequest`, `ReturnItem`, `RefundTransaction`.
 - **Order State Machine**: `PLACED` -> `CONFIRMED` -> `PROCESSING` -> `HANDED_OVER` -> `IN_TRANSIT` -> `DELIVERED` -> `COMPLETED` (or `CANCELLED` / `RETURNED`).
@@ -119,6 +129,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Points and commissions are accrued only when the order reaches `COMPLETED` (post return window).
 
 ### 2.10 Payments, Gateway Integration & Seller Settlement
+
 - **Scope**: Bangladesh payment gateway adapters (bKash, Nagad, Upay, COD, optional Stripe/Razorpay), payment intents, signed webhooks, capture recovery, and seller payout escrow.
 - **Key Entities**: `PaymentIntent`, `PaymentAttempt`, `WebhookLog`, `SellerSettlementBatch`, `SellerPayout`.
 - **Invariants**:
@@ -126,6 +137,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Seller funds are placed in escrow holds until fulfillment is confirmed and return eligibility expires.
 
 ### 2.11 Double-Entry Financial & Wallet Ledger
+
 - **Scope**: Strict double-entry accounting ledger, typed wallet accounts, immutable transaction journal, balance projections, and maker-checker admin adjustments.
 - **Key Entities**: `WalletAccount`, `LedgerTransaction`, `LedgerPosting`, `AdminAdjustmentRequest`.
 - **Account Types**: `MAIN_WITHDRAWABLE`, `SHOPPING_RESTRICTED`, `CUSTOMER_CLUB_POOL`, `SELLER_CLUB_POOL`, `REFERRAL_RESERVE`, `CHARITY_FUND`, `PLATFORM_RESERVE`, `ESCROW`.
@@ -135,6 +147,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Admin adjustments require two-party authorization (Maker-Checker).
 
 ### 2.12 Product Points Engine
+
 - **Scope**: Mandatory seller-defined point management, order item snapshotting, non-convertible point accounting, event-driven point allocation, and point reversals.
 - **Key Entities**: `ProductPointConfig`, `OrderItemPointSnapshot`, `PointEventLedger`.
 - **Invariants**:
@@ -143,6 +156,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Reversals execute proportionally for returned line items.
 
 ### 2.13 Customer Loyalty, Star Clubs & Rank Bonuses
+
 - **Scope**: Customer cashback (10% reference), direct referral bonus (5% reference), 50-20-15-5-10 reward splits, Customer Daily/Weekly/Monthly/Yearly Star Clubs, and 3% Customer Rank Bonus pool.
 - **Key Entities**: `CustomerRewardConfig`, `CustomerClubCycle`, `CustomerClubSettlement`, `CustomerRankBonusPool`.
 - **Invariants**:
@@ -150,6 +164,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Club settlements distribute equal shares of the accumulated pool to verified qualified members.
 
 ### 2.14 Seller Clubs, Levels & Leaderboards
+
 - **Scope**: Seller sales/point ledgers, 70-15-5-10 reward splits, Seller Star Clubs, seller performance badges, and leaderboards.
 - **Key Entities**: `SellerRewardConfig`, `SellerClubCycle`, `SellerClubSettlement`, `SellerLeaderboardEntry`.
 - **Invariants**:
@@ -157,6 +172,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Club pools are funded from explicit debit accounts; deficits halt distribution runs safely.
 
 ### 2.15 Regional Distribution & Commissions
+
 - **Scope**: Bangladesh administrative divisions, districts, upazilas, affiliated service points, commission distribution, and platform service charge accounting.
 - **Key Entities**: `GeoHierarchy`, `ServicePointPartner`, `CommissionDistributionRule`, `CommissionPosting`.
 - **Invariants**:
@@ -164,6 +180,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Residual poisha rounding remainders are credited to the platform reserve.
 
 ### 2.16 Lottery, Advertisement & Affiliate Network (Gated)
+
 - **Scope**: Good-Luck lottery ticket purchases (GATE-07), ad view tracking, subscription packages (GATE-06), and multi-tier marketing referrals.
 - **Key Entities**: `LotteryCampaign`, `LotteryTicket`, `AdCampaign`, `AdImpressionLog`, `SubscriptionPackage`.
 - **Invariants**:
@@ -171,6 +188,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Packages use fixed BDT catalogue prices; no USD dynamic conversion.
 
 ### 2.17 Rider Onboarding & Delivery Logistics
+
 - **Scope**: Rider registration, vehicle KYC, task dispatch, GPS location updates via Redis, OTP proof-of-delivery, and rider earnings.
 - **Key Entities**: `RiderProfile`, `DeliveryTask`, `GpsCheckpoint`, `RiderEarning`.
 - **Invariants**:
@@ -178,6 +196,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Rate-limited GPS ingestion through Redis prevents database write saturation.
 
 ### 2.18 Operations Console, Moderation & CMS
+
 - **Scope**: Role-based Admin console, customer support tickets, disputes, CMS banners, homepage layout management, and KPI dashboards.
 - **Key Entities**: `CmsSection`, `CmsBanner`, `SupportTicket`, `SupportNote`, `PlatformKpiSnapshot`.
 - **Invariants**:
@@ -185,6 +204,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - High-value operations require fresh authentication and explicit reason codes.
 
 ### 2.19 Background Jobs, Realtime Events & Outbox
+
 - **Scope**: BullMQ queue topology, transactional outbox pattern, scheduled recurring jobs in `Asia/Dhaka`, notification delivery (Email, SMS, Push, WhatsApp), and audit logging.
 - **Key Entities**: `OutboxEvent`, `NotificationQueueItem`, `AuditLogEntry`, `ScheduledJobRecord`.
 - **Invariants**:
@@ -192,6 +212,7 @@ To maintain strict modularity within a single deployable Next.js application, Al
   - Job processors are strictly idempotent using deterministic job identifiers.
 
 ### 2.20 Versioned REST Route Handlers (`/app/api/v1`)
+
 - **Scope**: External and mobile API entrypoints, Zod payload validation, standard HTTP status codes, standard JSON envelopes, and generated OpenAPI specifications.
 - **Envelopes**:
   - Success: `{ "success": true, "data": T, "pagination"?: P }`
@@ -204,12 +225,12 @@ To maintain strict modularity within a single deployable Next.js application, Al
 
 ## 3. Domain Interaction & Decoupling Matrix
 
-| Triggering Domain | Interacting Domain | Interaction Type | Decoupling Mechanism |
-|:---|:---|:---:|:---|
-| **Checkout** | **Inventory** | Synchronous | `InventoryService.reserveStock()` with distributed lock |
-| **Checkout** | **Payments** | Synchronous | `PaymentService.createIntent()` |
-| **Orders** | **Points Engine** | Asynchronous | Outbox Event: `order.completed` -> BullMQ Point Worker |
-| **Orders** | **Wallet Ledger** | Asynchronous | Outbox Event: `order.completed` -> BullMQ Settlement Worker |
-| **Orders** | **Notifications** | Asynchronous | Outbox Event: `order.placed` -> BullMQ Notification Queue |
-| **Catalog** | **Search Engine** | Asynchronous | Outbox Event: `product.published` -> BullMQ Indexer |
-| **Rider** | **Orders** | Synchronous | `OrderService.confirmDeliveryWithOtp()` |
+| Triggering Domain | Interacting Domain | Interaction Type | Decoupling Mechanism                                        |
+| :---------------- | :----------------- | :--------------: | :---------------------------------------------------------- |
+| **Checkout**      | **Inventory**      |   Synchronous    | `InventoryService.reserveStock()` with distributed lock     |
+| **Checkout**      | **Payments**       |   Synchronous    | `PaymentService.createIntent()`                             |
+| **Orders**        | **Points Engine**  |   Asynchronous   | Outbox Event: `order.completed` -> BullMQ Point Worker      |
+| **Orders**        | **Wallet Ledger**  |   Asynchronous   | Outbox Event: `order.completed` -> BullMQ Settlement Worker |
+| **Orders**        | **Notifications**  |   Asynchronous   | Outbox Event: `order.placed` -> BullMQ Notification Queue   |
+| **Catalog**       | **Search Engine**  |   Asynchronous   | Outbox Event: `product.published` -> BullMQ Indexer         |
+| **Rider**         | **Orders**         |   Synchronous    | `OrderService.confirmDeliveryWithOtp()`                     |

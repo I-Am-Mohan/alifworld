@@ -1,9 +1,9 @@
 /**
  * AlifWorld Authoritative Token Policy & Authentication Standards
- * 
+ *
  * Defines lifetime policies, cookie configurations, claim schemas,
  * and security invariants for web browsers and mobile Flutter clients.
- * 
+ *
  * Reference: docs/architecture/authentication-architecture-and-token-policy.md
  * Invariant: ADR-0031
  */
@@ -35,7 +35,8 @@ export const TOKEN_POLICIES = {
     return process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   },
   get AUDIENCE() {
-    const appUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl =
+      process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return appUrl.includes('/api') ? appUrl : `${appUrl.replace(/\/$/, '')}/api/v1`;
   },
 } as const;
@@ -43,34 +44,34 @@ export const TOKEN_POLICIES = {
 export type ClientType = 'WEB' | 'MOBILE_FLUTTER' | 'POS' | 'ADMIN_PORTAL';
 
 export interface AccessTokenClaims {
-  sub: string;               // User ID (e.g. usr_...)
-  email: string | null;      // Primary email address
-  phone: string | null;      // Primary E.164 phone
-  roles: string[];           // RBAC role codes (SUPER_ADMIN, SELLER_OWNER, CUSTOMER, etc.)
-  permissions: string[];     // Granular permission codes (catalog:read, orders:write, etc.)
-  sellerId: string | null;   // Active seller tenant ID if seller staff/owner
-  tokenVersion: number;      // User tokenVersion for instant global revocation
-  sessionId: string;         // Underlying UserSession ID
-  clientType: ClientType;    // Client platform category
-  iss: string;               // Issuer
-  aud: string;               // Audience
-  exp: number;               // Unix expiration timestamp in seconds
-  iat: number;               // Unix issued-at timestamp in seconds
-  jti: string;               // Unique JWT identifier
+  sub: string; // User ID (e.g. usr_...)
+  email: string | null; // Primary email address
+  phone: string | null; // Primary E.164 phone
+  roles: string[]; // RBAC role codes (SUPER_ADMIN, SELLER_OWNER, CUSTOMER, etc.)
+  permissions: string[]; // Granular permission codes (catalog:read, orders:write, etc.)
+  sellerId: string | null; // Active seller tenant ID if seller staff/owner
+  tokenVersion: number; // User tokenVersion for instant global revocation
+  sessionId: string; // Underlying UserSession ID
+  clientType: ClientType; // Client platform category
+  iss: string; // Issuer
+  aud: string; // Audience
+  exp: number; // Unix expiration timestamp in seconds
+  iat: number; // Unix issued-at timestamp in seconds
+  jti: string; // Unique JWT identifier
 }
 
 export interface RefreshTokenClaims {
-  sub: string;               // User ID
-  sessionId: string;         // Underlying UserSession ID
-  familyId: string;          // Refresh token family ID (Milestone 035)
-  generation: number;        // Monotonically increasing generation number in family (0, 1, 2, ...)
-  tokenVersion: number;      // User tokenVersion
-  clientType: ClientType;    // Client category
-  iss: string;               // Issuer
-  aud: string;               // Audience
-  exp: number;               // Expiration timestamp in seconds
-  iat: number;               // Issued at timestamp in seconds
-  jti: string;               // Unique token identifier
+  sub: string; // User ID
+  sessionId: string; // Underlying UserSession ID
+  familyId: string; // Refresh token family ID (Milestone 035)
+  generation: number; // Monotonically increasing generation number in family (0, 1, 2, ...)
+  tokenVersion: number; // User tokenVersion
+  clientType: ClientType; // Client category
+  iss: string; // Issuer
+  aud: string; // Audience
+  exp: number; // Expiration timestamp in seconds
+  iat: number; // Issued at timestamp in seconds
+  jti: string; // Unique token identifier
 }
 
 export interface AuthCookieOptions {

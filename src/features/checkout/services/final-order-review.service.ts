@@ -15,11 +15,7 @@
 
 import { createHash } from 'crypto';
 import { prisma } from '@/shared/database/prisma';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 import { normalizeBangladeshPhone, maskBangladeshPhone } from '@/shared/utils/phone';
 import {
   OrderReviewDTO,
@@ -107,53 +103,51 @@ export class FinalOrderReviewService {
     );
 
     // 4. Map Multi-Vendor Seller Packages
-    const packages: OrderReviewSellerPackageDTO[] = calculation.sellerGroups.map(
-      (group, idx) => {
-        const isInsideDhaka = recipient.division.toUpperCase() === 'DHAKA';
-        const minDays = isInsideDhaka ? 1 : 2;
-        const maxDays = isInsideDhaka ? 2 : 4;
-        const promiseText = isInsideDhaka
-          ? '1-2 Business Days (Dhaka Metro Express)'
-          : '2-4 Business Days (Nationwide Delivery)';
+    const packages: OrderReviewSellerPackageDTO[] = calculation.sellerGroups.map((group, idx) => {
+      const isInsideDhaka = recipient.division.toUpperCase() === 'DHAKA';
+      const minDays = isInsideDhaka ? 1 : 2;
+      const maxDays = isInsideDhaka ? 2 : 4;
+      const promiseText = isInsideDhaka
+        ? '1-2 Business Days (Dhaka Metro Express)'
+        : '2-4 Business Days (Nationwide Delivery)';
 
-        const items: OrderReviewItemDTO[] = group.items.map((i) => ({
-          variantId: i.variantId,
-          productTitle: i.productTitle,
-          variantTitle: i.variantTitle,
-          sku: i.sku,
-          unitPricePoisha: i.unitPricePoisha,
-          unitPriceBdtFormatted: i.unitPriceBdtFormatted,
-          quantity: i.quantity,
-          lineTotalPoisha: i.lineTotalPoisha,
-          lineTotalBdtFormatted: i.lineTotalBdtFormatted,
-          productPointSnapshot: i.productPointSnapshot,
-          totalProductPoints: i.totalProductPoints,
-          imageUrl: null,
-        }));
+      const items: OrderReviewItemDTO[] = group.items.map((i) => ({
+        variantId: i.variantId,
+        productTitle: i.productTitle,
+        variantTitle: i.variantTitle,
+        sku: i.sku,
+        unitPricePoisha: i.unitPricePoisha,
+        unitPriceBdtFormatted: i.unitPriceBdtFormatted,
+        quantity: i.quantity,
+        lineTotalPoisha: i.lineTotalPoisha,
+        lineTotalBdtFormatted: i.lineTotalBdtFormatted,
+        productPointSnapshot: i.productPointSnapshot,
+        totalProductPoints: i.totalProductPoints,
+        imageUrl: null,
+      }));
 
-        return {
-          sellerId: group.sellerId,
-          sellerName: group.sellerName,
-          sellerSlug: group.sellerSlug,
-          packageNumber: idx + 1,
-          courierProvider: group.courierProvider,
-          estimatedDeliveryMinDays: minDays,
-          estimatedDeliveryMaxDays: maxDays,
-          deliveryPromiseText: promiseText,
-          subtotalPoisha: group.subtotalPoisha,
-          subtotalBdtFormatted: group.subtotalBdtFormatted,
-          shippingFeePoisha: group.shippingFeePoisha,
-          shippingFeeBdtFormatted: group.shippingFeeBdtFormatted,
-          isFreeShipping: group.isFreeShipping,
-          taxPoisha: group.taxPoisha,
-          taxBdtFormatted: group.taxBdtFormatted,
-          totalPoisha: group.totalPoisha,
-          totalBdtFormatted: group.totalBdtFormatted,
-          totalProductPoints: group.totalProductPoints,
-          items,
-        };
-      }
-    );
+      return {
+        sellerId: group.sellerId,
+        sellerName: group.sellerName,
+        sellerSlug: group.sellerSlug,
+        packageNumber: idx + 1,
+        courierProvider: group.courierProvider,
+        estimatedDeliveryMinDays: minDays,
+        estimatedDeliveryMaxDays: maxDays,
+        deliveryPromiseText: promiseText,
+        subtotalPoisha: group.subtotalPoisha,
+        subtotalBdtFormatted: group.subtotalBdtFormatted,
+        shippingFeePoisha: group.shippingFeePoisha,
+        shippingFeeBdtFormatted: group.shippingFeeBdtFormatted,
+        isFreeShipping: group.isFreeShipping,
+        taxPoisha: group.taxPoisha,
+        taxBdtFormatted: group.taxBdtFormatted,
+        totalPoisha: group.totalPoisha,
+        totalBdtFormatted: group.totalBdtFormatted,
+        totalProductPoints: group.totalProductPoints,
+        items,
+      };
+    });
 
     // 5. Check Readiness & Payment Method Availability
     const blockingReasons: string[] = [];
@@ -212,7 +206,8 @@ export class FinalOrderReviewService {
         titleBn: 'শর্তাবলী ও নিয়মাবলী',
         version: CURRENT_TERMS_VERSION,
         summaryEn: 'I agree to the AlifWorld Platform Terms of Service and purchasing rules.',
-        summaryBn: 'আমি আলিফওয়ার্ল্ড প্ল্যাটফর্মের সেবার শর্তাবলী ও ক্রয়ের নিয়মাবলীতে সম্মতি দিচ্ছি।',
+        summaryBn:
+          'আমি আলিফওয়ার্ল্ড প্ল্যাটফর্মের সেবার শর্তাবলী ও ক্রয়ের নিয়মাবলীতে সম্মতি দিচ্ছি।',
         linkUrl: '/terms',
         isRequired: true,
       },
@@ -222,7 +217,8 @@ export class FinalOrderReviewService {
         titleBn: 'গোপনীয়তা ও তথ্য সুরক্ষা নীতি',
         version: CURRENT_PRIVACY_VERSION,
         summaryEn: 'I consent to the collection and processing of delivery contact information.',
-        summaryBn: 'ডেলিভারি ও অর্ডার প্রক্রিয়াকরণের জন্য প্রয়োজনীয় তথ্যের ব্যবহারে সম্মতি দিচ্ছি।',
+        summaryBn:
+          'ডেলিভারি ও অর্ডার প্রক্রিয়াকরণের জন্য প্রয়োজনীয় তথ্যের ব্যবহারে সম্মতি দিচ্ছি।',
         linkUrl: '/privacy',
         isRequired: true,
       },
@@ -232,7 +228,8 @@ export class FinalOrderReviewService {
         titleBn: '৭ দিনের রিটার্ন ও রিফান্ড পলিসি',
         version: CURRENT_RETURN_POLICY_VERSION,
         summaryEn: 'I acknowledge the 7-day doorstep return and inspection policy.',
-        summaryBn: 'পণ্য গ্রহণের ৭ দিনের মধ্যে প্রযোজ্য ক্ষেত্রে রিটার্ন ও রিফান্ড নীতি স্বীকার করছি।',
+        summaryBn:
+          'পণ্য গ্রহণের ৭ দিনের মধ্যে প্রযোজ্য ক্ষেত্রে রিটার্ন ও রিফান্ড নীতি স্বীকার করছি।',
         linkUrl: '/returns',
         isRequired: true,
       },
@@ -244,7 +241,8 @@ export class FinalOrderReviewService {
         titleEn: 'Cash on Delivery Commitment Agreement',
         titleBn: 'ক্যাশ অন ডেলিভারি অঙ্গীকারনামা',
         version: CURRENT_COD_AGREEMENT_VERSION,
-        summaryEn: 'I commit to receiving the parcel upon delivery and paying the exact order amount in cash.',
+        summaryEn:
+          'I commit to receiving the parcel upon delivery and paying the exact order amount in cash.',
         summaryBn: 'ডেলিভারির সময় পার্সেল গ্রহণ করে সম্পূর্ণ মূল্য নগদ পরিশোধ করার অঙ্গীকার করছি।',
         linkUrl: '/cod-agreement',
         isRequired: true,

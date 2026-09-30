@@ -245,14 +245,11 @@ describe('Milestone 141: Seller Fulfillment Order API Integration Tests', () => 
       const getSpy = spyOn(
         sellerFulfillmentOrderService,
         'getSellerFulfillmentOrder'
-      ).mockRejectedValue(
-        new NotFoundError("Fulfillment order 'sfg_nonexistent' not found.")
-      );
+      ).mockRejectedValue(new NotFoundError("Fulfillment order 'sfg_nonexistent' not found."));
 
-      const req = new NextRequest(
-        'http://localhost:3000/api/v1/seller/orders/sfg_nonexistent',
-        { method: 'GET' }
-      );
+      const req = new NextRequest('http://localhost:3000/api/v1/seller/orders/sfg_nonexistent', {
+        method: 'GET',
+      });
       const res = await getSellerOrderRoute(req, {
         params: Promise.resolve({ groupId: 'sfg_nonexistent' }),
       });

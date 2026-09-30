@@ -1,9 +1,9 @@
 /**
  * AlifWorld Server-Side Translation & Locale Access Utilities
- * 
+ *
  * Provides server-side translation resolution, message interpolation,
  * and locale extraction for Next.js Server Components and Route Handlers.
- * 
+ *
  * Invariants: ADR-0003, Phase 06 Milestone 051
  */
 

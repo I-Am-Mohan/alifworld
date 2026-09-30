@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
 import * as authzModule from '@/shared/authz';
 import {
   GET as listQuestionsRoute,
@@ -14,6 +14,7 @@ import { productQnaService } from '@/features/qna';
 import { NextRequest } from 'next/server';
 
 describe('Milestone 126: Product Q&A & Seller Moderation REST API Integration Tests', () => {
+  afterEach(() => mock.restore());
   const customerActor = {
     userId: 'usr_customer_01',
     roles: ['CUSTOMER'],
@@ -203,14 +204,11 @@ describe('Milestone 126: Product Q&A & Seller Moderation REST API Integration Te
   it('POST /api/v1/admin/questions/[id]/moderate updates status', async () => {
     spyOn(authzModule, 'authenticateRequest').mockReturnValue(adminActor as any);
 
-    const req = new NextRequest(
-      'http://localhost:3000/api/v1/admin/questions/q_101/moderate',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'APPROVED' }),
-      }
-    );
+    const req = new NextRequest('http://localhost:3000/api/v1/admin/questions/q_101/moderate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'APPROVED' }),
+    });
     const res = await moderateQuestionRoute(req, {
       params: Promise.resolve({ id: 'q_101' }),
     });

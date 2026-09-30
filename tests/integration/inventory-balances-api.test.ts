@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as listBalancesRoute } from '@/app/api/v1/inventory/balances/route';
 import { GET as getBalanceRoute } from '@/app/api/v1/inventory/balances/[id]/route';
@@ -52,21 +53,46 @@ describe('Milestone 102: Stock Balances & Inventory API Integration Tests', () =
 
     InventoryService.prototype.listBalances = async () => [mockStockBalance as any];
     InventoryService.prototype.receiveStock = async (input: any) => ({
-      balance: { ...mockStockBalance, onHand: mockStockBalance.onHand + input.quantity, available: mockStockBalance.available + input.quantity } as any,
-      movement: { id: 'mov_intake_01', movementType: 'RECEIVE', quantityDelta: input.quantity } as any,
+      balance: {
+        ...mockStockBalance,
+        onHand: mockStockBalance.onHand + input.quantity,
+        available: mockStockBalance.available + input.quantity,
+      } as any,
+      movement: {
+        id: 'mov_intake_01',
+        movementType: 'RECEIVE',
+        quantityDelta: input.quantity,
+      } as any,
     });
     InventoryService.prototype.adjustStock = async (input: any) => ({
-      balance: { ...mockStockBalance, onHand: mockStockBalance.onHand + input.quantityDelta } as any,
-      movement: { id: 'mov_adjust_01', movementType: input.movementType, quantityDelta: input.quantityDelta } as any,
+      balance: {
+        ...mockStockBalance,
+        onHand: mockStockBalance.onHand + input.quantityDelta,
+      } as any,
+      movement: {
+        id: 'mov_adjust_01',
+        movementType: input.movementType,
+        quantityDelta: input.quantityDelta,
+      } as any,
     });
     InventoryService.prototype.quarantineStock = async (input: any) => ({
-      balance: { ...mockStockBalance, quarantined: mockStockBalance.quarantined + input.quantity, available: mockStockBalance.available - input.quantity } as any,
-      movement: { id: 'mov_quarantine_01', movementType: 'ADJUST', quantityDelta: -input.quantity } as any,
+      balance: {
+        ...mockStockBalance,
+        quarantined: mockStockBalance.quarantined + input.quantity,
+        available: mockStockBalance.available - input.quantity,
+      } as any,
+      movement: {
+        id: 'mov_quarantine_01',
+        movementType: 'ADJUST',
+        quantityDelta: -input.quantity,
+      } as any,
     });
   });
 
   it('GET /api/v1/inventory/balances returns HTTP 200 with stock balances list', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/inventory/balances?warehouseId=wh_dhk_001');
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/inventory/balances?warehouseId=wh_dhk_001'
+    );
     const res = await listBalancesRoute(req);
 
     expect(res.status).toBe(200);

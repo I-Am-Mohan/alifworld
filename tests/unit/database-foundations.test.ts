@@ -1,9 +1,9 @@
 /**
  * Unit Tests for PostgreSQL & Prisma Database Foundations
- * 
+ *
  * Verifies Prisma singleton creation, error translation, pagination parsing,
  * tenant isolation assertion, and health probe logic.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  */
 
@@ -58,7 +58,8 @@ describe('PostgreSQL & Prisma Foundations Unit Tests', () => {
       const p2025Error = {
         code: 'P2025',
         meta: { cause: 'Record to update not found.' },
-        message: 'An operation failed because it depends on one or more records that were required but not found.',
+        message:
+          'An operation failed because it depends on one or more records that were required but not found.',
       };
 
       const result = translateDatabaseError(p2025Error, 'UpdateProduct');

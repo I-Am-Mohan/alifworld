@@ -4,13 +4,14 @@
 **Date**: 2026-09-22  
 **Deciders**: AlifWorld Architecture, Legal & Risk Governance Team  
 **Milestone Reference**: [Milestone 008](../../AlifWorld-300-Milestones/008-risk-register-and-compliance-approval-gates.md)  
-**Supporting Specification**: [Risk Register & Compliance Approval Gates](../architecture/risk-register-and-compliance-gates.md)  
+**Supporting Specification**: [Risk Register & Compliance Approval Gates](../architecture/risk-register-and-compliance-gates.md)
 
 ---
 
 ## Context and Problem Statement
 
 AlifWorld operates in a complex regulatory and commercial environment in Bangladesh. Marketing presentations and historical proposals contain ambitious business concepts—including term-deposit shopping accounts (Advanced Shopping), weekly lottery draws (Good-Luck Lottery), multi-tier affiliate referral chains, and unbacked reward pools—that present severe legal and financial hazards:
+
 1. Deposit-taking without a banking license violates the Bangladesh Bank Companies Act.
 2. Unlicensed lotteries violate the Public Gambling Act.
 3. Multi-tier pyramid compensation structures violate Direct Selling regulations.
@@ -33,10 +34,13 @@ A formal Architecture Decision Record is required to lock these high-risk areas 
 The AlifWorld architecture formally establishes the **Risk Register and Compliance Approval Gates Framework**:
 
 ### 1. Enterprise Risk Register Adoption
+
 All platform engineering must comply with the mitigations established in the 12-point Risk Register ([`docs/architecture/risk-register-and-compliance-gates.md`](../architecture/risk-register-and-compliance-gates.md)), covering Regulatory, Financial, Security, Technical, Operational, and Governance risks.
 
 ### 2. Operationalization of the Seven Compliance Gates
+
 The 7 compliance approval gates are codified in software:
+
 - **GATE-01 (Eligible Order Status)**: Points snapshot at checkout but post to active balance only after return window expiration (`COMPLETED`).
 - **GATE-02 (Reward Pool Funding)**: Reward distributions require verified double-entry pre-funding from `ESCROW_REWARD_RESERVE`.
 - **GATE-03 (Rank Qualification)**: Governed by versioned Admin configuration; cash rank bonuses are decoupled from marketing non-cash gifts.
@@ -46,7 +50,9 @@ The 7 compliance approval gates are codified in software:
 - **GATE-07 (Lottery / Gaming)**: Hard-gated behind `FEATURE_LOTTERY_ENABLED=false` pending legal certification.
 
 ### 3. Technical Behavior for Disabled Gates
+
 When a requested capability is gated:
+
 - Route Handlers must return HTTP `403 Forbidden` or `501 Not Implemented` with error code `FEATURE_PENDING_REGULATORY_APPROVAL`.
 - UI surfaces must render clear disabled-state notices; fake success journeys or placeholder screens are prohibited.
 - Background cron workers must skip execution runs and log an auditable skip record.
@@ -56,11 +62,13 @@ When a requested capability is gated:
 ## Consequences
 
 ### Positive:
+
 - Protects founders, operators, and platform infrastructure from severe legal sanctions and financial fraud.
 - Eliminates speculative coding by AI agents while allowing schema and adapter scaffolding to proceed cleanly.
 - Establishes a verifiable, auditable compliance trail for regulatory authorities.
 
 ### Negative / Trade-offs:
+
 - Advanced Shopping and Good-Luck lottery will not be available to end-users at initial soft launch.
 
 ---

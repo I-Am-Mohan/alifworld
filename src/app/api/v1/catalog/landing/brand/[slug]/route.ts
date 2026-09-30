@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/catalog/landing/brand/[slug]
  * Retrieves brand profile, verified authority status, and brand product catalog with category facets.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
     const searchParams = req.nextUrl.searchParams;

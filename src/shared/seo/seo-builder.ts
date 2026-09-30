@@ -1,9 +1,9 @@
 /**
  * AlifWorld Centralized SEO & Structured Data Builder
- * 
+ *
  * Generates canonical URLs, hreflang alternates (en-BD, bn-BD), OpenGraph / Twitter
  * social cards, and Schema.org JSON-LD structured data for Google rich snippets.
- * 
+ *
  * References:
  * - docs/architecture/scope-boundaries-and-domain-map.md
  * - docs/architecture/continuous-integration-and-quality-gates.md
@@ -81,7 +81,8 @@ export class SeoBuilder {
     const description =
       isBn && product.descriptionBn
         ? product.descriptionBn
-        : product.description || 'Verified authentic product on AlifWorld with nationwide delivery across Bangladesh.';
+        : product.description ||
+          'Verified authentic product on AlifWorld with nationwide delivery across Bangladesh.';
 
     const pageTitle = `${title} | AlifWorld Bangladesh`;
     const canonicalPath = `/products/${product.slug}`;
@@ -328,7 +329,8 @@ export class SeoBuilder {
 
     const canonicalPath = `/sellers/${seller.slug}`;
     const canonicalUrl = `${APP_BASE_URL}${canonicalPath}`;
-    const imageUrl = seller.bannerUrl || seller.logoUrl || `${APP_BASE_URL}/images/og-seller-default.jpg`;
+    const imageUrl =
+      seller.bannerUrl || seller.logoUrl || `${APP_BASE_URL}/images/og-seller-default.jpg`;
 
     const jsonLd = {
       '@context': 'https://schema.org',

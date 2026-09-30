@@ -3,7 +3,7 @@
 **Document Type**: Architectural Specification & QA Guide  
 **Milestone Reference**: [Milestone 018](../../AlifWorld-300-Milestones/018-establish-unit-integration-and-end-to-end-test-frameworks.md)  
 **Status**: Active / Approved  
-**Related Decision**: [ADR-0018](../decisions/0018-testing-frameworks-and-test-pyramid.md)  
+**Related Decision**: [ADR-0018](../decisions/0018-testing-frameworks-and-test-pyramid.md)
 
 ---
 
@@ -36,6 +36,7 @@ To guarantee zero regressions, deterministic accounting, and high deployment vel
 ## 2. Test Pyramid Layers
 
 ### 2.1 Unit Testing Layer (`tests/unit/`)
+
 - **Execution Speed**: Sub-millisecond per test file; executed fully in-memory without external I/O.
 - **Coverage Scope**:
   - Branded domain primitives: `Poisha` (integer minor units) and `ProductPoint` (discrete loyalty units).
@@ -46,6 +47,7 @@ To guarantee zero regressions, deterministic accounting, and high deployment vel
   - Domain error serialization and status code mapping (`error-hierarchy.test.ts`).
 
 ### 2.2 Integration Testing Layer (`tests/integration/`)
+
 - **Execution Scope**: Module boundary verification and HTTP route handler contracts without requiring a live network.
 - **Coverage Scope**:
   - System health probes: `/api/health/live` (process uptime) and `/api/health/ready` (dependency and gate checks).
@@ -54,6 +56,7 @@ To guarantee zero regressions, deterministic accounting, and high deployment vel
   - BullMQ background worker queue registry and event handlers.
 
 ### 2.3 End-to-End Smoke Testing Layer (`tests/e2e/`)
+
 - **Execution Scope**: Verifying that rendered React components and page surfaces instantiate without runtime errors and present correct navigation, brand elements, and access boundaries.
 - **Coverage Scope**:
   - Customer Storefront surface: [`src/app/page.tsx`](../../src/app/page.tsx) with AlifLogo, brand tokens, and navigation links.
@@ -65,6 +68,7 @@ To guarantee zero regressions, deterministic accounting, and high deployment vel
 ## 3. Shared Test Helpers and Fixtures (`tests/helpers/`)
 
 To avoid test duplication and ensure reproducible fixtures, [`tests/helpers/test-utils.ts`](../../tests/helpers/test-utils.ts) provides standard utilities:
+
 - `createMockSession(overrides)`: Generates typed user sessions across `CUSTOMER`, `SELLER`, `ADMIN`, and `SUPER_ADMIN` roles.
 - `createMockRequest(url, options)`: Creates mock Next.js Request instances with configured HTTP methods, headers, and JSON bodies.
 
@@ -74,12 +78,12 @@ To avoid test duplication and ensure reproducible fixtures, [`tests/helpers/test
 
 All test commands are standardized in [`package.json`](../../package.json) and executed via Bun:
 
-| Script Command | Target Directory | Description |
-| :--- | :--- | :--- |
-| `bun run test` | `tests/` | Executes all test suites across the repository. |
-| `bun run test:unit` | `tests/unit` | Executes pure unit tests with zero I/O dependencies. |
+| Script Command             | Target Directory    | Description                                          |
+| :------------------------- | :------------------ | :--------------------------------------------------- |
+| `bun run test`             | `tests/`            | Executes all test suites across the repository.      |
+| `bun run test:unit`        | `tests/unit`        | Executes pure unit tests with zero I/O dependencies. |
 | `bun run test:integration` | `tests/integration` | Executes route handler and worker integration tests. |
-| `bun run test:e2e` | `tests/e2e` | Executes end-to-end component smoke tests. |
+| `bun run test:e2e`         | `tests/e2e`         | Executes end-to-end component smoke tests.           |
 
 ---
 

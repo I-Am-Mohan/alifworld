@@ -92,7 +92,10 @@ export default function SharedWishlistPage() {
       </header>
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6"
+      >
         {loading ? (
           <div className="p-20 text-center text-xs text-slate-500 font-medium">
             Loading shared wishlist items...
@@ -104,7 +107,10 @@ export default function SharedWishlistPage() {
               {isBn ? 'উইশলিস্টটি অনুপলব্ধ' : 'Wishlist Link Unavailable'}
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              {error || (isBn ? 'এই শেয়ার লিংকটি ব্যক্তিগত করা হয়েছে অথবা এর মেয়াদ শেষ হয়েছে।' : 'This shared wishlist link is private or has been revoked by the owner.')}
+              {error ||
+                (isBn
+                  ? 'এই শেয়ার লিংকটি ব্যক্তিগত করা হয়েছে অথবা এর মেয়াদ শেষ হয়েছে।'
+                  : 'This shared wishlist link is private or has been revoked by the owner.')}
             </p>
             <Link
               href="/"
@@ -123,7 +129,8 @@ export default function SharedWishlistPage() {
                     Share-Safe Link
                   </Badge>
                   <span className="text-xs text-slate-500">
-                    Curated by <strong className="text-slate-800">{wishlist.ownerDisplayName}</strong>
+                    Curated by{' '}
+                    <strong className="text-slate-800">{wishlist.ownerDisplayName}</strong>
                   </span>
                 </div>
                 <h2 className="text-xl font-black text-slate-900">{wishlist.title}</h2>
@@ -180,14 +187,16 @@ export default function SharedWishlistPage() {
 
                     {item.notes && (
                       <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-600 italic">
-                        "{item.notes}"
+                        &quot;{item.notes}&quot;
                       </div>
                     )}
                   </div>
 
                   <div className="p-5 pt-0 border-t border-slate-100 bg-slate-50/50 mt-4 flex items-center justify-between">
                     <div>
-                      <div className="text-base font-black text-slate-900">৳{item.priceBdtFormatted}</div>
+                      <div className="text-base font-black text-slate-900">
+                        ৳{item.priceBdtFormatted}
+                      </div>
                       <div className="text-[10px] font-black text-[#FF6A00]">
                         ★ +{item.productPoint} Points
                       </div>

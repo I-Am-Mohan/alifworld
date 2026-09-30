@@ -101,48 +101,198 @@ async function seed() {
   // ----------------------------------------------------------------------------
   const permissionsData = [
     // IAM & Users
-    { code: 'users:read', name: 'View Users', module: 'IAM', description: 'View user profiles and list users' },
-    { code: 'users:write', name: 'Manage Users', module: 'IAM', description: 'Create and update user accounts' },
-    { code: 'users:delete', name: 'Delete Users', module: 'IAM', description: 'Soft-delete user accounts' },
-    { code: 'users:suspend', name: 'Suspend Users', module: 'IAM', description: 'Suspend or restore user access' },
-    { code: 'roles:read', name: 'View Roles', module: 'IAM', description: 'View RBAC roles and permissions' },
-    { code: 'roles:manage', name: 'Manage Roles', module: 'IAM', description: 'Create and edit custom roles' },
-    { code: 'roles:assign', name: 'Assign Roles', module: 'IAM', description: 'Assign or revoke roles from users' },
-    { code: 'permissions:read', name: 'View Permissions', module: 'IAM', description: 'Inspect permission catalogue' },
+    {
+      code: 'users:read',
+      name: 'View Users',
+      module: 'IAM',
+      description: 'View user profiles and list users',
+    },
+    {
+      code: 'users:write',
+      name: 'Manage Users',
+      module: 'IAM',
+      description: 'Create and update user accounts',
+    },
+    {
+      code: 'users:delete',
+      name: 'Delete Users',
+      module: 'IAM',
+      description: 'Soft-delete user accounts',
+    },
+    {
+      code: 'users:suspend',
+      name: 'Suspend Users',
+      module: 'IAM',
+      description: 'Suspend or restore user access',
+    },
+    {
+      code: 'roles:read',
+      name: 'View Roles',
+      module: 'IAM',
+      description: 'View RBAC roles and permissions',
+    },
+    {
+      code: 'roles:manage',
+      name: 'Manage Roles',
+      module: 'IAM',
+      description: 'Create and edit custom roles',
+    },
+    {
+      code: 'roles:assign',
+      name: 'Assign Roles',
+      module: 'IAM',
+      description: 'Assign or revoke roles from users',
+    },
+    {
+      code: 'permissions:read',
+      name: 'View Permissions',
+      module: 'IAM',
+      description: 'Inspect permission catalogue',
+    },
 
     // Seller
-    { code: 'sellers:read', name: 'View Sellers', module: 'SELLER', description: 'View seller directory and KYC documents' },
-    { code: 'sellers:verify', name: 'Verify Sellers', module: 'SELLER', description: 'Approve or reject seller KYC dossiers' },
-    { code: 'sellers:suspend', name: 'Suspend Sellers', module: 'SELLER', description: 'Suspend merchant store operations' },
-    { code: 'seller:profile:manage', name: 'Manage Store Profile', module: 'SELLER', description: 'Configure store settings and profile' },
-    { code: 'seller:staff:manage', name: 'Manage Store Staff', module: 'SELLER', description: 'Delegate roles to seller staff' },
+    {
+      code: 'sellers:read',
+      name: 'View Sellers',
+      module: 'SELLER',
+      description: 'View seller directory and KYC documents',
+    },
+    {
+      code: 'sellers:verify',
+      name: 'Verify Sellers',
+      module: 'SELLER',
+      description: 'Approve or reject seller KYC dossiers',
+    },
+    {
+      code: 'sellers:suspend',
+      name: 'Suspend Sellers',
+      module: 'SELLER',
+      description: 'Suspend merchant store operations',
+    },
+    {
+      code: 'seller:profile:manage',
+      name: 'Manage Store Profile',
+      module: 'SELLER',
+      description: 'Configure store settings and profile',
+    },
+    {
+      code: 'seller:staff:manage',
+      name: 'Manage Store Staff',
+      module: 'SELLER',
+      description: 'Delegate roles to seller staff',
+    },
 
     // Catalog
-    { code: 'catalog:read', name: 'Browse Catalog', module: 'CATALOG', description: 'View categories, brands, and products' },
-    { code: 'catalog:write', name: 'Manage Catalog', module: 'CATALOG', description: 'Create and edit products and variants' },
-    { code: 'catalog:publish', name: 'Publish Products', module: 'CATALOG', description: 'Publish product listings to storefront' },
-    { code: 'catalog:archive', name: 'Archive Products', module: 'CATALOG', description: 'Archive products from active catalog' },
+    {
+      code: 'catalog:read',
+      name: 'Browse Catalog',
+      module: 'CATALOG',
+      description: 'View categories, brands, and products',
+    },
+    {
+      code: 'catalog:write',
+      name: 'Manage Catalog',
+      module: 'CATALOG',
+      description: 'Create and edit products and variants',
+    },
+    {
+      code: 'catalog:publish',
+      name: 'Publish Products',
+      module: 'CATALOG',
+      description: 'Publish product listings to storefront',
+    },
+    {
+      code: 'catalog:archive',
+      name: 'Archive Products',
+      module: 'CATALOG',
+      description: 'Archive products from active catalog',
+    },
 
     // Orders
-    { code: 'orders:read', name: 'View Orders', module: 'ORDER', description: 'Inspect customer and fulfillment orders' },
-    { code: 'orders:manage', name: 'Process Orders', module: 'ORDER', description: 'Update order pack and handover states' },
-    { code: 'orders:cancel', name: 'Cancel Orders', module: 'ORDER', description: 'Cancel active customer orders' },
-    { code: 'orders:refund', name: 'Process Refunds', module: 'ORDER', description: 'Inspect returns and issue refunds' },
+    {
+      code: 'orders:read',
+      name: 'View Orders',
+      module: 'ORDER',
+      description: 'Inspect customer and fulfillment orders',
+    },
+    {
+      code: 'orders:manage',
+      name: 'Process Orders',
+      module: 'ORDER',
+      description: 'Update order pack and handover states',
+    },
+    {
+      code: 'orders:cancel',
+      name: 'Cancel Orders',
+      module: 'ORDER',
+      description: 'Cancel active customer orders',
+    },
+    {
+      code: 'orders:refund',
+      name: 'Process Refunds',
+      module: 'ORDER',
+      description: 'Inspect returns and issue refunds',
+    },
 
     // Finance
-    { code: 'finance:read', name: 'View Financials', module: 'FINANCE', description: 'Inspect wallet ledgers and transactions' },
-    { code: 'finance:ledger', name: 'Post Ledger Entries', module: 'FINANCE', description: 'Post manual journal entries' },
-    { code: 'finance:adjust', name: 'Maker-Checker Approval', module: 'FINANCE', description: 'Approve high-value balance adjustments' },
-    { code: 'finance:payout', name: 'Process Payouts', module: 'FINANCE', description: 'Authorize seller withdrawal disbursements' },
+    {
+      code: 'finance:read',
+      name: 'View Financials',
+      module: 'FINANCE',
+      description: 'Inspect wallet ledgers and transactions',
+    },
+    {
+      code: 'finance:ledger',
+      name: 'Post Ledger Entries',
+      module: 'FINANCE',
+      description: 'Post manual journal entries',
+    },
+    {
+      code: 'finance:adjust',
+      name: 'Maker-Checker Approval',
+      module: 'FINANCE',
+      description: 'Approve high-value balance adjustments',
+    },
+    {
+      code: 'finance:payout',
+      name: 'Process Payouts',
+      module: 'FINANCE',
+      description: 'Authorize seller withdrawal disbursements',
+    },
 
     // Inventory & Warehouses
-    { code: 'inventory:read', name: 'View Inventory', module: 'INVENTORY', description: 'Inspect stock balances, warehouse stock, and movement ledgers' },
-    { code: 'inventory:write', name: 'Manage Inventory', module: 'INVENTORY', description: 'Intake stock, adjust balances, and manage warehouses' },
-    { code: 'inventory:adjust', name: 'Audit Adjustments', module: 'INVENTORY', description: 'Execute damage, write-off, and audit stock adjustments' },
+    {
+      code: 'inventory:read',
+      name: 'View Inventory',
+      module: 'INVENTORY',
+      description: 'Inspect stock balances, warehouse stock, and movement ledgers',
+    },
+    {
+      code: 'inventory:write',
+      name: 'Manage Inventory',
+      module: 'INVENTORY',
+      description: 'Intake stock, adjust balances, and manage warehouses',
+    },
+    {
+      code: 'inventory:adjust',
+      name: 'Audit Adjustments',
+      module: 'INVENTORY',
+      description: 'Execute damage, write-off, and audit stock adjustments',
+    },
 
     // System
-    { code: 'system:config', name: 'Platform Settings', module: 'SYSTEM', description: 'Manage platform configuration and flags' },
-    { code: 'system:audit_read', name: 'View Audit Logs', module: 'SYSTEM', description: 'Review security and compliance audits' },
+    {
+      code: 'system:config',
+      name: 'Platform Settings',
+      module: 'SYSTEM',
+      description: 'Manage platform configuration and flags',
+    },
+    {
+      code: 'system:audit_read',
+      name: 'View Audit Logs',
+      module: 'SYSTEM',
+      description: 'Review security and compliance audits',
+    },
   ];
 
   const permissionMap = new Map<string, string>();
@@ -186,13 +336,27 @@ async function seed() {
       description: 'Administrative operator managing sellers, catalog, and compliance',
       isSystem: true,
       permissions: [
-        'users:read', 'users:write', 'users:suspend', 'roles:read', 'permissions:read',
-        'sellers:read', 'sellers:verify', 'sellers:suspend',
-        'catalog:read', 'catalog:write', 'catalog:publish', 'catalog:archive',
-        'orders:read', 'orders:manage', 'orders:refund',
-        'finance:read', 'finance:payout',
-        'inventory:read', 'inventory:write',
-        'system:config', 'system:audit_read',
+        'users:read',
+        'users:write',
+        'users:suspend',
+        'roles:read',
+        'permissions:read',
+        'sellers:read',
+        'sellers:verify',
+        'sellers:suspend',
+        'catalog:read',
+        'catalog:write',
+        'catalog:publish',
+        'catalog:archive',
+        'orders:read',
+        'orders:manage',
+        'orders:refund',
+        'finance:read',
+        'finance:payout',
+        'inventory:read',
+        'inventory:write',
+        'system:config',
+        'system:audit_read',
       ],
     },
     {
@@ -201,11 +365,16 @@ async function seed() {
       description: 'Tenant merchant store owner managing products, inventory, and finances',
       isSystem: true,
       permissions: [
-        'seller:profile:manage', 'seller:staff:manage',
-        'catalog:read', 'catalog:write', 'catalog:publish',
-        'orders:read', 'orders:manage',
+        'seller:profile:manage',
+        'seller:staff:manage',
+        'catalog:read',
+        'catalog:write',
+        'catalog:publish',
+        'orders:read',
+        'orders:manage',
         'finance:read',
-        'inventory:read', 'inventory:write',
+        'inventory:read',
+        'inventory:write',
       ],
     },
     {
@@ -214,9 +383,12 @@ async function seed() {
       description: 'Merchant manager overseeing order fulfillment and stock levels',
       isSystem: true,
       permissions: [
-        'catalog:read', 'catalog:write',
-        'orders:read', 'orders:manage',
-        'inventory:read', 'inventory:write',
+        'catalog:read',
+        'catalog:write',
+        'orders:read',
+        'orders:manage',
+        'inventory:read',
+        'inventory:write',
       ],
     },
     {
@@ -224,30 +396,21 @@ async function seed() {
       name: 'Seller Store Staff',
       description: 'Merchant operations staff packing orders and handling warehouse intake',
       isSystem: true,
-      permissions: [
-        'catalog:read',
-        'orders:read', 'orders:manage',
-        'inventory:read',
-      ],
+      permissions: ['catalog:read', 'orders:read', 'orders:manage', 'inventory:read'],
     },
     {
       code: 'CUSTOMER',
       name: 'Registered Customer',
       description: 'Standard consumer account placing orders and earning loyalty points',
       isSystem: true,
-      permissions: [
-        'catalog:read',
-        'orders:read',
-      ],
+      permissions: ['catalog:read', 'orders:read'],
     },
     {
       code: 'RIDER',
       name: 'Delivery Rider',
       description: 'Logistics fulfillment agent completing delivery handovers',
       isSystem: true,
-      permissions: [
-        'orders:read', 'orders:manage',
-      ],
+      permissions: ['orders:read', 'orders:manage'],
     },
   ];
 
@@ -419,14 +582,54 @@ async function seed() {
   // 5. Foundational Standard Chart of Accounts (Double-Entry Ledger)
   // ----------------------------------------------------------------------------
   const accountsData = [
-    { code: '1010-CASH-GATEWAY', name: 'Cash at Digital Gateway (Asset)', type: 'ASSET', desc: 'Inward payments collected at bKash/Nagad' },
-    { code: '2010-CUSTOMER-MAIN-LIABILITY', name: 'Customer Main Wallet (Liability)', type: 'LIABILITY', desc: 'Customer withdrawable fiat balances' },
-    { code: '2020-CUSTOMER-SHOPPING-LIABILITY', name: 'Customer Shopping Wallet (Liability)', type: 'LIABILITY', desc: 'Customer store credit balances' },
-    { code: '2030-CUSTOMER-GOODLUCK-LIABILITY', name: 'Customer Good-Luck Wallet (Liability)', type: 'LIABILITY', desc: 'Customer promotional lottery balances' },
-    { code: '2040-CUSTOMER-CHARITY-LIABILITY', name: 'Customer Charity Wallet (Liability)', type: 'LIABILITY', desc: 'Customer allocated donation funds' },
-    { code: '4010-PLATFORM-COMMISSION-REVENUE', name: 'Marketplace Commission Revenue', type: 'REVENUE', desc: 'Standard 5% platform cut' },
-    { code: '4020-SERVICE-CHARGE-REVENUE', name: 'Platform Service Charge Revenue', type: 'REVENUE', desc: '10% reward service fee deduction' },
-    { code: '5010-PROMOTIONAL-REWARDS-EXPENSE', name: 'Promotional Rewards Expense Pool', type: 'EXPENSE', desc: 'Funded pool for buyer reward distribution' },
+    {
+      code: '1010-CASH-GATEWAY',
+      name: 'Cash at Digital Gateway (Asset)',
+      type: 'ASSET',
+      desc: 'Inward payments collected at bKash/Nagad',
+    },
+    {
+      code: '2010-CUSTOMER-MAIN-LIABILITY',
+      name: 'Customer Main Wallet (Liability)',
+      type: 'LIABILITY',
+      desc: 'Customer withdrawable fiat balances',
+    },
+    {
+      code: '2020-CUSTOMER-SHOPPING-LIABILITY',
+      name: 'Customer Shopping Wallet (Liability)',
+      type: 'LIABILITY',
+      desc: 'Customer store credit balances',
+    },
+    {
+      code: '2030-CUSTOMER-GOODLUCK-LIABILITY',
+      name: 'Customer Good-Luck Wallet (Liability)',
+      type: 'LIABILITY',
+      desc: 'Customer promotional lottery balances',
+    },
+    {
+      code: '2040-CUSTOMER-CHARITY-LIABILITY',
+      name: 'Customer Charity Wallet (Liability)',
+      type: 'LIABILITY',
+      desc: 'Customer allocated donation funds',
+    },
+    {
+      code: '4010-PLATFORM-COMMISSION-REVENUE',
+      name: 'Marketplace Commission Revenue',
+      type: 'REVENUE',
+      desc: 'Standard 5% platform cut',
+    },
+    {
+      code: '4020-SERVICE-CHARGE-REVENUE',
+      name: 'Platform Service Charge Revenue',
+      type: 'REVENUE',
+      desc: '10% reward service fee deduction',
+    },
+    {
+      code: '5010-PROMOTIONAL-REWARDS-EXPENSE',
+      name: 'Promotional Rewards Expense Pool',
+      type: 'EXPENSE',
+      desc: 'Funded pool for buyer reward distribution',
+    },
   ];
 
   for (const acc of accountsData) {
@@ -449,7 +652,9 @@ async function seed() {
       },
     });
   }
-  console.info(`✅ Seeded foundational Chart of Accounts (${accountsData.length} master accounts).`);
+  console.info(
+    `✅ Seeded foundational Chart of Accounts (${accountsData.length} master accounts).`
+  );
 
   // Record seed execution in AuditLog
   await prisma.auditLog.create({

@@ -34,30 +34,44 @@ describe('Milestone 092: Channel Pricing Authorization & Policy Integration', ()
 
   describe('PricingPolicy.canCreatePriceList', () => {
     it('allows ADMIN to create sitewide and seller-specific price lists', () => {
-      expect(PricingPolicy.canCreatePriceList(adminActor, { sellerId: null, channel: 'RETAIL' })).toBe(true);
-      expect(PricingPolicy.canCreatePriceList(adminActor, { sellerId: 'sel-store-aaaa', channel: 'B2B' })).toBe(true);
+      expect(
+        PricingPolicy.canCreatePriceList(adminActor, { sellerId: null, channel: 'RETAIL' })
+      ).toBe(true);
+      expect(
+        PricingPolicy.canCreatePriceList(adminActor, { sellerId: 'sel-store-aaaa', channel: 'B2B' })
+      ).toBe(true);
     });
 
     it('allows SELLER to create price lists for their own store', () => {
-      expect(PricingPolicy.canCreatePriceList(sellerA, { sellerId: 'sel-store-aaaa', channel: 'B2B' })).toBe(true);
+      expect(
+        PricingPolicy.canCreatePriceList(sellerA, { sellerId: 'sel-store-aaaa', channel: 'B2B' })
+      ).toBe(true);
     });
 
     it('prohibits SELLER from creating sitewide platform price lists (null sellerId)', () => {
-      expect(PricingPolicy.canCreatePriceList(sellerA, { sellerId: null, channel: 'RETAIL' })).toBe(false);
+      expect(PricingPolicy.canCreatePriceList(sellerA, { sellerId: null, channel: 'RETAIL' })).toBe(
+        false
+      );
     });
 
     it('prohibits SELLER from creating price lists for another sellerId', () => {
-      expect(PricingPolicy.canCreatePriceList(sellerA, { sellerId: 'sel-store-bbbb', channel: 'B2B' })).toBe(false);
+      expect(
+        PricingPolicy.canCreatePriceList(sellerA, { sellerId: 'sel-store-bbbb', channel: 'B2B' })
+      ).toBe(false);
     });
 
     it('prohibits CUSTOMER from creating price lists', () => {
-      expect(PricingPolicy.canCreatePriceList(customerUser, { sellerId: null, channel: 'RETAIL' })).toBe(false);
+      expect(
+        PricingPolicy.canCreatePriceList(customerUser, { sellerId: null, channel: 'RETAIL' })
+      ).toBe(false);
     });
   });
 
   describe('PricingPolicy.canUpdatePriceList', () => {
     it('allows ADMIN to update any price list', () => {
-      expect(PricingPolicy.canUpdatePriceList(adminActor, { sellerId: 'sel-store-aaaa' })).toBe(true);
+      expect(PricingPolicy.canUpdatePriceList(adminActor, { sellerId: 'sel-store-aaaa' })).toBe(
+        true
+      );
       expect(PricingPolicy.canUpdatePriceList(adminActor, { sellerId: null })).toBe(true);
     });
 

@@ -129,7 +129,9 @@ export default function B2BCommercePortalPage() {
   const handleCreateRfq = (e: React.FormEvent) => {
     e.preventDefault();
     if (newRfqQty < 50) {
-      showToast(isBn ? 'ন্যূনতম অর্ডারের পরিমাণ (MOQ) ৫০ টি।' : 'Minimum Order Quantity (MOQ) is 50 units.');
+      showToast(
+        isBn ? 'ন্যূনতম অর্ডারের পরিমাণ (MOQ) ৫০ টি।' : 'Minimum Order Quantity (MOQ) is 50 units.'
+      );
       return;
     }
 
@@ -160,7 +162,11 @@ export default function B2BCommercePortalPage() {
         return q;
       })
     );
-    showToast(isBn ? 'কোটেশন সফলভাবে গৃহীত হয়েছে!' : 'Quote accepted successfully! Ready for cart conversion.');
+    showToast(
+      isBn
+        ? 'কোটেশন সফলভাবে গৃহীত হয়েছে!'
+        : 'Quote accepted successfully! Ready for cart conversion.'
+    );
   };
 
   const handleConvertToCart = (quoteId: string) => {
@@ -172,7 +178,11 @@ export default function B2BCommercePortalPage() {
         return q;
       })
     );
-    showToast(isBn ? 'কোটেশন কার্টে রূপান্তর করা হয়েছে!' : 'Quote items added to Cart with locked negotiated pricing!');
+    showToast(
+      isBn
+        ? 'কোটেশন কার্টে রূপান্তর করা হয়েছে!'
+        : 'Quote items added to Cart with locked negotiated pricing!'
+    );
   };
 
   return (
@@ -199,7 +209,9 @@ export default function B2BCommercePortalPage() {
               <button
                 onClick={() => setActiveTab('rfqs')}
                 className={`px-3 py-1.5 rounded-lg transition-colors ${
-                  activeTab === 'rfqs' ? 'bg-slate-100 text-slate-900 font-bold' : 'hover:bg-slate-50'
+                  activeTab === 'rfqs'
+                    ? 'bg-slate-100 text-slate-900 font-bold'
+                    : 'hover:bg-slate-50'
                 }`}
               >
                 {isBn ? 'আরএফকিউ (RFQ)' : 'Requests for Quote (RFQs)'}
@@ -207,7 +219,9 @@ export default function B2BCommercePortalPage() {
               <button
                 onClick={() => setActiveTab('quotes')}
                 className={`px-3 py-1.5 rounded-lg transition-colors ${
-                  activeTab === 'quotes' ? 'bg-slate-100 text-slate-900 font-bold' : 'hover:bg-slate-50'
+                  activeTab === 'quotes'
+                    ? 'bg-slate-100 text-slate-900 font-bold'
+                    : 'hover:bg-slate-50'
                 }`}
               >
                 {isBn ? 'দরপত্র / কোটেশন' : 'Quotes & Negotiations'}
@@ -215,7 +229,9 @@ export default function B2BCommercePortalPage() {
               <button
                 onClick={() => setActiveTab('organization')}
                 className={`px-3 py-1.5 rounded-lg transition-colors ${
-                  activeTab === 'organization' ? 'bg-slate-100 text-slate-900 font-bold' : 'hover:bg-slate-50'
+                  activeTab === 'organization'
+                    ? 'bg-slate-100 text-slate-900 font-bold'
+                    : 'hover:bg-slate-50'
                 }`}
               >
                 {isBn ? 'প্রতিষ্ঠান ও ক্রেডিট প্রোফাইল' : 'Organization & Credit'}
@@ -246,7 +262,9 @@ export default function B2BCommercePortalPage() {
         <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm text-slate-900">{organization.companyName}</span>
+              <span className="font-extrabold text-sm text-slate-900">
+                {organization.companyName}
+              </span>
               <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] font-bold">
                 {organization.status}
               </Badge>
@@ -255,18 +273,35 @@ export default function B2BCommercePortalPage() {
               </Badge>
             </div>
             <div className="text-xs text-slate-500 flex flex-wrap gap-4">
-              <span>Trade License: <strong className="text-slate-700">{organization.tradeLicenseNumber}</strong></span>
-              <span>BIN: <strong className="text-slate-700">{organization.binNumber}</strong></span>
-              <span>B2B Rewards: <strong className="text-slate-700">{organization.rewardsRuleVersion} ({organization.earnsProductPoints ? 'Earns Points' : '0 Points Rule'})</strong></span>
+              <span>
+                Trade License:{' '}
+                <strong className="text-slate-700">{organization.tradeLicenseNumber}</strong>
+              </span>
+              <span>
+                BIN: <strong className="text-slate-700">{organization.binNumber}</strong>
+              </span>
+              <span>
+                B2B Rewards:{' '}
+                <strong className="text-slate-700">
+                  {organization.rewardsRuleVersion} (
+                  {organization.earnsProductPoints ? 'Earns Points' : '0 Points Rule'})
+                </strong>
+              </span>
             </div>
           </div>
 
           {/* Credit Status Guard (Invariant: Disabled until explicitly approved by Admin) */}
           <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
             <div className="text-right text-xs">
-              <div className="text-slate-400 font-semibold">{isBn ? 'ক্রেডিট সুবিধা' : 'Credit Terms'}</div>
+              <div className="text-slate-400 font-semibold">
+                {isBn ? 'ক্রেডিট সুবিধা' : 'Credit Terms'}
+              </div>
               <div className="font-black text-slate-800">
-                {organization.creditStatus === 'APPROVED' ? '৳' + (organization.creditLimitPoisha / 100).toLocaleString() : (isBn ? 'নিষ্ক্রিয় (তাত্ক্ষণিক পরিশোধ)' : 'Disabled (Immediate Payment)')}
+                {organization.creditStatus === 'APPROVED'
+                  ? '৳' + (organization.creditLimitPoisha / 100).toLocaleString()
+                  : isBn
+                    ? 'নিষ্ক্রিয় (তাত্ক্ষণিক পরিশোধ)'
+                    : 'Disabled (Immediate Payment)'}
               </div>
             </div>
             <Badge
@@ -299,11 +334,16 @@ export default function B2BCommercePortalPage() {
 
             <div className="grid grid-cols-1 gap-4">
               {rfqs.map((rfq) => (
-                <Card key={rfq.id} className="border border-slate-200 bg-white hover:border-slate-300 transition-all p-5">
+                <Card
+                  key={rfq.id}
+                  className="border border-slate-200 bg-white hover:border-slate-300 transition-all p-5"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#FF6A00]">{rfq.rfqNumber}</span>
+                        <span className="font-mono text-xs font-bold text-[#FF6A00]">
+                          {rfq.rfqNumber}
+                        </span>
                         <Badge
                           className={`text-[10px] font-bold ${
                             rfq.status === 'QUOTED'
@@ -321,10 +361,21 @@ export default function B2BCommercePortalPage() {
                       </div>
                       <h3 className="font-bold text-sm text-slate-900">{rfq.title}</h3>
                       <div className="text-xs text-slate-500 flex items-center gap-4">
-                        <span>Items: <strong>{rfq.itemsCount}</strong></span>
-                        <span>Target: <strong>{rfq.totalTargetBdt}</strong></span>
-                        <span>Expires: <strong>{rfq.expiresAt}</strong></span>
-                        {rfq.sellerName && <span>Target Seller: <strong className="text-blue-800">{rfq.sellerName}</strong></span>}
+                        <span>
+                          Items: <strong>{rfq.itemsCount}</strong>
+                        </span>
+                        <span>
+                          Target: <strong>{rfq.totalTargetBdt}</strong>
+                        </span>
+                        <span>
+                          Expires: <strong>{rfq.expiresAt}</strong>
+                        </span>
+                        {rfq.sellerName && (
+                          <span>
+                            Target Seller:{' '}
+                            <strong className="text-blue-800">{rfq.sellerName}</strong>
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -350,7 +401,9 @@ export default function B2BCommercePortalPage() {
           <div className="space-y-4">
             <div>
               <h2 className="text-base font-extrabold text-slate-900">
-                {isBn ? 'দরপত্র ও সমঝোতা (Quotes & Negotiations)' : 'Active Quotes & Negotiated Offers'}
+                {isBn
+                  ? 'দরপত্র ও সমঝোতা (Quotes & Negotiations)'
+                  : 'Active Quotes & Negotiated Offers'}
               </h2>
               <p className="text-xs text-slate-500">
                 {isBn
@@ -365,7 +418,9 @@ export default function B2BCommercePortalPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-slate-800">{quote.quoteNumber}</span>
+                        <span className="font-mono text-xs font-bold text-slate-800">
+                          {quote.quoteNumber}
+                        </span>
                         <span className="text-xs text-slate-400">• Ref: {quote.rfqNumber}</span>
                         <Badge className="bg-purple-100 text-purple-800 border-purple-300 text-[10px] font-bold">
                           Version {quote.currentVersion}
@@ -375,38 +430,54 @@ export default function B2BCommercePortalPage() {
                             quote.status === 'ACCEPTED'
                               ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                               : quote.status === 'CONVERTED'
-                              ? 'bg-slate-100 text-slate-800'
-                              : 'bg-blue-100 text-blue-800'
+                                ? 'bg-slate-100 text-slate-800'
+                                : 'bg-blue-100 text-blue-800'
                           }`}
                         >
                           {quote.status}
                         </Badge>
                       </div>
                       <div className="text-xs text-slate-600">
-                        Supplier: <strong className="text-slate-900">{quote.sellerName}</strong> • Payment Terms:{' '}
+                        Supplier: <strong className="text-slate-900">{quote.sellerName}</strong> •
+                        Payment Terms:{' '}
                         <strong className="text-slate-900">{quote.paymentTerms}</strong>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs text-slate-500">{isBn ? 'মোট দরপত্র মূল্য' : 'Total Quote Value'}</div>
-                      <div className="text-lg font-black text-slate-900">{quote.totalBdtFormatted}</div>
-                      <div className="text-[10px] text-slate-400 font-medium">Valid until: {quote.validUntil}</div>
+                      <div className="text-xs text-slate-500">
+                        {isBn ? 'মোট দরপত্র মূল্য' : 'Total Quote Value'}
+                      </div>
+                      <div className="text-lg font-black text-slate-900">
+                        {quote.totalBdtFormatted}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-medium">
+                        Valid until: {quote.validUntil}
+                      </div>
                     </div>
                   </div>
 
                   {/* Line Items & Quantity Break Tiers */}
                   <div className="space-y-2">
-                    <div className="text-xs font-bold text-slate-700">{isBn ? 'পণ্যের বিবরণ ও মূল্য' : 'Quoted Line Items'}</div>
+                    <div className="text-xs font-bold text-slate-700">
+                      {isBn ? 'পণ্যের বিবরণ ও মূল্য' : 'Quoted Line Items'}
+                    </div>
                     <div className="border border-slate-100 rounded-xl overflow-hidden text-xs">
                       {quote.items.map((item, idx) => (
-                        <div key={idx} className="p-3 bg-slate-50 flex items-center justify-between border-b border-slate-100 last:border-0">
+                        <div
+                          key={idx}
+                          className="p-3 bg-slate-50 flex items-center justify-between border-b border-slate-100 last:border-0"
+                        >
                           <div>
                             <span className="font-bold text-slate-800">{item.title}</span>
-                            <div className="text-[11px] text-emerald-700 font-medium">{item.tier}</div>
+                            <div className="text-[11px] text-emerald-700 font-medium">
+                              {item.tier}
+                            </div>
                           </div>
                           <div className="text-right">
-                            <span className="text-slate-500 font-mono">{item.quantity.toLocaleString()} units @ {item.unitPriceBdt}</span>
+                            <span className="text-slate-500 font-mono">
+                              {item.quantity.toLocaleString()} units @ {item.unitPriceBdt}
+                            </span>
                             <div className="font-bold text-slate-900">{item.lineTotalBdt}</div>
                           </div>
                         </div>
@@ -454,7 +525,9 @@ export default function B2BCommercePortalPage() {
           <Card className="border border-slate-200 bg-white p-6 max-w-2xl space-y-6">
             <div>
               <h3 className="text-sm font-black text-slate-900">
-                {isBn ? 'বিজনেস বায়ার গভর্ন্যান্স ও ক্রেডিট নীতি' : 'Business Buyer Governance & Credit Policy'}
+                {isBn
+                  ? 'বিজনেস বায়ার গভর্ন্যান্স ও ক্রেডিট নীতি'
+                  : 'Business Buyer Governance & Credit Policy'}
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                 Corporate compliance, spending authorization thresholds, and Admin credit terms.
@@ -472,11 +545,15 @@ export default function B2BCommercePortalPage() {
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Trade License</span>
-                <span className="font-mono font-bold text-slate-800">{organization.tradeLicenseNumber}</span>
+                <span className="font-mono font-bold text-slate-800">
+                  {organization.tradeLicenseNumber}
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Credit Facility Status</span>
-                <span className="font-bold text-amber-700">{organization.creditStatus} (Requires Admin Approval)</span>
+                <span className="font-bold text-amber-700">
+                  {organization.creditStatus} (Requires Admin Approval)
+                </span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100">
                 <span className="text-slate-500">Internal Spending Authorization Limit</span>
@@ -484,7 +561,9 @@ export default function B2BCommercePortalPage() {
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-slate-500">B2B Loyalty Points Policy</span>
-                <span className="font-bold text-slate-800">Rule: {organization.rewardsRuleVersion} (Decoupled from retail)</span>
+                <span className="font-bold text-slate-800">
+                  Rule: {organization.rewardsRuleVersion} (Decoupled from retail)
+                </span>
               </div>
             </div>
           </Card>
@@ -506,7 +585,9 @@ export default function B2BCommercePortalPage() {
 
             <form onSubmit={handleCreateRfq} className="space-y-4 text-xs">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Item Title / Requirement</label>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Item Title / Requirement
+                </label>
                 <input
                   type="text"
                   value={newRfqTitle}
@@ -530,7 +611,9 @@ export default function B2BCommercePortalPage() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Target Price (BDT / unit)</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Target Price (BDT / unit)
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -543,7 +626,9 @@ export default function B2BCommercePortalPage() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Purchase Order Reference (Optional)</label>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Purchase Order Reference (Optional)
+                </label>
                 <input
                   type="text"
                   value={newRfqPo}

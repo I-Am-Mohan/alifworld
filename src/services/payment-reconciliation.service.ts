@@ -1,20 +1,28 @@
 /**
  * Payment Reconciliation & Settlement Service
- * 
+ *
  * Implements business transactions for:
  * 1. Customer gateway payments (bKash, Nagad, SSLCommerz, COD).
  * 2. Cryptographic webhook verification, replay deduplication, and atomic order reconciliation.
  * 3. Platform commission ledger recording with immutable rule versioning.
  * 4. Item-level partial refunds with financial ceiling enforcement and commission reversals.
  * 5. Periodic seller settlement batch reconciliation and electronic payout disbursals.
- * 
+ *
  * Reference: docs/architecture/payments-refunds-commissions-settlements-and-payouts.md
  * Invariants: ADR-0003, ADR-0022, ADR-0027, ADR-0028
  */
 
 import { createHmac } from 'crypto';
-import { PaymentRepository, CreatePaymentInput, CreateRefundInput } from '@/repositories/payment.repository';
-import { SettlementRepository, CreateSettlementInput, CreatePayoutInput } from '@/repositories/settlement.repository';
+import {
+  PaymentRepository,
+  CreatePaymentInput,
+  CreateRefundInput,
+} from '@/repositories/payment.repository';
+import {
+  SettlementRepository,
+  CreateSettlementInput,
+  CreatePayoutInput,
+} from '@/repositories/settlement.repository';
 import { OrderRepository } from '@/repositories/order.repository';
 import {
   InitiatePaymentInput,
@@ -22,7 +30,12 @@ import {
   ProcessRefundInput,
   DisbursePayoutInput,
 } from '@/validators/payment.validator';
-import { ValidationError, NotFoundError, ConflictError, AuthorizationError } from '@/shared/errors/app-error';
+import {
+  ValidationError,
+  NotFoundError,
+  ConflictError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
 import { PLATFORM_COMMISSION_BPS } from '@/services/order-fulfillment.service';
 
 export class PaymentReconciliationService {
@@ -202,7 +215,8 @@ export class PaymentReconciliationService {
         totalReversalPoints += item.productPoints ?? 0;
         totalTaxReversal += BigInt(item.taxPoisha ?? 0);
         // Reverse 5% platform commission on refunded merchandise
-        commissionReversal += (BigInt(item.amountPoisha) * BigInt(PLATFORM_COMMISSION_BPS)) / BigInt(10000);
+        commissionReversal +=
+          (BigInt(item.amountPoisha) * BigInt(PLATFORM_COMMISSION_BPS)) / BigInt(10000);
       }
     } else {
       // Pro-rate commission reversal on gross refund
@@ -225,13 +239,15 @@ export class PaymentReconciliationService {
       commissionReversalPoisha: commissionReversal,
       initiatedBy: actorId ?? null,
       approvedBy: actorId ?? null,
-      items: input.items ? input.items.map((i) => ({
-        orderItemId: i.orderItemId,
-        quantity: i.quantity,
-        amountPoisha: BigInt(i.amountPoisha),
-        taxPoisha: i.taxPoisha ? BigInt(i.taxPoisha) : BigInt(0),
-        productPoints: i.productPoints ?? 0,
-      })) : undefined,
+      items: input.items
+        ? input.items.map((i) => ({
+            orderItemId: i.orderItemId,
+            quantity: i.quantity,
+            amountPoisha: BigInt(i.amountPoisha),
+            taxPoisha: i.taxPoisha ? BigInt(i.taxPoisha) : BigInt(0),
+            productPoints: i.productPoints ?? 0,
+          }))
+        : undefined,
     });
 
     // Audit transition on order
@@ -255,7 +271,9 @@ export class PaymentReconciliationService {
     const earnings = await this.settlementRepo.getSellerUnsettledEarnings(sellerId);
 
     if (earnings.groupCount === 0) {
-      throw new ValidationError('No delivered fulfillment groups found for this merchant in the selected period');
+      throw new ValidationError(
+        'No delivered fulfillment groups found for this merchant in the selected period'
+      );
     }
 
     const settlement = await this.settlementRepo.createSettlementBatch({

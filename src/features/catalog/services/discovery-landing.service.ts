@@ -1,9 +1,9 @@
 /**
  * AlifWorld Discovery & Landing Page Service
- * 
+ *
  * Orchestrates category breadcrumb hierarchies, brand flagship profiles,
  * and promotional collection landing pages backed by the resilient SearchService.
- * 
+ *
  * References:
  * - docs/architecture/catalog-taxonomy-products-and-media.md
  * - docs/architecture/scope-boundaries-and-domain-map.md

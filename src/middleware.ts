@@ -1,42 +1,34 @@
 /**
  * AlifWorld Global Security & HTTP Request Middleware
- * 
+ *
  * Intercepts all incoming traffic to enforce:
  * 1. Request correlation tracking (x-request-id injection)
  * 2. Cross-Origin Resource Sharing (CORS) preflight & origin verification
  * 3. Cross-Site Request Forgery (CSRF) validation on state-modifying requests
  * 4. Automatic anti-CSRF token cookie provisioning for browser clients
  * 5. Strict HTTP security headers (CSP, HSTS, X-Frame-Options, Permissions-Policy)
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, Phase 05 Milestone 048
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  evaluateCors,
-  createPreflightResponse,
-  applyCorsHeaders,
-} from '@/shared/security/cors';
+import { evaluateCors, createPreflightResponse, applyCorsHeaders } from '@/shared/security/cors';
 import {
   verifyRequestCsrfEdge,
   generateCsrfTokenEdge,
   getCsrfCookieOptionsEdge,
   CSRF_COOKIE_NAME,
 } from '@/shared/security/csrf-edge';
-import {
-  buildSecurityHeaders,
-  applySecurityHeaders,
-} from '@/shared/security/headers';
+import { buildSecurityHeaders, applySecurityHeaders } from '@/shared/security/headers';
 import { logEdgeSecurityEvent } from '@/shared/audit/edge-audit';
-import {
-  resolveLocaleFromRequest,
-  extractLocaleFromPath,
-} from '@/i18n/locale-resolver';
+import { resolveLocaleFromRequest, extractLocaleFromPath } from '@/i18n/locale-resolver';
 import { LOCALE_COOKIE_NAME } from '@/i18n/config';
 
 export async function middleware(req: NextRequest): Promise<NextResponse> {
   const pathname = req.nextUrl.pathname;
-  const requestId = req.headers.get('x-request-id') || `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const requestId =
+    req.headers.get('x-request-id') ||
+    `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
   // 1. Evaluate CORS Policy
   const corsResult = evaluateCors(req);

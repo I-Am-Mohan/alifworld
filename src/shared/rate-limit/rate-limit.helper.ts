@@ -1,9 +1,9 @@
 /**
  * Rate Limiting Route Handler Helper
- * 
+ *
  * Coordinates rate limiting checks, audit logging on breaches,
  * standard rate limit headers, and localized 429 exceptions.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 040
  */
 
@@ -81,10 +81,7 @@ export function applyRateLimitHeaders(
 ): NextResponse {
   response.headers.set('X-RateLimit-Limit', String(result.limit));
   response.headers.set('X-RateLimit-Remaining', String(result.remaining));
-  response.headers.set(
-    'X-RateLimit-Reset',
-    String(Math.ceil(result.resetMs / 1000))
-  );
+  response.headers.set('X-RateLimit-Reset', String(Math.ceil(result.resetMs / 1000)));
 
   if (!result.isAllowed && result.retryAfterSeconds > 0) {
     response.headers.set('Retry-After', String(result.retryAfterSeconds));

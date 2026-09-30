@@ -9,21 +9,22 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/catalog/landing/category/[slug]
  * Retrieves category details, parent/child breadcrumb hierarchy, and filtered search catalog.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
     const searchParams = req.nextUrl.searchParams;
 
     const brandParams = searchParams.getAll('brand');
     const brandsQuery = searchParams.get('brands');
-    const brands = brandParams.length > 0
-      ? brandParams
-      : brandsQuery
-      ? brandsQuery.split(',').map((b) => b.trim()).filter(Boolean)
-      : undefined;
+    const brands =
+      brandParams.length > 0
+        ? brandParams
+        : brandsQuery
+          ? brandsQuery
+              .split(',')
+              .map((b) => b.trim())
+              .filter(Boolean)
+          : undefined;
 
     const validatedQuery = SearchQuerySchema.parse({
       query: searchParams.get('q') || searchParams.get('query') || '',

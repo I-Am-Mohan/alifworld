@@ -1,6 +1,6 @@
 /**
  * Orders, Fulfillment Groups, Shipments & Poisha Arithmetic Unit Tests
- * 
+ *
  * Verifies:
  * 1. Integer poisha monetary precision (zero floating-point error).
  * 2. Independent discrete Product Points snapshots (no BDT conversion).
@@ -9,7 +9,7 @@
  * 5. Fulfillment group state machine transitions and invalid transition rejections.
  * 6. Append-only immutability of status histories and shipment events.
  * 7. Domain identifier prefix registration.
- * 
+ *
  * Reference: docs/architecture/carts-orders-fulfillment-groups-and-shipments.md
  * Invariants: ADR-0003, ADR-0022, ADR-0025, ADR-0027
  */
@@ -38,32 +38,60 @@ import {
   FulfillmentStatusTransitionSchema,
   DispatchShipmentSchema,
 } from '@/validators/order.validator';
-import { AuthorizationError, ConflictError, NotFoundError, ValidationError } from '@/shared/errors/app-error';
+import {
+  AuthorizationError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from '@/shared/errors/app-error';
 
 describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () => {
   describe('Checkout snapshot boundary', () => {
     it('adds only a sellable variant at its stored price and Point values', async () => {
       const repository = new CartRepository();
       let storedVariant: any = {
-        pricePoisha: 1535n, productPoint: null, product: { sellerId: 'seller-1', productPoint: 9 },
+        pricePoisha: 1535n,
+        productPoint: null,
+        product: { sellerId: 'seller-1', productPoint: 9 },
       };
       let variantQuery: any;
-      Object.defineProperty(repository, 'db', { value: {
-        productVariant: { findFirst: async (query: any) => { variantQuery = query; return storedVariant; } },
-      } });
-      const cartSpy = spyOn(repository, 'getOrCreateCart').mockResolvedValue({ id: 'cart-1', currency: 'BDT', status: 'ACTIVE' } as any);
-      const addSpy = spyOn(repository, 'addItem').mockResolvedValue({ id: 'item-1', pricePoisha: 1535n } as any);
+      Object.defineProperty(repository, 'db', {
+        value: {
+          productVariant: {
+            findFirst: async (query: any) => {
+              variantQuery = query;
+              return storedVariant;
+            },
+          },
+        },
+      });
+      const cartSpy = spyOn(repository, 'getOrCreateCart').mockResolvedValue({
+        id: 'cart-1',
+        currency: 'BDT',
+        status: 'ACTIVE',
+      } as any);
+      const addSpy = spyOn(repository, 'addItem').mockResolvedValue({
+        id: 'item-1',
+        pricePoisha: 1535n,
+      } as any);
       try {
         const result = await repository.addPublishedVariant('buyer', 'variant-1', 2);
         expect(result.cartId).toBe('cart-1');
         expect(variantQuery.where).toMatchObject({
-          isActive: true, product: { status: 'PUBLISHED', currency: 'BDT', seller: { status: 'VERIFIED' } },
+          isActive: true,
+          product: { status: 'PUBLISHED', currency: 'BDT', seller: { status: 'VERIFIED' } },
         });
         expect(addSpy).toHaveBeenCalledWith('cart-1', {
-          variantId: 'variant-1', sellerId: 'seller-1', quantity: 2, pricePoisha: 1535n, productPoint: 9,
+          variantId: 'variant-1',
+          sellerId: 'seller-1',
+          quantity: 2,
+          pricePoisha: 1535n,
+          productPoint: 9,
         });
         storedVariant = null;
-        await expect(repository.addPublishedVariant('buyer', 'draft-variant', 1)).rejects.toBeInstanceOf(NotFoundError);
+        await expect(
+          repository.addPublishedVariant('buyer', 'draft-variant', 1)
+        ).rejects.toBeInstanceOf(NotFoundError);
       } finally {
         cartSpy.mockRestore();
         addSpy.mockRestore();
@@ -75,33 +103,55 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
       let cartIsActive = true;
       let cartVersion = 1;
       let itemUpdates = 0;
-      const transactionSpy = spyOn(repository, 'withTransaction').mockImplementation(async (callback: any) => {
-        return callback({
-          cart: {
-            updateMany: async ({ where, data }: any) => {
-              expect(where).toMatchObject({ id: 'cart-1', status: 'ACTIVE', deletedAt: null });
-              expect(data).toEqual({ version: { increment: 1 } });
-              if (!cartIsActive) return { count: 0 };
-              cartVersion++;
-              return { count: 1 };
+      const transactionSpy = spyOn(repository, 'withTransaction').mockImplementation(
+        async (callback: any) => {
+          return callback({
+            cart: {
+              updateMany: async ({ where, data }: any) => {
+                expect(where).toMatchObject({ id: 'cart-1', status: 'ACTIVE', deletedAt: null });
+                expect(data).toEqual({ version: { increment: 1 } });
+                if (!cartIsActive) return { count: 0 };
+                cartVersion++;
+                return { count: 1 };
+              },
             },
-          },
-          cartItem: {
-            findFirst: async ({ where }: any) => where.id ? { cartId: 'cart-1' } : null,
-            create: async () => { itemUpdates++; },
-            update: async () => { itemUpdates++; },
-            updateMany: async () => { itemUpdates++; },
-          },
-        });
-      });
+            cartItem: {
+              findFirst: async ({ where }: any) => (where.id ? { cartId: 'cart-1' } : null),
+              create: async () => {
+                itemUpdates++;
+              },
+              update: async () => {
+                itemUpdates++;
+              },
+              updateMany: async () => {
+                itemUpdates++;
+              },
+            },
+          });
+        }
+      );
 
       try {
-        await repository.addItem('cart-1', { variantId: 'variant-1', sellerId: 'seller-1', pricePoisha: 1205n, quantity: 1 });
+        await repository.addItem('cart-1', {
+          variantId: 'variant-1',
+          sellerId: 'seller-1',
+          pricePoisha: 1205n,
+          quantity: 1,
+        });
         expect(cartVersion).toBe(2);
         expect(itemUpdates).toBe(1);
         cartIsActive = false;
-        await expect(repository.addItem('cart-1', { variantId: 'variant-1', sellerId: 'seller-1', pricePoisha: 1205n, quantity: 1 })).rejects.toBeInstanceOf(ConflictError);
-        await expect(repository.updateItemQuantity('item-1', 2)).rejects.toBeInstanceOf(ConflictError);
+        await expect(
+          repository.addItem('cart-1', {
+            variantId: 'variant-1',
+            sellerId: 'seller-1',
+            pricePoisha: 1205n,
+            quantity: 1,
+          })
+        ).rejects.toBeInstanceOf(ConflictError);
+        await expect(repository.updateItemQuantity('item-1', 2)).rejects.toBeInstanceOf(
+          ConflictError
+        );
         await expect(repository.removeItem('item-1')).rejects.toBeInstanceOf(ConflictError);
         await expect(repository.clearCart('cart-1')).rejects.toBeInstanceOf(ConflictError);
         expect(itemUpdates).toBe(1);
@@ -113,23 +163,35 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
     it('refuses a second checkout before inserting any order records', async () => {
       const repository = new OrderRepository();
       let attemptedOrderInsert = false;
-      const transactionSpy = spyOn(repository, 'withTransaction').mockImplementation(async (callback: any) => {
-        return callback({
-          cart: {
-            updateMany: async ({ where }: any) => {
-              expect(where).toMatchObject({
-                id: 'cart-1', userId: 'buyer', currency: 'BDT', status: 'ACTIVE', version: 2, deletedAt: null,
-              });
-              return { count: 0 };
+      const transactionSpy = spyOn(repository, 'withTransaction').mockImplementation(
+        async (callback: any) => {
+          return callback({
+            cart: {
+              updateMany: async ({ where }: any) => {
+                expect(where).toMatchObject({
+                  id: 'cart-1',
+                  userId: 'buyer',
+                  currency: 'BDT',
+                  status: 'ACTIVE',
+                  version: 2,
+                  deletedAt: null,
+                });
+                return { count: 0 };
+              },
             },
-          },
-          order: { create: async () => { attemptedOrderInsert = true; } },
-        });
-      });
+            order: {
+              create: async () => {
+                attemptedOrderInsert = true;
+              },
+            },
+          });
+        }
+      );
 
       try {
-        await expect(repository.createOrder({ cartId: 'cart-1', cartVersion: 2, customerId: 'buyer' } as any))
-          .rejects.toBeInstanceOf(ConflictError);
+        await expect(
+          repository.createOrder({ cartId: 'cart-1', cartVersion: 2, customerId: 'buyer' } as any)
+        ).rejects.toBeInstanceOf(ConflictError);
       } finally {
         transactionSpy.mockRestore();
       }
@@ -145,10 +207,14 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
     });
 
     function serviceFor(cart: object) {
-      const cartRepo = { findById: async () => ({ createdAt: new Date('2026-09-24T00:00:00Z'), ...cart }) } as unknown as CartRepository;
+      const cartRepo = {
+        findById: async () => ({ createdAt: new Date('2026-09-24T00:00:00Z'), ...cart }),
+      } as unknown as CartRepository;
       const orderRepo = {
         findOrderByNumber: async () => null,
-        createOrder: async () => { throw new Error('Order should not be created'); },
+        createOrder: async () => {
+          throw new Error('Order should not be created');
+        },
       } as unknown as OrderRepository;
       return new OrderFulfillmentService(cartRepo, orderRepo);
     }
@@ -156,12 +222,21 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
     it('passes the frozen price and independent Point values to order persistence', async () => {
       const cartRepo = {
         findById: async () => ({
-          userId: 'buyer', status: 'ACTIVE', currency: 'BDT', version: 2, createdAt: new Date('2026-09-24T00:00:00Z'),
-          items: [{
-            sellerId: 'seller-1', variantId: 'variant-1', quantity: 2,
-            pricePoisha: 1205n, productPoint: 7,
-            variant: { title: 'Medium', sku: 'SKU-1', product: { title: 'Shirt' } },
-          }],
+          userId: 'buyer',
+          status: 'ACTIVE',
+          currency: 'BDT',
+          version: 2,
+          createdAt: new Date('2026-09-24T00:00:00Z'),
+          items: [
+            {
+              sellerId: 'seller-1',
+              variantId: 'variant-1',
+              quantity: 2,
+              pricePoisha: 1205n,
+              productPoint: 7,
+              variant: { title: 'Medium', sku: 'SKU-1', product: { title: 'Shirt' } },
+            },
+          ],
         }),
         markConverted: async () => {},
       } as unknown as CartRepository;
@@ -170,22 +245,36 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
         findOrderByNumber: async () => null,
         createOrder: async (input: Parameters<OrderRepository['createOrder']>[0]) => {
           storedInput = input;
-          return { id: 'order-1', orderNumber: input.orderNumber,
-            totalPoisha: input.totalPoisha, totalProductPoints: input.totalProductPoints };
+          return {
+            id: 'order-1',
+            orderNumber: input.orderNumber,
+            totalPoisha: input.totalPoisha,
+            totalProductPoints: input.totalProductPoints,
+          };
         },
       } as unknown as OrderRepository;
       const auditSpy = spyOn(auditService, 'logBusinessEvent').mockResolvedValue(undefined);
 
       try {
-        await new OrderFulfillmentService(cartRepo, orderRepo).processCheckout('cart-1', 'buyer', checkout, 'test-request-1');
+        await new OrderFulfillmentService(cartRepo, orderRepo).processCheckout(
+          'cart-1',
+          'buyer',
+          checkout,
+          'test-request-1'
+        );
       } finally {
         auditSpy.mockRestore();
       }
 
       expect(storedInput?.fulfillmentGroups[0].items[0]).toMatchObject({
-        unitPricePoisha: 1205n, totalPoisha: 2410n, quantity: 2,
-        productPointSnapshot: 7, totalProductPoints: 14,
-        productTitle: 'Shirt', variantTitle: 'Medium', sku: 'SKU-1',
+        unitPricePoisha: 1205n,
+        totalPoisha: 2410n,
+        quantity: 2,
+        productPointSnapshot: 7,
+        totalProductPoints: 14,
+        productTitle: 'Shirt',
+        variantTitle: 'Medium',
+        sku: 'SKU-1',
       });
       expect(storedInput?.subtotalPoisha).toBe(2410n);
       expect(storedInput?.totalProductPoints).toBe(14);
@@ -195,20 +284,38 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
       let existingOrder: any = null;
       let writes = 0;
       let cartStatus = 'ACTIVE';
-      const cartRepo = { findById: async () => ({
-        userId: 'buyer', status: cartStatus, currency: 'BDT', version: 1,
-        createdAt: new Date('2026-09-24T00:00:00Z'), items: [{
-          sellerId: 'seller-1', variantId: 'variant-1', pricePoisha: 1205n, productPoint: 7,
-          quantity: 2, variant: { sku: 'SKU-1', title: 'Medium', product: { title: 'Shirt' } },
-        }],
-      }) } as unknown as CartRepository;
+      const cartRepo = {
+        findById: async () => ({
+          userId: 'buyer',
+          status: cartStatus,
+          currency: 'BDT',
+          version: 1,
+          createdAt: new Date('2026-09-24T00:00:00Z'),
+          items: [
+            {
+              sellerId: 'seller-1',
+              variantId: 'variant-1',
+              pricePoisha: 1205n,
+              productPoint: 7,
+              quantity: 2,
+              variant: { sku: 'SKU-1', title: 'Medium', product: { title: 'Shirt' } },
+            },
+          ],
+        }),
+      } as unknown as CartRepository;
       const orderRepo = {
-        findOrderByNumber: async (orderNumber: string) => existingOrder?.orderNumber === orderNumber ? existingOrder : null,
+        findOrderByNumber: async (orderNumber: string) =>
+          existingOrder?.orderNumber === orderNumber ? existingOrder : null,
         createOrder: async (input: Parameters<OrderRepository['createOrder']>[0]) => {
           writes++;
           cartStatus = 'CONVERTED';
-          existingOrder = { id: 'order-1', customerId: 'buyer', orderNumber: input.orderNumber,
-            totalPoisha: input.totalPoisha, totalProductPoints: input.totalProductPoints };
+          existingOrder = {
+            id: 'order-1',
+            customerId: 'buyer',
+            orderNumber: input.orderNumber,
+            totalPoisha: input.totalPoisha,
+            totalProductPoints: input.totalProductPoints,
+          };
           return existingOrder;
         },
       } as unknown as OrderRepository;
@@ -219,8 +326,14 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
         const replay = await service.processCheckout('cart-1', 'buyer', checkout, 'repeat-request');
         expect(replay.orderNumber).toBe(first.orderNumber);
         expect(writes).toBe(1);
-        await expect(service.processCheckout('cart-1', 'buyer', { ...checkout, shippingAddress: 'Another address' }, 'repeat-request'))
-          .rejects.toBeInstanceOf(ConflictError);
+        await expect(
+          service.processCheckout(
+            'cart-1',
+            'buyer',
+            { ...checkout, shippingAddress: 'Another address' },
+            'repeat-request'
+          )
+        ).rejects.toBeInstanceOf(ConflictError);
       } finally {
         auditSpy.mockRestore();
       }
@@ -229,7 +342,9 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
     it('rejects another customer or an unowned guest cart before creating an order', async () => {
       for (const userId of ['other-customer', null]) {
         const service = serviceFor({ userId, status: 'ACTIVE', currency: 'BDT', items: [{}] });
-        await expect(service.processCheckout('cart-1', 'buyer', checkout, 'test-request-1')).rejects.toBeInstanceOf(AuthorizationError);
+        await expect(
+          service.processCheckout('cart-1', 'buyer', checkout, 'test-request-1')
+        ).rejects.toBeInstanceOf(AuthorizationError);
       }
     });
 
@@ -238,7 +353,9 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
         { userId: 'buyer', status: 'CONVERTED', currency: 'BDT', items: [{}] },
         { userId: 'buyer', status: 'ACTIVE', currency: 'USD', items: [{}] },
       ]) {
-        await expect(serviceFor(cart).processCheckout('cart-1', 'buyer', checkout, 'test-request-1')).rejects.toBeInstanceOf(ConflictError);
+        await expect(
+          serviceFor(cart).processCheckout('cart-1', 'buyer', checkout, 'test-request-1')
+        ).rejects.toBeInstanceOf(ConflictError);
       }
     });
   });
@@ -348,8 +465,8 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
 
     it('enforces exact platform commission deduction and seller payout', () => {
       const groupSubtotal = BigInt(1000000); // ৳10,000.00
-      const shippingFee = BigInt(6000);      // ৳60.00
-      const tax = BigInt(150000);            // ৳1,500.00
+      const shippingFee = BigInt(6000); // ৳60.00
+      const tax = BigInt(150000); // ৳1,500.00
       const totalPoisha = groupSubtotal + shippingFee + tax; // 1,156,000 poisha
 
       // 5% Commission on subtotal
@@ -362,7 +479,7 @@ describe('Milestone 027: Carts, Orders, Fulfillment Groups, and Shipments', () =
     });
 
     it('differentiates shipping fee between Dhaka inside and nationwide divisions', () => {
-      expect(SHIPPING_RATES_POISHA.DHAKA_INSIDE).toBe(BigInt(6000));  // ৳60.00
+      expect(SHIPPING_RATES_POISHA.DHAKA_INSIDE).toBe(BigInt(6000)); // ৳60.00
       expect(SHIPPING_RATES_POISHA.DHAKA_OUTSIDE).toBe(BigInt(12000)); // ৳120.00
     });
   });

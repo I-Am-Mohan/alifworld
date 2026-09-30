@@ -1,9 +1,9 @@
 /**
  * AlifWorld Ephemeral OTP & Verification Token Repository
- * 
+ *
  * Manages one-time verification tokens, attempt tracking, cooldowns,
  * and rate-limiting inspection for email and SMS OTPs.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, ADR-0033
  */
 

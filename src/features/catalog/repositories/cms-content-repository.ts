@@ -22,7 +22,9 @@ export class CmsContentRepository {
   }
 
   async create(actorId: string, input: CreateCmsContentInput) {
-    const existing = await (prisma as any).cmsContent.findFirst({ where: { slug: input.slug, deletedAt: null } });
+    const existing = await (prisma as any).cmsContent.findFirst({
+      where: { slug: input.slug, deletedAt: null },
+    });
     if (existing) throw new ConflictError(`CMS content slug '${input.slug}' is already in use.`);
 
     const id = generatePrefixedId(ENTITY_PREFIXES.CMS_CONTENT);
@@ -65,7 +67,9 @@ export class CmsContentRepository {
           status: input.status,
           updatedBy: actorId,
           version: { increment: 1 },
-          ...(input.status === 'PUBLISHED' ? { publishedAt: new Date(), publishedBy: actorId } : {}),
+          ...(input.status === 'PUBLISHED'
+            ? { publishedAt: new Date(), publishedBy: actorId }
+            : {}),
         },
         include: { translations: true },
       });
@@ -73,7 +77,11 @@ export class CmsContentRepository {
         for (const translation of input.translations) {
           await tx.cmsContentTranslation.upsert({
             where: { contentId_locale: { contentId: id, locale: translation.locale } },
-            create: { id: generatePrefixedId(ENTITY_PREFIXES.CMS_CONTENT_TRANSLATION), contentId: id, ...translation },
+            create: {
+              id: generatePrefixedId(ENTITY_PREFIXES.CMS_CONTENT_TRANSLATION),
+              contentId: id,
+              ...translation,
+            },
             update: { ...translation, version: { increment: 1 } },
           });
         }

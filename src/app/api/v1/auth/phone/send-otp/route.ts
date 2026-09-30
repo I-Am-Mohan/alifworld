@@ -12,10 +12,10 @@ const policies = getRateLimitPolicies();
 
 /**
  * POST /api/v1/auth/phone/send-otp
- * 
+ *
  * Generates and dispatches a 6-digit numeric OTP to a Bangladesh mobile number.
  * Supports purpose: 'LOGIN' | 'REGISTRATION'
- * 
+ *
  * Throttled to 3 OTP requests per hour per mobile number with sliding window.
  */
 export async function POST(req: NextRequest) {
@@ -39,11 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Enforce SMS rate limiting (max 3/hr per phone + IP)
-    const rateLimitResult = await assertRateLimit(
-      req,
-      policies.AUTH_SMS_OTP,
-      phone
-    );
+    const rateLimitResult = await assertRateLimit(req, policies.AUTH_SMS_OTP, phone);
 
     // 2. Dispatch OTP
     const result =

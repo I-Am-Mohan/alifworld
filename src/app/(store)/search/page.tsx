@@ -244,14 +244,22 @@ export default function StorefrontSearchPage() {
       </header>
 
       {/* Main Layout: Sidebar Filters + Product Grid */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 flex flex-col md:flex-row gap-8">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 flex flex-col md:flex-row gap-8"
+      >
         {/* Faceted Filters Sidebar */}
         <aside className="w-full md:w-64 shrink-0 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
               {isBn ? 'ফিল্টারসমূহ' : 'Filters & Facets'}
             </h2>
-            {(selectedCategory || selectedBrands.length > 0 || inStockOnly || minPriceBdt || maxPriceBdt || minRating) && (
+            {(selectedCategory ||
+              selectedBrands.length > 0 ||
+              inStockOnly ||
+              minPriceBdt ||
+              maxPriceBdt ||
+              minRating) && (
               <button
                 onClick={clearAllFilters}
                 className="text-[11px] font-bold text-[#FF6A00] hover:underline"
@@ -269,13 +277,20 @@ export default function StorefrontSearchPage() {
             <div className="space-y-1.5 text-xs">
               {[
                 { name: 'Smartphones', nameBn: 'স্মার্টফোন', slug: 'smartphones', count: 1 },
-                { name: 'Audio & Wearables', nameBn: 'অডিও ও পরিধানযোগ্য', slug: 'audio-wearables', count: 1 },
+                {
+                  name: 'Audio & Wearables',
+                  nameBn: 'অডিও ও পরিধানযোগ্য',
+                  slug: 'audio-wearables',
+                  count: 1,
+                },
                 { name: 'Fashion', nameBn: 'ফ্যাশন ও পোশাক', slug: 'fashion', count: 2 },
                 { name: 'Groceries', nameBn: 'মুদি ও খাদ্যপণ্য', slug: 'groceries', count: 1 },
               ].map((cat) => (
                 <button
                   key={cat.slug}
-                  onClick={() => setSelectedCategory(selectedCategory === cat.slug ? null : cat.slug)}
+                  onClick={() =>
+                    setSelectedCategory(selectedCategory === cat.slug ? null : cat.slug)
+                  }
                   className={`w-full flex items-center justify-between py-1 px-2 rounded-md transition-colors text-left ${
                     selectedCategory === cat.slug
                       ? 'bg-[#FF6A00]/10 text-[#FF6A00] font-bold'
@@ -296,7 +311,10 @@ export default function StorefrontSearchPage() {
             </h3>
             <div className="space-y-2 text-xs">
               {['Walton', 'Xiaomi', 'Aarong', 'Bata', 'PRAN'].map((brand) => (
-                <label key={brand} className="flex items-center space-x-2.5 cursor-pointer text-slate-700">
+                <label
+                  key={brand}
+                  className="flex items-center space-x-2.5 cursor-pointer text-slate-700"
+                >
                   <input
                     type="checkbox"
                     checked={selectedBrands.includes(brand)}
@@ -379,7 +397,7 @@ export default function StorefrontSearchPage() {
                 {query ? (
                   <span>
                     {isBn ? 'অনুসন্ধানের ফলাফল: ' : 'Search results for: '}
-                    <span className="text-[#FF6A00]">"{query}"</span>
+                    <span className="text-[#FF6A00]">&quot;{query}&quot;</span>
                   </span>
                 ) : (
                   <span>{isBn ? 'সকল পণ্য' : 'All Catalog Products'}</span>
@@ -399,9 +417,15 @@ export default function StorefrontSearchPage() {
                 className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#FF6A00]"
               >
                 <option value="relevance">{isBn ? 'প্রাসঙ্গিকতা' : 'Most Relevant'}</option>
-                <option value="price_asc">{isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}</option>
-                <option value="price_desc">{isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}</option>
-                <option value="points_desc">{isBn ? 'সর্বোচ্চ প্রোডাক্ট পয়েন্ট' : 'Highest Reward Points'}</option>
+                <option value="price_asc">
+                  {isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}
+                </option>
+                <option value="price_desc">
+                  {isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}
+                </option>
+                <option value="points_desc">
+                  {isBn ? 'সর্বোচ্চ প্রোডাক্ট পয়েন্ট' : 'Highest Reward Points'}
+                </option>
                 <option value="rating">{isBn ? 'সেরা রেটিং' : 'Customer Rating'}</option>
               </select>
             </div>
@@ -417,7 +441,10 @@ export default function StorefrontSearchPage() {
                 </Badge>
               )}
               {selectedBrands.map((b) => (
-                <Badge key={b} className="bg-slate-100 text-slate-800 hover:bg-slate-200 flex items-center gap-1">
+                <Badge
+                  key={b}
+                  className="bg-slate-100 text-slate-800 hover:bg-slate-200 flex items-center gap-1"
+                >
                   <span>Brand: {b}</span>
                   <button onClick={() => toggleBrand(b)}>✕</button>
                 </Badge>
@@ -530,7 +557,10 @@ export default function StorefrontSearchPage() {
 
           {/* Degraded Mode Observation Pill */}
           <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-center text-xs text-slate-500 font-medium">
-            🛡️ {isBn ? 'আলিফওয়ার্ল্ড ফলব্যাক আর্কিটেকচার সক্রিয়: ১০০% আপটাইম রেজিলিয়েন্স নিশ্চিত।' : 'AlifWorld Boot-Safe Resilience Active: 100% search uptime guaranteed via PostgreSQL fallback engine.'}
+            🛡️{' '}
+            {isBn
+              ? 'আলিফওয়ার্ল্ড ফলব্যাক আর্কিটেকচার সক্রিয়: ১০০% আপটাইম রেজিলিয়েন্স নিশ্চিত।'
+              : 'AlifWorld Boot-Safe Resilience Active: 100% search uptime guaranteed via PostgreSQL fallback engine.'}
           </div>
         </section>
       </main>

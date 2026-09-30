@@ -73,7 +73,9 @@ export function LanguageSwitcher({ className = '' }: LanguageSwitcherProps) {
         >
           <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 flex items-center justify-between">
             <span>{t('language.selectLanguage')}</span>
-            <span className="text-[9px] text-slate-400 font-medium font-mono">{availableLanguages.length}</span>
+            <span className="text-[9px] text-slate-400 font-medium font-mono">
+              {availableLanguages.length}
+            </span>
           </div>
 
           <div className="py-0.5">

@@ -1,6 +1,6 @@
 /**
  * Zod Validation Schemas for Support & Delivery Rider Subsystems
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0024, Milestone 046
  */
 
@@ -79,13 +79,7 @@ export type RiderLocationUpdateInput = z.infer<typeof RiderLocationUpdateSchema>
 
 export const RiderStatusUpdateSchema = z.object({
   deliveryId: z.string().trim().min(5, 'Delivery identifier is required'),
-  status: z.enum([
-    'PICKED_UP',
-    'IN_TRANSIT',
-    'OUT_FOR_DELIVERY',
-    'DELIVERED',
-    'FAILED_DELIVERY',
-  ]),
+  status: z.enum(['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FAILED_DELIVERY']),
   note: z.string().trim().max(255).optional(),
   location: z.string().trim().max(100).optional(),
 });

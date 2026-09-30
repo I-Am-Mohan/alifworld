@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface LowStockItem {
   id: string;
@@ -97,7 +104,11 @@ export default function SellerLowStockPage() {
         if (item.id === id) {
           const rec = Math.max(editReorderPoint * 2 - item.available, editReorderPoint);
           const urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM' =
-            item.available === 0 ? 'CRITICAL' : item.available <= editLowThreshold ? 'HIGH' : 'MEDIUM';
+            item.available === 0
+              ? 'CRITICAL'
+              : item.available <= editLowThreshold
+                ? 'HIGH'
+                : 'MEDIUM';
           return {
             ...item,
             lowStockThreshold: editLowThreshold,
@@ -177,7 +188,9 @@ export default function SellerLowStockPage() {
               <div className="text-3xl font-black text-amber-800">
                 {items.filter((i) => i.urgency === 'HIGH').length}
               </div>
-              <p className="text-xs text-amber-700/80 mt-1 font-medium">Available ≤ Low Stock Threshold</p>
+              <p className="text-xs text-amber-700/80 mt-1 font-medium">
+                Available ≤ Low Stock Threshold
+              </p>
             </CardContent>
           </Card>
 
@@ -256,8 +269,12 @@ export default function SellerLowStockPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-xs font-semibold text-slate-800">{item.warehouseName}</div>
-                        <div className="text-[10px] font-mono text-slate-500">{item.warehouseCode}</div>
+                        <div className="text-xs font-semibold text-slate-800">
+                          {item.warehouseName}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-500">
+                          {item.warehouseCode}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <span
@@ -265,8 +282,8 @@ export default function SellerLowStockPage() {
                             item.available === 0
                               ? 'text-red-600'
                               : item.available <= item.lowStockThreshold
-                              ? 'text-amber-600'
-                              : 'text-slate-900'
+                                ? 'text-amber-600'
+                                : 'text-slate-900'
                           }`}
                         >
                           {item.available}

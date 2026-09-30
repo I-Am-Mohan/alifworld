@@ -33,10 +33,7 @@ import {
   ShippingMethodCode,
 } from '../types/shipping-rate.types';
 import { deliveryServiceabilityService } from './delivery-serviceability.service';
-import {
-  calculatePackageWeight,
-  calculateDeliveryPromise,
-} from './shipping-promise-calculator';
+import { calculatePackageWeight, calculateDeliveryPromise } from './shipping-promise-calculator';
 import { shippingRateProviderRegistry } from '../providers/shipping-rate-provider.registry';
 import { shippingRateRepository } from '../repositories/shipping-rate.repository';
 
@@ -148,9 +145,7 @@ export class ShippingRateService {
       // Free shipping threshold progress
       const standardRate = rateOptions.find((r) => r.methodCode === 'STANDARD') || activeRate;
       const freeThresholdPoisha =
-        seller?.operationalDefaults?.shippingMode === 'CUSTOM'
-          ? null
-          : 200000; // ৳2,000.00 standard threshold
+        seller?.operationalDefaults?.shippingMode === 'CUSTOM' ? null : 200000; // ৳2,000.00 standard threshold
 
       const qualifiesForFreeShipping = activeRate.isFreeShipping;
       const amountNeededForFreeShippingPoisha =
@@ -251,9 +246,7 @@ export class ShippingRateService {
       totalShippingFeePoisha: totalOrderShippingFeePoisha,
       totalShippingFeeBdtFormatted: this.formatBdt(totalOrderShippingFeePoisha),
       totalFreeShippingSavingsPoisha: totalOrderFreeShippingSavingsPoisha,
-      totalFreeShippingSavingsBdtFormatted: this.formatBdt(
-        totalOrderFreeShippingSavingsPoisha
-      ),
+      totalFreeShippingSavingsBdtFormatted: this.formatBdt(totalOrderFreeShippingSavingsPoisha),
       overallDeliveryPromise: {
         earliestDeliveryDate: earliestDeliveryDate || new Date().toISOString(),
         latestDeliveryDate: latestDeliveryDate || new Date().toISOString(),

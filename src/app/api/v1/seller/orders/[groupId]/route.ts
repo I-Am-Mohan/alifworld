@@ -19,10 +19,7 @@ function resolveSellerId(actor: any): string {
  * GET /api/v1/seller/orders/[groupId]
  * Retrieves single fulfillment order scoped strictly to the merchant tenant.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ groupId: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ groupId: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const sellerId = resolveSellerId(actor);

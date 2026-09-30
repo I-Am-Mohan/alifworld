@@ -9,18 +9,12 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/catalog/products/[id]/reviews/eligibility
  * Checks if the authenticated customer is eligible to submit a verified review for this product.
  */
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
 
-    const eligibility = await productReviewService.checkCustomerEligibility(
-      actor.userId,
-      id
-    );
+    const eligibility = await productReviewService.checkCustomerEligibility(actor.userId, id);
 
     return NextResponse.json(
       {

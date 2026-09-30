@@ -53,7 +53,8 @@ export function AdminPlaceholderPage({
 
         <h2 className="text-xl font-black text-slate-900">{title}</h2>
         <p className="mt-2 text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-          {description || 'This section is currently under development and will be available in an upcoming phase.'}
+          {description ||
+            'This section is currently under development and will be available in an upcoming phase.'}
         </p>
 
         <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-3">

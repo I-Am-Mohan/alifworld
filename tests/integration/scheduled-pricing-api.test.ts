@@ -51,8 +51,16 @@ describe('Milestone 099: Scheduled Prices and Price History API Integration Test
       newCompareAtPoisha: 150000n,
       reason: 'Cost adjustment',
       effectiveAt: new Date('2026-06-01'),
-      variant: { id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', sku: 'SKU-SHIRT-BLUE-L', title: 'Blue L' },
-      product: { id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', title: 'Premium T-Shirt', sellerId: 'sel-store-aaaa-1111' },
+      variant: {
+        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        sku: 'SKU-SHIRT-BLUE-L',
+        title: 'Blue L',
+      },
+      product: {
+        id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+        title: 'Premium T-Shirt',
+        sellerId: 'sel-store-aaaa-1111',
+      },
     },
   ];
 
@@ -167,7 +175,9 @@ describe('Milestone 099: Scheduled Prices and Price History API Integration Test
       });
 
       try {
-        const req = new NextRequest('http://localhost:3000/api/v1/pricing/history?variantId=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11');
+        const req = new NextRequest(
+          'http://localhost:3000/api/v1/pricing/history?variantId=a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
+        );
         const res = await getHistoryRoute(req);
 
         expect(res.status).toBe(200);
@@ -204,7 +214,9 @@ describe('Milestone 099: Scheduled Prices and Price History API Integration Test
       });
 
       try {
-        const req = new NextRequest('http://localhost:3000/api/v1/pricing/scheduled?channel=RETAIL');
+        const req = new NextRequest(
+          'http://localhost:3000/api/v1/pricing/scheduled?channel=RETAIL'
+        );
         const res = await getScheduledRoute(req);
 
         expect(res.status).toBe(200);

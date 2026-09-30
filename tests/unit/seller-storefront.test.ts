@@ -38,9 +38,15 @@ class MockSearchEngine implements SearchServiceInterface {
       },
     };
   }
-  public async indexDocuments(): Promise<any> { return { indexed: 0 }; }
-  public async deleteDocuments(): Promise<any> { return { deleted: 0 }; }
-  public async checkHealth(): Promise<any> { return { status: 'HEALTHY' }; }
+  public async indexDocuments(): Promise<any> {
+    return { indexed: 0 };
+  }
+  public async deleteDocuments(): Promise<any> {
+    return { deleted: 0 };
+  }
+  public async checkHealth(): Promise<any> {
+    return { status: 'HEALTHY' };
+  }
 }
 
 class MockPrismaSellerDb {

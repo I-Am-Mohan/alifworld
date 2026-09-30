@@ -6,6 +6,9 @@ export const dynamic = 'force-dynamic';
 const service = new CollectionService();
 
 export async function GET(req: NextRequest) {
-  try { return NextResponse.json({ success: true, data: await service.getPublished() }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load collections'); }
+  try {
+    return NextResponse.json({ success: true, data: await service.getPublished() });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load collections');
+  }
 }

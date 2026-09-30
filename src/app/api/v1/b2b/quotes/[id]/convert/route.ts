@@ -9,18 +9,12 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/b2b/quotes/[id]/convert
  * Converts an ACCEPTED quote to an active Cart with locked negotiated pricing.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
 
-    const conversion = await b2bCommerceService.convertQuoteToCart(
-      id,
-      actor.userId
-    );
+    const conversion = await b2bCommerceService.convertQuoteToCart(id, actor.userId);
 
     return NextResponse.json(
       {

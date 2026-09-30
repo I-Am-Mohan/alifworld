@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/reviews/[id]/vote
  * Casts a helpful or unhelpful vote on a review.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;

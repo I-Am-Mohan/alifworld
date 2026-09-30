@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/v1/search
  * Full-text product search with faceted filters, multi-lingual support, and automatic degraded-mode fallback.
- * 
+ *
  * Query Parameters:
  * - q | query: Search keyword (English or Bengali)
  * - locale: 'en-BD' | 'bn-BD'
@@ -32,15 +32,22 @@ export async function GET(req: NextRequest) {
     // Multi-brand support: supports ?brand=A&brand=B or ?brands=A,B
     const brandParams = searchParams.getAll('brand');
     const brandsQuery = searchParams.get('brands');
-    const brands = brandParams.length > 0
-      ? brandParams
-      : brandsQuery
-      ? brandsQuery.split(',').map((b) => b.trim()).filter(Boolean)
-      : undefined;
+    const brands =
+      brandParams.length > 0
+        ? brandParams
+        : brandsQuery
+          ? brandsQuery
+              .split(',')
+              .map((b) => b.trim())
+              .filter(Boolean)
+          : undefined;
 
     const tagsQuery = searchParams.get('tags');
     const tags = tagsQuery
-      ? tagsQuery.split(',').map((t) => t.trim()).filter(Boolean)
+      ? tagsQuery
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
       : undefined;
 
     const validatedInput = SearchQuerySchema.parse({

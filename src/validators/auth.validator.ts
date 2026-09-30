@@ -1,9 +1,9 @@
 /**
  * AlifWorld Authentication & Token Policy Validation Schemas
- * 
+ *
  * Zod validation contracts for authentication, token introspection,
  * refresh rotation, and session invalidation.
- * 
+ *
  * Invariants: ADR-0031
  */
 
@@ -17,9 +17,7 @@ export const loginSchema = z.object({
     .max(255, 'Identifier exceeds maximum allowed length')
     .transform((val) => val.trim().toLowerCase()),
   password: z.string().min(1, 'Password is required'),
-  clientType: z
-    .enum(['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'])
-    .default('WEB'),
+  clientType: z.enum(['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL']).default('WEB'),
   deviceInfo: z.string().max(255).optional(),
 });
 
@@ -27,13 +25,20 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerPasswordSchema = z
   .string()
-  .min(PASSWORD_POLICY.MIN_LENGTH, `Password must be at least ${PASSWORD_POLICY.MIN_LENGTH} characters`)
-  .max(PASSWORD_POLICY.MAX_LENGTH, `Password must not exceed ${PASSWORD_POLICY.MAX_LENGTH} characters`)
+  .min(
+    PASSWORD_POLICY.MIN_LENGTH,
+    `Password must be at least ${PASSWORD_POLICY.MIN_LENGTH} characters`
+  )
+  .max(
+    PASSWORD_POLICY.MAX_LENGTH,
+    `Password must not exceed ${PASSWORD_POLICY.MAX_LENGTH} characters`
+  )
   .regex(PASSWORD_POLICY.PATTERN, 'Password does not meet required complexity standards');
 
 export const customerRegistrationSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(5, 'Email is required')
     .max(255, 'Email exceeds maximum allowed length')
     .email('Please enter a valid email address')
@@ -67,9 +72,7 @@ export type CustomerRegistrationInput = z.infer<typeof customerRegistrationSchem
 
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required').optional(),
-  clientType: z
-    .enum(['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL'])
-    .default('WEB'),
+  clientType: z.enum(['WEB', 'MOBILE_FLUTTER', 'POS', 'ADMIN_PORTAL']).default('WEB'),
 });
 
 export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
@@ -90,6 +93,7 @@ export type RevokeSessionInput = z.infer<typeof revokeSessionSchema>;
 export const verifyEmailSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(5, 'Email is required')
     .max(255, 'Email exceeds maximum allowed length')
     .email('Please enter a valid email address')
@@ -105,6 +109,7 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export const resendVerificationSchema = z.object({
   email: z
     .string()
+    .trim()
     .min(5, 'Email is required')
     .max(255, 'Email exceeds maximum allowed length')
     .email('Please enter a valid email address')
@@ -115,6 +120,7 @@ export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 
 const passwordResetEmailSchema = z
   .string()
+  .trim()
   .min(5, 'Email is required')
   .max(255, 'Email exceeds maximum allowed length')
   .email('Please enter a valid email address')
@@ -122,8 +128,14 @@ const passwordResetEmailSchema = z
 
 const newPasswordSchema = z
   .string()
-  .min(PASSWORD_POLICY.MIN_LENGTH, `Password must be at least ${PASSWORD_POLICY.MIN_LENGTH} characters`)
-  .max(PASSWORD_POLICY.MAX_LENGTH, `Password must not exceed ${PASSWORD_POLICY.MAX_LENGTH} characters`);
+  .min(
+    PASSWORD_POLICY.MIN_LENGTH,
+    `Password must be at least ${PASSWORD_POLICY.MIN_LENGTH} characters`
+  )
+  .max(
+    PASSWORD_POLICY.MAX_LENGTH,
+    `Password must not exceed ${PASSWORD_POLICY.MAX_LENGTH} characters`
+  );
 
 export const requestPasswordResetSchema = z.object({
   email: passwordResetEmailSchema,
@@ -144,7 +156,10 @@ export const resetPasswordSchema = z
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required').max(PASSWORD_POLICY.MAX_LENGTH),
+    currentPassword: z
+      .string()
+      .min(1, 'Current password is required')
+      .max(PASSWORD_POLICY.MAX_LENGTH),
     newPassword: newPasswordSchema,
     confirmPassword: z.string().max(PASSWORD_POLICY.MAX_LENGTH),
   })
@@ -181,4 +196,3 @@ export const oauthVerifySchema = z
     path: ['idToken'],
   });
 export type OAuthVerifyInput = z.infer<typeof oauthVerifySchema>;
-

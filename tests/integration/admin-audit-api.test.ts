@@ -1,6 +1,6 @@
 /**
  * Integration Tests: Admin Historical Audit Trail Exploration REST API (Milestone 049)
- * 
+ *
  * Verifies /api/v1/admin/audit and /api/v1/admin/audit/[id]:
  * 1. 401 Unauthorized when unauthenticated
  * 2. 403 Forbidden when Customer attempts to inspect audit trails
@@ -10,11 +10,11 @@
  * 6. Multi-parameter filtering by action, resource, actorId
  * 7. Single audit record inspection by ID (200 OK vs 404 Not Found)
  * 8. Append-only immutability invariant: DELETE/PUT/PATCH return 405 Method Not Allowed
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0031, Milestone 044, Milestone 049
  */
 
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { NextRequest } from 'next/server';
 import { GET as getAuditLogs } from '@/app/api/v1/admin/audit/route';
 import {
@@ -80,8 +80,14 @@ describe('Admin Historical Audit Trail REST API Integration (Milestone 049)', ()
 
   // Mock in-memory audit logs
   let mockLogs: any[];
+  let originalAuditLog: typeof prisma.auditLog;
+
+  afterEach(() => {
+    (prisma as any).auditLog = originalAuditLog;
+  });
 
   beforeEach(() => {
+    originalAuditLog = prisma.auditLog;
     mockLogs = [
       {
         id: 'aud_001',
@@ -252,7 +258,9 @@ describe('Admin Historical Audit Trail REST API Integration (Milestone 049)', ()
       const req = new NextRequest('http://localhost:3000/api/v1/admin/audit/aud_non_existent', {
         headers: { authorization: SUPER_ADMIN_AUTH },
       });
-      const res = await getAuditLogById(req, { params: Promise.resolve({ id: 'aud_non_existent' }) });
+      const res = await getAuditLogById(req, {
+        params: Promise.resolve({ id: 'aud_non_existent' }),
+      });
       expect(res.status).toBe(404);
     });
 

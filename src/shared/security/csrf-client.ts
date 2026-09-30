@@ -8,7 +8,9 @@ function readCsrfCookie(): string | null {
   const encoded = document.cookie
     .split('; ')
     .find((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`))
-    ?.split('=').slice(1).join('=');
+    ?.split('=')
+    .slice(1)
+    .join('=');
 
   return encoded ? decodeURIComponent(encoded) : null;
 }
@@ -27,7 +29,9 @@ async function requestCsrfToken(forceRefresh = false): Promise<string | null> {
 
   if (!response.ok) return null;
 
-  const body = (await response.json().catch(() => null)) as { data?: { csrfToken?: string } } | null;
+  const body = (await response.json().catch(() => null)) as {
+    data?: { csrfToken?: string };
+  } | null;
   return body?.data?.csrfToken || readCsrfCookie();
 }
 
@@ -45,7 +49,10 @@ function isCsrfFailure(response: Response, body: unknown): boolean {
  * Browser fetch wrapper for cookie-authenticated state-changing requests.
  * It attaches the double-submit CSRF header and refreshes once on token drift.
  */
-export async function csrfFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+export async function csrfFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {}
+): Promise<Response> {
   const method = init.method || 'GET';
   if (!isStateChanging(method)) {
     return fetch(input, { ...init, credentials: init.credentials || 'same-origin' });
@@ -60,7 +67,10 @@ export async function csrfFetch(input: RequestInfo | URL, init: RequestInit = {}
       headers,
       credentials: init.credentials || 'same-origin',
     });
-    const body = await response.clone().json().catch(() => null);
+    const body = await response
+      .clone()
+      .json()
+      .catch(() => null);
     return { response, body };
   };
 

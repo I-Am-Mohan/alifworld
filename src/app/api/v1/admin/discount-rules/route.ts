@@ -25,7 +25,13 @@ export async function GET(req: NextRequest) {
     const limit = Number(searchParams.get('limit') || '20');
 
     const service = new DiscountRuleService(prisma);
-    const result = await service.listDiscountRules(actor, { discountType, isAutomatic, status, page, limit });
+    const result = await service.listDiscountRules(actor, {
+      discountType,
+      isAutomatic,
+      status,
+      page,
+      limit,
+    });
 
     return NextResponse.json({
       success: true,

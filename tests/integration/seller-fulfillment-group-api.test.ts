@@ -17,12 +17,8 @@ import { GET as getSellerGroupRoute } from '@/app/api/v1/seller/fulfillment-grou
 import { PATCH as updateGroupStatusRoute } from '@/app/api/v1/seller/fulfillment-groups/[id]/status/route';
 import { POST as dispatchGroupRoute } from '@/app/api/v1/seller/fulfillment-groups/[id]/dispatch/route';
 import { GET as getManifestRoute } from '@/app/api/v1/seller/fulfillment-groups/[id]/manifest/route';
-import {
-  GET as listAdminGroupsRoute,
-} from '@/app/api/v1/admin/fulfillment-groups/route';
-import {
-  GET as getAdminGroupRoute,
-} from '@/app/api/v1/admin/fulfillment-groups/[id]/route';
+import { GET as listAdminGroupsRoute } from '@/app/api/v1/admin/fulfillment-groups/route';
+import { GET as getAdminGroupRoute } from '@/app/api/v1/admin/fulfillment-groups/[id]/route';
 import { sellerFulfillmentGroupService } from '@/features/fulfillment';
 import { NextRequest } from 'next/server';
 
@@ -119,15 +115,14 @@ describe('Milestone 135: Seller Fulfillment Group REST API Integration Tests', (
 
   describe('1. GET /api/v1/seller/fulfillment-groups (Tenant-Scoped Listing)', () => {
     it('returns fulfillment groups scoped exclusively to the seller tenant', async () => {
-      const listSpy = spyOn(
-        sellerFulfillmentGroupService,
-        'listGroupsForSeller'
-      ).mockResolvedValue({
-        items: [sampleGroupAlpha],
-        total: 1,
-        page: 1,
-        limit: 20,
-      });
+      const listSpy = spyOn(sellerFulfillmentGroupService, 'listGroupsForSeller').mockResolvedValue(
+        {
+          items: [sampleGroupAlpha],
+          total: 1,
+          page: 1,
+          limit: 20,
+        }
+      );
 
       const req = new NextRequest(
         'http://localhost:3000/api/v1/seller/fulfillment-groups?page=1&limit=20',
@@ -191,7 +186,7 @@ describe('Milestone 135: Seller Fulfillment Group REST API Integration Tests', (
         'http://localhost:3000/api/v1/seller/fulfillment-groups/sfg_alpha_001/status',
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'cross-tenant-test' },
           body: JSON.stringify({ status: 'ACCEPTED' }),
         }
       );
@@ -228,6 +223,29 @@ describe('Milestone 135: Seller Fulfillment Group REST API Integration Tests', (
   });
 
   describe('3. State Machine Progression (PATCH status)', () => {
+    it('requires a replay key and order permission before invoking the service', async () => {
+      const transitionSpy = spyOn(sellerFulfillmentGroupService, 'transitionGroupStatus');
+      try {
+        const request = () =>
+          new NextRequest('http://localhost:3000/api/v1/seller/fulfillment-groups/group-1/status', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'ACCEPTED' }),
+          });
+        const missingKey = await updateGroupStatusRoute(request(), {
+          params: Promise.resolve({ id: 'group-1' }),
+        });
+        expect(missingKey.status).toBe(422);
+        authSpy.mockReturnValue({ ...sellerAlphaActor, permissions: [] });
+        const missingPermission = await updateGroupStatusRoute(request(), {
+          params: Promise.resolve({ id: 'group-1' }),
+        });
+        expect(missingPermission.status).toBe(403);
+        expect(transitionSpy).not.toHaveBeenCalled();
+      } finally {
+        transitionSpy.mockRestore();
+      }
+    });
     it('allows merchant to advance status from PENDING to ACCEPTED', async () => {
       const transitionSpy = spyOn(
         sellerFulfillmentGroupService,
@@ -241,7 +259,7 @@ describe('Milestone 135: Seller Fulfillment Group REST API Integration Tests', (
         'http://localhost:3000/api/v1/seller/fulfillment-groups/sfg_alpha_001/status',
         {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'accept-test' },
           body: JSON.stringify({
             status: 'ACCEPTED',
             reason: 'Merchant accepted order for packing',

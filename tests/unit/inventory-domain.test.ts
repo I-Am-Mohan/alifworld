@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
-import { calculateAvailableStock, MovementType, SourceType, ReservationStatus } from '@/features/inventory/types';
+import {
+  calculateAvailableStock,
+  MovementType,
+  SourceType,
+  ReservationStatus,
+} from '@/features/inventory/types';
 import {
   CreateWarehouseSchema,
   UpdateWarehouseSchema,

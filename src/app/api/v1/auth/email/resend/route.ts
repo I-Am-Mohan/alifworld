@@ -9,7 +9,7 @@ const verificationService = new EmailVerificationService();
 
 /**
  * POST /api/v1/auth/email/resend
- * 
+ *
  * Resends a 6-digit email verification code with a 60-second cooldown
  * and a strict limit of 3 resends per hour to prevent spam and abuse.
  */

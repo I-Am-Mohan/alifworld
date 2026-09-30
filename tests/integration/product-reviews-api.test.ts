@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import {
   GET as listReviewsRoute,
@@ -171,16 +172,13 @@ describe('Milestone 125: Product Reviews & Ratings REST API Integration Tests', 
   it('POST /api/v1/reviews/[id]/seller-response adds official seller reply', async () => {
     spyOn(authzModule, 'authenticateRequest').mockReturnValue(sellerActor as any);
 
-    const req = new NextRequest(
-      'http://localhost:3000/api/v1/reviews/rev_101/seller-response',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sellerResponse: 'Thank you for your purchase!',
-        }),
-      }
-    );
+    const req = new NextRequest('http://localhost:3000/api/v1/reviews/rev_101/seller-response', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sellerResponse: 'Thank you for your purchase!',
+      }),
+    });
     const res = await sellerResponseRoute(req, {
       params: Promise.resolve({ id: 'rev_101' }),
     });
@@ -210,14 +208,11 @@ describe('Milestone 125: Product Reviews & Ratings REST API Integration Tests', 
   it('POST /api/v1/admin/reviews/[id]/moderate updates review moderation status', async () => {
     spyOn(authzModule, 'authenticateRequest').mockReturnValue(adminActor as any);
 
-    const req = new NextRequest(
-      'http://localhost:3000/api/v1/admin/reviews/rev_101/moderate',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'APPROVED' }),
-      }
-    );
+    const req = new NextRequest('http://localhost:3000/api/v1/admin/reviews/rev_101/moderate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'APPROVED' }),
+    });
     const res = await moderateReviewRoute(req, {
       params: Promise.resolve({ id: 'rev_101' }),
     });

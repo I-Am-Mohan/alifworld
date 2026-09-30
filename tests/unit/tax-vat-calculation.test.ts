@@ -132,7 +132,11 @@ describe('Milestone 093: Configurable Tax and VAT Calculation Architecture', () 
         },
       ];
 
-      const snapshot = taxService.generateTaxSnapshot(lineItems, new Date('2026-09-25T00:00:00Z'), 'BD');
+      const snapshot = taxService.generateTaxSnapshot(
+        lineItems,
+        new Date('2026-09-25T00:00:00Z'),
+        'BD'
+      );
 
       expect(snapshot.jurisdiction).toBe('BD');
       expect(snapshot.lines.length).toBe(2);

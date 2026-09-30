@@ -1,9 +1,9 @@
 /**
  * AlifWorld CMS Domain Types & Contracts
- * 
+ *
  * Defines type contracts for storefront homepage layout, hero banners,
  * feature highlight blocks, and dynamic category/brand showcases.
- * 
+ *
  * Invariants: ADR-0001, ADR-0003, ADR-0022
  */
 

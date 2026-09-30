@@ -110,7 +110,8 @@ function verifyOriginAndReferer(req: NextRequest, allowedOrigins: string[] = [])
   if (origin) {
     try {
       const originUrl = new URL(origin);
-      if (host && (originUrl.host === host || originUrl.hostname === host.split(':')[0])) return true;
+      if (host && (originUrl.host === host || originUrl.hostname === host.split(':')[0]))
+        return true;
       return allowedOrigins.some((allowed) => allowed === origin || allowed === originUrl.origin);
     } catch {
       return false;
@@ -120,7 +121,8 @@ function verifyOriginAndReferer(req: NextRequest, allowedOrigins: string[] = [])
   if (referer) {
     try {
       const refererUrl = new URL(referer);
-      if (host && (refererUrl.host === host || refererUrl.hostname === host.split(':')[0])) return true;
+      if (host && (refererUrl.host === host || refererUrl.hostname === host.split(':')[0]))
+        return true;
       return allowedOrigins.some((allowed) => allowed === refererUrl.origin);
     } catch {
       return false;
@@ -147,7 +149,9 @@ export async function verifyRequestCsrfEdge(
 
   const hasAuthHeader = Boolean(req.headers.get('authorization')?.startsWith('Bearer '));
   const hasAccessCookie = Boolean(req.cookies.get(TOKEN_POLICIES.ACCESS_TOKEN_COOKIE_NAME)?.value);
-  const hasRefreshCookie = Boolean(req.cookies.get(TOKEN_POLICIES.REFRESH_TOKEN_COOKIE_NAME)?.value);
+  const hasRefreshCookie = Boolean(
+    req.cookies.get(TOKEN_POLICIES.REFRESH_TOKEN_COOKIE_NAME)?.value
+  );
   const hasCookieAuth = hasAccessCookie || hasRefreshCookie;
 
   if (hasAuthHeader && !hasCookieAuth) {
@@ -166,7 +170,11 @@ export async function verifyRequestCsrfEdge(
   const headerToken = extractCsrfHeader(req);
 
   if (!hasCookieAuth && !cookieToken) {
-    return { valid: true, code: 'CSRF_SKIPPED', reason: 'Unauthenticated initial public interaction' };
+    return {
+      valid: true,
+      code: 'CSRF_SKIPPED',
+      reason: 'Unauthenticated initial public interaction',
+    };
   }
 
   if (!headerToken || !cookieToken) {
@@ -195,5 +203,9 @@ export async function verifyRequestCsrfEdge(
     };
   }
 
-  return { valid: true, code: 'CSRF_VALID', reason: 'Anti-CSRF token and origin verified successfully' };
+  return {
+    valid: true,
+    code: 'CSRF_VALID',
+    reason: 'Anti-CSRF token and origin verified successfully',
+  };
 }

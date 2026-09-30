@@ -25,4 +25,3 @@ export * from './adapters/in-house.adapter';
 export * from './adapters/courier-adapter.registry';
 export * from './repositories/shipment.repository';
 export * from './services/courier-dispatch.service';
-

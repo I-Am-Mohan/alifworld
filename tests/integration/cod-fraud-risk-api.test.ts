@@ -9,7 +9,7 @@
  * 5. POST, GET & DELETE /api/v1/admin/checkout/cod/blacklist - fraud registry management
  */
 
-import { describe, it, expect, beforeEach, afterEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, spyOn, mock } from 'bun:test';
 import * as authzModule from '@/shared/authz';
 import { POST as evaluateCodRoute } from '@/app/api/v1/checkout/cod/evaluate/route';
 import { POST as sendCodOtpRoute } from '@/app/api/v1/checkout/cod/send-otp/route';
@@ -49,7 +49,7 @@ describe('Milestone 137: COD Fraud-Risk REST API Integration Tests', () => {
   });
 
   afterEach(() => {
-    authSpy?.mockRestore();
+    mock.restore();
   });
 
   describe('1. POST /api/v1/checkout/cod/evaluate', () => {
@@ -268,19 +268,16 @@ describe('Milestone 137: COD Fraud-Risk REST API Integration Tests', () => {
       authSpy.mockReturnValue(adminActor as any);
 
       // 1. Add Blacklist Entry
-      const addReq = new NextRequest(
-        'http://localhost:3000/api/v1/admin/checkout/cod/blacklist',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'PHONE',
-            identifier: '01999887766',
-            reason: 'Frequent doorstep refusals',
-            severity: 'BLOCK',
-          }),
-        }
-      );
+      const addReq = new NextRequest('http://localhost:3000/api/v1/admin/checkout/cod/blacklist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'PHONE',
+          identifier: '01999887766',
+          reason: 'Frequent doorstep refusals',
+          severity: 'BLOCK',
+        }),
+      });
 
       const addRes = await addBlacklistRoute(addReq);
       const addJson = await addRes.json();

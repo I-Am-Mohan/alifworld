@@ -120,10 +120,9 @@ describe('Milestone 140: Abandoned Checkout Recovery REST API Integration Tests'
         'getAbandonedCheckoutById'
       ).mockResolvedValue(sampleAbandoned as any);
 
-      const req = new NextRequest(
-        'http://localhost:3000/api/v1/checkout/abandoned/rec_sample_01',
-        { method: 'GET' }
-      );
+      const req = new NextRequest('http://localhost:3000/api/v1/checkout/abandoned/rec_sample_01', {
+        method: 'GET',
+      });
 
       const response = await getAbandonedRoute(req, {
         params: Promise.resolve({ id: 'rec_sample_01' }),
@@ -176,10 +175,7 @@ describe('Milestone 140: Abandoned Checkout Recovery REST API Integration Tests'
 
   describe('4. GET /api/v1/cart/recover/[token]', () => {
     it('restores cart from recovery token with revalidation metrics', async () => {
-      const recoverSpy = spyOn(
-        abandonedCheckoutRecoveryService,
-        'recoverCart'
-      ).mockResolvedValue({
+      const recoverSpy = spyOn(abandonedCheckoutRecoveryService, 'recoverCart').mockResolvedValue({
         success: true,
         cartId: 'crt_abandoned_01',
         recoveryToken: 'rec_valid_token_123',
@@ -199,10 +195,9 @@ describe('Milestone 140: Abandoned Checkout Recovery REST API Integration Tests'
         restoredAt: new Date().toISOString(),
       });
 
-      const req = new NextRequest(
-        'http://localhost:3000/api/v1/cart/recover/rec_valid_token_123',
-        { method: 'GET' }
-      );
+      const req = new NextRequest('http://localhost:3000/api/v1/cart/recover/rec_valid_token_123', {
+        method: 'GET',
+      });
 
       const response = await recoverCartRoute(req, {
         params: Promise.resolve({ token: 'rec_valid_token_123' }),

@@ -1,16 +1,21 @@
 /**
  * Settlement, Commission Ledger & Merchant Payout Repository
- * 
+ *
  * Manages platform commission audit ledgers, periodic seller settlement batches,
  * and electronic banking payout disbursals (BEFTN/RTGS/MFS).
- * 
+ *
  * Invariants:
  * - ADR-0003: Single modular monolith with tenant isolation
  * - ADR-0022: Immutable financial ledgers & audited reversals
  * - ADR-0028: Reconciled merchant settlements and payout disbursals
  */
 
-import { BaseRepository, parseOffsetPagination, formatPaginatedResult, assertSellerScope } from '@/shared/database/base-repository';
+import {
+  BaseRepository,
+  parseOffsetPagination,
+  formatPaginatedResult,
+  assertSellerScope,
+} from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
 import { NotFoundError, ConflictError, ValidationError } from '@/shared/errors/app-error';
 
@@ -76,7 +81,11 @@ export class SettlementRepository extends BaseRepository {
   /**
    * Records a linked, reversing entry in the CommissionLedger.
    */
-  async recordCommissionReversal(originalCommissionId: string, reversalAmountPoisha: bigint, reason: string) {
+  async recordCommissionReversal(
+    originalCommissionId: string,
+    reversalAmountPoisha: bigint,
+    reason: string
+  ) {
     return this.executeSafe(async () => {
       const original = await (this.db as any).commissionLedger.findUnique({
         where: { id: originalCommissionId },
@@ -108,7 +117,10 @@ export class SettlementRepository extends BaseRepository {
   /**
    * SELLER TENANT SCOPING: Retrieves commission entries for a specific merchant.
    */
-  async findCommissionsBySellerId(sellerId: string, options: { page?: number; limit?: number } = {}) {
+  async findCommissionsBySellerId(
+    sellerId: string,
+    options: { page?: number; limit?: number } = {}
+  ) {
     const { skip, take, page, limit } = parseOffsetPagination(options);
 
     return this.executeSafe(async () => {
@@ -233,7 +245,10 @@ export class SettlementRepository extends BaseRepository {
   /**
    * SELLER TENANT SCOPING: Retrieves settlements for a specific merchant.
    */
-  async findSettlementsBySellerId(sellerId: string, options: { page?: number; limit?: number } = {}) {
+  async findSettlementsBySellerId(
+    sellerId: string,
+    options: { page?: number; limit?: number } = {}
+  ) {
     const { skip, take, page, limit } = parseOffsetPagination(options);
 
     return this.executeSafe(async () => {

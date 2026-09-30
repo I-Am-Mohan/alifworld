@@ -6,7 +6,11 @@ import { UserRepository } from '../../src/repositories/user.repository';
 import { SessionRepository } from '../../src/repositories/session.repository';
 import { hashPassword } from '../../src/shared/auth/password';
 import { verifyJwt } from '../../src/shared/auth/jwt';
-import { AccessTokenClaims, RefreshTokenClaims, TOKEN_POLICIES } from '../../src/shared/auth/token-policy';
+import {
+  AccessTokenClaims,
+  RefreshTokenClaims,
+  TOKEN_POLICIES,
+} from '../../src/shared/auth/token-policy';
 import { UnauthorizedError } from '../../src/shared/errors/app-error';
 
 describe('Customer Login and Access Token Issuance (Milestone 034)', () => {
@@ -231,7 +235,10 @@ describe('Customer Login and Access Token Issuance (Milestone 034)', () => {
         expect(claims.tokenVersion).toBe(1);
 
         // 4. Verify Decoded Refresh Token Claims
-        const refreshClaims = verifyJwt<RefreshTokenClaims>(result.tokens.refreshToken, TEST_SECRET);
+        const refreshClaims = verifyJwt<RefreshTokenClaims>(
+          result.tokens.refreshToken,
+          TEST_SECRET
+        );
         expect(refreshClaims.sub).toBe('usr_01j7x4b9e8m02k3f8d7c6b5a1');
         expect(refreshClaims.clientType).toBe('WEB');
 
@@ -357,16 +364,14 @@ describe('Customer Login and Access Token Issuance (Milestone 034)', () => {
         const user = mockUsers.get('usr_01j7x4b9e8m02k3f8d7c6b5a1');
         user.tokenVersion = 2; // Old token has tokenVersion: 1
 
-        await expect(
-          loginService.getCurrentUser(loginResult.tokens.accessToken)
-        ).rejects.toThrow(UnauthorizedError);
+        await expect(loginService.getCurrentUser(loginResult.tokens.accessToken)).rejects.toThrow(
+          UnauthorizedError
+        );
       });
 
       it('rejects profile retrieval if token signature is invalid', async () => {
         const tamperedToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalidpayload.invalidsig';
-        await expect(loginService.getCurrentUser(tamperedToken)).rejects.toThrow(
-          UnauthorizedError
-        );
+        await expect(loginService.getCurrentUser(tamperedToken)).rejects.toThrow(UnauthorizedError);
       });
     });
   });

@@ -12,7 +12,9 @@ describe('Password reset, change, and breach-safe controls (Milestone 037)', () 
   it('shares all registration password requirements with server validation', () => {
     const weak = getPasswordRequirements('lowercase');
     expect(weak.filter(({ met }) => !met).map(({ key }) => key)).toEqual([
-      'uppercase', 'number', 'special',
+      'uppercase',
+      'number',
+      'special',
     ]);
     expect(validatePasswordStrength('lowercase').errors).toEqual([
       'Password must contain at least one uppercase English letter',
@@ -20,11 +22,22 @@ describe('Password reset, change, and breach-safe controls (Milestone 037)', () 
       'Password must contain at least one special character (!@#$%^&*...)',
     ]);
     expect(validatePasswordStrength('Welcome@123').isValid).toBe(false);
-    expect(getPasswordRequirements('Welcome@123').find(({ key }) => key === 'unique')?.met).toBe(false);
+    expect(getPasswordRequirements('Welcome@123').find(({ key }) => key === 'unique')?.met).toBe(
+      false
+    );
     expect(validatePasswordStrength('NewUnique@Pass2027').isValid).toBe(true);
-    expect(validatePasswordStrength('')).toEqual({ isValid: false, errors: ['Password is required'] });
-    expect(validatePasswordStrength(null as unknown as string)).toEqual({ isValid: false, errors: ['Password is required'] });
-    expect(validatePasswordStrength(123 as unknown as string)).toEqual({ isValid: false, errors: ['Password is required'] });
+    expect(validatePasswordStrength('')).toEqual({
+      isValid: false,
+      errors: ['Password is required'],
+    });
+    expect(validatePasswordStrength(null as unknown as string)).toEqual({
+      isValid: false,
+      errors: ['Password is required'],
+    });
+    expect(validatePasswordStrength(123 as unknown as string)).toEqual({
+      isValid: false,
+      errors: ['Password is required'],
+    });
   });
   const fixedNow = new Date('2026-09-22T12:00:00.000Z');
   const rawResetToken = 'reset_token_with_more_than_thirty_two_secure_characters_037';
@@ -64,9 +77,7 @@ describe('Password reset, change, and breach-safe controls (Milestone 037)', () 
       getRecentOtpCount: async (identifier: string, purpose: string, since: Date) =>
         otpTokens.filter(
           (otp) =>
-            otp.identifier === identifier &&
-            otp.purpose === purpose &&
-            otp.createdAt >= since
+            otp.identifier === identifier && otp.purpose === purpose && otp.createdAt >= since
         ).length,
       findActiveOtp: async (identifier: string, purpose: string) =>
         otpTokens
@@ -91,8 +102,7 @@ describe('Password reset, change, and breach-safe controls (Milestone 037)', () 
     };
 
     const userRepo: any = {
-      findPasswordUserByEmail: async (email: string) =>
-        email === user.email ? { ...user } : null,
+      findPasswordUserByEmail: async (email: string) => (email === user.email ? { ...user } : null),
       findPasswordUserById: async (id: string) => (id === user.id ? { ...user } : null),
     };
 
@@ -214,7 +224,11 @@ describe('Password reset, change, and breach-safe controls (Milestone 037)', () 
     await service.requestPasswordReset(user.email, 'en-BD');
 
     await expect(
-      service.resetPassword(user.email, 'wrong_token_that_is_long_enough_for_the_contract', replacementPassword)
+      service.resetPassword(
+        user.email,
+        'wrong_token_that_is_long_enough_for_the_contract',
+        replacementPassword
+      )
     ).rejects.toBeInstanceOf(ValidationError);
     expect(otpTokens[0].attempts).toBe(1);
     expect(verifyPassword(originalPassword, user.passwordHash)).toBe(true);

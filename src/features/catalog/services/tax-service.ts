@@ -1,9 +1,9 @@
 /**
  * AlifWorld Tax & VAT Calculation Domain Service
- * 
+ *
  * Implements jurisdiction- and effective-date-aware Value Added Tax (VAT)
  * rules under Bangladesh National Board of Revenue (NBR) Mushak 6.3 standards.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0001, ADR-0005, ADR-0025
  */
@@ -73,14 +73,22 @@ export class TaxService {
     // 3. Fallback to the effective jurisdiction rule. Rule selection is date-aware;
     // this milestone does not activate new rates or invent seller-specific tax rates.
     const effectiveDate = params.date || new Date();
-    const effectiveRule = this.defaultJurisdictionRules.find((rule) =>
-      rule.effectiveFrom <= effectiveDate && (!rule.effectiveTo || effectiveDate <= rule.effectiveTo)
+    const effectiveRule = this.defaultJurisdictionRules.find(
+      (rule) =>
+        rule.effectiveFrom <= effectiveDate &&
+        (!rule.effectiveTo || effectiveDate <= rule.effectiveTo)
     );
     return effectiveRule?.standardRatePercent ?? 15.0;
   }
 
-  public async resolvePersistedTaxRatePercent(params: { categoryId?: string | null; date?: Date }): Promise<number> {
-    const rule = await this.taxRuleRepository.resolveEffective(params.categoryId ?? null, params.date || new Date());
+  public async resolvePersistedTaxRatePercent(params: {
+    categoryId?: string | null;
+    date?: Date;
+  }): Promise<number> {
+    const rule = await this.taxRuleRepository.resolveEffective(
+      params.categoryId ?? null,
+      params.date || new Date()
+    );
     return rule?.ratePercent ?? this.resolveTaxRatePercent({ date: params.date });
   }
 
@@ -231,7 +239,8 @@ export class TaxService {
     }
     const [whole, fraction = ''] = raw.split('.');
     const basisPoints = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
-    if (basisPoints < 0 || basisPoints > 10000) throw new Error(`Tax rate must be between 0 and 100 percent: ${value}`);
+    if (basisPoints < 0 || basisPoints > 10000)
+      throw new Error(`Tax rate must be between 0 and 100 percent: ${value}`);
     return basisPoints;
   }
 

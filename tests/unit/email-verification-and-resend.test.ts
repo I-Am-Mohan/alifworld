@@ -1,10 +1,13 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
 import { verifyEmailSchema, resendVerificationSchema } from '../../src/validators/auth.validator';
-import { EmailVerificationService, EMAIL_VERIFICATION_CONSTANTS } from '../../src/services/email-verification.service';
+import {
+  EmailVerificationService,
+  EMAIL_VERIFICATION_CONSTANTS,
+} from '../../src/services/email-verification.service';
 import { OtpRepository } from '../../src/repositories/otp.repository';
 import { UserRepository } from '../../src/repositories/user.repository';
 import { hashToken } from '../../src/shared/auth/jwt';
-import { NotFoundError, ValidationError } from '../../src/shared/errors/app-error';
+import { ValidationError } from '../../src/shared/errors/app-error';
 
 describe('Email Verification and Resend Controls (Milestone 033)', () => {
   describe('Zod Validation Schemas', () => {
@@ -20,15 +23,25 @@ describe('Email Verification and Resend Controls (Milestone 033)', () => {
     });
 
     it('rejects verifyEmail with non-6-digit code', () => {
-      expect(() => verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '12345' })).toThrow();
-      expect(() => verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '1234567' })).toThrow();
+      expect(() =>
+        verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '12345' })
+      ).toThrow();
+      expect(() =>
+        verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '1234567' })
+      ).toThrow();
       expect(() => verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '' })).toThrow();
     });
 
     it('rejects verifyEmail with non-numeric code characters', () => {
-      expect(() => verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '12345a' })).toThrow();
-      expect(() => verifyEmailSchema.parse({ email: 'tanvir@example.com', code: 'ABCDEF' })).toThrow();
-      expect(() => verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '12 456' })).toThrow();
+      expect(() =>
+        verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '12345a' })
+      ).toThrow();
+      expect(() =>
+        verifyEmailSchema.parse({ email: 'tanvir@example.com', code: 'ABCDEF' })
+      ).toThrow();
+      expect(() =>
+        verifyEmailSchema.parse({ email: 'tanvir@example.com', code: '12 456' })
+      ).toThrow();
     });
 
     it('rejects verifyEmail with invalid email', () => {
@@ -175,7 +188,14 @@ describe('Email Verification and Resend Controls (Milestone 033)', () => {
       service = new EmailVerificationService(
         mockOtpRepo as unknown as OtpRepository,
         mockUserRepo as unknown as UserRepository,
-        mockPrisma
+        mockPrisma,
+        async () => ({
+          messageId: 'test-only',
+          response: 'Test delivery',
+          accepted: [],
+          rejected: [],
+          configUsed: { host: 'test.invalid', port: 25, from: 'test@example.invalid' },
+        })
       );
     });
 
@@ -213,7 +233,9 @@ describe('Email Verification and Resend Controls (Milestone 033)', () => {
         expect(mockAuditLogs.some((log) => log.action === 'EMAIL_VERIFIED')).toBe(true);
 
         // Verify outbox event emitted
-        expect(mockOutboxEvents.some((event) => event.eventType === 'auth.email_verified')).toBe(true);
+        expect(mockOutboxEvents.some((event) => event.eventType === 'auth.email_verified')).toBe(
+          true
+        );
       });
 
       it('returns idempotent success if user is already verified', async () => {
@@ -227,9 +249,9 @@ describe('Email Verification and Resend Controls (Milestone 033)', () => {
         expect(result.message).toContain('already verified');
       });
 
-      it('throws NotFoundError if email does not exist', async () => {
+      it('returns the same validation error for an unknown email and invalid verification code', async () => {
         await expect(service.verifyEmail('nonexistent@example.com', '123456')).rejects.toThrow(
-          NotFoundError
+          ValidationError
         );
       });
 
@@ -304,6 +326,14 @@ describe('Email Verification and Resend Controls (Milestone 033)', () => {
           'If an account exists with this email, a verification code has been sent.'
         );
         expect(result.cooldownSeconds).toBe(60);
+        expect(mockOtps.size).toBe(1);
+        expect(Array.from(mockOtps.values())[0].userId).toBeNull();
+        expect(mockAuditLogs).toHaveLength(0);
+        const verified = await service.verifyEmail(
+          'unknown@example.com',
+          result.devVerificationCode!
+        );
+        expect(verified.verified).toBe(true);
       });
 
       it('returns alreadyVerified status without generating new token if already verified', async () => {
@@ -399,7 +429,9 @@ describe('Email Verification and Resend Controls (Milestone 033)', () => {
 
         expect(result.success).toBe(true);
         expect(result.cooldownSeconds).toBe(60);
-        expect(result.message).toContain('A new 6-digit verification code has been sent');
+        expect(result.message).toBe(
+          'If an account exists with this email, a verification code has been sent.'
+        );
         expect(result.devVerificationCode).toBeDefined();
         expect(result.devVerificationCode?.length).toBe(6);
 

@@ -42,7 +42,10 @@ class MockStockBalanceRepository extends StockBalanceRepository {
     return this.balances.get(id) ?? null;
   }
 
-  public async findByWarehouseAndVariant(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async findByWarehouseAndVariant(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     for (const bal of this.balances.values()) {
       if (bal.warehouseId === warehouseId && bal.variantId === variantId) {
         return bal;
@@ -159,11 +162,16 @@ class MockStockReservationRepository extends StockReservationRepository {
     return model;
   }
 
-  public async commit(id: string, expectedVersion: number, orderId?: string): Promise<StockReservationModel> {
+  public async commit(
+    id: string,
+    expectedVersion: number,
+    orderId?: string
+  ): Promise<StockReservationModel> {
     const res = this.reservations.get(id);
     if (!res) throw new NotFoundError(`Reservation ${id} not found`);
     if (res.version !== expectedVersion) throw new ConflictError('OCC conflict on reservation');
-    if (res.status !== ReservationStatus.ACTIVE) throw new ConflictError(`Cannot commit in status ${res.status}`);
+    if (res.status !== ReservationStatus.ACTIVE)
+      throw new ConflictError(`Cannot commit in status ${res.status}`);
 
     const updated: StockReservationModel = {
       ...res,
@@ -181,7 +189,8 @@ class MockStockReservationRepository extends StockReservationRepository {
     const res = this.reservations.get(id);
     if (!res) throw new NotFoundError(`Reservation ${id} not found`);
     if (res.version !== expectedVersion) throw new ConflictError('OCC conflict on reservation');
-    if (res.status !== ReservationStatus.ACTIVE) throw new ConflictError(`Cannot release in status ${res.status}`);
+    if (res.status !== ReservationStatus.ACTIVE)
+      throw new ConflictError(`Cannot release in status ${res.status}`);
 
     const updated: StockReservationModel = {
       ...res,
@@ -209,7 +218,9 @@ class MockStockReservationRepository extends StockReservationRepository {
     return updated;
   }
 
-  public async findExpiredActiveReservations(cutoffDate: Date = new Date()): Promise<StockReservationModel[]> {
+  public async findExpiredActiveReservations(
+    cutoffDate: Date = new Date()
+  ): Promise<StockReservationModel[]> {
     const list: StockReservationModel[] = [];
     for (const res of this.reservations.values()) {
       if (res.status === ReservationStatus.ACTIVE && res.expiresAt <= cutoffDate) {
@@ -265,12 +276,7 @@ describe('Inventory Reservation & Stock Lifecycle', () => {
     movementRepo = new MockStockMovementRepository();
     warehouseRepo = new MockWarehouseRepository();
 
-    service = new InventoryService(
-      balanceRepo,
-      reservationRepo,
-      movementRepo,
-      warehouseRepo
-    );
+    service = new InventoryService(balanceRepo, reservationRepo, movementRepo, warehouseRepo);
   });
 
   it('receives incoming stock and computes available stock', async () => {

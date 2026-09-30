@@ -11,11 +11,7 @@
 
 import { prisma } from '@/shared/database/prisma';
 import { generatePrefixedId, ENTITY_PREFIXES } from '@/shared/utils/id';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 import {
   CustomerDashboardOverviewDTO,
   CustomerDashboardMetricsDTO,
@@ -163,16 +159,18 @@ export class CustomerDashboardService {
       };
     });
 
-    const recentNotifications: CustomerNotificationItemDTO[] = recentNotificationsDb.map((n: any) => ({
-      id: n.id,
-      channel: n.channel,
-      eventType: n.eventType,
-      title: n.subject || 'Order Notification',
-      body: n.bodyPreview || 'Your order status has updated.',
-      isRead: n.status === 'READ',
-      actionUrl: '/account',
-      createdAt: n.createdAt.toISOString(),
-    }));
+    const recentNotifications: CustomerNotificationItemDTO[] = recentNotificationsDb.map(
+      (n: any) => ({
+        id: n.id,
+        channel: n.channel,
+        eventType: n.eventType,
+        title: n.subject || 'Order Notification',
+        body: n.bodyPreview || 'Your order status has updated.',
+        isRead: n.status === 'READ',
+        actionUrl: '/account',
+        createdAt: n.createdAt.toISOString(),
+      })
+    );
 
     return {
       profile,
@@ -235,10 +233,8 @@ export class CustomerDashboardService {
 
     const mappedOrders: CustomerOrderListItemDTO[] = orders.map((o: any) => {
       const totalPoisha = Number(o.totalPoisha);
-      const totalProductPoints = o.items?.reduce(
-        (sum: number, i: any) => sum + (i.totalProductPoints || 0),
-        0
-      ) || 0;
+      const totalProductPoints =
+        o.items?.reduce((sum: number, i: any) => sum + (i.totalProductPoints || 0), 0) || 0;
 
       const items: CustomerOrderItemSnapshotDTO[] = (o.items || []).map((i: any) => {
         const itemUnitPrice = Number(i.unitPricePoisha);
@@ -481,10 +477,7 @@ export class CustomerDashboardService {
   /**
    * Marks a notification as read.
    */
-  public async markNotificationRead(
-    userId: string,
-    notificationId: string
-  ): Promise<void> {
+  public async markNotificationRead(userId: string, notificationId: string): Promise<void> {
     await (this.db as any).userNotificationDelivery.updateMany({
       where: { id: notificationId, userId },
       data: { status: 'READ' },

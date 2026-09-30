@@ -54,9 +54,7 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
       setSuccess(true);
       setTimeout(onPasswordChanged, 1200);
     } catch (submitError) {
-      setError(
-        submitError instanceof Error ? submitError.message : t('auth.passwordChangeFailed')
-      );
+      setError(submitError instanceof Error ? submitError.message : t('auth.passwordChangeFailed'));
     } finally {
       setLoading(false);
     }
@@ -74,7 +72,9 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
             <KeyRound className="h-4 w-4" aria-hidden="true" />
           </span>
           <span>
-            <span className="block text-sm font-bold text-slate-900">{t('auth.changePassword')}</span>
+            <span className="block text-sm font-bold text-slate-900">
+              {t('auth.changePassword')}
+            </span>
             <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">
               {t('auth.changePasswordSubtitle')}
             </span>
@@ -106,13 +106,19 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
       </div>
 
       {error && (
-        <div role="alert" className="mb-3 flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+        <div
+          role="alert"
+          className="mb-3 flex gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700"
+        >
           <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}
       {success && (
-        <div role="status" className="mb-3 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+        <div
+          role="status"
+          className="mb-3 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800"
+        >
           <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{t('auth.passwordChangedSuccess')}</span>
         </div>
@@ -120,7 +126,9 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
 
       <div className="space-y-3">
         <label className="block">
-          <span className="mb-1.5 block text-xs font-bold text-slate-700">{t('auth.currentPassword')}</span>
+          <span className="mb-1.5 block text-xs font-bold text-slate-700">
+            {t('auth.currentPassword')}
+          </span>
           <input
             type={showPasswords ? 'text' : 'password'}
             value={currentPassword}
@@ -131,7 +139,9 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-xs font-bold text-slate-700">{t('auth.newPassword')}</span>
+          <span className="mb-1.5 block text-xs font-bold text-slate-700">
+            {t('auth.newPassword')}
+          </span>
           <input
             type={showPasswords ? 'text' : 'password'}
             value={newPassword}
@@ -144,7 +154,9 @@ export function ChangePasswordForm({ onPasswordChanged }: ChangePasswordFormProp
           />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-xs font-bold text-slate-700">{t('auth.confirmPassword')}</span>
+          <span className="mb-1.5 block text-xs font-bold text-slate-700">
+            {t('auth.confirmPassword')}
+          </span>
           <input
             type={showPasswords ? 'text' : 'password'}
             value={confirmPassword}

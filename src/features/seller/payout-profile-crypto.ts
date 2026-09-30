@@ -16,15 +16,24 @@ export function encryptPayoutSecret(value: string): string {
   const cipher = createCipheriv('aes-256-gcm', key(), iv);
   const ciphertext = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return [VERSION, iv.toString('base64url'), tag.toString('base64url'), ciphertext.toString('base64url')].join('.');
+  return [
+    VERSION,
+    iv.toString('base64url'),
+    tag.toString('base64url'),
+    ciphertext.toString('base64url'),
+  ].join('.');
 }
 
 export function decryptPayoutSecret(payload: string): string {
   const [version, ivText, tagText, ciphertextText] = payload.split('.');
-  if (version !== VERSION || !ivText || !tagText || !ciphertextText) throw new Error('Invalid payout profile ciphertext.');
+  if (version !== VERSION || !ivText || !tagText || !ciphertextText)
+    throw new Error('Invalid payout profile ciphertext.');
   const decipher = createDecipheriv('aes-256-gcm', key(), Buffer.from(ivText, 'base64url'));
   decipher.setAuthTag(Buffer.from(tagText, 'base64url'));
-  return Buffer.concat([decipher.update(Buffer.from(ciphertextText, 'base64url')), decipher.final()]).toString('utf8');
+  return Buffer.concat([
+    decipher.update(Buffer.from(ciphertextText, 'base64url')),
+    decipher.final(),
+  ]).toString('utf8');
 }
 
 export function payoutFingerprint(value: string): string {

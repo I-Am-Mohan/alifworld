@@ -1,10 +1,29 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test';
 import { ProductService } from '@/features/catalog/services/product-service';
 import { ProductStatus } from '@/features/catalog/types';
-import { AuthorizationError, ConflictError, ValidationError, NotFoundError } from '@/shared/errors/app-error';
+import {
+  AuthorizationError,
+  ConflictError,
+  ValidationError,
+  NotFoundError,
+} from '@/shared/errors/app-error';
 import { prisma } from '@/shared/database/prisma';
 
 describe('ProductService: Catalog Management & Tenant Isolation', () => {
+  let originalOutbox: any;
+  let originalAuditLog: any;
+  const mockVersionHistory: any = { record: mock(async () => {}) };
+  const mockIdentifierPolicy: any = { assertAvailable: mock(async () => ({})) };
+
+  beforeEach(() => {
+    originalOutbox = (prisma as any).outboxEvent;
+    originalAuditLog = (prisma as any).auditLog;
+  });
+
+  afterEach(() => {
+    (prisma as any).outboxEvent = originalOutbox;
+    (prisma as any).auditLog = originalAuditLog;
+  });
   const mockSeller = {
     id: 'sel_dhaka_tech_01',
     name: 'Dhaka Tech Electronics',
@@ -95,7 +114,9 @@ describe('ProductService: Catalog Management & Tenant Isolation', () => {
       mockMediaRepo,
       mockCategoryRepo,
       mockSellerRepo,
-      mockRoleRepo
+      mockRoleRepo,
+      mockIdentifierPolicy,
+      mockVersionHistory
     );
 
     const created = await service.createProduct('usr_owner_01', {
@@ -187,7 +208,9 @@ describe('ProductService: Catalog Management & Tenant Isolation', () => {
       {} as any,
       {} as any,
       mockSellerRepo,
-      mockRoleRepo
+      mockRoleRepo,
+      mockIdentifierPolicy,
+      mockVersionHistory
     );
 
     await service.updateProduct('usr_owner_01', 'prd_walton_01', 1, {
@@ -221,9 +244,9 @@ describe('ProductService: Catalog Management & Tenant Isolation', () => {
       mockRoleRepo
     );
 
-    expect(
-      service.publishProduct('usr_owner_01', 'prd_walton_01', 1)
-    ).rejects.toThrow(ValidationError);
+    expect(service.publishProduct('usr_owner_01', 'prd_walton_01', 1)).rejects.toThrow(
+      ValidationError
+    );
   });
 
   it('successfully publishes product when all checklist items pass', async () => {
@@ -299,8 +322,8 @@ describe('ProductService: Catalog Management & Tenant Isolation', () => {
       mockRoleRepo
     );
 
-    expect(
-      service.publishProduct('usr_owner_01', 'prd_walton_01', 1)
-    ).rejects.toThrow(ValidationError);
+    expect(service.publishProduct('usr_owner_01', 'prd_walton_01', 1)).rejects.toThrow(
+      ValidationError
+    );
   });
 });

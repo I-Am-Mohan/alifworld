@@ -1,9 +1,9 @@
 /**
  * AlifWorld Cross-Origin Resource Sharing (CORS) Security Subsystem
- * 
+ *
  * Enforces explicit origin whitelisting, prevents insecure wildcard credential
  * reflections, handles preflight OPTIONS requests, and exposes standard API headers.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, W3C CORS, OWASP API Security, Milestone 048
  */
 
@@ -21,15 +21,7 @@ export const DEFAULT_ALLOWED_ORIGINS: string[] = [
   'https://api.alifworld.com',
 ];
 
-export const DEFAULT_ALLOWED_METHODS = [
-  'GET',
-  'POST',
-  'PUT',
-  'PATCH',
-  'DELETE',
-  'OPTIONS',
-  'HEAD',
-];
+export const DEFAULT_ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'];
 
 export const DEFAULT_ALLOWED_HEADERS = [
   'Content-Type',
@@ -88,7 +80,10 @@ export function resolveAllowedOrigins(): string[] {
 /**
  * Checks if a candidate origin matches allowed origins or trusted alifworld.com subdomains.
  */
-export function isOriginAllowed(origin: string | null | undefined, allowedOrigins: string[] = resolveAllowedOrigins()): boolean {
+export function isOriginAllowed(
+  origin: string | null | undefined,
+  allowedOrigins: string[] = resolveAllowedOrigins()
+): boolean {
   if (!origin) {
     return false;
   }
@@ -117,7 +112,10 @@ export function isOriginAllowed(origin: string | null | undefined, allowedOrigin
   // Trusted production subdomains match: https://*.alifworld.com
   try {
     const url = new URL(normalized);
-    if (url.protocol === 'https:' && (url.hostname === 'alifworld.com' || url.hostname.endsWith('.alifworld.com'))) {
+    if (
+      url.protocol === 'https:' &&
+      (url.hostname === 'alifworld.com' || url.hostname.endsWith('.alifworld.com'))
+    ) {
       return true;
     }
   } catch {
@@ -200,7 +198,10 @@ export function createPreflightResponse(corsResult: CorsEvaluationResult): NextR
 /**
  * Applies evaluated CORS headers to an existing response.
  */
-export function applyCorsHeaders(response: NextResponse, corsResult: CorsEvaluationResult): NextResponse {
+export function applyCorsHeaders(
+  response: NextResponse,
+  corsResult: CorsEvaluationResult
+): NextResponse {
   for (const [key, value] of Object.entries(corsResult.headers)) {
     response.headers.set(key, value);
   }

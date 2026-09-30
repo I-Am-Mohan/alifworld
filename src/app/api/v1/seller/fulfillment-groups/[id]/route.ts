@@ -28,10 +28,7 @@ function resolveSellerId(actor: any): string {
  * GET /api/v1/seller/fulfillment-groups/[id]
  * Retrieves single fulfillment group details scoped strictly by the seller's tenant ID.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

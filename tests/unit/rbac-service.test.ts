@@ -1,9 +1,9 @@
 /**
  * Unit Tests for AlifWorld RBAC Service and Multi-Tenant Isolation
- * 
+ *
  * Verifies permission resolution, tenant scoping, role delegation gates,
  * and privilege escalation prevention.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0006, ADR-0023
  */
@@ -18,19 +18,43 @@ class MockRoleRepository {
   private roles = new Map<string, any>([
     [
       'rol_super_admin',
-      { id: 'rol_super_admin', code: 'SUPER_ADMIN', name: 'Super Administrator', isSystem: true, version: 1 },
+      {
+        id: 'rol_super_admin',
+        code: 'SUPER_ADMIN',
+        name: 'Super Administrator',
+        isSystem: true,
+        version: 1,
+      },
     ],
     [
       'rol_admin',
-      { id: 'rol_admin', code: 'ADMIN', name: 'Platform Administrator', isSystem: true, version: 1 },
+      {
+        id: 'rol_admin',
+        code: 'ADMIN',
+        name: 'Platform Administrator',
+        isSystem: true,
+        version: 1,
+      },
     ],
     [
       'rol_seller_owner',
-      { id: 'rol_seller_owner', code: 'SELLER_OWNER', name: 'Store Owner', isSystem: true, version: 1 },
+      {
+        id: 'rol_seller_owner',
+        code: 'SELLER_OWNER',
+        name: 'Store Owner',
+        isSystem: true,
+        version: 1,
+      },
     ],
     [
       'rol_seller_staff',
-      { id: 'rol_seller_staff', code: 'SELLER_STAFF', name: 'Store Staff', isSystem: true, version: 1 },
+      {
+        id: 'rol_seller_staff',
+        code: 'SELLER_STAFF',
+        name: 'Store Staff',
+        isSystem: true,
+        version: 1,
+      },
     ],
     [
       'rol_customer',
@@ -179,8 +203,12 @@ describe('RbacService Authorization & Multi-Tenant Scoping Tests', () => {
   });
 
   it('assertPermission throws AuthorizationError when user lacks permission', async () => {
-    await expect(rbacService.assertPermission(customerId, 'sellers:verify')).rejects.toThrow(AuthorizationError);
-    await expect(rbacService.assertPermission(adminId, 'roles:manage')).rejects.toThrow(AuthorizationError);
+    await expect(rbacService.assertPermission(customerId, 'sellers:verify')).rejects.toThrow(
+      AuthorizationError
+    );
+    await expect(rbacService.assertPermission(adminId, 'roles:manage')).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   it('assertRole verifies user role successfully', async () => {
@@ -190,8 +218,12 @@ describe('RbacService Authorization & Multi-Tenant Scoping Tests', () => {
   });
 
   it('assertSellerTenantAccess permits Super Admin to access any seller tenant', async () => {
-    await expect(rbacService.assertSellerTenantAccess(superAdminId, 'sel_dhaka_store_01')).resolves.toBeUndefined();
-    await expect(rbacService.assertSellerTenantAccess(superAdminId, 'sel_chittagong_store_02')).resolves.toBeUndefined();
+    await expect(
+      rbacService.assertSellerTenantAccess(superAdminId, 'sel_dhaka_store_01')
+    ).resolves.toBeUndefined();
+    await expect(
+      rbacService.assertSellerTenantAccess(superAdminId, 'sel_chittagong_store_02')
+    ).resolves.toBeUndefined();
   });
 
   it('assertSellerTenantAccess permits Seller Owner to access their own store', async () => {

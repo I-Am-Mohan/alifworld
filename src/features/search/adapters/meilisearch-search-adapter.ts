@@ -1,9 +1,9 @@
 /**
  * AlifWorld Meilisearch Search Adapter
- * 
+ *
  * High-performance full-text search adapter leveraging Meilisearch.
  * Features typo-tolerance, facet aggregation, and timeout-guarded query dispatch.
- * 
+ *
  * References:
  * - docs/architecture/local-development-infrastructure-profiles.md
  * - docs/decisions/0004-non-functional-requirements-and-slos.md
@@ -32,7 +32,8 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
     timeoutMs?: number;
   }) {
     const host = options?.host || process.env.MEILISEARCH_HOST || 'http://localhost:7700';
-    const apiKey = options?.apiKey || process.env.MEILISEARCH_API_KEY || process.env.MEILI_MASTER_KEY || '';
+    const apiKey =
+      options?.apiKey || process.env.MEILISEARCH_API_KEY || process.env.MEILI_MASTER_KEY || '';
     const prefix = process.env.MEILISEARCH_INDEX_PREFIX || 'alifworld';
 
     this.indexName = options?.indexName || `${prefix}_products`;
@@ -110,15 +111,13 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
       sort.push('productPointSnapshot:desc');
     }
 
-    const searchPromise = this.client
-      .index(this.indexName)
-      .search(options.query || '', {
-        offset,
-        limit,
-        filter: filters.length > 0 ? filters.join(' AND ') : undefined,
-        sort: sort.length > 0 ? sort : undefined,
-        facets: ['categoryName', 'brand'],
-      });
+    const searchPromise = this.client.index(this.indexName).search(options.query || '', {
+      offset,
+      limit,
+      filter: filters.length > 0 ? filters.join(' AND ') : undefined,
+      sort: sort.length > 0 ? sort : undefined,
+      facets: ['categoryName', 'brand'],
+    });
 
     // Enforce 250ms SLA timeout
     const result: any = await this.withTimeout(searchPromise, this.timeoutMs);
@@ -146,7 +145,9 @@ export class MeilisearchSearchAdapter implements SearchServiceInterface {
     };
   }
 
-  public async indexDocuments(documents: SearchDocument[]): Promise<{ indexed: number; taskUid?: number }> {
+  public async indexDocuments(
+    documents: SearchDocument[]
+  ): Promise<{ indexed: number; taskUid?: number }> {
     if (!this.client) {
       throw new Error('Meilisearch client is uninitialized');
     }

@@ -136,9 +136,7 @@ export default function AdminDashboardPage() {
       {/* Dashboard Clean Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            Dashboard
-          </h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Dashboard</h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Operational overview, transactions, and system health status.
           </p>
@@ -204,12 +202,8 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div>
-            <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              48
-            </div>
-            <div className="text-[10px] text-amber-700 font-bold mt-1">
-              5 Pending KYC Review
-            </div>
+            <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">48</div>
+            <div className="text-[10px] text-amber-700 font-bold mt-1">5 Pending KYC Review</div>
           </div>
         </div>
 
@@ -226,9 +220,7 @@ export default function AdminDashboardPage() {
             <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               28,500
             </div>
-            <div className="text-[10px] text-slate-500 font-medium mt-1">
-              E.164 BD Normalized
-            </div>
+            <div className="text-[10px] text-slate-500 font-medium mt-1">E.164 BD Normalized</div>
           </div>
         </div>
 
@@ -245,9 +237,7 @@ export default function AdminDashboardPage() {
             <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               1.42M
             </div>
-            <div className="text-[10px] text-purple-700 font-bold mt-1">
-              Non-Convertible Pool
-            </div>
+            <div className="text-[10px] text-purple-700 font-bold mt-1">Non-Convertible Pool</div>
           </div>
         </div>
 
@@ -280,7 +270,8 @@ export default function AdminDashboardPage() {
               {t('admin.modulesTitle')}
             </h3>
             <p className="text-xs text-slate-500">
-              Select an operational section to inspect, verify, or configure administrative parameters.
+              Select an operational section to inspect, verify, or configure administrative
+              parameters.
             </p>
           </div>
           <button
@@ -314,9 +305,7 @@ export default function AdminDashboardPage() {
                   <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-[#F59E0B]" />
                 </h4>
 
-                <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-                  {item.desc}
-                </p>
+                <p className="mt-2 text-xs text-slate-600 leading-relaxed">{item.desc}</p>
               </div>
 
               <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500 group-hover:text-amber-700">
@@ -376,15 +365,16 @@ export default function AdminDashboardPage() {
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 font-mono font-bold text-slate-900">
-                        {order.id}
-                      </td>
+                      <td className="py-3 font-mono font-bold text-slate-900">{order.id}</td>
                       <td className="py-3">
                         <div className="font-semibold text-slate-900">{order.customer}</div>
                         <div className="text-[10px] text-slate-400">{order.division} Division</div>
                       </td>
                       <td className="py-3 font-mono font-bold text-slate-900">
-                        ৳{(order.amountPoisha / 100).toLocaleString('en-BD', { minimumFractionDigits: 2 })}
+                        ৳
+                        {(order.amountPoisha / 100).toLocaleString('en-BD', {
+                          minimumFractionDigits: 2,
+                        })}
                       </td>
                       <td className="py-3">
                         <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md text-[10px]">
@@ -397,10 +387,10 @@ export default function AdminDashboardPage() {
                             order.status === 'DELIVERED'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : order.status === 'SHIPPED'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : order.status === 'PROCESSING'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-slate-100 text-slate-700'
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : order.status === 'PROCESSING'
+                                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  : 'bg-slate-100 text-slate-700'
                           }`}
                         >
                           {order.status}
@@ -431,7 +421,8 @@ export default function AdminDashboardPage() {
                 <div>
                   <div className="text-xs font-bold text-slate-900">BDT Poisha Precision</div>
                   <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
-                    1 BDT = 100 Poisha. Integer math enforced on all wallets, splits, and cart items.
+                    1 BDT = 100 Poisha. Integer math enforced on all wallets, splits, and cart
+                    items.
                   </div>
                 </div>
               </div>
@@ -441,7 +432,8 @@ export default function AdminDashboardPage() {
                 <div>
                   <div className="text-xs font-bold text-slate-900">Independent Product Points</div>
                   <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
-                    Points are segregated discrete units. Zero automatic conversion to fiat currency.
+                    Points are segregated discrete units. Zero automatic conversion to fiat
+                    currency.
                   </div>
                 </div>
               </div>
@@ -461,7 +453,8 @@ export default function AdminDashboardPage() {
                 <div>
                   <div className="text-xs font-bold text-slate-900">Tenant Scoped Isolation</div>
                   <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
-                    Merchants cannot access or modify peer store orders, inventory, or KYC documents.
+                    Merchants cannot access or modify peer store orders, inventory, or KYC
+                    documents.
                   </div>
                 </div>
               </div>
@@ -470,7 +463,9 @@ export default function AdminDashboardPage() {
 
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
             <span>Platform Rule Version</span>
-            <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">v1.0.0</span>
+            <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+              v1.0.0
+            </span>
           </div>
         </section>
       </div>

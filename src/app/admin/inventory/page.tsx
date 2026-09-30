@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface AdminStockOverview {
   id: string;
@@ -188,7 +195,9 @@ export default function AdminInventoryWorkspacePage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-black text-amber-800">{totalReserved}</div>
-              <p className="text-xs text-amber-700/80 mt-1 font-medium">TTL checkout locks active</p>
+              <p className="text-xs text-amber-700/80 mt-1 font-medium">
+                TTL checkout locks active
+              </p>
             </CardContent>
           </Card>
 
@@ -200,7 +209,9 @@ export default function AdminInventoryWorkspacePage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-black text-emerald-800">{totalAvailable}</div>
-              <p className="text-xs text-emerald-700/80 mt-1 font-medium">Ready for buyer checkout</p>
+              <p className="text-xs text-emerald-700/80 mt-1 font-medium">
+                Ready for buyer checkout
+              </p>
             </CardContent>
           </Card>
 
@@ -212,7 +223,9 @@ export default function AdminInventoryWorkspacePage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-black text-red-800">{lowStockAlertsCount}</div>
-              <p className="text-xs text-red-700/80 mt-1 font-medium">Available ≤ Low Stock Threshold</p>
+              <p className="text-xs text-red-700/80 mt-1 font-medium">
+                Available ≤ Low Stock Threshold
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -275,14 +288,20 @@ export default function AdminInventoryWorkspacePage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-xs font-semibold text-slate-800">{b.warehouseName}</div>
-                        <div className="text-[10px] font-mono text-slate-500">{b.warehouseCode}</div>
+                        <div className="text-xs font-semibold text-slate-800">
+                          {b.warehouseName}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-500">
+                          {b.warehouseCode}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs">{b.onHand}</TableCell>
                       <TableCell className="text-right font-mono text-xs font-bold text-amber-600">
                         {b.reserved}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-xs text-red-600">{b.damaged}</TableCell>
+                      <TableCell className="text-right font-mono text-xs text-red-600">
+                        {b.damaged}
+                      </TableCell>
                       <TableCell className="text-right font-mono text-xs font-black text-emerald-700">
                         {b.available}
                       </TableCell>

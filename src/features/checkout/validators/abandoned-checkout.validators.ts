@@ -4,12 +4,7 @@
 
 import { z } from 'zod';
 
-export const AbandonedStatusEnum = z.enum([
-  'ABANDONED',
-  'NOTIFIED',
-  'RECOVERED',
-  'EXPIRED',
-]);
+export const AbandonedStatusEnum = z.enum(['ABANDONED', 'NOTIFIED', 'RECOVERED', 'EXPIRED']);
 
 export const QueryAbandonedCheckoutsSchema = z.object({
   status: AbandonedStatusEnum.optional(),

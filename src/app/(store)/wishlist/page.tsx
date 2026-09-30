@@ -84,14 +84,20 @@ export default function CustomerWishlistPage() {
     const token = `wsh_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
     setShareToken(token);
     setIsShared(true);
-    showToast(isBn ? 'শেয়ার-নিরাপদ লিংক তৈরি ���রা হয়েছে!' : 'Share-safe wishlist link generated!');
+    showToast(
+      isBn ? 'শেয়ার-নিরাপদ লিংক তৈরি ���রা হয়েছে!' : 'Share-safe wishlist link generated!'
+    );
   };
 
   const handleRevokeShareLink = () => {
     setShareToken(null);
     setIsShared(false);
     setShowShareModal(false);
-    showToast(isBn ? 'শেয়ার লিংক বাতিল করা হয়েছে। উইশলিস্টটি এখন ব্যক্তিগত।' : 'Share link revoked. Wishlist is now private.');
+    showToast(
+      isBn
+        ? 'শেয়ার লিংক বাতিল করা হয়েছে। উইশলিস্টটি এখন ব্যক্তিগত।'
+        : 'Share link revoked. Wishlist is now private.'
+    );
   };
 
   const copyShareLink = () => {
@@ -121,9 +127,7 @@ export default function CustomerWishlistPage() {
               <span className="text-xs uppercase tracking-widest text-[#FF6A00] font-black">
                 {isBn ? 'পছন্দের তালিকা' : 'Customer Wishlist'}
               </span>
-              <h1 className="text-sm font-black text-slate-900 leading-tight">
-                {wishlistTitle}
-              </h1>
+              <h1 className="text-sm font-black text-slate-900 leading-tight">{wishlistTitle}</h1>
             </div>
           </div>
 
@@ -151,7 +155,10 @@ export default function CustomerWishlistPage() {
       </header>
 
       {/* Main Wishlist Content */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-6"
+      >
         {/* Wishlist Header Callout */}
         <div className="p-6 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
           <div>
@@ -186,7 +193,10 @@ export default function CustomerWishlistPage() {
               <h4 className="text-sm font-black text-slate-900">
                 {isBn ? 'উইশলিস্ট শেয়ার সেটিংস' : 'Share-Safe Wishlist Link'}
               </h4>
-              <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-slate-600 text-xs">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xs"
+              >
                 ✕
               </button>
             </div>
@@ -200,19 +210,31 @@ export default function CustomerWishlistPage() {
             {isShared && shareToken ? (
               <div className="space-y-3">
                 <div className="p-3 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-700 truncate select-all">
-                  {typeof window !== 'undefined' ? `${window.location.origin}/wishlist/shared/${shareToken}` : `https://alifworld.com/wishlist/shared/${shareToken}`}
+                  {typeof window !== 'undefined'
+                    ? `${window.location.origin}/wishlist/shared/${shareToken}`
+                    : `https://alifworld.com/wishlist/shared/${shareToken}`}
                 </div>
                 <div className="flex space-x-2">
-                  <Button onClick={copyShareLink} className="bg-[#FF6A00] text-white text-xs font-bold">
+                  <Button
+                    onClick={copyShareLink}
+                    className="bg-[#FF6A00] text-white text-xs font-bold"
+                  >
                     Copy Link
                   </Button>
-                  <Button onClick={handleRevokeShareLink} variant="outline" className="text-xs font-bold text-red-600">
+                  <Button
+                    onClick={handleRevokeShareLink}
+                    variant="outline"
+                    className="text-xs font-bold text-red-600"
+                  >
                     Revoke Share Link
                   </Button>
                 </div>
               </div>
             ) : (
-              <Button onClick={handleGenerateShareLink} className="bg-[#FF6A00] text-white text-xs font-bold">
+              <Button
+                onClick={handleGenerateShareLink}
+                className="bg-[#FF6A00] text-white text-xs font-bold"
+              >
                 Generate Share-Safe Link
               </Button>
             )}
@@ -269,14 +291,16 @@ export default function CustomerWishlistPage() {
 
                   {item.notes && (
                     <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-600 italic">
-                      "{item.notes}"
+                      &quot;{item.notes}&quot;
                     </div>
                   )}
                 </div>
 
                 <div className="p-5 pt-0 border-t border-slate-100 bg-slate-50/50 mt-4 flex items-center justify-between">
                   <div>
-                    <div className="text-base font-black text-slate-900">৳{item.priceBdtFormatted}</div>
+                    <div className="text-base font-black text-slate-900">
+                      ৳{item.priceBdtFormatted}
+                    </div>
                     <div className="text-[10px] font-black text-[#FF6A00]">
                       ★ +{item.productPoint} Points
                     </div>
@@ -311,7 +335,8 @@ export default function CustomerWishlistPage() {
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 font-medium">
-          AlifWorld Customer Experience • Private Wishlists, Share-Safe Token Links & Zero PII Exposure
+          AlifWorld Customer Experience • Private Wishlists, Share-Safe Token Links & Zero PII
+          Exposure
         </div>
       </footer>
     </div>

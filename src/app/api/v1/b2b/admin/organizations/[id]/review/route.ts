@@ -11,14 +11,13 @@ export const dynamic = 'force-dynamic';
  * POST /api/v1/b2b/admin/organizations/[id]/review
  * Admin reviews and approves, rejects, or suspends a business buyer organization.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.roles.includes('ADMIN') && !actor.roles.includes('SUPER_ADMIN')) {
-      throw new AuthorizationError('Only AlifWorld Platform Admins can review buyer organizations.');
+      throw new AuthorizationError(
+        'Only AlifWorld Platform Admins can review buyer organizations.'
+      );
     }
 
     const { id } = await props.params;

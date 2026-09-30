@@ -11,8 +11,7 @@ export const dynamic = 'force-dynamic';
 
 function assertAdmin(actor: any) {
   const isAdmin =
-    actor.roles.includes(SystemRoleCode.ADMIN) ||
-    actor.roles.includes(SystemRoleCode.SUPER_ADMIN);
+    actor.roles.includes(SystemRoleCode.ADMIN) || actor.roles.includes(SystemRoleCode.SUPER_ADMIN);
 
   if (!isAdmin) {
     throw new AuthorizationError('Admin or Super Admin authority required.', {

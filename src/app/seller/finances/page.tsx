@@ -71,12 +71,24 @@ interface CommissionRecord {
 
 export default function SellerFinancesPage() {
   const { locale } = useI18n();
-  const [activeTab, setActiveTab] = useState<'settlements' | 'payouts' | 'commissions' | 'bank_account'>('settlements');
+  const [activeTab, setActiveTab] = useState<
+    'settlements' | 'payouts' | 'commissions' | 'bank_account'
+  >('settlements');
   const [requestPayoutSuccess, setRequestPayoutSuccess] = useState(false);
-  const [payoutProfile, setPayoutProfile] = useState<{ providerName: string; displayAccount: string; status: string; version: number } | null>(null);
+  const [payoutProfile, setPayoutProfile] = useState<{
+    providerName: string;
+    displayAccount: string;
+    status: string;
+    version: number;
+  } | null>(null);
 
   useEffect(() => {
-    fetch('/api/v1/seller/payout-profile').then((response) => response.json()).then((json) => { if (json.success) setPayoutProfile(json.data); }).catch(() => undefined);
+    fetch('/api/v1/seller/payout-profile')
+      .then((response) => response.json())
+      .then((json) => {
+        if (json.success) setPayoutProfile(json.data);
+      })
+      .catch(() => undefined);
   }, []);
 
   // Mock initial financial state based on Section 9 seed records
@@ -87,8 +99,8 @@ export default function SellerFinancesPage() {
       periodStart: '2026-09-15T00:00:00.000Z',
       periodEnd: '2026-09-22T23:59:59.000Z',
       grossOrderPoisha: BigInt(2199000), // ৳21,990.00
-      shippingFeePoisha: BigInt(6000),  // ৳60.00
-      taxPoisha: BigInt(329850),        // ৳3,298.50
+      shippingFeePoisha: BigInt(6000), // ৳60.00
+      taxPoisha: BigInt(329850), // ৳3,298.50
       commissionPoisha: BigInt(109950), // 5% = ৳1,099.50
       refundDeductionPoisha: BigInt(0),
       netPayoutPoisha: BigInt(2424900), // ৳24,249.00
@@ -101,11 +113,11 @@ export default function SellerFinancesPage() {
       periodStart: '2026-09-08T00:00:00.000Z',
       periodEnd: '2026-09-14T23:59:59.000Z',
       grossOrderPoisha: BigInt(598000), // ৳5,980.00
-      shippingFeePoisha: BigInt(6000),  // ৳60.00
-      taxPoisha: BigInt(89700),         // ৳897.00
-      commissionPoisha: BigInt(29900),  // 5% = ৳299.00
+      shippingFeePoisha: BigInt(6000), // ৳60.00
+      taxPoisha: BigInt(89700), // ৳897.00
+      commissionPoisha: BigInt(29900), // 5% = ৳299.00
       refundDeductionPoisha: BigInt(0),
-      netPayoutPoisha: BigInt(663800),  // ৳6,638.00
+      netPayoutPoisha: BigInt(663800), // ৳6,638.00
       status: 'DISBURSED',
       disbursedAt: '2026-09-15T16:20:00.000Z',
     },
@@ -231,7 +243,8 @@ export default function SellerFinancesPage() {
               Seller Finances & Wire Settlements
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Exact minor-unit integer ledger (1 BDT = 100 poisha). Platform fee locked at 5.00% (500 bps) with automated weekly BEFTN bank wire disbursal.
+              Exact minor-unit integer ledger (1 BDT = 100 poisha). Platform fee locked at 5.00%
+              (500 bps) with automated weekly BEFTN bank wire disbursal.
             </p>
           </div>
 
@@ -252,15 +265,29 @@ export default function SellerFinancesPage() {
           <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center justify-between animate-in fade-in">
             <div className="flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>Weekly settlement batch STL-20260922-0001 submitted to Bangladesh Bank BEFTN clearing network. Disbursal confirmation expected within 1 business day.</span>
+              <span>
+                Weekly settlement batch STL-20260922-0001 submitted to Bangladesh Bank BEFTN
+                clearing network. Disbursal confirmation expected within 1 business day.
+              </span>
             </div>
           </div>
         )}
 
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <h2 className="text-sm font-bold text-white">Payout profile</h2>
-          {payoutProfile ? <p className="mt-2 text-xs text-slate-300">{payoutProfile.providerName} · {payoutProfile.displayAccount} · {payoutProfile.status}</p> : <p className="mt-2 text-xs text-slate-500">No payout profile is configured.</p>}
-          <Link href="/seller/settings" className="mt-3 inline-flex text-xs font-bold text-amber-400 hover:underline">Manage payout profile in seller settings</Link>
+          {payoutProfile ? (
+            <p className="mt-2 text-xs text-slate-300">
+              {payoutProfile.providerName} · {payoutProfile.displayAccount} · {payoutProfile.status}
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-slate-500">No payout profile is configured.</p>
+          )}
+          <Link
+            href="/seller/settings"
+            className="mt-3 inline-flex text-xs font-bold text-amber-400 hover:underline"
+          >
+            Manage payout profile in seller settings
+          </Link>
         </div>
 
         {/* Financial KPI Summary Cards */}
@@ -310,12 +337,8 @@ export default function SellerFinancesPage() {
               <span>Settlement Cycle Status</span>
               <Clock className="w-4 h-4 text-blue-400" />
             </div>
-            <div className="text-xl font-bold text-white">
-              Weekly (Mondays)
-            </div>
-            <div className="text-[11px] text-slate-400 mt-1">
-              Next batch: 29 Sep 2026
-            </div>
+            <div className="text-xl font-bold text-white">Weekly (Mondays)</div>
+            <div className="text-[11px] text-slate-400 mt-1">Next batch: 29 Sep 2026</div>
           </div>
         </div>
 
@@ -410,8 +433,8 @@ export default function SellerFinancesPage() {
                               batch.status === 'APPROVED'
                                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                                 : batch.status === 'DISBURSED'
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                             }`}
                           >
                             <CheckCircle2 className="w-3 h-3" />
@@ -458,16 +481,14 @@ export default function SellerFinancesPage() {
                         <td className="p-4 font-mono font-medium text-white">
                           {payout.payoutNumber}
                         </td>
-                        <td className="p-4 font-mono text-slate-400">
-                          {payout.settlementNumber}
-                        </td>
+                        <td className="p-4 font-mono text-slate-400">{payout.settlementNumber}</td>
                         <td className="p-4">
                           <div className="font-semibold text-white">{payout.bankName}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">Routing: {payout.routingNumber} ({payout.channel})</div>
+                          <div className="text-[10px] text-slate-500 font-mono">
+                            Routing: {payout.routingNumber} ({payout.channel})
+                          </div>
                         </td>
-                        <td className="p-4 font-mono text-slate-300">
-                          {payout.accountNumber}
-                        </td>
+                        <td className="p-4 font-mono text-slate-300">{payout.accountNumber}</td>
                         <td className="p-4 text-right font-mono font-bold text-emerald-400 text-sm">
                           {formatBdt(payout.amountPoisha)}
                         </td>
@@ -510,18 +531,10 @@ export default function SellerFinancesPage() {
                   <tbody className="divide-y divide-slate-800/60 text-slate-200">
                     {commissions.map((comm) => (
                       <tr key={comm.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="p-4 font-mono text-slate-400 text-[11px]">
-                          {comm.id}
-                        </td>
-                        <td className="p-4 font-mono font-medium text-white">
-                          {comm.orderNumber}
-                        </td>
-                        <td className="p-4 font-mono text-slate-400">
-                          {comm.groupNumber}
-                        </td>
-                        <td className="p-4 text-right font-mono">
-                          {formatBdt(comm.basisPoisha)}
-                        </td>
+                        <td className="p-4 font-mono text-slate-400 text-[11px]">{comm.id}</td>
+                        <td className="p-4 font-mono font-medium text-white">{comm.orderNumber}</td>
+                        <td className="p-4 font-mono text-slate-400">{comm.groupNumber}</td>
+                        <td className="p-4 text-right font-mono">{formatBdt(comm.basisPoisha)}</td>
                         <td className="p-4 text-center font-mono text-[#F59E0B]">
                           {(comm.rateBps / 100).toFixed(2)}%
                         </td>
@@ -551,7 +564,9 @@ export default function SellerFinancesPage() {
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div>
                 <h2 className="text-base font-bold text-white">Verified Commercial Bank Account</h2>
-                <p className="text-xs text-slate-400">Bangladesh Bank BEFTN / NPSB Electronic Clearing Profile</p>
+                <p className="text-xs text-slate-400">
+                  Bangladesh Bank BEFTN / NPSB Electronic Clearing Profile
+                </p>
               </div>
               <span className="text-[11px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full flex items-center space-x-1">
                 <CheckCircle2 className="w-3 h-3" />
@@ -561,7 +576,9 @@ export default function SellerFinancesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <span className="text-slate-500 uppercase font-mono text-[10px]">Bank Institution</span>
+                <span className="text-slate-500 uppercase font-mono text-[10px]">
+                  Bank Institution
+                </span>
                 <p className="font-semibold text-white mt-0.5">City Bank PLC</p>
               </div>
               <div>
@@ -569,25 +586,37 @@ export default function SellerFinancesPage() {
                 <p className="font-semibold text-white mt-0.5">Gulshan Avenue Branch, Dhaka</p>
               </div>
               <div>
-                <span className="text-slate-500 uppercase font-mono text-[10px]">Account Legal Title</span>
+                <span className="text-slate-500 uppercase font-mono text-[10px]">
+                  Account Legal Title
+                </span>
                 <p className="font-semibold text-white mt-0.5">Dhaka Tech Retail Ltd</p>
               </div>
               <div>
-                <span className="text-slate-500 uppercase font-mono text-[10px]">Account Number</span>
+                <span className="text-slate-500 uppercase font-mono text-[10px]">
+                  Account Number
+                </span>
                 <p className="font-mono text-white mt-0.5">1102938475001</p>
               </div>
               <div>
-                <span className="text-slate-500 uppercase font-mono text-[10px]">Bangladesh Bank Routing</span>
+                <span className="text-slate-500 uppercase font-mono text-[10px]">
+                  Bangladesh Bank Routing
+                </span>
                 <p className="font-mono text-white mt-0.5">225272345</p>
               </div>
               <div>
-                <span className="text-slate-500 uppercase font-mono text-[10px]">Disbursal Currency</span>
-                <p className="font-mono text-emerald-400 font-bold mt-0.5">BDT (Bangladeshi Taka)</p>
+                <span className="text-slate-500 uppercase font-mono text-[10px]">
+                  Disbursal Currency
+                </span>
+                <p className="font-mono text-emerald-400 font-bold mt-0.5">
+                  BDT (Bangladeshi Taka)
+                </p>
               </div>
             </div>
 
             <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-              <span>To update bank routing information, please submit an audited corporate resolution.</span>
+              <span>
+                To update bank routing information, please submit an audited corporate resolution.
+              </span>
               <button className="px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium transition-colors">
                 Request Change
               </button>

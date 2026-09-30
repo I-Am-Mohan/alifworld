@@ -1,13 +1,13 @@
 /**
  * Integration Tests: Seller Tenant Isolation Across REST API Handlers
- * 
+ *
  * Tests /api/v1/seller/settings and /api/v1/seller/kyc:
  * 1. 401 Unauthorized when unauthenticated
  * 2. 403 Forbidden when merchant from Tenant A accesses Tenant B
  * 3. 403 Forbidden when customer attempts merchant operations
  * 4. 422 Unprocessable Entity when validation fails
  * 5. Super Admin cross-tenant operational bypass
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 043
  */
 

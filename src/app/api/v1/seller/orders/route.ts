@@ -35,10 +35,7 @@ export async function GET(req: NextRequest) {
       endDate: searchParams.get('endDate') || undefined,
     });
 
-    const result = await sellerFulfillmentOrderService.listSellerFulfillmentOrders(
-      sellerId,
-      query
-    );
+    const result = await sellerFulfillmentOrderService.listSellerFulfillmentOrders(sellerId, query);
 
     return NextResponse.json(
       {

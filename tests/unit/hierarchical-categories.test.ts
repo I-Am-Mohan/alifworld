@@ -3,7 +3,10 @@ import { CreateCategorySchema, UpdateCategorySchema } from '@/features/catalog/v
 
 describe('hierarchical category contracts', () => {
   it('validates normalized slugs and optional parents', () => {
-    expect(CreateCategorySchema.safeParse({ name: 'Electronics', slug: 'electronics', parentId: null }).success).toBe(true);
+    expect(
+      CreateCategorySchema.safeParse({ name: 'Electronics', slug: 'electronics', parentId: null })
+        .success
+    ).toBe(true);
     expect(CreateCategorySchema.safeParse({ name: 'Bad', slug: 'Bad Slug' }).success).toBe(false);
   });
 

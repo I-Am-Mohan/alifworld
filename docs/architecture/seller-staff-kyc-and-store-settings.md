@@ -4,7 +4,7 @@
 **Phase Reference**: Phase 03 — Data Architecture  
 **Milestone Reference**: [Milestone 024](../../AlifWorld-300-Milestones/024-model-sellers-seller-staff-kyc-documents-and-store-settings.md)  
 **Supporting ADR**: [ADR-0024](../decisions/0024-model-sellers-seller-staff-kyc-documents-and-store-settings.md)  
-**Status**: Authoritative & Accepted  
+**Status**: Authoritative & Accepted
 
 ---
 
@@ -77,6 +77,7 @@ classDiagram
 ## 2. Relational Schema & Persistence Constraints
 
 ### 2.1 Seller Model (`sellers`)
+
 - **Primary Identifier**: `id` with prefix `sel_` (e.g., `sel_dhaka_tech_01`).
 - **Owner Foreign Key**: `ownerUserId` referencing `users(id)` with `ON DELETE RESTRICT`.
 - **Slug Constraint**: `slug` is unique across the entire platform.
@@ -90,12 +91,14 @@ classDiagram
 - **Soft Deletion**: `deletedAt` timestamp; filtered out from standard queries.
 
 ### 2.2 SellerStaff Model (`seller_staff`)
+
 - **Primary Identifier**: `id` with prefix `stf_`.
 - **Compound Uniqueness**: `@@unique([sellerId, userId])` ensures a user can hold only one staff membership record per store.
 - **Permissions**: String array storing granular action scopes (e.g., `ORDERS_READ`, `PRODUCTS_UPDATE`).
 - **Status**: `ACTIVE`, `INVITED`, `SUSPENDED`.
 
 ### 2.3 SellerKycDocument Model (`seller_kyc_documents`)
+
 - **Primary Identifier**: `id` with prefix `kyc_`.
 - **Tenant Scope**: `sellerId` referencing `sellers(id)` with cascade deletion when tenant is purged.
 - **Document Classification**:
@@ -108,6 +111,7 @@ classDiagram
 - **Security Invariant**: `fileUrl` stores private S3 object keys. Public web access is prohibited; clients receive 15-minute temporary presigned download URLs.
 
 ### 2.4 SellerStoreSettings Model (`seller_store_settings`)
+
 - **Primary Identifier**: `id` with prefix `set_`.
 - **One-to-One Relation**: `sellerId` unique constraint ensures exactly one settings record per merchant.
 - **Logistics Defaults**:
@@ -121,6 +125,7 @@ classDiagram
 ## 3. Lifecycle State Machines
 
 ### 3.1 Seller Account Lifecycle
+
 ```
 [DRAFT]
    │
@@ -137,6 +142,7 @@ classDiagram
 ```
 
 ### 3.2 KYC Document Lifecycle
+
 ```
 [PENDING] ──► [UNDER_REVIEW] ──┬──► [VERIFIED] (Approved by Compliance Admin)
                                └──► [REJECTED] (Requires re-submission with reason)
@@ -146,17 +152,17 @@ classDiagram
 
 ## 4. Access Control Matrix & Security Boundaries
 
-| Operation | Anonymous / Buyer | Seller Staff | Seller Owner | Super Admin |
-| :--- | :---: | :---: | :---: | :---: |
-| **Browse Public Store Profile** | Yes | Yes | Yes | Yes |
-| **Register New Storefront** | No | No | Yes (Customer becomes Owner) | Yes |
-| **Update Store Logistics Settings** | No | With `SETTINGS_UPDATE` | Yes (Own Store Only) | Yes |
-| **Invite / Revoke Store Staff** | No | No | Yes (Own Store Only) | Yes |
-| **Upload KYC Regulatory Documents** | No | No | Yes (Own Store Only) | Yes |
-| **Inspect KYC Document (Presigned URL)** | No | No | Yes (Own Store Only) | Yes (Audited) |
-| **Verify / Reject KYC Document** | No | No | No | Yes (Admin Console) |
-| **Modify Platform Commission Rate** | No | No | No | Yes (Maker-Checker) |
-| **Suspend / Reactivate Store** | No | No | No | Yes (Admin Console) |
+| Operation                                | Anonymous / Buyer |      Seller Staff      |         Seller Owner         |     Super Admin     |
+| :--------------------------------------- | :---------------: | :--------------------: | :--------------------------: | :-----------------: |
+| **Browse Public Store Profile**          |        Yes        |          Yes           |             Yes              |         Yes         |
+| **Register New Storefront**              |        No         |           No           | Yes (Customer becomes Owner) |         Yes         |
+| **Update Store Logistics Settings**      |        No         | With `SETTINGS_UPDATE` |     Yes (Own Store Only)     |         Yes         |
+| **Invite / Revoke Store Staff**          |        No         |           No           |     Yes (Own Store Only)     |         Yes         |
+| **Upload KYC Regulatory Documents**      |        No         |           No           |     Yes (Own Store Only)     |         Yes         |
+| **Inspect KYC Document (Presigned URL)** |        No         |           No           |     Yes (Own Store Only)     |    Yes (Audited)    |
+| **Verify / Reject KYC Document**         |        No         |           No           |              No              | Yes (Admin Console) |
+| **Modify Platform Commission Rate**      |        No         |           No           |              No              | Yes (Maker-Checker) |
+| **Suspend / Reactivate Store**           |        No         |           No           |              No              | Yes (Admin Console) |
 
 ---
 

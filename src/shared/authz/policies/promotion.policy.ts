@@ -58,7 +58,10 @@ export class PromotionPolicy {
    * Admin/SuperAdmin can read all promotion attributions.
    * Seller can read attributions ONLY for their own sellerId.
    */
-  static canReadAttribution(actor: ActorContext, attribution: PromotionAttributionResource): boolean {
+  static canReadAttribution(
+    actor: ActorContext,
+    attribution: PromotionAttributionResource
+  ): boolean {
     const isAdmin = actor.roles.includes('ADMIN') || actor.roles.includes('SUPER_ADMIN');
     if (isAdmin) {
       return true;

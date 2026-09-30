@@ -1,9 +1,9 @@
 /**
  * AlifWorld User Role Assignment Repository
- * 
+ *
  * Manages user-to-role mappings, tenant seller scoping, role revocations,
  * and permission resolution.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0022, ADR-0023
  */
@@ -197,7 +197,10 @@ export class UserRoleAssignmentRepository extends BaseRepository {
   /**
    * Resolves a distinct list of permission codes for a user, optionally filtering by seller tenant.
    */
-  public async getUserEffectivePermissions(userId: string, targetSellerId?: string): Promise<string[]> {
+  public async getUserEffectivePermissions(
+    userId: string,
+    targetSellerId?: string
+  ): Promise<string[]> {
     const assignments = await this.getUserRoleAssignments(userId);
     const permissionSet = new Set<string>();
 
@@ -217,7 +220,11 @@ export class UserRoleAssignmentRepository extends BaseRepository {
   /**
    * Checks whether a user possesses a specific permission code.
    */
-  public async hasPermission(userId: string, permissionCode: string, targetSellerId?: string): Promise<boolean> {
+  public async hasPermission(
+    userId: string,
+    permissionCode: string,
+    targetSellerId?: string
+  ): Promise<boolean> {
     const permissions = await this.getUserEffectivePermissions(userId, targetSellerId);
     return permissions.includes(permissionCode.toLowerCase());
   }
@@ -225,7 +232,11 @@ export class UserRoleAssignmentRepository extends BaseRepository {
   /**
    * Checks whether a user holds a specific role code.
    */
-  public async hasRole(userId: string, roleCode: string, targetSellerId?: string): Promise<boolean> {
+  public async hasRole(
+    userId: string,
+    roleCode: string,
+    targetSellerId?: string
+  ): Promise<boolean> {
     const assignments = await this.getUserRoleAssignments(userId);
     return assignments.some((a) => {
       const matchesRole = a.role.code === roleCode.toUpperCase();

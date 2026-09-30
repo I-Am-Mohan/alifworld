@@ -1,11 +1,11 @@
 /**
  * Integration Tests: Admin vs Super Admin API Route Handlers (Milestone 044)
- * 
+ *
  * Verifies HTTP response codes and privilege enforcement across:
  * - POST /api/v1/system/setup
  * - POST /api/v1/iam/roles/assign
  * - POST /api/v1/iam/roles/revoke
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 044
  */
 

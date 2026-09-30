@@ -11,7 +11,9 @@ describe('Milestone 060 localization fallback and QA tooling', () => {
   });
 
   it('preserves placeholders during fallback interpolation', () => {
-    expect(translateWithFallback('store.divisions.locationSet', 'fr-FR', { location: 'ঢাকা' })).toContain('ঢাকা');
+    expect(
+      translateWithFallback('store.divisions.locationSet', 'fr-FR', { location: 'ঢাকা' })
+    ).toContain('ঢাকা');
   });
 
   it('supports English plural categories without losing count interpolation', () => {

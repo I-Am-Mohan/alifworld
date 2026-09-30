@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * Receives payment gateway callbacks, cryptographically verifies signatures,
  * and deduplicates external event IDs against PaymentWebhookLog.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ gateway: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ gateway: string }> }) {
   try {
     const { gateway } = await params;
     const rawBody = await req.text();

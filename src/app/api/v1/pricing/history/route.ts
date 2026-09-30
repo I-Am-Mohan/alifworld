@@ -38,7 +38,9 @@ export async function GET(req: NextRequest) {
       ...item,
       previousPricePoisha: item.previousPricePoisha ? item.previousPricePoisha.toString() : null,
       newPricePoisha: item.newPricePoisha.toString(),
-      previousCompareAtPoisha: item.previousCompareAtPoisha ? item.previousCompareAtPoisha.toString() : null,
+      previousCompareAtPoisha: item.previousCompareAtPoisha
+        ? item.previousCompareAtPoisha.toString()
+        : null,
       newCompareAtPoisha: item.newCompareAtPoisha ? item.newCompareAtPoisha.toString() : null,
     }));
 

@@ -1,13 +1,13 @@
 /**
  * Integration Tests: Server-Side Authorization Route Guard & Policy Decorator
- * 
+ *
  * Verifies withAuthorization decorator and authorizeRequest helper across HTTP scenarios:
  * 1. 401 Unauthorized when credentials are absent
  * 2. 403 Forbidden when policy denies request
  * 3. 403 Feature Pending when Gate-05 maker-checker check fails
  * 4. 200 OK and execution of wrapped handler when authorized
  * 5. Dynamic resource extraction from incoming request params
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, ADR-0023, Milestone 042
  */
 

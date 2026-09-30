@@ -40,8 +40,10 @@ export async function getSmtpConfig(): Promise<SmtpConfig> {
   const secure = (map.get('SMTP_SECURE') ?? process.env.SMTP_SECURE ?? 'false') === 'true';
   const user = map.get('SMTP_USER') || process.env.SMTP_USER || '';
   const pass = map.get('SMTP_PASSWORD') || process.env.SMTP_PASSWORD || '';
-  const fromName = map.get('SMTP_FROM_NAME') || process.env.SMTP_FROM_NAME || 'AlifWorld Notifications';
-  const fromEmail = map.get('SMTP_FROM_EMAIL') || process.env.SMTP_FROM_EMAIL || 'noreply@alifworld.com';
+  const fromName =
+    map.get('SMTP_FROM_NAME') || process.env.SMTP_FROM_NAME || 'AlifWorld Notifications';
+  const fromEmail =
+    map.get('SMTP_FROM_EMAIL') || process.env.SMTP_FROM_EMAIL || 'noreply@alifworld.com';
 
   return {
     enabled,

@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
  * PUT /api/v1/reviews/[id]
  * Updates an existing review by author.
  */
-export async function PUT(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
@@ -21,11 +18,7 @@ export async function PUT(
     const body = await req.json();
     const validatedInput = UpdateProductReviewSchema.parse(body);
 
-    const updated = await productReviewService.updateReview(
-      id,
-      actor.userId,
-      validatedInput
-    );
+    const updated = await productReviewService.updateReview(id, actor.userId, validatedInput);
 
     return NextResponse.json(
       {
@@ -43,10 +36,7 @@ export async function PUT(
  * DELETE /api/v1/reviews/[id]
  * Deletes a review (author or admin).
  */
-export async function DELETE(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;

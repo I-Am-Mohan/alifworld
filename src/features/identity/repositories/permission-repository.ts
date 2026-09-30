@@ -1,8 +1,8 @@
 /**
  * AlifWorld Permission Repository
- * 
+ *
  * Manages atomic authorization permissions across all platform modules.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0022, ADR-0023
  */

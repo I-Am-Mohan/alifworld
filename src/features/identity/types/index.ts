@@ -1,9 +1,9 @@
 /**
  * Identity & Access Management (IAM) Domain Types & Ubiquitous Language
- * 
+ *
  * Defines User, Role, Permission, Role Assignment structures, status enums,
  * and session contracts.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0022, ADR-0023
  */

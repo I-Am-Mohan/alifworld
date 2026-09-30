@@ -251,11 +251,7 @@ describe('Phone-First OTP Login & Registration Flow', () => {
         const sendResult = await phoneAuthService.sendLoginOtp('01700112233');
         const code = sendResult.devOtpCode!;
 
-        const loginResult = await phoneAuthService.verifyLoginOtp(
-          '01700112233',
-          code,
-          'WEB'
-        );
+        const loginResult = await phoneAuthService.verifyLoginOtp('01700112233', code, 'WEB');
 
         expect(loginResult.verified).toBe(true);
         expect(loginResult.phone).toBe('+8801700112233');
@@ -291,7 +287,9 @@ describe('Phone-First OTP Login & Registration Flow', () => {
       });
 
       it('rejects register OTP if phone already exists', async () => {
-        await expect(phoneAuthService.sendRegisterOtp('01700112233')).rejects.toThrow(ConflictError);
+        await expect(phoneAuthService.sendRegisterOtp('01700112233')).rejects.toThrow(
+          ConflictError
+        );
       });
 
       it('completes registration, provisions 4 wallets, and logs in immediately', async () => {

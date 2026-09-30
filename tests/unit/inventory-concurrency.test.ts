@@ -25,7 +25,10 @@ class ConcurrentStockBalanceRepository extends StockBalanceRepository {
     return this.balances.get(id) ?? null;
   }
 
-  public async findByWarehouseAndVariant(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async findByWarehouseAndVariant(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     for (const bal of this.balances.values()) {
       if (bal.warehouseId === warehouseId && bal.variantId === variantId) {
         return bal;
@@ -179,12 +182,7 @@ describe('Inventory Concurrency: Racing on the Last Unit', () => {
       updatedAt: new Date(),
     });
 
-    service = new InventoryService(
-      balanceRepo,
-      reservationRepo,
-      movementRepo,
-      warehouseRepo
-    );
+    service = new InventoryService(balanceRepo, reservationRepo, movementRepo, warehouseRepo);
   });
 
   it('prevents overselling when two buyers race concurrently for the same final unit', async () => {

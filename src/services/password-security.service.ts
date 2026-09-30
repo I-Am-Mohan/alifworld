@@ -11,17 +11,9 @@ import { OtpRepository } from '@/repositories/otp.repository';
 import { UserRepository } from '@/repositories/user.repository';
 import { getPrismaClient } from '@/shared/database/prisma';
 import { hashToken } from '@/shared/auth/jwt';
-import {
-  hashPassword,
-  validatePasswordStrength,
-  verifyPassword,
-} from '@/shared/auth/password';
+import { hashPassword, validatePasswordStrength, verifyPassword } from '@/shared/auth/password';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import {
-  ConflictError,
-  UnauthorizedError,
-  ValidationError,
-} from '@/shared/errors/app-error';
+import { ConflictError, UnauthorizedError, ValidationError } from '@/shared/errors/app-error';
 
 export const PASSWORD_RESET_POLICY = {
   PURPOSE: 'PASSWORD_RESET',
@@ -79,9 +71,7 @@ export class PasswordSecurityService {
       accepted: true,
       message: 'If an account exists for this email, password reset instructions have been queued.',
       cooldownSeconds: PASSWORD_RESET_POLICY.REQUEST_COOLDOWN_SECONDS,
-      ...(process.env.NODE_ENV !== 'production' && devResetToken
-        ? { devResetToken }
-        : {}),
+      ...(process.env.NODE_ENV !== 'production' && devResetToken ? { devResetToken } : {}),
     };
   }
 
@@ -133,9 +123,7 @@ export class PasswordSecurityService {
     }
 
     const rawToken = this.createToken();
-    const expiresAt = new Date(
-      now.getTime() + PASSWORD_RESET_POLICY.TOKEN_TTL_SECONDS * 1000
-    );
+    const expiresAt = new Date(now.getTime() + PASSWORD_RESET_POLICY.TOKEN_TTL_SECONDS * 1000);
 
     await this.prisma.$transaction(async (tx: any) => {
       await tx.otpToken.updateMany({
@@ -204,10 +192,7 @@ export class PasswordSecurityService {
     metadata: RequestMetadata = {}
   ): Promise<{ passwordReset: true; sessionsRevoked: true; message: string }> {
     const cleanEmail = email.trim().toLowerCase();
-    const activeToken = await this.otpRepo.findActiveOtp(
-      cleanEmail,
-      PASSWORD_RESET_POLICY.PURPOSE
-    );
+    const activeToken = await this.otpRepo.findActiveOtp(cleanEmail, PASSWORD_RESET_POLICY.PURPOSE);
 
     if (!activeToken || activeToken.attempts >= activeToken.maxAttempts) {
       throw new ValidationError('This password reset link is invalid or has expired.', {

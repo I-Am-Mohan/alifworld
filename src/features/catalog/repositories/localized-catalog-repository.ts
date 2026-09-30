@@ -27,27 +27,97 @@ export class LocalizedCatalogRepository {
     return this.selectBest(rows, locale);
   }
 
-  async upsertProductTranslation(productId: string, input: { locale: string; title: string; description: string; warranty?: string | null; specifications?: Record<string, string>; richContent?: unknown[]; version?: number }) {
+  async upsertProductTranslation(
+    productId: string,
+    input: {
+      locale: string;
+      title: string;
+      description: string;
+      warranty?: string | null;
+      specifications?: Record<string, string>;
+      richContent?: unknown[];
+      version?: number;
+    }
+  ) {
     return (prisma as any).productTranslation.upsert({
       where: { productId_locale: { productId, locale: input.locale } },
-      create: { id: generatePrefixedId(ENTITY_PREFIXES.PRODUCT_TRANSLATION), productId, locale: input.locale, title: input.title, description: input.description, warranty: input.warranty ?? null, specifications: input.specifications ?? {}, richContent: input.richContent ?? [], version: 1 },
-      update: { title: input.title, description: input.description, warranty: input.warranty ?? null, specifications: input.specifications ?? {}, richContent: input.richContent ?? [], version: { increment: 1 } },
+      create: {
+        id: generatePrefixedId(ENTITY_PREFIXES.PRODUCT_TRANSLATION),
+        productId,
+        locale: input.locale,
+        title: input.title,
+        description: input.description,
+        warranty: input.warranty ?? null,
+        specifications: input.specifications ?? {},
+        richContent: input.richContent ?? [],
+        version: 1,
+      },
+      update: {
+        title: input.title,
+        description: input.description,
+        warranty: input.warranty ?? null,
+        specifications: input.specifications ?? {},
+        richContent: input.richContent ?? [],
+        version: { increment: 1 },
+      },
     });
   }
 
-  async upsertCategoryTranslation(categoryId: string, input: { locale: string; name: string; description?: string | null; seoTitle?: string | null; seoDescription?: string | null; breadcrumbLabel?: string | null }) {
+  async upsertCategoryTranslation(
+    categoryId: string,
+    input: {
+      locale: string;
+      name: string;
+      description?: string | null;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      breadcrumbLabel?: string | null;
+    }
+  ) {
     return (prisma as any).categoryTranslation.upsert({
       where: { categoryId_locale: { categoryId, locale: input.locale } },
-      create: { id: generatePrefixedId(ENTITY_PREFIXES.CATEGORY_TRANSLATION), categoryId, ...input, version: 1 },
-      update: { name: input.name, description: input.description, seoTitle: input.seoTitle, seoDescription: input.seoDescription, breadcrumbLabel: input.breadcrumbLabel, version: { increment: 1 } },
+      create: {
+        id: generatePrefixedId(ENTITY_PREFIXES.CATEGORY_TRANSLATION),
+        categoryId,
+        ...input,
+        version: 1,
+      },
+      update: {
+        name: input.name,
+        description: input.description,
+        seoTitle: input.seoTitle,
+        seoDescription: input.seoDescription,
+        breadcrumbLabel: input.breadcrumbLabel,
+        version: { increment: 1 },
+      },
     });
   }
 
-  async upsertBrandTranslation(brandId: string, input: { locale: string; name: string; seoTitle?: string | null; seoDescription?: string | null; breadcrumbLabel?: string | null }) {
+  async upsertBrandTranslation(
+    brandId: string,
+    input: {
+      locale: string;
+      name: string;
+      seoTitle?: string | null;
+      seoDescription?: string | null;
+      breadcrumbLabel?: string | null;
+    }
+  ) {
     return (prisma as any).brandTranslation.upsert({
       where: { brandId_locale: { brandId, locale: input.locale } },
-      create: { id: generatePrefixedId(ENTITY_PREFIXES.BRAND_TRANSLATION), brandId, ...input, version: 1 },
-      update: { name: input.name, seoTitle: input.seoTitle, seoDescription: input.seoDescription, breadcrumbLabel: input.breadcrumbLabel, version: { increment: 1 } },
+      create: {
+        id: generatePrefixedId(ENTITY_PREFIXES.BRAND_TRANSLATION),
+        brandId,
+        ...input,
+        version: 1,
+      },
+      update: {
+        name: input.name,
+        seoTitle: input.seoTitle,
+        seoDescription: input.seoDescription,
+        breadcrumbLabel: input.breadcrumbLabel,
+        version: { increment: 1 },
+      },
     });
   }
 

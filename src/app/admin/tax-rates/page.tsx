@@ -102,7 +102,8 @@ export default function TaxRatesAdminPage() {
             Tax & NBR VAT Rule Architecture
           </h1>
           <p className="text-sm text-slate-500">
-            Configure jurisdiction VAT rules, NBR Mushak-6.3 rates (15% Standard, 5% Concession, 0% Exempt), and inclusive/exclusive pricing modes.
+            Configure jurisdiction VAT rules, NBR Mushak-6.3 rates (15% Standard, 5% Concession, 0%
+            Exempt), and inclusive/exclusive pricing modes.
           </p>
         </div>
         <button
@@ -115,7 +116,9 @@ export default function TaxRatesAdminPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">{error}</div>
+        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">
+          {error}
+        </div>
       )}
 
       {loading ? (
@@ -138,16 +141,21 @@ export default function TaxRatesAdminPage() {
               {taxRules.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-6 text-center text-slate-400">
-                    No tax rules defined yet. Click &apos;Add Tax Rule&apos; to configure NBR VAT rules.
+                    No tax rules defined yet. Click &apos;Add Tax Rule&apos; to configure NBR VAT
+                    rules.
                   </td>
                 </tr>
               ) : (
                 taxRules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30">
-                    <td className="p-3 font-mono font-bold text-emerald-600">{rule.jurisdiction}</td>
+                    <td className="p-3 font-mono font-bold text-emerald-600">
+                      {rule.jurisdiction}
+                    </td>
                     <td className="p-3 font-medium text-slate-900 dark:text-white">{rule.name}</td>
                     <td className="p-3">{rule.taxType}</td>
-                    <td className="p-3 font-bold text-slate-900 dark:text-white">{rule.ratePercent}%</td>
+                    <td className="p-3 font-bold text-slate-900 dark:text-white">
+                      {rule.ratePercent}%
+                    </td>
                     <td className="p-3 font-medium">
                       {rule.priceIncludesTax ? (
                         <span className="text-blue-600">Inclusive</span>
@@ -174,7 +182,9 @@ export default function TaxRatesAdminPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-800 rounded-lg max-w-lg w-full p-6 space-y-4 shadow-xl border">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Jurisdiction Tax Rule</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Create Jurisdiction Tax Rule
+            </h2>
             <form onSubmit={handleCreate} className="space-y-4 text-sm">
               <div>
                 <label className="block font-medium mb-1">Rule Name</label>

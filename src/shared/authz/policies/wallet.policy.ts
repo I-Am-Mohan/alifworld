@@ -1,9 +1,9 @@
 /**
  * AlifWorld Financial Wallet & Double-Entry Ledger Authorization Policy
- * 
+ *
  * Enforces customer wallet privacy, finance team ledger access, and
  * Gate-05 Maker-Checker dual authorization for high-value payouts and adjustments.
- * 
+ *
  * Invariants: ADR-0003, ADR-0021, ADR-0022, Gate-05, Milestone 042
  */
 
@@ -11,7 +11,9 @@ import { IPolicy, ActorContext, ResourceContext, PolicyDecision } from '../authz
 import { SystemRoleCode } from '@/features/identity/types';
 
 // Threshold in Poisha: 50,000 BDT = 5,000,000 Poisha
-const MAKER_CHECKER_THRESHOLD_POISHA = BigInt(process.env.MAKER_CHECKER_THRESHOLD_POISHA || '5000000');
+const MAKER_CHECKER_THRESHOLD_POISHA = BigInt(
+  process.env.MAKER_CHECKER_THRESHOLD_POISHA || '5000000'
+);
 
 export class WalletPolicy implements IPolicy {
   readonly name = 'WalletPolicy';
@@ -24,17 +26,32 @@ export class WalletPolicy implements IPolicy {
     // 1. Read Wallet Balances
     if (action === 'read' || action === 'finance:read') {
       if (isSuperAdmin || isPlatformAdmin || actor.permissions.includes('finance:read')) {
-        return { granted: true, code: 'GRANTED', reason: 'Finance operator authorized to inspect ledger.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Finance operator authorized to inspect ledger.',
+          policyName: this.name,
+        };
       }
 
       // Customer inspecting own segregated wallet
       if (resource.ownerId && resource.ownerId === actor.userId) {
-        return { granted: true, code: 'GRANTED', reason: 'Customer accessing own wallet.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Customer accessing own wallet.',
+          policyName: this.name,
+        };
       }
 
       // Seller inspecting own store wallet
       if (resource.sellerId && actor.sellerId === resource.sellerId) {
-        return { granted: true, code: 'GRANTED', reason: 'Merchant accessing store settlement wallet.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Merchant accessing store settlement wallet.',
+          policyName: this.name,
+        };
       }
 
       return {
@@ -48,7 +65,12 @@ export class WalletPolicy implements IPolicy {
     // 2. Post Manual Double-Entry Journal Entries
     if (action === 'ledger' || action === 'finance:ledger') {
       if (isSuperAdmin || actor.permissions.includes('finance:ledger')) {
-        return { granted: true, code: 'GRANTED', reason: 'Authorized to post manual double-entry ledger journals.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Authorized to post manual double-entry ledger journals.',
+          policyName: this.name,
+        };
       }
       return {
         granted: false,
@@ -59,8 +81,16 @@ export class WalletPolicy implements IPolicy {
     }
 
     // 3. Maker-Checker Payout & Balance Adjustment
-    if (action === 'adjust' || action === 'payout' || action === 'finance:adjust' || action === 'finance:payout') {
-      const hasPerm = isSuperAdmin || actor.permissions.includes('finance:adjust') || actor.permissions.includes('finance:payout');
+    if (
+      action === 'adjust' ||
+      action === 'payout' ||
+      action === 'finance:adjust' ||
+      action === 'finance:payout'
+    ) {
+      const hasPerm =
+        isSuperAdmin ||
+        actor.permissions.includes('finance:adjust') ||
+        actor.permissions.includes('finance:payout');
       if (!hasPerm) {
         return {
           granted: false,
@@ -95,7 +125,12 @@ export class WalletPolicy implements IPolicy {
         }
       }
 
-      return { granted: true, code: 'GRANTED', reason: 'Authorized financial payout or ledger adjustment.', policyName: this.name };
+      return {
+        granted: true,
+        code: 'GRANTED',
+        reason: 'Authorized financial payout or ledger adjustment.',
+        policyName: this.name,
+      };
     }
 
     return {

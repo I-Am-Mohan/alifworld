@@ -72,7 +72,10 @@ export default function PublicSellerStorefrontPage() {
       </header>
 
       {/* Main Container */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8">
+      <main
+        id="main-content"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1 space-y-8"
+      >
         {loading ? (
           <div className="p-20 text-center text-xs text-slate-500 font-medium">
             Loading merchant storefront...
@@ -84,7 +87,9 @@ export default function PublicSellerStorefrontPage() {
               {isBn ? 'স্টোরটি খুঁজে পাওয়া যায়নি' : 'Store Not Found'}
             </h3>
             <p className="text-xs text-slate-500">
-              {isBn ? 'এই সেলারের স্টোরটি বর্তমানে অনুপলব্ধ।' : 'This merchant storefront is currently inactive.'}
+              {isBn
+                ? 'এই সেলারের স্টোরটি বর্তমানে অনুপলব্ধ।'
+                : 'This merchant storefront is currently inactive.'}
             </p>
             <Link
               href="/"
@@ -104,7 +109,10 @@ export default function PublicSellerStorefrontPage() {
                     {isBn ? 'স্টোর ছুটি মোডে রয়েছে: ' : 'Store is on vacation: '}
                   </span>
                   <span>
-                    {store.vacationMessage || (isBn ? 'সাময়িক বিরতিতে অর্ডার ডেলিভারি বিলম্ব হতে পারে।' : 'Order processing may experience slight delays.')}
+                    {store.vacationMessage ||
+                      (isBn
+                        ? 'সাময়িক বিরতিতে অর্ডার ডেলিভারি বিলম্ব হতে পারে।'
+                        : 'Order processing may experience slight delays.')}
                   </span>
                 </div>
               </div>
@@ -136,7 +144,9 @@ export default function PublicSellerStorefrontPage() {
                 <div className="flex items-center space-x-4 text-xs text-slate-400 pt-1 font-medium">
                   <span>📅 Member since {store.memberSince}</span>
                   <span>•</span>
-                  <span>★ {store.rating} ({store.reviewCount} reviews)</span>
+                  <span>
+                    ★ {store.rating} ({store.reviewCount} reviews)
+                  </span>
                 </div>
               </div>
 
@@ -190,7 +200,8 @@ export default function PublicSellerStorefrontPage() {
                 {/* Sorting Strip */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-100">
                   <div className="text-xs text-slate-500 font-medium">
-                    {storefront.totalHits} {isBn ? 'টি পণ্য পাওয়া গেছে' : 'products available from this seller'}
+                    {storefront.totalHits}{' '}
+                    {isBn ? 'টি পণ্য পাওয়া গেছে' : 'products available from this seller'}
                   </div>
 
                   <div className="flex items-center space-x-2 text-xs">
@@ -201,9 +212,15 @@ export default function PublicSellerStorefrontPage() {
                       className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg font-medium text-slate-800 text-xs focus:ring-1 focus:ring-[#FF6A00]"
                     >
                       <option value="relevance">{isBn ? 'প্রাসঙ্গিকতা' : 'Most Relevant'}</option>
-                      <option value="price_asc">{isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}</option>
-                      <option value="price_desc">{isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}</option>
-                      <option value="points_desc">{isBn ? 'সর্বোচ্চ পয়েন্ট' : 'Highest Reward Points'}</option>
+                      <option value="price_asc">
+                        {isBn ? 'মূল্য: কম থেকে বেশি' : 'Price: Low to High'}
+                      </option>
+                      <option value="price_desc">
+                        {isBn ? 'মূল্য: বেশি থেকে কম' : 'Price: High to Low'}
+                      </option>
+                      <option value="points_desc">
+                        {isBn ? 'সর্বোচ্চ পয়েন্ট' : 'Highest Reward Points'}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -213,7 +230,9 @@ export default function PublicSellerStorefrontPage() {
                   <div className="p-16 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
                     <span className="text-3xl">📦</span>
                     <h3 className="text-sm font-black text-slate-900">
-                      {isBn ? 'এই সেলারের কোনো পণ্য উপলব্ধ নেই' : 'No products available from this seller'}
+                      {isBn
+                        ? 'এই সেলারের কোনো পণ্য উপলব্ধ নেই'
+                        : 'No products available from this seller'}
                     </h3>
                   </div>
                 ) : (
@@ -284,18 +303,14 @@ export default function PublicSellerStorefrontPage() {
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
                     {isBn ? 'ডেলিভারি পলিসি' : 'Shipping Policy'}
                   </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {store.shippingPolicy}
-                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">{store.shippingPolicy}</p>
                 </Card>
 
                 <Card className="p-6 border border-slate-200 bg-white space-y-2">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
                     {isBn ? 'রিটার্ন ও রিপ্লেসমেন্ট পলিসি' : 'Return Policy'}
                   </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {store.returnPolicy}
-                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed">{store.returnPolicy}</p>
                 </Card>
 
                 <Card className="p-6 border border-slate-200 bg-white space-y-2">

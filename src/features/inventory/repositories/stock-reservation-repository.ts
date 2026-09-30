@@ -1,9 +1,9 @@
 /**
  * AlifWorld Stock Reservation Repository
- * 
+ *
  * Handles atomic reservation records during checkout sessions, deterministic TTL
  * expiration queries, commitments upon order placement, and releases upon cart abandon.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
@@ -139,7 +139,11 @@ export class StockReservationRepository {
     return this.mapToModel(record);
   }
 
-  public async commit(id: string, expectedVersion: number, orderId?: string): Promise<StockReservationModel> {
+  public async commit(
+    id: string,
+    expectedVersion: number,
+    orderId?: string
+  ): Promise<StockReservationModel> {
     const existing = await this.findById(id);
     if (!existing) {
       throw new NotFoundError(`Stock reservation '${id}' not found.`);
@@ -238,7 +242,9 @@ export class StockReservationRepository {
     return this.mapToModel(updated);
   }
 
-  public async findExpiredActiveReservations(cutoffDate: Date = new Date()): Promise<StockReservationModel[]> {
+  public async findExpiredActiveReservations(
+    cutoffDate: Date = new Date()
+  ): Promise<StockReservationModel[]> {
     const records = await (this.prisma as any).stockReservation.findMany({
       where: {
         status: ReservationStatus.ACTIVE,

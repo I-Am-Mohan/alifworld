@@ -34,8 +34,15 @@ describe('Milestone 094: Discount Rule Authorization & Service Integration', () 
 
   describe('DiscountRulePolicy.canCreateDiscountRule', () => {
     it('allows ADMIN to create platform-funded, seller-funded, and co-funded discount rules', () => {
-      expect(DiscountRulePolicy.canCreateDiscountRule(adminActor, { fundingType: 'PLATFORM_FUNDED' })).toBe(true);
-      expect(DiscountRulePolicy.canCreateDiscountRule(adminActor, { fundingType: 'SELLER_FUNDED', sellerId: 'sel-store-aaaa' })).toBe(true);
+      expect(
+        DiscountRulePolicy.canCreateDiscountRule(adminActor, { fundingType: 'PLATFORM_FUNDED' })
+      ).toBe(true);
+      expect(
+        DiscountRulePolicy.canCreateDiscountRule(adminActor, {
+          fundingType: 'SELLER_FUNDED',
+          sellerId: 'sel-store-aaaa',
+        })
+      ).toBe(true);
     });
 
     it('allows SELLER to create seller-funded discount rules for their own store', () => {
@@ -66,7 +73,9 @@ describe('Milestone 094: Discount Rule Authorization & Service Integration', () 
     });
 
     it('prohibits CUSTOMER from creating discount rules', () => {
-      expect(DiscountRulePolicy.canCreateDiscountRule(customerActor, { fundingType: 'SELLER_FUNDED' })).toBe(false);
+      expect(
+        DiscountRulePolicy.canCreateDiscountRule(customerActor, { fundingType: 'SELLER_FUNDED' })
+      ).toBe(false);
     });
   });
 

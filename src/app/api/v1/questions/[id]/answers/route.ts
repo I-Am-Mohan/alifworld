@@ -12,14 +12,13 @@ export const dynamic = 'force-dynamic';
  * Posts an official seller response to a product question.
  * Enforces seller tenant scoping inside the repository query.
  */
-export async function POST(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.sellerId) {
-      throw new AuthorizationError('Only registered sellers can answer customer pre-sale questions.');
+      throw new AuthorizationError(
+        'Only registered sellers can answer customer pre-sale questions.'
+      );
     }
 
     const { id } = await props.params;

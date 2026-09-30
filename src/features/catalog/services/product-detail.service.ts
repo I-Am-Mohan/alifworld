@@ -1,9 +1,9 @@
 /**
  * AlifWorld Product Detail Service
- * 
+ *
  * Orchestrates product detail resolution by canonical slug or historical slug,
  * variant selection matrix, available inventory calculation, and Google Schema.org JSON-LD.
- * 
+ *
  * References:
  * - docs/architecture/catalog-taxonomy-products-and-media.md
  * - docs/architecture/scope-boundaries-and-domain-map.md
@@ -93,7 +93,7 @@ export class ProductDetailService {
     locale: 'en-BD' | 'bn-BD' = 'en-BD'
   ): Promise<ProductDetailResult | ProductDetailRedirect> {
     // 1. Direct slug or ID lookup
-    let product = await this.db.product.findFirst({
+    const product = await this.db.product.findFirst({
       where: {
         OR: [{ slug: identifier }, { id: identifier }],
         deletedAt: null,
@@ -145,9 +145,9 @@ export class ProductDetailService {
     }
 
     // Resolve translations
-    let title = product.title;
+    const title = product.title;
     let titleBn = product.titleBn;
-    let description = product.description;
+    const description = product.description;
     let descriptionBn = product.descriptionBn;
 
     if (product.translations) {
@@ -164,7 +164,9 @@ export class ProductDetailService {
     const displayDescription = isBn && descriptionBn ? descriptionBn : description;
 
     const basePricePoisha = Number(product.basePricePoisha || 0);
-    const compareAtPricePoisha = product.compareAtPricePoisha ? Number(product.compareAtPricePoisha) : null;
+    const compareAtPricePoisha = product.compareAtPricePoisha
+      ? Number(product.compareAtPricePoisha)
+      : null;
 
     // Process Variants
     const variants: ProductVariantDetail[] = (product.variants || []).map((v: any) => {
@@ -184,9 +186,12 @@ export class ProductDetailService {
       const variantComparePoisha = v.compareAtPricePoisha ? Number(v.compareAtPricePoisha) : null;
 
       const options: Array<{ name: string; value: string }> = [];
-      if (v.option1Name && v.option1Value) options.push({ name: v.option1Name, value: v.option1Value });
-      if (v.option2Name && v.option2Value) options.push({ name: v.option2Name, value: v.option2Value });
-      if (v.option3Name && v.option3Value) options.push({ name: v.option3Name, value: v.option3Value });
+      if (v.option1Name && v.option1Value)
+        options.push({ name: v.option1Name, value: v.option1Value });
+      if (v.option2Name && v.option2Value)
+        options.push({ name: v.option2Name, value: v.option2Value });
+      if (v.option3Name && v.option3Value)
+        options.push({ name: v.option3Name, value: v.option3Value });
 
       return {
         id: v.id,
@@ -195,7 +200,9 @@ export class ProductDetailService {
         pricePoisha: variantPricePoisha,
         compareAtPricePoisha: variantComparePoisha,
         priceBdtFormatted: this.formatBdt(variantPricePoisha),
-        compareAtPriceBdtFormatted: variantComparePoisha ? this.formatBdt(variantComparePoisha) : null,
+        compareAtPriceBdtFormatted: variantComparePoisha
+          ? this.formatBdt(variantComparePoisha)
+          : null,
         productPoint: v.productPoint ?? product.productPoint ?? 0,
         options,
         imageUrl: v.imageUrl || null,
@@ -214,7 +221,10 @@ export class ProductDetailService {
     if (product.category) {
       if (product.category.parent) {
         breadcrumbs.push({
-          label: isBn && product.category.parent.nameBn ? product.category.parent.nameBn : product.category.parent.name,
+          label:
+            isBn && product.category.parent.nameBn
+              ? product.category.parent.nameBn
+              : product.category.parent.name,
           href: `/categories/${product.category.parent.slug}`,
         });
       }
@@ -238,7 +248,10 @@ export class ProductDetailService {
     }));
 
     // Schema.org JSON-LD structured data for SEO
-    const primaryImage = media.find((m: any) => m.isPrimary)?.url || media[0]?.url || 'https://alifworld.com/placeholder.png';
+    const primaryImage =
+      media.find((m: any) => m.isPrimary)?.url ||
+      media[0]?.url ||
+      'https://alifworld.com/placeholder.png';
     const jsonLd = {
       '@context': 'https://schema.org/',
       '@type': 'Product',
@@ -277,7 +290,9 @@ export class ProductDetailService {
       basePricePoisha,
       basePriceBdtFormatted: this.formatBdt(basePricePoisha),
       compareAtPricePoisha,
-      compareAtPriceBdtFormatted: compareAtPricePoisha ? this.formatBdt(compareAtPricePoisha) : null,
+      compareAtPriceBdtFormatted: compareAtPricePoisha
+        ? this.formatBdt(compareAtPricePoisha)
+        : null,
       productPoint: product.productPoint || 0,
       currency: 'BDT',
       minOrderQuantity: product.minOrderQuantity || 1,

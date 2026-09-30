@@ -50,7 +50,10 @@ export class PromotionStackingService {
       usageCount: rule.usageCount,
       status: rule.status,
       deletedAt: rule.deletedAt,
-      targets: (rule.targets || []).map((t) => ({ targetType: t.targetType, targetId: t.targetId })),
+      targets: (rule.targets || []).map((t) => ({
+        targetType: t.targetType,
+        targetId: t.targetId,
+      })),
     }));
 
     // 2. Fetch coupon rules if specified
@@ -87,7 +90,10 @@ export class PromotionStackingService {
             usageCount: couponRule.usageCount,
             status: couponRule.status,
             deletedAt: couponRule.deletedAt,
-            targets: (couponRule.targets || []).map((t) => ({ targetType: t.targetType, targetId: t.targetId })),
+            targets: (couponRule.targets || []).map((t) => ({
+              targetType: t.targetType,
+              targetId: t.targetId,
+            })),
           });
         }
       }

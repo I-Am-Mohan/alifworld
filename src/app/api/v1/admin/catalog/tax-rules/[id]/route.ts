@@ -12,7 +12,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const actor = authenticateRequest(req);
     const parsed = TaxRuleUpdateSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid tax rule update.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.update(actor.userId, (await params).id, parsed.data) });
-  } catch (error) { return errorResponse(req, error, 'Failed to update tax rule'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid tax rule update.', parsed.error.flatten());
+    return NextResponse.json({
+      success: true,
+      data: await service.update(actor.userId, (await params).id, parsed.data),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to update tax rule');
+  }
 }

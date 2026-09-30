@@ -22,9 +22,7 @@ export async function POST(req: NextRequest) {
 
     const validatedInput = SendCodOtpSchema.parse(payload);
 
-    const result = await codFraudRiskService.sendCodVerificationOtp(
-      validatedInput.recipientPhone
-    );
+    const result = await codFraudRiskService.sendCodVerificationOtp(validatedInput.recipientPhone);
 
     return NextResponse.json(
       {

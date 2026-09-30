@@ -118,7 +118,10 @@ export class CouponLifecycleService {
           startsAt: discountRule.startsAt,
           endsAt: discountRule.endsAt,
           status: discountRule.status,
-          targets: (discountRule.targets || []).map((t) => ({ targetType: t.targetType, targetId: t.targetId })),
+          targets: (discountRule.targets || []).map((t) => ({
+            targetType: t.targetType,
+            targetId: t.targetId,
+          })),
         },
         {
           lineItems: [
@@ -177,7 +180,9 @@ export class CouponLifecycleService {
     }
 
     if (discountAmountPoisha <= 0n) {
-      throw new ValidationError(`Coupon '${codeUpper}' provides no discount for current order subtotal`);
+      throw new ValidationError(
+        `Coupon '${codeUpper}' provides no discount for current order subtotal`
+      );
     }
 
     // Atomically reserve redemption in database transaction
@@ -212,7 +217,10 @@ export class CouponLifecycleService {
     const list = await this.redemptionRepo.listRedemptions({ page: 1, limit: 1 });
     const redemption = list.items.find((i) => i.id === input.redemptionId);
 
-    if (redemption && !CouponPolicy.canReleaseRedemption(actor, { customerId: redemption.customerId })) {
+    if (
+      redemption &&
+      !CouponPolicy.canReleaseRedemption(actor, { customerId: redemption.customerId })
+    ) {
       throw new AuthorizationError('Insufficient permissions to release this coupon redemption');
     }
 

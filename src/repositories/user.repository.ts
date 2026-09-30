@@ -1,9 +1,9 @@
 /**
  * AlifWorld User Account & Identity Repository
- * 
+ *
  * Manages user accounts, RBAC role assignments, multi-wallet initialization,
  * and transactional customer onboarding.
- * 
+ *
  * Invariants: ADR-0022, ADR-0028, ADR-0029, ADR-0031, ADR-0032
  */
 

@@ -33,7 +33,9 @@ const spawnArgs = hasDotEnv
   : [process.execPath, 'run', ...command];
 
 if (!hasDotEnv) {
-  console.info('[run-with-env] .env file not found. Executing command using environment variables.');
+  console.info(
+    '[run-with-env] .env file not found. Executing command using environment variables.'
+  );
 } else {
   console.info('[run-with-env] Loaded environment from .env file.');
 }

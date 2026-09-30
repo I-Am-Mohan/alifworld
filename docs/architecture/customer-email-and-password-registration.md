@@ -54,19 +54,19 @@ sequenceDiagram
 
 When a customer registers, 8 database entities are touched or created atomically within a single transaction:
 
-| Entity | Primary Key / Index | Lifecycle Policy | Initial State |
-|---|---|---|---|
-| **`User`** | `usr_...` | `SOFT_DELETE` | `status: 'ACTIVE'`, `isEmailVerified: false`, `tokenVersion: 1` |
-| **`Role`** | `rol_...` (`code: 'CUSTOMER'`) | `SOFT_DELETE` | Default customer role |
-| **`UserRoleAssignment`** | `ura_...` | `SOFT_DELETE` | Binds user to `CUSTOMER` role |
-| **`Wallet` (`MAIN`)** | `wal_...` | `SOFT_DELETE` | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'` |
-| **`Wallet` (`SHOPPING`)** | `wal_...` | `SOFT_DELETE` | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'` |
-| **`Wallet` (`GOOD_LUCK`)** | `wal_...` | `SOFT_DELETE` | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'` |
-| **`Wallet` (`CHARITY`)** | `wal_...` | `SOFT_DELETE` | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'` |
-| **`PointAccount`** | `pac_...` | `SOFT_DELETE` | `availablePoints: 0`, `pendingPoints: 0`, `lifetimePoints: 0` |
-| **`OtpToken`** | `otp_...` | `EPHEMERAL` | 6-digit numeric hash, `purpose: 'EMAIL_VERIFICATION'`, 15m TTL |
-| **`OutboxEvent`** | `evt_...` | `IMMUTABLE` | `eventType: 'auth.customer_registered'`, `status: 'PENDING'` |
-| **`AuditLog`** | `aud_...` | `IMMUTABLE` | `action: 'CUSTOMER_REGISTERED'`, `resource: 'User'` |
+| Entity                     | Primary Key / Index            | Lifecycle Policy | Initial State                                                   |
+| -------------------------- | ------------------------------ | ---------------- | --------------------------------------------------------------- |
+| **`User`**                 | `usr_...`                      | `SOFT_DELETE`    | `status: 'ACTIVE'`, `isEmailVerified: false`, `tokenVersion: 1` |
+| **`Role`**                 | `rol_...` (`code: 'CUSTOMER'`) | `SOFT_DELETE`    | Default customer role                                           |
+| **`UserRoleAssignment`**   | `ura_...`                      | `SOFT_DELETE`    | Binds user to `CUSTOMER` role                                   |
+| **`Wallet` (`MAIN`)**      | `wal_...`                      | `SOFT_DELETE`    | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'`    |
+| **`Wallet` (`SHOPPING`)**  | `wal_...`                      | `SOFT_DELETE`    | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'`    |
+| **`Wallet` (`GOOD_LUCK`)** | `wal_...`                      | `SOFT_DELETE`    | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'`    |
+| **`Wallet` (`CHARITY`)**   | `wal_...`                      | `SOFT_DELETE`    | `availablePoisha: 0`, `pendingPoisha: 0`, `status: 'ACTIVE'`    |
+| **`PointAccount`**         | `pac_...`                      | `SOFT_DELETE`    | `availablePoints: 0`, `pendingPoints: 0`, `lifetimePoints: 0`   |
+| **`OtpToken`**             | `otp_...`                      | `EPHEMERAL`      | 6-digit numeric hash, `purpose: 'EMAIL_VERIFICATION'`, 15m TTL  |
+| **`OutboxEvent`**          | `evt_...`                      | `IMMUTABLE`      | `eventType: 'auth.customer_registered'`, `status: 'PENDING'`    |
+| **`AuditLog`**             | `aud_...`                      | `IMMUTABLE`      | `action: 'CUSTOMER_REGISTERED'`, `resource: 'User'`             |
 
 ---
 
@@ -84,6 +84,7 @@ When a customer registers, 8 database entities are touched or created atomically
 ## 5. REST API Contract
 
 ### Request: `POST /api/v1/auth/register`
+
 ```json
 {
   "name": "Tanvir Ahmed",
@@ -96,6 +97,7 @@ When a customer registers, 8 database entities are touched or created atomically
 ```
 
 ### Success Response: `HTTP 201 Created`
+
 ```json
 {
   "success": true,
@@ -112,6 +114,7 @@ When a customer registers, 8 database entities are touched or created atomically
 ```
 
 ### Conflict Response: `HTTP 409 Conflict`
+
 ```json
 {
   "success": false,
@@ -123,6 +126,7 @@ When a customer registers, 8 database entities are touched or created atomically
 ```
 
 ### Validation Failure: `HTTP 422 Unprocessable Entity`
+
 ```json
 {
   "success": false,

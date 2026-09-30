@@ -1,19 +1,26 @@
 /**
  * Order Cancellation API Route
- * 
+ *
  * Enforces customer self-ownership and order lifecycle invariants.
  * Customers can only cancel their own orders in eligible pending states.
- * 
+ *
  * Invariants: ADR-0003, ADR-0010, ADR-0022, ADR-0023, Milestone 047
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { authenticateRequest, defaultObjectAuthzService } from '@/shared/authz';
 import { OrderRepository } from '@/repositories/order.repository';
 import { CancelOrderSchema } from '@/validators/order.validator';
-import { AppError, ValidationError, NotFoundError } from '@/shared/errors/app-error';
-import { prisma } from '@/shared/database/prisma';
-import { auditService } from '@/shared/audit';
+import {
+  AppError,
+  ValidationError,
+  NotFoundError,
+  AuthorizationError,
+} from '@/shared/errors/app-error';
+import { validationErrorResponse } from '@/shared/api/error-response';
+import { TransitionIdempotencyKeySchema } from '@/features/orders/validators/order.validators';
+import { orderTransitionService } from '@/features/orders/state-machines/order-transition.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,10 +30,7 @@ const orderRepo = new OrderRepository();
  * POST /api/v1/orders/[id]/cancel
  * Cancels an order with object-level ownership and lifecycle checks.
  */
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id: orderId } = await params;
@@ -35,11 +39,10 @@ export async function POST(
     try {
       body = await req.json();
     } catch {
-      // Optional body
+      throw new ValidationError('Invalid JSON body');
     }
 
-    const parseResult = CancelOrderSchema.safeParse(body);
-    const reason = parseResult.success ? parseResult.data.reason : 'Customer requested order cancellation';
+    const { reason } = CancelOrderSchema.parse(body);
 
     // 1. Fetch the order
     const order = await orderRepo.findById(orderId);
@@ -48,68 +51,54 @@ export async function POST(
     }
 
     // 2. Object-level authorization and lifecycle check
-    await defaultObjectAuthzService.assert({
-      action: 'cancel',
-      actor,
-      object: {
-        type: 'ORDER',
-        id: order.id,
-        ownerId: order.customerId,
-        status: order.status,
-      },
-      reason,
-    });
-
-    // 3. Perform cancellation in transaction
-    const updated = await (prisma as any).order.update({
-      where: { id: order.id },
-      data: {
-        status: 'CANCELLED',
-        cancelledAt: new Date(),
-        cancelReason: reason,
-      },
-    });
-
-    // 4. Record status history
-    await (prisma as any).orderStatusHistory.create({
-      data: {
-        id: `osh_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        orderId: order.id,
-        fromStatus: order.status,
-        toStatus: 'CANCELLED',
-        actorId: actor.userId,
-        actorRole: actor.roles[0] || 'CUSTOMER',
+    if (order.status === 'CANCELLED') {
+      const isAdmin = actor.roles.some((role) => ['ADMIN', 'SUPER_ADMIN'].includes(role));
+      if (
+        (!isAdmin && order.customerId !== actor.userId) ||
+        (!actor.roles.includes('SUPER_ADMIN') && !actor.permissions.includes('orders:cancel'))
+      ) {
+        throw new AuthorizationError('Cancellation ownership and permission required.');
+      }
+    } else
+      await defaultObjectAuthzService.assert({
+        action: 'cancel',
+        actor,
+        object: {
+          type: 'ORDER',
+          id: order.id,
+          ownerId: order.customerId,
+          status: order.status,
+        },
         reason,
-      },
-    });
+      });
 
-    // 5. Record immutable business audit log with state diff
-    await auditService.logBusinessEvent({
-      action: 'ORDER_CANCELLED',
-      resource: 'ORDER',
-      resourceId: order.id,
+    const idempotencyKey = TransitionIdempotencyKeySchema.parse(req.headers.get('idempotency-key'));
+    const transition = await orderTransitionService.transitionOrderStatus({
+      orderId: order.id,
+      nextStatus: 'CANCELLED',
       actorId: actor.userId,
-      actorRole: actor.roles[0] || 'CUSTOMER',
-      before: { status: order.status },
-      after: { status: 'CANCELLED' },
-      metadata: { reason, orderNumber: order.orderNumber },
-      req,
+      actorRole: actor.roles.some((role) => ['ADMIN', 'SUPER_ADMIN'].includes(role))
+        ? 'ADMIN'
+        : 'CUSTOMER',
+      reason,
+      idempotencyKey,
     });
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          id: updated.id,
-          orderNumber: updated.orderNumber,
-          status: updated.status,
-          cancelReason: updated.cancelReason,
-          cancelledAt: updated.cancelledAt,
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: transition.newStatus,
+          cancelReason: reason,
+          cancelledAt: transition.transitionedAt,
         },
       },
       { status: 200 }
     );
   } catch (error: any) {
+    if (error instanceof z.ZodError) return validationErrorResponse(req, error);
     if (error instanceof AppError) {
       return NextResponse.json(error.toJSON(), { status: error.statusCode });
     }

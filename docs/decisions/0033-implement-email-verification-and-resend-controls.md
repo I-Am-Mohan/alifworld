@@ -5,13 +5,14 @@
 **Deciders**: Security Architecture, Identity Engineering, Storefront UX, Core Platform Team  
 **Milestone Reference**: [Milestone 033](../../AlifWorld-300-Milestones/033-implement-email-verification-and-resend-controls.md)  
 **Phase**: Phase 04: Identity and Authentication  
-**Supporting Specification**: [Email Verification and Resend Controls Architecture](../architecture/email-verification-and-resend-controls.md)  
+**Supporting Specification**: [Email Verification and Resend Controls Architecture](../architecture/email-verification-and-resend-controls.md)
 
 ---
 
 ## Context and Problem Statement
 
 Customer email verification is critical to guarantee identity authenticity, combat spam registrations, and establish a trusted contact vector for transaction receipts, OTPs, and dispute resolution. An insecure verification flow presents several platform risks:
+
 1. **Brute-Force Vulnerability**: A 6-digit numeric code possesses only 1,000,000 permutations. Without strict attempt limits, high-throughput automated attacks can guess the code within the 15-minute TTL.
 2. **Flooding and Denial of Service (Email Bombing)**: Uncapped resend requests can overwhelm email dispatch queues, inflate SMTP costs, and trigger blacklisting from email service providers (SES/SendGrid).
 3. **User Account Enumeration**: Information disclosure during resend or verification requests can leak whether an email address is registered on AlifWorld.
@@ -32,19 +33,20 @@ Customer email verification is critical to guarantee identity authenticity, comb
 ## Considered Options
 
 1. **Magic Link Verification Only**:
-   - *Pros*: Single click flow.
-   - *Cons*: Poor experience across mobile web and native Flutter wrappers; anti-spam email scanners pre-fetch links, prematurely consuming one-time tokens and frustrating customers.
+   - _Pros_: Single click flow.
+   - _Cons_: Poor experience across mobile web and native Flutter wrappers; anti-spam email scanners pre-fetch links, prematurely consuming one-time tokens and frustrating customers.
 2. **Uncapped 6-Digit Verification with Generic Rate Limits**:
-   - *Pros*: Simple to code.
-   - *Cons*: Leaves the platform susceptible to SMS/email bombing, wallet fraud, and brute force; lacks explicit cooldown timers for UI synchronization.
+   - _Pros_: Simple to code.
+   - _Cons_: Leaves the platform susceptible to SMS/email bombing, wallet fraud, and brute force; lacks explicit cooldown timers for UI synchronization.
 3. **Ephemeral 6-Digit Numeric Token with Attempt Tracking, 60s Cooldown, 3/Hour Cap, and Atomic Transaction (Selected)**:
-   - *Pros*: Highly secure, resilient against automated brute force, resists account enumeration, prevents email flooding, and delivers a frictionless mobile UX.
+   - _Pros_: Highly secure, resilient against automated brute force, resists account enumeration, prevents email flooding, and delivers a frictionless mobile UX.
 
 ---
 
 ## Decision Outcome & Detailed Rationale
 
 ### 1. Ephemeral Token Lifecycle & Security Policy
+
 - **Generation**: Cryptographically strong 6-digit numeric string (`100000` to `999999`).
 - **Storage**: Raw codes are never stored in plaintext. The SHA-256 digest (`hashToken(code)`) is persisted in `otp_tokens` with `purpose = 'EMAIL_VERIFICATION'` and `expiresAt = now() + 15 minutes`.
 - **Attempt Tracking & Lockout**:
@@ -53,6 +55,7 @@ Customer email verification is critical to guarantee identity authenticity, comb
   - Upon reaching 3 failed attempts, the token is permanently invalidated (`isUsed = true`), locking out further guesses and requiring the user to request a fresh code.
 
 ### 2. Resend Rate Limiting & Cooldown Controls
+
 - **60-Second Cooldown**:
   - Evaluated against the creation timestamp of the latest OTP token (`createdAt`).
   - If `Date.now() - latestOtp.createdAt < 60s`, the request is rejected with HTTP 429 (`ValidationError`) carrying `cooldownRemainingSeconds`.
@@ -65,7 +68,9 @@ Customer email verification is critical to guarantee identity authenticity, comb
   - If the requested email does not exist in the `users` table, the service returns a neutral HTTP 200 success response: `'If an account exists with this email, a verification code has been sent.'` with `cooldownSeconds: 60`.
 
 ### 3. Atomic Verification Transaction
+
 Execution in `EmailVerificationService.verifyEmail` guarantees all-or-nothing completion:
+
 ```typescript
 await prisma.$transaction(async (tx) => {
   // 1. Consume OTP token
@@ -80,6 +85,7 @@ await prisma.$transaction(async (tx) => {
 ```
 
 ### 4. REST Contracts
+
 - `POST /api/v1/auth/email/verify`:
   - Request: `{ email: string, code: string (6 digits) }`
   - Responses: HTTP 200 (verified), HTTP 404 (user not found), HTTP 422 (invalid/expired code or attempt lockout).
@@ -88,6 +94,7 @@ await prisma.$transaction(async (tx) => {
   - Responses: HTTP 200 (sent or neutral notice with `cooldownSeconds`), HTTP 429 (cooldown or hourly limit breach), HTTP 422 (validation error).
 
 ### 5. Storefront Verification UI (`/verify-email`)
+
 - Six single-character input cells with automated focus progression on input and reverse focus on backspace.
 - Full clipboard paste listener parsing first 6 numeric digits and populating all cells instantly.
 - Reactive 60-second countdown timer disabling the resend button until expiration.
@@ -98,10 +105,12 @@ await prisma.$transaction(async (tx) => {
 ## Consequences
 
 ### Positive
+
 - Strict defense against brute-force attacks via 3-attempt token invalidation.
 - Reliable protection of outbound email infrastructure via 60-second cooldown and 3/hour hard cap.
 - Prevention of user account reconnaissance through neutral responses.
 - Complete auditability and event-driven decoupling via the Transactional Outbox pattern.
 
 ### Negative & Mitigations
+
 - Network latency or clock drift between client and server could cause premature resend attempts (mitigated by server-enforced timestamps returning explicit remaining cooldown seconds).

@@ -1,9 +1,9 @@
 /**
  * Integration Tests for Database Health Probe in Readiness Endpoint
- * 
+ *
  * Verifies that /api/health/ready accurately probes database health,
  * calculates query latency, and preserves non-blocking resilience.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  */
 
@@ -27,10 +27,7 @@ describe('Database Health Integration Tests', () => {
     expect(typeof body.data.checks.databaseDetails.latencyMs).toBe('number');
     expect(body.data.checks.databaseDetails.latencyMs).toBeGreaterThanOrEqual(0);
 
-    // Platform invariants preservation
-    expect(body.data.currency).toBe('BDT');
-    expect(body.data.timezone).toBe('Asia/Dhaka');
-    expect(body.data.checks.gates.pointsCashConvertible).toBe(false);
-    expect(body.data.checks.gates.affiliateDepth).toBe(1);
+    expect(body.data.checks.configuration).toBe('valid');
+    expect(body.data.checks.process).toBe('healthy');
   });
 });

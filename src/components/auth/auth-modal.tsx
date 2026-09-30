@@ -378,9 +378,7 @@ export function AuthModal() {
       setResetRequested(true);
     } catch (requestError) {
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : translate('auth.resetRequestFailed')
+        requestError instanceof Error ? requestError.message : translate('auth.resetRequestFailed')
       );
     } finally {
       setLoading(false);
@@ -481,9 +479,14 @@ export function AuthModal() {
     setError(null);
     setPasswordAttempted(true);
     const errors = {
-      password: validatePasswordStrength(registerPassword).isValid ? undefined : translate('auth.passwordRequirementsError'),
-      confirmPassword: !confirmPassword ? translate('auth.confirmPasswordRequired') :
-        registerPassword !== confirmPassword ? translate('auth.errPassMismatch') : undefined,
+      password: validatePasswordStrength(registerPassword).isValid
+        ? undefined
+        : translate('auth.passwordRequirementsError'),
+      confirmPassword: !confirmPassword
+        ? translate('auth.confirmPasswordRequired')
+        : registerPassword !== confirmPassword
+          ? translate('auth.errPassMismatch')
+          : undefined,
     };
     setRegisterErrors((current) => ({ ...current, ...errors }));
     if (errors.password || errors.confirmPassword) {
@@ -509,9 +512,11 @@ export function AuthModal() {
           lastName: lastName.trim(),
           password: registerPassword,
           address: skipOptional ? undefined : address.trim() || undefined,
-          division: skipOptional ? undefined : divisionList.find((d) => d.key === selectedDivisionKey)?.name || undefined,
+          division: skipOptional
+            ? undefined
+            : divisionList.find((d) => d.key === selectedDivisionKey)?.name || undefined,
           district: skipOptional ? undefined : selectedDistrict || undefined,
-          city: skipOptional ? undefined : (city.trim() || selectedDistrict || undefined),
+          city: skipOptional ? undefined : city.trim() || selectedDistrict || undefined,
           birthday: skipOptional ? undefined : birthday || undefined,
           gender: skipOptional ? undefined : gender || undefined,
           clientType: 'WEB',
@@ -523,7 +528,10 @@ export function AuthModal() {
         if (data.error?.message?.startsWith('Password does not meet required security standards')) {
           setRegisterStep('password');
           setPasswordAttempted(true);
-          setRegisterErrors((current) => ({ ...current, password: translate('auth.passwordRequirementsError') }));
+          setRegisterErrors((current) => ({
+            ...current,
+            password: translate('auth.passwordRequirementsError'),
+          }));
           return;
         }
         throw new Error(data.error?.message || translate('auth.errRegFailed'));
@@ -625,8 +633,12 @@ export function AuthModal() {
               }}
               className="mb-4 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-[11px] text-amber-800 font-semibold cursor-pointer hover:bg-amber-100 transition"
             >
-              <span>{t.devOtpLabel} <strong>{devOtpCode}</strong></span>
-              <span className="text-[10px] uppercase underline text-amber-600">{t.clickToFill}</span>
+              <span>
+                {t.devOtpLabel} <strong>{devOtpCode}</strong>
+              </span>
+              <span className="text-[10px] uppercase underline text-amber-600">
+                {t.clickToFill}
+              </span>
             </div>
           )}
 
@@ -642,14 +654,13 @@ export function AuthModal() {
                   className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300"
                 >
                   <div>
-                    <h3 className="text-lg font-black text-slate-900 mb-1">
-                      {t.signInWithMobile}
-                    </h3>
-                    <p className="text-xs text-slate-500 mb-4">
-                      {t.signInWithMobileDesc}
-                    </p>
+                    <h3 className="text-lg font-black text-slate-900 mb-1">{t.signInWithMobile}</h3>
+                    <p className="text-xs text-slate-500 mb-4">{t.signInWithMobileDesc}</p>
 
-                    <label htmlFor="register-phone" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    <label
+                      htmlFor="register-phone"
+                      className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2"
+                    >
                       {t.mobileNumber}
                     </label>
                     <div className="relative flex items-center">
@@ -824,7 +835,8 @@ export function AuthModal() {
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     {cooldown > 0 ? (
                       <span className="font-medium">
-                        {t.resendIn} <strong className="text-amber-600 font-mono">{cooldown}s</strong>
+                        {t.resendIn}{' '}
+                        <strong className="text-amber-600 font-mono">{cooldown}s</strong>
                       </span>
                     ) : (
                       <button
@@ -884,9 +896,7 @@ export function AuthModal() {
                     <h3 className="text-lg font-black text-slate-900 mb-1">
                       {t.signInWithPassword}
                     </h3>
-                    <p className="text-xs text-slate-500 mb-4">
-                      {t.signInWithPasswordDesc}
-                    </p>
+                    <p className="text-xs text-slate-500 mb-4">{t.signInWithPasswordDesc}</p>
 
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                       {t.emailOrMobile}
@@ -936,7 +946,11 @@ export function AuthModal() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -989,7 +1003,10 @@ export function AuthModal() {
                   </div>
 
                   {resetRequested ? (
-                    <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-relaxed text-emerald-800">
+                    <div
+                      role="status"
+                      className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-relaxed text-emerald-800"
+                    >
                       <div className="flex gap-2">
                         <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
                         <span>{t.resetRequestAccepted}</span>
@@ -1062,12 +1079,8 @@ export function AuthModal() {
                   className="space-y-4 animate-in fade-in slide-in-from-right-3 duration-300"
                 >
                   <div>
-                    <h3 className="text-lg font-black text-slate-900 mb-1">
-                      {t.createAccount}
-                    </h3>
-                    <p className="text-xs text-slate-500 mb-4">
-                      {t.createAccountDesc}
-                    </p>
+                    <h3 className="text-lg font-black text-slate-900 mb-1">{t.createAccount}</h3>
+                    <p className="text-xs text-slate-500 mb-4">{t.createAccountDesc}</p>
 
                     <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                       {t.mobileNumber}
@@ -1081,7 +1094,10 @@ export function AuthModal() {
                         id="register-phone"
                         type="tel"
                         value={phone}
-                        onChange={(e) => { setPhone(e.target.value); clearRegisterError('phone'); }}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          clearRegisterError('phone');
+                        }}
                         aria-invalid={!!registerErrors.phone}
                         aria-describedby={registerErrors.phone ? 'register-phone-error' : undefined}
                         placeholder="1700112233"
@@ -1097,7 +1113,15 @@ export function AuthModal() {
                         </div>
                       )}
                     </div>
-                    {registerErrors.phone && <p id="register-phone-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.phone}</p>}
+                    {registerErrors.phone && (
+                      <p
+                        id="register-phone-error"
+                        role="alert"
+                        className="mt-1 text-xs text-rose-600"
+                      >
+                        {registerErrors.phone}
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -1161,7 +1185,10 @@ export function AuthModal() {
                         inputMode="numeric"
                         maxLength={1}
                         value={digit}
-                        onChange={(e) => { handleOtpChange(idx, e.target.value); clearRegisterError('otp'); }}
+                        onChange={(e) => {
+                          handleOtpChange(idx, e.target.value);
+                          clearRegisterError('otp');
+                        }}
                         aria-label={`${t.verifyCode} ${idx + 1}`}
                         aria-invalid={!!registerErrors.otp}
                         aria-describedby={registerErrors.otp ? 'register-otp-error' : undefined}
@@ -1172,12 +1199,17 @@ export function AuthModal() {
                       />
                     ))}
                   </div>
-                  {registerErrors.otp && <p id="register-otp-error" role="alert" className="text-xs text-rose-600">{registerErrors.otp}</p>}
+                  {registerErrors.otp && (
+                    <p id="register-otp-error" role="alert" className="text-xs text-rose-600">
+                      {registerErrors.otp}
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     {cooldown > 0 ? (
                       <span className="font-medium">
-                        {t.resendIn} <strong className="text-amber-600 font-mono">{cooldown}s</strong>
+                        {t.resendIn}{' '}
+                        <strong className="text-amber-600 font-mono">{cooldown}s</strong>
                       </span>
                     ) : (
                       <button
@@ -1188,7 +1220,10 @@ export function AuthModal() {
                             const res = await csrfFetch('/api/v1/auth/phone/send-otp', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ phone: phone.trim(), purpose: 'REGISTRATION' }),
+                              body: JSON.stringify({
+                                phone: phone.trim(),
+                                purpose: 'REGISTRATION',
+                              }),
                             });
                             const data = await res.json();
                             if (res.ok && data.success) {
@@ -1234,45 +1269,75 @@ export function AuthModal() {
                       {t.step1of3}
                     </div>
                     <h3 className="text-lg font-black text-slate-900">{t.stepName}</h3>
-                    <p className="text-xs text-slate-500 mb-4">
-                      {t.enterNameDesc}
-                    </p>
+                    <p className="text-xs text-slate-500 mb-4">{t.enterNameDesc}</p>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="register-first-name" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="register-first-name"
+                          className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2"
+                        >
                           {t.firstName}
                         </label>
                         <input
                           id="register-first-name"
                           type="text"
                           value={firstName}
-                          onChange={(e) => { setFirstName(e.target.value); clearRegisterError('firstName'); }}
+                          onChange={(e) => {
+                            setFirstName(e.target.value);
+                            clearRegisterError('firstName');
+                          }}
                           aria-invalid={!!registerErrors.firstName}
-                          aria-describedby={registerErrors.firstName ? 'register-first-name-error' : undefined}
+                          aria-describedby={
+                            registerErrors.firstName ? 'register-first-name-error' : undefined
+                          }
                           placeholder={t.firstNamePlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition"
                           autoFocus
                           required
                         />
-                        {registerErrors.firstName && <p id="register-first-name-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.firstName}</p>}
+                        {registerErrors.firstName && (
+                          <p
+                            id="register-first-name-error"
+                            role="alert"
+                            className="mt-1 text-xs text-rose-600"
+                          >
+                            {registerErrors.firstName}
+                          </p>
+                        )}
                       </div>
                       <div>
-                        <label htmlFor="register-last-name" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="register-last-name"
+                          className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2"
+                        >
                           {t.lastName}
                         </label>
                         <input
                           id="register-last-name"
                           type="text"
                           value={lastName}
-                          onChange={(e) => { setLastName(e.target.value); clearRegisterError('lastName'); }}
+                          onChange={(e) => {
+                            setLastName(e.target.value);
+                            clearRegisterError('lastName');
+                          }}
                           aria-invalid={!!registerErrors.lastName}
-                          aria-describedby={registerErrors.lastName ? 'register-last-name-error' : undefined}
+                          aria-describedby={
+                            registerErrors.lastName ? 'register-last-name-error' : undefined
+                          }
                           placeholder={t.lastNamePlaceholder}
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition"
                           required
                         />
-                        {registerErrors.lastName && <p id="register-last-name-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.lastName}</p>}
+                        {registerErrors.lastName && (
+                          <p
+                            id="register-last-name-error"
+                            role="alert"
+                            className="mt-1 text-xs text-rose-600"
+                          >
+                            {registerErrors.lastName}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1308,7 +1373,10 @@ export function AuthModal() {
 
                     <div className="space-y-3 mt-3">
                       <div>
-                        <label htmlFor="register-password" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="register-password"
+                          className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2"
+                        >
                           {t.password}
                         </label>
                         <div className="relative">
@@ -1316,9 +1384,20 @@ export function AuthModal() {
                             id="register-password"
                             type={showPassword ? 'text' : 'password'}
                             value={registerPassword}
-                            onChange={(e) => { setRegisterPassword(e.target.value); clearRegisterError('password'); }}
-                            aria-invalid={!!registerErrors.password || (registerPassword.length > 0 && !validatePasswordStrength(registerPassword).isValid)}
-                            aria-describedby={registerErrors.password ? 'register-password-requirements register-password-error' : 'register-password-requirements'}
+                            onChange={(e) => {
+                              setRegisterPassword(e.target.value);
+                              clearRegisterError('password');
+                            }}
+                            aria-invalid={
+                              !!registerErrors.password ||
+                              (registerPassword.length > 0 &&
+                                !validatePasswordStrength(registerPassword).isValid)
+                            }
+                            aria-describedby={
+                              registerErrors.password
+                                ? 'register-password-requirements register-password-error'
+                                : 'register-password-requirements'
+                            }
                             placeholder="••••••••"
                             className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl pl-4 pr-11 py-3 text-sm text-slate-900 outline-none transition"
                             autoFocus
@@ -1327,42 +1406,106 @@ export function AuthModal() {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? translate('auth.hidePassword') : translate('auth.showPassword')}
+                            aria-label={
+                              showPassword
+                                ? translate('auth.hidePassword')
+                                : translate('auth.showPassword')
+                            }
                             className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
                           >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" />
+                            ) : (
+                              <Eye className="w-4 h-4" />
+                            )}
                           </button>
                         </div>
-                        <ul id="register-password-requirements" className="mt-2 space-y-1 text-xs" aria-label={translate('auth.passwordChecklistTitle')}>
-                          {passwordRequirements.filter(({ key }) => key !== 'required' && key !== 'maxLength' && key !== 'unique').map(({ key, met }) => (
-                            <li key={key} className={met ? 'text-emerald-700' : registerPassword || passwordAttempted ? 'text-rose-600' : 'text-slate-500'}>
-                              {met ? '✓' : '○'} {passwordLabels[key]}
-                            </li>
-                          ))}
-                          {(registerPassword.length > 128 || passwordAttempted) && passwordRequirements.filter(({ key }) => key === 'maxLength' || key === 'unique').map(({ key, met }) => !met && (
-                            <li key={key} className="text-rose-600">○ {passwordLabels[key]}</li>
-                          ))}
+                        <ul
+                          id="register-password-requirements"
+                          className="mt-2 space-y-1 text-xs"
+                          aria-label={translate('auth.passwordChecklistTitle')}
+                        >
+                          {passwordRequirements
+                            .filter(
+                              ({ key }) =>
+                                key !== 'required' && key !== 'maxLength' && key !== 'unique'
+                            )
+                            .map(({ key, met }) => (
+                              <li
+                                key={key}
+                                className={
+                                  met
+                                    ? 'text-emerald-700'
+                                    : registerPassword || passwordAttempted
+                                      ? 'text-rose-600'
+                                      : 'text-slate-500'
+                                }
+                              >
+                                {met ? '✓' : '○'} {passwordLabels[key]}
+                              </li>
+                            ))}
+                          {(registerPassword.length > 128 || passwordAttempted) &&
+                            passwordRequirements
+                              .filter(({ key }) => key === 'maxLength' || key === 'unique')
+                              .map(
+                                ({ key, met }) =>
+                                  !met && (
+                                    <li key={key} className="text-rose-600">
+                                      ○ {passwordLabels[key]}
+                                    </li>
+                                  )
+                              )}
                         </ul>
-                        {registerErrors.password && <p id="register-password-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.password}</p>}
+                        {registerErrors.password && (
+                          <p
+                            id="register-password-error"
+                            role="alert"
+                            className="mt-1 text-xs text-rose-600"
+                          >
+                            {registerErrors.password}
+                          </p>
+                        )}
                       </div>
 
                       <div>
-                        <label htmlFor="register-confirm-password" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="register-confirm-password"
+                          className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2"
+                        >
                           {t.confirmPassword}
                         </label>
                         <input
                           id="register-confirm-password"
                           type={showPassword ? 'text' : 'password'}
                           value={confirmPassword}
-                          onChange={(e) => { setConfirmPassword(e.target.value); clearRegisterError('confirmPassword'); }}
-                          aria-invalid={!!registerErrors.confirmPassword || (confirmPassword.length > 0 && confirmPassword !== registerPassword)}
-                          aria-describedby={registerErrors.confirmPassword || confirmPassword.length > 0 ? 'register-confirm-error' : undefined}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value);
+                            clearRegisterError('confirmPassword');
+                          }}
+                          aria-invalid={
+                            !!registerErrors.confirmPassword ||
+                            (confirmPassword.length > 0 && confirmPassword !== registerPassword)
+                          }
+                          aria-describedby={
+                            registerErrors.confirmPassword || confirmPassword.length > 0
+                              ? 'register-confirm-error'
+                              : undefined
+                          }
                           placeholder="••••••••"
                           className="w-full bg-[#F8FAFC] border border-slate-200 focus:border-[#F59E0B] focus:ring-2 focus:ring-amber-100 rounded-2xl px-4 py-3 text-sm text-slate-900 outline-none transition"
                           required
                         />
-                        {(registerErrors.confirmPassword || (confirmPassword && confirmPassword !== registerPassword && translate('auth.errPassMismatch'))) && (
-                          <p id="register-confirm-error" role="alert" className="mt-1 text-xs text-rose-600">{registerErrors.confirmPassword || translate('auth.errPassMismatch')}</p>
+                        {(registerErrors.confirmPassword ||
+                          (confirmPassword &&
+                            confirmPassword !== registerPassword &&
+                            translate('auth.errPassMismatch'))) && (
+                          <p
+                            id="register-confirm-error"
+                            role="alert"
+                            className="mt-1 text-xs text-rose-600"
+                          >
+                            {registerErrors.confirmPassword || translate('auth.errPassMismatch')}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -1608,4 +1751,3 @@ function SocialOAuthButtons({
     </div>
   );
 }
-

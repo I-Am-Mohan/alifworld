@@ -11,10 +11,7 @@ export const dynamic = 'force-dynamic';
  * PATCH /api/v1/b2b/organization/members/[id]
  * Updates member role or spending limit. (Organization Admin only)
  */
-export async function PATCH(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
@@ -27,12 +24,7 @@ export async function PATCH(
     const body = await req.json();
     const validatedInput = UpdateBuyerMemberSchema.parse(body);
 
-    const updated = await b2bCommerceService.updateMember(
-      org.id,
-      actor.userId,
-      id,
-      validatedInput
-    );
+    const updated = await b2bCommerceService.updateMember(org.id, actor.userId, id, validatedInput);
 
     return NextResponse.json(
       {

@@ -45,15 +45,7 @@ const BANGLA_MONTHS = [
   'ডিসে',
 ];
 
-const BANGLA_WEEKDAYS = [
-  'রবি',
-  'সোম',
-  'মঙ্গল',
-  'বুধ',
-  'বৃহস্পতি',
-  'শুক্র',
-  'শনি',
-];
+const BANGLA_WEEKDAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি'];
 
 const ENGLISH_MONTHS = [
   'Jan',
@@ -94,9 +86,7 @@ export function calculatePackageWeight(items: ShippingItemInput[]): PackageWeigh
 
     if (item.lengthMm && item.widthMm && item.heightMm) {
       // Volumetric weight in grams = (L mm * W mm * H mm) / 5000
-      const itemVolumetricGrams = Math.round(
-        (item.lengthMm * item.widthMm * item.heightMm) / 5000
-      );
+      const itemVolumetricGrams = Math.round((item.lengthMm * item.widthMm * item.heightMm) / 5000);
       totalVolumetricGrams += itemVolumetricGrams * qty;
     } else {
       // Fallback volumetric equals actual weight
@@ -221,9 +211,7 @@ export function calculateDeliveryPromise(
   const cutoffMinutesInDay = cutoffHour * 60 + cutoffMinute;
 
   const isCutoffPassed = currentMinutesInDay >= cutoffMinutesInDay;
-  const cutoffRemainingMinutes = isCutoffPassed
-    ? null
-    : cutoffMinutesInDay - currentMinutesInDay;
+  const cutoffRemainingMinutes = isCutoffPassed ? null : cutoffMinutesInDay - currentMinutesInDay;
 
   // Determine starting handling day in Dhaka
   let startYear = dhakaNow.year;
@@ -292,8 +280,8 @@ export function calculateDeliveryPromise(
   const confidenceLevel: PromiseConfidenceLevel = isGuaranteed
     ? 'GUARANTEED'
     : totalMaxDays <= 2
-    ? 'HIGH'
-    : 'ESTIMATED';
+      ? 'HIGH'
+      : 'ESTIMATED';
 
   // SLA Hours commitment (24 hours per business day)
   const slaHours = Math.max(24, totalMaxDays * 24);

@@ -1,6 +1,6 @@
 /**
  * Unit Tests: Locale Resolution & Internationalization Architecture (Milestone 051)
- * 
+ *
  * Verifies:
  * 1. BCP 47 locale normalization (bn-BD, en-BD, short aliases bn, en)
  * 2. Deterministic locale resolution priority (path > query > header > cookie > accept-language > fallback)
@@ -8,7 +8,7 @@
  * 4. RFC 7231 Accept-Language quality-weighted parsing
  * 5. Server-side translation dictionary retrieval and parameter interpolation
  * 6. Bangladesh localization primitives (BDT poisha formatting, Bengali numerals, Asia/Dhaka dates)
- * 
+ *
  * Invariants: ADR-0003, ADR-0022, Phase 06 Milestone 051
  */
 
@@ -30,15 +30,8 @@ import {
   stripLocaleFromPath,
   buildLocalizedUrl,
 } from '@/i18n/locale-resolver';
-import {
-  getDictionary,
-  resolveTranslationValue,
-  registerTranslation,
-} from '@/i18n/translations';
-import {
-  formatServerMessage,
-  createTranslator,
-} from '@/i18n/server';
+import { getDictionary, resolveTranslationValue, registerTranslation } from '@/i18n/translations';
+import { formatServerMessage, createTranslator } from '@/i18n/server';
 import {
   formatLocalizedCurrency,
   formatLocalizedNumber,

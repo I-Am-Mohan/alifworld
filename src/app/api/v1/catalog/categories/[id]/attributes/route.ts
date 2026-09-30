@@ -6,6 +6,9 @@ export const dynamic = 'force-dynamic';
 const service = new CategoryAttributeService();
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try { return NextResponse.json({ success: true, data: await service.list((await params).id) }); }
-  catch (error) { return errorResponse(req, error, 'Failed to load category attributes'); }
+  try {
+    return NextResponse.json({ success: true, data: await service.list((await params).id) });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to load category attributes');
+  }
 }

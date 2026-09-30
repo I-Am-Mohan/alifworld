@@ -16,13 +16,21 @@ export const ReviewMediaItemSchema = z.object({
 export const CreateProductReviewSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
   variantId: z.string().optional().nullable(),
-  rating: z.number().int().min(1, 'Rating must be at least 1 star').max(5, 'Rating cannot exceed 5 stars'),
+  rating: z
+    .number()
+    .int()
+    .min(1, 'Rating must be at least 1 star')
+    .max(5, 'Rating cannot exceed 5 stars'),
   title: z.string().max(150, 'Title cannot exceed 150 characters').optional().nullable(),
   comment: z
     .string()
     .min(10, 'Review comment must be at least 10 characters')
     .max(3000, 'Review comment cannot exceed 3000 characters'),
-  media: z.array(ReviewMediaItemSchema).max(5, 'Maximum of 5 media attachments allowed').optional().default([]),
+  media: z
+    .array(ReviewMediaItemSchema)
+    .max(5, 'Maximum of 5 media attachments allowed')
+    .optional()
+    .default([]),
 });
 
 export const UpdateProductReviewSchema = z.object({
@@ -70,4 +78,3 @@ export type AdminModerateReviewInput = z.infer<typeof AdminModerateReviewSchema>
 export type VoteReviewInput = z.infer<typeof VoteReviewSchema>;
 export type ListProductReviewsQueryInput = z.input<typeof ListProductReviewsQuerySchema>;
 export type ListProductReviewsQuery = z.infer<typeof ListProductReviewsQuerySchema>;
-

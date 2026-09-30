@@ -8,10 +8,10 @@ const authTokenService = new AuthTokenService();
 
 /**
  * POST /api/v1/auth/sessions/revoke-others
- * 
+ *
  * Revokes all active sessions for the authenticated user EXCEPT the current session.
  * Allows a user to log out from all other devices without interrupting their current session.
- * 
+ *
  * Invariants: ADR-0022, ADR-0031
  */
 export async function POST(req: NextRequest) {

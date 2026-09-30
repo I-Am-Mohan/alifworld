@@ -38,10 +38,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const validatedInput = ChangePasswordSchema.parse(body);
 
-    const result = await customerAccountService.changePassword(
-      actor.userId,
-      validatedInput
-    );
+    const result = await customerAccountService.changePassword(actor.userId, validatedInput);
 
     return NextResponse.json(
       {

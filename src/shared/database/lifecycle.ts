@@ -1,9 +1,9 @@
 /**
  * AlifWorld Lifecycle Fields, Optimistic Concurrency & Deletion Policy Standards
- * 
+ *
  * Enforces strict classification of models into Immutable (append-only),
  * Soft-Deletable (domain entities), and Ephemeral (TTL retention).
- * 
+ *
  * Reference: docs/architecture/identifiers-lifecycle-and-deletion-policy.md
  * Invariant: ADR-0022
  */

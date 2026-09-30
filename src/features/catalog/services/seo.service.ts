@@ -1,9 +1,9 @@
 /**
  * AlifWorld SEO & Metadata Resolution Service
- * 
+ *
  * Provides centralized resolution of canonical URLs, hreflang links,
  * OpenGraph social preview tags, and Schema.org JSON-LD for storefront entities.
- * 
+ *
  * Invariants: ADR-0001, ADR-0003, ADR-0022
  */
 

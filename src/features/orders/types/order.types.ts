@@ -19,18 +19,9 @@ export type OrderStatus =
   | 'REFUNDED';
 
 export type PaymentStatus =
-  | 'UNPAID'
-  | 'AUTHORIZED'
-  | 'PAID'
-  | 'PARTIALLY_REFUNDED'
-  | 'REFUNDED'
-  | 'FAILED';
+  'UNPAID' | 'AUTHORIZED' | 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED' | 'FAILED';
 
-export type FulfillmentStatus =
-  | 'UNFULFILLED'
-  | 'PARTIALLY_FULFILLED'
-  | 'FULFILLED'
-  | 'RETURNED';
+export type FulfillmentStatus = 'UNFULFILLED' | 'PARTIALLY_FULFILLED' | 'FULFILLED' | 'RETURNED';
 
 export interface OrderLineItemSnapshotDTO {
   id: string;

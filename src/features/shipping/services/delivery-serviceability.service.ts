@@ -76,7 +76,7 @@ const MAJOR_CITY_DISTRICTS = new Set([
   'RANGPUR',
   'MYMENSINGH',
   'CUMILLA',
-  'COX\'S BAZAR',
+  "COX'S BAZAR",
   'BOGURA',
 ]);
 
@@ -269,8 +269,8 @@ export class DeliveryServiceabilityService {
           code: (d.code === 'CHATTOGRAM'
             ? 'CHITTAGONG'
             : d.code === 'BARISHAL'
-            ? 'BARISAL'
-            : d.code) as BangladeshDivisionCode,
+              ? 'BARISAL'
+              : d.code) as BangladeshDivisionCode,
           nameEn: d.nameEn,
           nameBn: d.nameBn,
           headquarters: d.headquarters,
@@ -286,19 +286,13 @@ export class DeliveryServiceabilityService {
   /**
    * Lists districts belonging to a division.
    */
-  public async listDistricts(
-    divisionCode?: BangladeshDivisionCode
-  ): Promise<GeoDistrictDTO[]> {
+  public async listDistricts(divisionCode?: BangladeshDivisionCode): Promise<GeoDistrictDTO[]> {
     try {
       let whereClause: any = { isActive: true };
       if (divisionCode) {
         const divUpper = divisionCode.toUpperCase();
         const altCode =
-          divUpper === 'CHITTAGONG'
-            ? 'CHATTOGRAM'
-            : divUpper === 'BARISAL'
-            ? 'BARISHAL'
-            : divUpper;
+          divUpper === 'CHITTAGONG' ? 'CHATTOGRAM' : divUpper === 'BARISAL' ? 'BARISHAL' : divUpper;
 
         whereClause = {
           isActive: true,
@@ -317,8 +311,8 @@ export class DeliveryServiceabilityService {
           divisionCode: (d.divisionCode === 'CHATTOGRAM'
             ? 'CHITTAGONG'
             : d.divisionCode === 'BARISHAL'
-            ? 'BARISAL'
-            : d.divisionCode) as BangladeshDivisionCode,
+              ? 'BARISAL'
+              : d.divisionCode) as BangladeshDivisionCode,
           nameEn: d.nameEn,
           nameBn: d.nameBn,
           postalCodePrefix: d.postalCodePrefix,
@@ -334,16 +328,15 @@ export class DeliveryServiceabilityService {
   /**
    * Lists upazilas / thanas belonging to a district.
    */
-  public async listUpazilas(
-    districtId?: string,
-    districtName?: string
-  ): Promise<GeoUpazilaDTO[]> {
+  public async listUpazilas(districtId?: string, districtName?: string): Promise<GeoUpazilaDTO[]> {
     try {
       const dbUpazilas = await (this.db as any).geoUpazila.findMany({
         where: {
           isActive: true,
           ...(districtId ? { districtId } : {}),
-          ...(districtName ? { district: { nameEn: { contains: districtName, mode: 'insensitive' } } } : {}),
+          ...(districtName
+            ? { district: { nameEn: { contains: districtName, mode: 'insensitive' } } }
+            : {}),
         },
         orderBy: { nameEn: 'asc' },
       });
@@ -372,11 +365,7 @@ export class DeliveryServiceabilityService {
   ): DeliveryZone {
     const divUpper = (division || '').toUpperCase();
     const normalizedDiv =
-      divUpper === 'CHATTOGRAM'
-        ? 'CHITTAGONG'
-        : divUpper === 'BARISHAL'
-        ? 'BARISAL'
-        : divUpper;
+      divUpper === 'CHATTOGRAM' ? 'CHITTAGONG' : divUpper === 'BARISHAL' ? 'BARISAL' : divUpper;
     const distUpper = (district || '').toUpperCase();
     const upzUpper = (upazila || '').toUpperCase();
 
@@ -410,17 +399,83 @@ export class DeliveryServiceabilityService {
 
   private getFallbackDistricts(divisionCode?: BangladeshDivisionCode): GeoDistrictDTO[] {
     const sampleDistricts: GeoDistrictDTO[] = [
-      { id: 'dist_dhk', divisionCode: 'DHAKA', nameEn: 'Dhaka', nameBn: 'ঢাকা', postalCodePrefix: '12' },
-      { id: 'dist_gzp', divisionCode: 'DHAKA', nameEn: 'Gazipur', nameBn: 'গাজীপুর', postalCodePrefix: '17' },
-      { id: 'dist_nrn', divisionCode: 'DHAKA', nameEn: 'Narayanganj', nameBn: 'নারায়ণগঞ্জ', postalCodePrefix: '14' },
-      { id: 'dist_ctg', divisionCode: 'CHITTAGONG', nameEn: 'Chittagong', nameBn: 'চট্টগ্রাম', postalCodePrefix: '40' },
-      { id: 'dist_cxb', divisionCode: 'CHITTAGONG', nameEn: 'Cox\'s Bazar', nameBn: 'কক্সবাজার', postalCodePrefix: '47' },
-      { id: 'dist_syl', divisionCode: 'SYLHET', nameEn: 'Sylhet', nameBn: 'সিলেট', postalCodePrefix: '31' },
-      { id: 'dist_raj', divisionCode: 'RAJSHAHI', nameEn: 'Rajshahi', nameBn: 'রাজশাহী', postalCodePrefix: '60' },
-      { id: 'dist_khl', divisionCode: 'KHULNA', nameEn: 'Khulna', nameBn: 'খুলনা', postalCodePrefix: '90' },
-      { id: 'dist_bar', divisionCode: 'BARISAL', nameEn: 'Barisal', nameBn: 'বরিশাল', postalCodePrefix: '82' },
-      { id: 'dist_rng', divisionCode: 'RANGPUR', nameEn: 'Rangpur', nameBn: 'রংপুর', postalCodePrefix: '54' },
-      { id: 'dist_mym', divisionCode: 'MYMENSINGH', nameEn: 'Mymensingh', nameBn: 'ময়মনসিংহ', postalCodePrefix: '22' },
+      {
+        id: 'dist_dhk',
+        divisionCode: 'DHAKA',
+        nameEn: 'Dhaka',
+        nameBn: 'ঢাকা',
+        postalCodePrefix: '12',
+      },
+      {
+        id: 'dist_gzp',
+        divisionCode: 'DHAKA',
+        nameEn: 'Gazipur',
+        nameBn: 'গাজীপুর',
+        postalCodePrefix: '17',
+      },
+      {
+        id: 'dist_nrn',
+        divisionCode: 'DHAKA',
+        nameEn: 'Narayanganj',
+        nameBn: 'নারায়ণগঞ্জ',
+        postalCodePrefix: '14',
+      },
+      {
+        id: 'dist_ctg',
+        divisionCode: 'CHITTAGONG',
+        nameEn: 'Chittagong',
+        nameBn: 'চট্টগ্রাম',
+        postalCodePrefix: '40',
+      },
+      {
+        id: 'dist_cxb',
+        divisionCode: 'CHITTAGONG',
+        nameEn: "Cox's Bazar",
+        nameBn: 'কক্সবাজার',
+        postalCodePrefix: '47',
+      },
+      {
+        id: 'dist_syl',
+        divisionCode: 'SYLHET',
+        nameEn: 'Sylhet',
+        nameBn: 'সিলেট',
+        postalCodePrefix: '31',
+      },
+      {
+        id: 'dist_raj',
+        divisionCode: 'RAJSHAHI',
+        nameEn: 'Rajshahi',
+        nameBn: 'রাজশাহী',
+        postalCodePrefix: '60',
+      },
+      {
+        id: 'dist_khl',
+        divisionCode: 'KHULNA',
+        nameEn: 'Khulna',
+        nameBn: 'খুলনা',
+        postalCodePrefix: '90',
+      },
+      {
+        id: 'dist_bar',
+        divisionCode: 'BARISAL',
+        nameEn: 'Barisal',
+        nameBn: 'বরিশাল',
+        postalCodePrefix: '82',
+      },
+      {
+        id: 'dist_rng',
+        divisionCode: 'RANGPUR',
+        nameEn: 'Rangpur',
+        nameBn: 'রংপুর',
+        postalCodePrefix: '54',
+      },
+      {
+        id: 'dist_mym',
+        divisionCode: 'MYMENSINGH',
+        nameEn: 'Mymensingh',
+        nameBn: 'ময়মনসিংহ',
+        postalCodePrefix: '22',
+      },
     ];
 
     if (!divisionCode) return sampleDistricts;
@@ -429,13 +484,62 @@ export class DeliveryServiceabilityService {
 
   private getFallbackUpazilas(districtName?: string): GeoUpazilaDTO[] {
     const sampleUpazilas: GeoUpazilaDTO[] = [
-      { id: 'upz_gul', districtId: 'dist_dhk', nameEn: 'Gulshan', nameBn: 'গুলশান', postalCode: '1212', level: 'THANA' },
-      { id: 'upz_dhn', districtId: 'dist_dhk', nameEn: 'Dhanmondi', nameBn: 'ধানমন্ডি', postalCode: '1209', level: 'THANA' },
-      { id: 'upz_ban', districtId: 'dist_dhk', nameEn: 'Banani', nameBn: 'বনানী', postalCode: '1213', level: 'THANA' },
-      { id: 'upz_mir', districtId: 'dist_dhk', nameEn: 'Mirpur', nameBn: 'মিরপুর', postalCode: '1216', level: 'THANA' },
-      { id: 'upz_utt', districtId: 'dist_dhk', nameEn: 'Uttara', nameBn: 'উত্তরা', postalCode: '1230', level: 'THANA' },
-      { id: 'upz_mot', districtId: 'dist_dhk', nameEn: 'Motijheel', nameBn: 'মতিঝিল', postalCode: '1000', level: 'THANA' },
-      { id: 'upz_sav', districtId: 'dist_dhk', nameEn: 'Savar', nameBn: 'সাভার', postalCode: '1340', level: 'UPAZILA' },
+      {
+        id: 'upz_gul',
+        districtId: 'dist_dhk',
+        nameEn: 'Gulshan',
+        nameBn: 'গুলশান',
+        postalCode: '1212',
+        level: 'THANA',
+      },
+      {
+        id: 'upz_dhn',
+        districtId: 'dist_dhk',
+        nameEn: 'Dhanmondi',
+        nameBn: 'ধানমন্ডি',
+        postalCode: '1209',
+        level: 'THANA',
+      },
+      {
+        id: 'upz_ban',
+        districtId: 'dist_dhk',
+        nameEn: 'Banani',
+        nameBn: 'বনানী',
+        postalCode: '1213',
+        level: 'THANA',
+      },
+      {
+        id: 'upz_mir',
+        districtId: 'dist_dhk',
+        nameEn: 'Mirpur',
+        nameBn: 'মিরপুর',
+        postalCode: '1216',
+        level: 'THANA',
+      },
+      {
+        id: 'upz_utt',
+        districtId: 'dist_dhk',
+        nameEn: 'Uttara',
+        nameBn: 'উত্তরা',
+        postalCode: '1230',
+        level: 'THANA',
+      },
+      {
+        id: 'upz_mot',
+        districtId: 'dist_dhk',
+        nameEn: 'Motijheel',
+        nameBn: 'মতিঝিল',
+        postalCode: '1000',
+        level: 'THANA',
+      },
+      {
+        id: 'upz_sav',
+        districtId: 'dist_dhk',
+        nameEn: 'Savar',
+        nameBn: 'সাভার',
+        postalCode: '1340',
+        level: 'UPAZILA',
+      },
     ];
 
     return sampleUpazilas;

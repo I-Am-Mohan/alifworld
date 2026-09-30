@@ -72,9 +72,8 @@ class MockPrismaDashboardDb {
   public userAddress = {
     findFirst: async ({ where }: any) => {
       return (
-        this.userAddresses.find(
-          (a) => a.userId === where.userId && a.isDefault && !a.deletedAt
-        ) || null
+        this.userAddresses.find((a) => a.userId === where.userId && a.isDefault && !a.deletedAt) ||
+        null
       );
     },
   };
@@ -300,10 +299,14 @@ describe('Milestone 130: Customer Dashboard & Order Shortcuts Unit Tests', () =>
         ],
       });
 
-      const secAlert = updated.find((m) => m.eventType === 'SECURITY_ALERTS' && m.channel === 'SMS');
+      const secAlert = updated.find(
+        (m) => m.eventType === 'SECURITY_ALERTS' && m.channel === 'SMS'
+      );
       expect(secAlert?.enabled).toBe(true); // Invariant: Mandatory alert stays enabled!
 
-      const promoEmail = updated.find((m) => m.eventType === 'MARKETING_PROMOTIONS' && m.channel === 'EMAIL');
+      const promoEmail = updated.find(
+        (m) => m.eventType === 'MARKETING_PROMOTIONS' && m.channel === 'EMAIL'
+      );
       expect(promoEmail?.enabled).toBe(true);
     });
   });

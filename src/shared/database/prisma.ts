@@ -1,9 +1,9 @@
 /**
  * AlifWorld Prisma Client Singleton & Connection Management
- * 
+ *
  * Provides a resilient singleton connection pool for Next.js App Router
  * with hot-reloading protection, structured logging, and health probing.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: docs/architecture/single-application-modular-monolith.md
  */
@@ -28,9 +28,7 @@ export function createPrismaClient(): PrismaClient {
 
   return new PrismaClient({
     adapter: new PrismaPg({ connectionString }),
-    log: isDevelopment
-      ? ['query', 'error', 'warn']
-      : ['error', 'warn'],
+    log: isDevelopment ? ['query', 'error', 'warn'] : ['error', 'warn'],
     errorFormat: 'colorless',
   });
 }
@@ -75,7 +73,10 @@ export async function checkDatabaseHealth(timeoutMs = 3000): Promise<DatabaseHea
     // Execute a lightweight ping query with timeout protection
     const pingPromise = (prisma as any).$queryRawUnsafe('SELECT 1 as ping');
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`Database health check timed out after ${timeoutMs}ms`)), timeoutMs)
+      setTimeout(
+        () => reject(new Error(`Database health check timed out after ${timeoutMs}ms`)),
+        timeoutMs
+      )
     );
 
     await Promise.race([pingPromise, timeoutPromise]);

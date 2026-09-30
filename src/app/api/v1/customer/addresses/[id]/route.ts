@@ -80,7 +80,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!removed) throw new NotFoundError('Customer address not found.');
     return NextResponse.json({ success: true, data: { id, deleted: true } }, { status: 200 });
   } catch (error: any) {
-    const normalized = error instanceof AppError ? error : new NotFoundError('Customer address not found.');
+    const normalized =
+      error instanceof AppError ? error : new NotFoundError('Customer address not found.');
     return NextResponse.json(normalized.toJSON(), { status: normalized.statusCode });
   }
 }

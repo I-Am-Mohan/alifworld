@@ -4,10 +4,7 @@ import { StockBalanceRepository } from '@/features/inventory/repositories/stock-
 import { StockReservationRepository } from '@/features/inventory/repositories/stock-reservation-repository';
 import { StockMovementRepository } from '@/features/inventory/repositories/stock-movement-repository';
 import { WarehouseRepository } from '@/features/inventory/repositories/warehouse-repository';
-import {
-  StockBalanceModel,
-  calculateAvailableStock,
-} from '@/features/inventory/types';
+import { StockBalanceModel, calculateAvailableStock } from '@/features/inventory/types';
 import { NotFoundError } from '@/shared/errors/app-error';
 
 class MockWarehouseRepo extends WarehouseRepository {
@@ -32,7 +29,10 @@ class MockStockBalanceRepo extends StockBalanceRepository {
     return this.balances.get(id) ?? null;
   }
 
-  public async findByWarehouseAndVariant(warehouseId: string, variantId: string): Promise<StockBalanceModel | null> {
+  public async findByWarehouseAndVariant(
+    warehouseId: string,
+    variantId: string
+  ): Promise<StockBalanceModel | null> {
     for (const bal of this.balances.values()) {
       if (bal.warehouseId === warehouseId && bal.variantId === variantId) {
         return bal;

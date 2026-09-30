@@ -22,9 +22,7 @@ export async function POST(req: NextRequest) {
 
     const validatedInput = ValidateAddressServiceabilitySchema.parse(payload);
 
-    const result = await deliveryServiceabilityService.checkAddressServiceability(
-      validatedInput
-    );
+    const result = await deliveryServiceabilityService.checkAddressServiceability(validatedInput);
 
     return NextResponse.json(
       {

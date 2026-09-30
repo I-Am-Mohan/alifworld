@@ -111,9 +111,15 @@ describe('Milestone 103: Immutable Stock Movement Ledger Unit Tests', () => {
     });
 
     it('enforces InventoryPolicy read restrictions for seller movement ledger queries', () => {
-      expect(InventoryPolicy.canReadInventory(adminActor, { sellerId: 'sel-store-aaaa-1111' })).toBe(true);
-      expect(InventoryPolicy.canReadInventory(sellerActorA, { sellerId: 'sel-store-aaaa-1111' })).toBe(true);
-      expect(InventoryPolicy.canReadInventory(sellerActorA, { sellerId: 'sel-store-bbbb-2222' })).toBe(false);
+      expect(
+        InventoryPolicy.canReadInventory(adminActor, { sellerId: 'sel-store-aaaa-1111' })
+      ).toBe(true);
+      expect(
+        InventoryPolicy.canReadInventory(sellerActorA, { sellerId: 'sel-store-aaaa-1111' })
+      ).toBe(true);
+      expect(
+        InventoryPolicy.canReadInventory(sellerActorA, { sellerId: 'sel-store-bbbb-2222' })
+      ).toBe(false);
     });
   });
 });

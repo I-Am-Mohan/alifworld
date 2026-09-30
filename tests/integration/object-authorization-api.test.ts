@@ -1,6 +1,6 @@
 /**
  * Integration Tests: Object-Level Authorization and Ownership Verification REST API (Milestone 047)
- * 
+ *
  * Verifies end-to-end HTTP request handlers:
  * 1. /api/v1/customer/profile:
  *    - 401 Unauthorized when unauthenticated
@@ -24,11 +24,11 @@
  *    - 200 OK returns authenticated customer's cart
  * 5. /api/v1/cart/checkout:
  *    - 403 Forbidden (OWNERSHIP_VIOLATION) when Customer A attempts to checkout Customer B's cart
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0010, ADR-0022, ADR-0023, Milestone 047
  */
 
-import { describe, it, expect, beforeEach } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, spyOn } from 'bun:test';
 import { NextRequest } from 'next/server';
 import { GET as getProfile, PUT as updateProfile } from '@/app/api/v1/customer/profile/route';
 import { GET as getOrderById } from '@/app/api/v1/orders/[id]/route';
@@ -38,6 +38,8 @@ import { POST as checkoutCart } from '@/app/api/v1/cart/checkout/route';
 import { generateAccessToken } from '@/shared/auth/jwt';
 import { SystemRoleCode } from '@/features/identity/types';
 import { prisma } from '@/shared/database/prisma';
+import { orderTransitionService } from '@/features/orders/state-machines/order-transition.service';
+import { ConflictError } from '@/shared/errors/app-error';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'test_jwt_secret_min_32_chars_long_for_security';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -103,8 +105,23 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
   let mockOrderAliceDelivered: any;
   let mockCartAlice: any;
   let mockCartBob: any;
+  let originalDelegates: Pick<
+    typeof prisma,
+    'auditLog' | 'user' | 'order' | 'orderStatusHistory' | 'cart'
+  >;
+
+  afterEach(() => {
+    Object.assign(prisma, originalDelegates);
+  });
 
   beforeEach(() => {
+    originalDelegates = {
+      auditLog: prisma.auditLog,
+      user: prisma.user,
+      order: prisma.order,
+      orderStatusHistory: prisma.orderStatusHistory,
+      cart: prisma.cart,
+    };
     mockUserAlice = {
       id: CUSTOMER_ALICE_ID,
       email: 'alice@example.com',
@@ -232,6 +249,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
     };
 
     (prisma as any).cart = {
+      create: async ({ data }: any) => ({ ...data, items: [] }),
       findFirst: async ({ where }: any) => {
         if (where.userId === CUSTOMER_ALICE_ID || where.id === 'crt_alice_1') return mockCartAlice;
         if (where.userId === CUSTOMER_BOB_ID || where.id === 'crt_bob_1') return mockCartBob;
@@ -326,7 +344,9 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
   describe('Single Order Object Authorization (/api/v1/orders/[id])', () => {
     it('returns 401 Unauthorized when unauthenticated', async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1');
-      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
+      const res = await getOrderById(req, {
+        params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+      });
       expect(res.status).toBe(401);
     });
 
@@ -342,7 +362,9 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: ALICE_AUTH },
       });
-      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
+      const res = await getOrderById(req, {
+        params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+      });
       expect(res.status).toBe(200);
 
       const json = await res.json();
@@ -351,11 +373,13 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       expect(json.data.customerId).toBe(CUSTOMER_ALICE_ID);
     });
 
-    it('returns 403 Forbidden (OWNERSHIP_VIOLATION) when Customer B attempts to inspect Customer A\'s order', async () => {
+    it("returns 403 Forbidden (OWNERSHIP_VIOLATION) when Customer B attempts to inspect Customer A's order", async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: BOB_AUTH },
       });
-      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
+      const res = await getOrderById(req, {
+        params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+      });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -367,7 +391,9 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: WALTON_SELLER_AUTH },
       });
-      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
+      const res = await getOrderById(req, {
+        params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+      });
       expect(res.status).toBe(200);
 
       const json = await res.json();
@@ -379,7 +405,9 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
       const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1', {
         headers: { authorization: APEX_SELLER_AUTH },
       });
-      const res = await getOrderById(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
+      const res = await getOrderById(req, {
+        params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+      });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -391,17 +419,73 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
   // ── 3. /api/v1/orders/[id]/cancel ───────────────────────────────────────────
 
   describe('Order Cancellation Self-Ownership & Invariants (/api/v1/orders/[id]/cancel)', () => {
-    it('returns 403 Forbidden (OWNERSHIP_VIOLATION) when Bob tries to cancel Alice\'s order', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1/cancel', {
-        method: 'POST',
-        headers: {
-          authorization: BOB_AUTH,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ reason: 'Customer changed mind' }),
+    it('delegates an owned cancelled order to receipt replay without bypassing key conflicts', async () => {
+      mockOrderAlicePending.status = 'CANCELLED';
+      const transitionSpy = spyOn(
+        orderTransitionService,
+        'transitionOrderStatus'
+      ).mockResolvedValue({
+        success: true,
+        previousStatus: 'PENDING_PAYMENT',
+        newStatus: 'CANCELLED',
+        statusLabelEn: 'Cancelled',
+        statusLabelBn: 'Cancelled',
+        transitionedAt: '2026-09-29T00:00:00.000Z',
       });
+      try {
+        const request = new NextRequest(
+          'http://localhost:3000/api/v1/orders/ord_alice_pending_1/cancel',
+          {
+            method: 'POST',
+            headers: {
+              authorization: createBearer({
+                userId: CUSTOMER_ALICE_ID,
+                roles: ['CUSTOMER'],
+                permissions: ['orders:cancel'],
+              }),
+              'Idempotency-Key': 'original-cancel',
+            },
+            body: JSON.stringify({ reason: 'Customer requested cancellation' }),
+          }
+        );
+        const response = await cancelOrder(request, {
+          params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+        });
+        expect(response.status).toBe(200);
+        expect(transitionSpy.mock.calls[0][0].idempotencyKey).toBe('original-cancel');
+        transitionSpy.mockRejectedValue(
+          new ConflictError('Terminal order cannot be transitioned with a new key')
+        );
+        request.headers.set('Idempotency-Key', 'new-cancel');
+        const retry = new NextRequest(request.url, {
+          method: 'POST',
+          headers: request.headers,
+          body: JSON.stringify({ reason: 'Customer requested cancellation' }),
+        });
+        expect(
+          (await cancelOrder(retry, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) }))
+            .status
+        ).toBe(409);
+      } finally {
+        transitionSpy.mockRestore();
+      }
+    });
+    it("returns 403 Forbidden (OWNERSHIP_VIOLATION) when Bob tries to cancel Alice's order", async () => {
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/orders/ord_alice_pending_1/cancel',
+        {
+          method: 'POST',
+          headers: {
+            authorization: BOB_AUTH,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ reason: 'Customer changed mind' }),
+        }
+      );
 
-      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
+      const res = await cancelOrder(req, {
+        params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+      });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -409,16 +493,21 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
     });
 
     it('returns 403 Forbidden when Alice tries to cancel an order already in DELIVERED status', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_delivered_1/cancel', {
-        method: 'POST',
-        headers: {
-          authorization: ALICE_AUTH,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ reason: 'Item unwanted' }),
-      });
+      const req = new NextRequest(
+        'http://localhost:3000/api/v1/orders/ord_alice_delivered_1/cancel',
+        {
+          method: 'POST',
+          headers: {
+            authorization: ALICE_AUTH,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ reason: 'Item unwanted' }),
+        }
+      );
 
-      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_delivered_1' }) });
+      const res = await cancelOrder(req, {
+        params: Promise.resolve({ id: 'ord_alice_delivered_1' }),
+      });
       expect(res.status).toBe(403);
 
       const json = await res.json();
@@ -426,31 +515,58 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
     });
 
     it('returns 200 OK when Alice cancels her own PENDING order', async () => {
-      const req = new NextRequest('http://localhost:3000/api/v1/orders/ord_alice_pending_1/cancel', {
-        method: 'POST',
-        headers: {
-          authorization: ALICE_AUTH,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ reason: 'Accidentally selected wrong quantity' }),
+      const transitionSpy = spyOn(
+        orderTransitionService,
+        'transitionOrderStatus'
+      ).mockResolvedValue({
+        success: true,
+        previousStatus: 'PENDING_PAYMENT',
+        newStatus: 'CANCELLED',
+        statusLabelEn: 'Cancelled',
+        statusLabelBn: 'Cancelled',
+        transitionedAt: '2026-09-29T00:00:00.000Z',
       });
+      try {
+        const req = new NextRequest(
+          'http://localhost:3000/api/v1/orders/ord_alice_pending_1/cancel',
+          {
+            method: 'POST',
+            headers: {
+              authorization: ALICE_AUTH,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({ reason: 'Accidentally selected wrong quantity' }),
+          }
+        );
+        req.headers.set('Idempotency-Key', 'alice-cancel-1');
 
-      const res = await cancelOrder(req, { params: Promise.resolve({ id: 'ord_alice_pending_1' }) });
-      expect(res.status).toBe(200);
+        const res = await cancelOrder(req, {
+          params: Promise.resolve({ id: 'ord_alice_pending_1' }),
+        });
+        expect(res.status).toBe(200);
 
-      const json = await res.json();
-      expect(json.success).toBe(true);
-      expect(json.data.status).toBe('CANCELLED');
+        const json = await res.json();
+        expect(json.success).toBe(true);
+        expect(json.data.status).toBe('CANCELLED');
+      } finally {
+        transitionSpy.mockRestore();
+      }
     });
   });
 
   // ── 4. /api/v1/cart ─────────────────────────────────────────────────────────
 
   describe('Shopping Cart Self-Ownership (/api/v1/cart)', () => {
-    it('returns 401 Unauthorized when unauthenticated', async () => {
+    it('returns an isolated guest cart and token when unauthenticated', async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/cart');
       const res = await getCart(req);
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.data.userId).toBeNull();
+      expect(json.data.isGuest).toBe(true);
+      expect(json.data.items).toEqual([]);
+      expect(res.headers.get('x-guest-cart-token')).toBe(json.data.guestCartToken);
+      expect(res.headers.get('set-cookie')).toContain('alifworld_guest_cart=');
     });
 
     it('returns 200 OK with active cart scoped to authenticated customer', async () => {
@@ -469,7 +585,7 @@ describe('Object-Level Authorization REST API Integration (Milestone 047)', () =
   // ── 5. /api/v1/cart/checkout ────────────────────────────────────────────────
 
   describe('Cart Checkout Ownership Enforcement (/api/v1/cart/checkout)', () => {
-    it('returns 403 Forbidden (OWNERSHIP_VIOLATION) when Alice attempts to check out Bob\'s cart', async () => {
+    it("returns 403 Forbidden (OWNERSHIP_VIOLATION) when Alice attempts to check out Bob's cart", async () => {
       const req = new NextRequest('http://localhost:3000/api/v1/cart/checkout', {
         method: 'POST',
         headers: {

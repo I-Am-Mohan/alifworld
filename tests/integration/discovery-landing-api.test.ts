@@ -53,9 +53,12 @@ describe('Milestone 116: Category, Brand, and Collection Landing API Integration
   });
 
   it('GET /api/v1/catalog/landing/category/[slug] returns category landing payload', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/catalog/landing/category/smartphones', {
-      method: 'GET',
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/catalog/landing/category/smartphones',
+      {
+        method: 'GET',
+      }
+    );
 
     const res = await getCategoryLandingRoute(req, {
       params: Promise.resolve({ slug: 'smartphones' }),
@@ -85,9 +88,12 @@ describe('Milestone 116: Category, Brand, and Collection Landing API Integration
   });
 
   it('GET /api/v1/catalog/landing/collection/[slug] returns collection landing payload', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/catalog/landing/collection/eid-surge-2026', {
-      method: 'GET',
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/catalog/landing/collection/eid-surge-2026',
+      {
+        method: 'GET',
+      }
+    );
 
     const res = await getCollectionLandingRoute(req, {
       params: Promise.resolve({ slug: 'eid-surge-2026' }),

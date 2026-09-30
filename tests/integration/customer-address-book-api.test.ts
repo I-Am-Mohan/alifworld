@@ -1,6 +1,10 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz/guard.helper';
-import { GET as listAddressesRoute, POST as createAddressRoute } from '@/app/api/v1/customer/addresses/route';
+import {
+  GET as listAddressesRoute,
+  POST as createAddressRoute,
+} from '@/app/api/v1/customer/addresses/route';
 import {
   GET as getAddressRoute,
   PUT as updateAddressRoute,
@@ -51,7 +55,9 @@ describe('Milestone 122: Customer Address Book REST API Integration Tests', () =
   });
 
   it('GET /api/v1/customer/addresses lists saved customer addresses', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses', { method: 'GET' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses', {
+      method: 'GET',
+    });
     const res = await listAddressesRoute(req);
     const body = await res.json();
 
@@ -62,7 +68,9 @@ describe('Milestone 122: Customer Address Book REST API Integration Tests', () =
   });
 
   it('GET /api/v1/customer/addresses/[id] returns individual address details', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses/addr_101', { method: 'GET' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses/addr_101', {
+      method: 'GET',
+    });
     const res = await getAddressRoute(req, { params: Promise.resolve({ id: 'addr_101' }) });
     const body = await res.json();
 
@@ -115,7 +123,9 @@ describe('Milestone 122: Customer Address Book REST API Integration Tests', () =
   });
 
   it('PATCH /api/v1/customer/addresses/[id] sets address as default', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses/addr_101', { method: 'PATCH' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses/addr_101', {
+      method: 'PATCH',
+    });
     const res = await setDefaultAddressRoute(req, { params: Promise.resolve({ id: 'addr_101' }) });
     const body = await res.json();
 
@@ -125,7 +135,9 @@ describe('Milestone 122: Customer Address Book REST API Integration Tests', () =
   });
 
   it('DELETE /api/v1/customer/addresses/[id] soft-deletes address', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses/addr_101', { method: 'DELETE' });
+    const req = new NextRequest('http://localhost:3000/api/v1/customer/addresses/addr_101', {
+      method: 'DELETE',
+    });
     const res = await deleteAddressRoute(req, { params: Promise.resolve({ id: 'addr_101' }) });
     const body = await res.json();
 

@@ -1,8 +1,8 @@
 /**
  * AlifWorld CMS Validators
- * 
+ *
  * Strict validation for storefront homepage sections, banners, and layout updates.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022
  */
 

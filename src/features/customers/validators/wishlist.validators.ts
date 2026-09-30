@@ -1,9 +1,9 @@
 /**
  * AlifWorld Wishlist Validation Schemas
- * 
+ *
  * Strict Zod validation for wishlist creation, updates, item addition,
  * and share link privacy configuration.
- * 
+ *
  * Invariants: ADR-0003, ADR-0022
  */
 

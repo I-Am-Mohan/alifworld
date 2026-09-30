@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { POST as initiateTransferRoute } from '@/app/api/v1/inventory/transfers/route';
 import { POST as receiveTransferRoute } from '@/app/api/v1/inventory/transfers/receive/route';
@@ -131,16 +132,19 @@ describe('Milestone 107: Stock Transfers & Dual Approvals REST API Integration T
   });
 
   it('POST /api/v1/inventory/counts/corrections/submit should submit count variance', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/inventory/counts/corrections/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        countSessionId: 'cnt_001',
-        stockBalanceId: 'stb_001',
-        countedQuantity: 30,
-        reason: 'Physical count damage write-off',
-      }),
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/inventory/counts/corrections/submit',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          countSessionId: 'cnt_001',
+          stockBalanceId: 'stb_001',
+          countedQuantity: 30,
+          reason: 'Physical count damage write-off',
+        }),
+      }
+    );
 
     const res = await submitCorrectionRoute(req);
     const body = await res.json();
@@ -151,14 +155,17 @@ describe('Milestone 107: Stock Transfers & Dual Approvals REST API Integration T
   });
 
   it('POST /api/v1/inventory/counts/corrections/approve should perform Maker-Checker approval', async () => {
-    const req = new NextRequest('http://localhost:3000/api/v1/inventory/counts/corrections/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        correctionId: 'cor_123456',
-        approved: true,
-      }),
-    });
+    const req = new NextRequest(
+      'http://localhost:3000/api/v1/inventory/counts/corrections/approve',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correctionId: 'cor_123456',
+          approved: true,
+        }),
+      }
+    );
 
     const res = await approveCorrectionRoute(req);
     const body = await res.json();

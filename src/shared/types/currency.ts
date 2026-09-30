@@ -1,6 +1,6 @@
 /**
  * AlifWorld Multi-Currency Data Models and Formatters
- * 
+ *
  * Supports 3 core parameters per currency:
  * 1. Name / Code (e.g. BDT, INR, USD, EUR)
  * 2. Symbol (e.g. ৳, ₹, $, €)
@@ -21,7 +21,9 @@ export const CURRENCY_MINOR_UNITS = {
 } as const;
 
 export type CurrencyCode = keyof typeof CURRENCY_MINOR_UNITS;
-export const CurrencyCodeSchema = z.enum(Object.keys(CURRENCY_MINOR_UNITS) as [CurrencyCode, ...CurrencyCode[]]);
+export const CurrencyCodeSchema = z.enum(
+  Object.keys(CURRENCY_MINOR_UNITS) as [CurrencyCode, ...CurrencyCode[]]
+);
 
 export interface CurrencyConfig {
   name: string;
@@ -46,7 +48,9 @@ export function parseCurrencies(raw: string | undefined | null): CurrencyConfig[
     if (Array.isArray(parsed) && parsed.length > 0) {
       const normalized = parsed
         .map((item) => ({
-          name: String(item.name || '').trim().toUpperCase(),
+          name: String(item.name || '')
+            .trim()
+            .toUpperCase(),
           symbol: String(item.symbol || '').trim(),
           position: item.position === 'right' ? ('right' as const) : ('left' as const),
         }))
@@ -109,7 +113,8 @@ export function formatMinorUnitAmount(
   const absolute = negative ? -minorUnits : minorUnits;
   const divisor = 10n ** BigInt(fractionDigits);
   const whole = absolute / divisor;
-  const fraction = fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
+  const fraction =
+    fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
   const wholeText = new Intl.NumberFormat(locale === 'bn-BD' ? 'en-US' : 'en-US').format(whole);
   const symbol = DEFAULT_CURRENCIES.find((item) => item.name === code)?.symbol || code;
   const value = `${negative ? '-' : ''}${wholeText}${fraction}`;
@@ -146,7 +151,10 @@ export function formatCurrencyAmount(
     const absolute = negative ? -amount : amount;
     const divisor = 10n ** BigInt(fractionDigits);
     const whole = absolute / divisor;
-    const fraction = fractionDigits === 0 ? '' : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
+    const fraction =
+      fractionDigits === 0
+        ? ''
+        : `.${(absolute % divisor).toString().padStart(fractionDigits, '0')}`;
     formattedValue = `${negative ? '-' : ''}${new Intl.NumberFormat('en-US').format(whole)}${fraction}`;
   } else {
     formattedValue = String(amount);

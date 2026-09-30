@@ -1,9 +1,9 @@
 /**
  * AlifWorld Seller KYC Service
- * 
+ *
  * Handles document submissions, administrative verification, and audited
  * access control for merchant KYC files.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0006, ADR-0024
  */
@@ -38,7 +38,9 @@ export class SellerKycService {
   ): Promise<SellerKycDocumentModel> {
     const seller = await this.sellerRepo.findById(input.sellerId);
     if (!seller) {
-      throw new NotFoundError(`Seller with id '${input.sellerId}' not found.`, { sellerId: input.sellerId });
+      throw new NotFoundError(`Seller with id '${input.sellerId}' not found.`, {
+        sellerId: input.sellerId,
+      });
     }
 
     // Verify actor is owner or authorized staff of this seller
@@ -48,10 +50,15 @@ export class SellerKycService {
       SystemRoleCode.SELLER_STAFF,
       input.sellerId
     );
-    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
 
     if (!isOwner && !hasTenantStaffRole && !isSuperAdmin) {
-      throw new AuthorizationError('You do not have permission to submit KYC documents for this seller tenant.');
+      throw new AuthorizationError(
+        'You do not have permission to submit KYC documents for this seller tenant.'
+      );
     }
 
     const doc = await this.kycRepo.submitDocument({
@@ -113,7 +120,9 @@ export class SellerKycService {
   ): Promise<SellerKycDocumentModel> {
     let seller = await this.sellerRepo.findById(input.sellerId);
     if (!seller) {
-      seller = await (prisma as any).seller.findFirst({ where: { ownerUserId: actorUserId, deletedAt: null } });
+      seller = await (prisma as any).seller.findFirst({
+        where: { ownerUserId: actorUserId, deletedAt: null },
+      });
     }
 
     if (!seller) {
@@ -134,10 +143,19 @@ export class SellerKycService {
     input.sellerId = activeSeller.id;
 
     const isOwner = activeSeller.ownerUserId === actorUserId;
-    const hasTenantStaffRole = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SELLER_STAFF, input.sellerId);
-    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const hasTenantStaffRole = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SELLER_STAFF,
+      input.sellerId
+    );
+    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
     if (!isOwner && !hasTenantStaffRole && !isSuperAdmin) {
-      throw new AuthorizationError('You do not have permission to submit KYC documents for this seller tenant.');
+      throw new AuthorizationError(
+        'You do not have permission to submit KYC documents for this seller tenant.'
+      );
     }
 
     const contentSha256 = createHash('sha256').update(file).digest('hex');
@@ -169,7 +187,9 @@ export class SellerKycService {
       });
 
       if (activeSeller.status === 'DRAFT') {
-        await this.sellerRepo.update(activeSeller.id, activeSeller.version, { status: 'PENDING_VERIFICATION' });
+        await this.sellerRepo.update(activeSeller.id, activeSeller.version, {
+          status: 'PENDING_VERIFICATION',
+        });
       }
 
       await (prisma as any).outboxEvent.create({
@@ -186,7 +206,12 @@ export class SellerKycService {
           action: 'SELLER_KYC_SUBMITTED',
           resource: 'SellerKycDocument',
           resourceId: doc.id,
-          metadata: { sellerId: input.sellerId, documentType: doc.documentType, fileSize: doc.fileSize, contentSha256 },
+          metadata: {
+            sellerId: input.sellerId,
+            documentType: doc.documentType,
+            fileSize: doc.fileSize,
+            contentSha256,
+          },
         },
       });
       return doc;
@@ -204,7 +229,10 @@ export class SellerKycService {
     expectedVersion: number,
     input: VerifyKycDocumentInput
   ): Promise<SellerKycDocumentModel> {
-    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(adminUserId, SystemRoleCode.SUPER_ADMIN);
+    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      adminUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
     const isAdmin = await this.roleAssignmentRepo.hasRole(adminUserId, SystemRoleCode.ADMIN);
 
     if (!isSuperAdmin && !isAdmin) {
@@ -217,7 +245,10 @@ export class SellerKycService {
       verifiedBy: adminUserId,
     });
 
-    const auditAction = input.status === KycDocumentStatus.VERIFIED ? AUDIT_ACTIONS.SELLER_KYC_VERIFIED : AUDIT_ACTIONS.SELLER_KYC_REJECTED;
+    const auditAction =
+      input.status === KycDocumentStatus.VERIFIED
+        ? AUDIT_ACTIONS.SELLER_KYC_VERIFIED
+        : AUDIT_ACTIONS.SELLER_KYC_REJECTED;
     await (prisma as any).outboxEvent.create({
       data: {
         eventType: auditAction,
@@ -246,8 +277,14 @@ export class SellerKycService {
    * Generates a signed, short-lived secure view URL for a private KYC document.
    * Enforces strict authorization and writes access audits.
    */
-  public async getSecureDocumentViewUrl(actorUserId: string, documentId: string): Promise<{ viewUrl: string; expiresAt: Date }> {
-    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+  public async getSecureDocumentViewUrl(
+    actorUserId: string,
+    documentId: string
+  ): Promise<{ viewUrl: string; expiresAt: Date }> {
+    const isSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
     const isAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
     let doc = await this.kycRepo.findById(documentId);
 
@@ -270,7 +307,9 @@ export class SellerKycService {
 
     // Access authorization: only the seller owner or platform administrators may view KYC documents.
     if (!isOwner && !isSuperAdmin && !isAdmin) {
-      throw new AuthorizationError('Access Denied: You are not authorized to inspect this sensitive KYC document.');
+      throw new AuthorizationError(
+        'Access Denied: You are not authorized to inspect this sensitive KYC document.'
+      );
     }
 
     const signed = await this.storage.createReadUrl(doc.fileUrl, 15 * 60);

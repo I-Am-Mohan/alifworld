@@ -24,12 +24,60 @@ import { AuthorizationError, ValidationError, NotFoundError } from '@/shared/err
 
 class MockRoleRepository {
   public readonly roles = new Map<string, any>([
-    ['rol_super_admin', { id: 'rol_super_admin', code: 'SUPER_ADMIN', name: 'Super Administrator', isSystem: true, version: 1 }],
-    ['rol_admin', { id: 'rol_admin', code: 'ADMIN', name: 'Platform Administrator', isSystem: true, version: 1 }],
-    ['rol_seller_owner', { id: 'rol_seller_owner', code: 'SELLER_OWNER', name: 'Seller Owner', isSystem: true, version: 1 }],
-    ['rol_seller_manager', { id: 'rol_seller_manager', code: 'SELLER_MANAGER', name: 'Seller Manager', isSystem: true, version: 1 }],
-    ['rol_seller_staff', { id: 'rol_seller_staff', code: 'SELLER_STAFF', name: 'Seller Staff', isSystem: true, version: 1 }],
-    ['rol_customer', { id: 'rol_customer', code: 'CUSTOMER', name: 'Customer', isSystem: true, version: 1 }],
+    [
+      'rol_super_admin',
+      {
+        id: 'rol_super_admin',
+        code: 'SUPER_ADMIN',
+        name: 'Super Administrator',
+        isSystem: true,
+        version: 1,
+      },
+    ],
+    [
+      'rol_admin',
+      {
+        id: 'rol_admin',
+        code: 'ADMIN',
+        name: 'Platform Administrator',
+        isSystem: true,
+        version: 1,
+      },
+    ],
+    [
+      'rol_seller_owner',
+      {
+        id: 'rol_seller_owner',
+        code: 'SELLER_OWNER',
+        name: 'Seller Owner',
+        isSystem: true,
+        version: 1,
+      },
+    ],
+    [
+      'rol_seller_manager',
+      {
+        id: 'rol_seller_manager',
+        code: 'SELLER_MANAGER',
+        name: 'Seller Manager',
+        isSystem: true,
+        version: 1,
+      },
+    ],
+    [
+      'rol_seller_staff',
+      {
+        id: 'rol_seller_staff',
+        code: 'SELLER_STAFF',
+        name: 'Seller Staff',
+        isSystem: true,
+        version: 1,
+      },
+    ],
+    [
+      'rol_customer',
+      { id: 'rol_customer', code: 'CUSTOMER', name: 'Customer', isSystem: true, version: 1 },
+    ],
     ['rol_rider', { id: 'rol_rider', code: 'RIDER', name: 'Rider', isSystem: true, version: 1 }],
   ]);
 
@@ -96,7 +144,12 @@ class MockUserRoleAssignmentRepository {
   }
 
   public async assignRole(params: any) {
-    const rec = { ...params, id: `ura_${Date.now()}`, version: 1, role: { code: 'TEST', permissions: [] } };
+    const rec = {
+      ...params,
+      id: `ura_${Date.now()}`,
+      version: 1,
+      role: { code: 'TEST', permissions: [] },
+    };
     this.assignments.push(rec);
     return rec;
   }
@@ -111,8 +164,15 @@ describe('Milestone 041 — Seed Roles & Granular Permissions Matrix', () => {
     const systemRoleCodes = Object.values(SystemRoleCode);
     // At minimum, the seed must define these 7
     const requiredRoles = [
-      'SUPER_ADMIN', 'ADMIN', 'OPERATIONS', 'SUPPORT', 'FINANCE',
-      'SELLER_OWNER', 'SELLER_STAFF', 'CUSTOMER', 'RIDER',
+      'SUPER_ADMIN',
+      'ADMIN',
+      'OPERATIONS',
+      'SUPPORT',
+      'FINANCE',
+      'SELLER_OWNER',
+      'SELLER_STAFF',
+      'CUSTOMER',
+      'RIDER',
     ];
     for (const r of ['SUPER_ADMIN', 'ADMIN', 'SELLER_OWNER', 'SELLER_STAFF', 'CUSTOMER', 'RIDER']) {
       expect(systemRoleCodes).toContain(r as SystemRoleCode);
@@ -181,11 +241,17 @@ describe('RbacService — Authorization & Multi-Tenant Scoping (Milestone 041)',
         id: 'rol_super_admin',
         code: 'SUPER_ADMIN',
         permissions: [
-          { code: 'users:read' }, { code: 'users:write' },
-          { code: 'roles:manage' }, { code: 'roles:assign' },
-          { code: 'sellers:read' }, { code: 'sellers:verify' },
-          { code: 'catalog:read' }, { code: 'orders:read' },
-          { code: 'finance:read' }, { code: 'system:config' }, { code: 'system:audit_read' },
+          { code: 'users:read' },
+          { code: 'users:write' },
+          { code: 'roles:manage' },
+          { code: 'roles:assign' },
+          { code: 'sellers:read' },
+          { code: 'sellers:verify' },
+          { code: 'catalog:read' },
+          { code: 'orders:read' },
+          { code: 'finance:read' },
+          { code: 'system:config' },
+          { code: 'system:audit_read' },
         ],
       },
     },
@@ -198,11 +264,17 @@ describe('RbacService — Authorization & Multi-Tenant Scoping (Milestone 041)',
         id: 'rol_admin',
         code: 'ADMIN',
         permissions: [
-          { code: 'users:read' }, { code: 'users:write' },
-          { code: 'sellers:read' }, { code: 'sellers:verify' },
-          { code: 'catalog:read' }, { code: 'catalog:write' },
-          { code: 'orders:read' }, { code: 'orders:manage' },
-          { code: 'finance:read' }, { code: 'system:config' }, { code: 'system:audit_read' },
+          { code: 'users:read' },
+          { code: 'users:write' },
+          { code: 'sellers:read' },
+          { code: 'sellers:verify' },
+          { code: 'catalog:read' },
+          { code: 'catalog:write' },
+          { code: 'orders:read' },
+          { code: 'orders:manage' },
+          { code: 'finance:read' },
+          { code: 'system:config' },
+          { code: 'system:audit_read' },
         ],
       },
     },
@@ -215,8 +287,10 @@ describe('RbacService — Authorization & Multi-Tenant Scoping (Milestone 041)',
         id: 'rol_seller_owner',
         code: 'SELLER_OWNER',
         permissions: [
-          { code: 'seller:profile:manage' }, { code: 'catalog:write' },
-          { code: 'orders:read' }, { code: 'orders:manage' },
+          { code: 'seller:profile:manage' },
+          { code: 'catalog:write' },
+          { code: 'orders:read' },
+          { code: 'orders:manage' },
         ],
       },
     },
@@ -268,23 +342,37 @@ describe('RbacService — Authorization & Multi-Tenant Scoping (Milestone 041)',
 
   it('assertPermission: Customer fails for admin permissions', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertPermission(CUSTOMER_ID, 'sellers:verify')).rejects.toThrow(AuthorizationError);
-    await expect(rbac.assertPermission(CUSTOMER_ID, 'system:config')).rejects.toThrow(AuthorizationError);
-    await expect(rbac.assertPermission(CUSTOMER_ID, 'finance:read')).rejects.toThrow(AuthorizationError);
+    await expect(rbac.assertPermission(CUSTOMER_ID, 'sellers:verify')).rejects.toThrow(
+      AuthorizationError
+    );
+    await expect(rbac.assertPermission(CUSTOMER_ID, 'system:config')).rejects.toThrow(
+      AuthorizationError
+    );
+    await expect(rbac.assertPermission(CUSTOMER_ID, 'finance:read')).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   it('assertPermission: Unknown user (no roles) fails all permissions', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertPermission(UNKNOWN_USER_ID, 'catalog:read')).rejects.toThrow(AuthorizationError);
-    await expect(rbac.assertPermission(UNKNOWN_USER_ID, 'orders:read')).rejects.toThrow(AuthorizationError);
+    await expect(rbac.assertPermission(UNKNOWN_USER_ID, 'catalog:read')).rejects.toThrow(
+      AuthorizationError
+    );
+    await expect(rbac.assertPermission(UNKNOWN_USER_ID, 'orders:read')).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   it('assertPermission: Rider can manage orders but not access seller or finance', async () => {
     const rbac = makeRbac();
     await expect(rbac.assertPermission(RIDER_ID, 'orders:read')).resolves.toBeUndefined();
     await expect(rbac.assertPermission(RIDER_ID, 'orders:manage')).resolves.toBeUndefined();
-    await expect(rbac.assertPermission(RIDER_ID, 'finance:read')).rejects.toThrow(AuthorizationError);
-    await expect(rbac.assertPermission(RIDER_ID, 'sellers:read')).rejects.toThrow(AuthorizationError);
+    await expect(rbac.assertPermission(RIDER_ID, 'finance:read')).rejects.toThrow(
+      AuthorizationError
+    );
+    await expect(rbac.assertPermission(RIDER_ID, 'sellers:read')).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   // ── Role Assertion ────────────────────────────────────────────────────────
@@ -301,28 +389,38 @@ describe('RbacService — Authorization & Multi-Tenant Scoping (Milestone 041)',
 
   it('assertSellerTenantAccess: Super Admin bypasses all tenant restrictions', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertSellerTenantAccess(SUPER_ADMIN_ID, DHAKA_STORE)).resolves.toBeUndefined();
+    await expect(
+      rbac.assertSellerTenantAccess(SUPER_ADMIN_ID, DHAKA_STORE)
+    ).resolves.toBeUndefined();
     await expect(rbac.assertSellerTenantAccess(SUPER_ADMIN_ID, CTG_STORE)).resolves.toBeUndefined();
   });
 
   it('assertSellerTenantAccess: Seller Owner accesses own store', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertSellerTenantAccess(SELLER_DHAKA_ID, DHAKA_STORE)).resolves.toBeUndefined();
+    await expect(
+      rbac.assertSellerTenantAccess(SELLER_DHAKA_ID, DHAKA_STORE)
+    ).resolves.toBeUndefined();
   });
 
   it('assertSellerTenantAccess: Seller Owner BLOCKED from cross-tenant access', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertSellerTenantAccess(SELLER_DHAKA_ID, CTG_STORE)).rejects.toThrow(AuthorizationError);
+    await expect(rbac.assertSellerTenantAccess(SELLER_DHAKA_ID, CTG_STORE)).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   it('assertSellerTenantAccess: Customer BLOCKED from any seller tenant', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertSellerTenantAccess(CUSTOMER_ID, DHAKA_STORE)).rejects.toThrow(AuthorizationError);
+    await expect(rbac.assertSellerTenantAccess(CUSTOMER_ID, DHAKA_STORE)).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   it('assertSellerTenantAccess: Rider BLOCKED from seller tenant', async () => {
     const rbac = makeRbac();
-    await expect(rbac.assertSellerTenantAccess(RIDER_ID, DHAKA_STORE)).rejects.toThrow(AuthorizationError);
+    await expect(rbac.assertSellerTenantAccess(RIDER_ID, DHAKA_STORE)).rejects.toThrow(
+      AuthorizationError
+    );
   });
 
   // ── Privilege Escalation Prevention ─────────────────────────────────────
@@ -375,13 +473,16 @@ describe('RbacService — Authorization & Multi-Tenant Scoping (Milestone 041)',
     const rbac = makeRbac();
     // With correct sellerId: has catalog:write
     const hasWrite = await (rbac as any).roleAssignmentRepo.hasPermission(
-      SELLER_DHAKA_ID, 'catalog:write', DHAKA_STORE
+      SELLER_DHAKA_ID,
+      'catalog:write',
+      DHAKA_STORE
     );
     expect(hasWrite).toBe(true);
 
     // Without sellerId context: seller role does not apply globally
     const hasWriteGlobal = await (rbac as any).roleAssignmentRepo.hasPermission(
-      SELLER_DHAKA_ID, 'catalog:write'
+      SELLER_DHAKA_ID,
+      'catalog:write'
     );
     // Seller role is scoped — without matching sellerId, it should NOT appear as global
     expect(hasWriteGlobal).toBe(false);

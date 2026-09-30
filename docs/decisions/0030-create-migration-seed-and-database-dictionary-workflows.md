@@ -6,13 +6,14 @@
 **Milestone Reference**: [Milestone 030](../../AlifWorld-300-Milestones/030-create-migration-seed-and-database-dictionary-workflows.md)  
 **Phase**: Phase 03: Data Architecture (Conclusion)  
 **Supporting Specification**: [Migration, Seed, and Database-Dictionary Workflows Architecture](../architecture/migration-seed-and-database-dictionary-workflows.md)  
-**Data Dictionary**: [Authoritative Database Data Dictionary](../database/data-dictionary.md)  
+**Data Dictionary**: [Authoritative Database Data Dictionary](../database/data-dictionary.md)
 
 ---
 
 ## Context and Problem Statement
 
 Phase 03 established the relational database schema for AlifWorld, comprising 49 canonical Prisma models across 8 business domains:
+
 1. **System & Health** (4 models): `SystemConfig`, `HealthProbe`, `OutboxEvent`, `AuditLog`
 2. **Identity & Access Management** (5 models): `User`, `Role`, `Permission`, `UserRoleAssignment`, `RolePermission`
 3. **Seller Domain & Multi-Tenancy** (4 models): `Seller`, `SellerStaff`, `SellerKycDocument`, `SellerStoreSettings`
@@ -23,6 +24,7 @@ Phase 03 established the relational database schema for AlifWorld, comprising 49
 8. **Wallets, Loyalty Points & Ledgers** (11 models): `Wallet`, `LedgerAccount`, `LedgerJournal`, `LedgerPosting`, `PointAccount`, `PointEvent`, `RewardRule`, `RewardAllocation`, `RankDefinition`, `UserRank`, `LeaderboardSnapshot`
 
 To guarantee long-term operational resilience, compliance, zero-downtime deployments, and developer alignment, the platform requires:
+
 1. **An Authoritative Data Dictionary**: Programmatically generated, human-readable documentation classifying all 49 models by lifecycle deletion policy (`IMMUTABLE`, `SOFT_DELETE`, `EPHEMERAL`), column types, nullability, defaults, foreign keys, and indexes.
 2. **Expand-and-Contract Migration Workflow**: Safe zero-downtime schema evolution across rolling application deployments, forbidding destructive immediate column drops or renames.
 3. **Idempotent Seed Scripts**: Guaranteed safe repeated execution of `prisma/seed.ts` via deterministic upserts, seeding the initial SuperAdmin (`contact@mail.com`) with forced password rotation on initial login.
@@ -43,13 +45,13 @@ To guarantee long-term operational resilience, compliance, zero-downtime deploym
 ## Considered Options
 
 1. **Ad-Hoc Manual Migrations with Traditional Down-Scripts (`migrate down`)**:
-   - *Pros*: Simple for initial prototype stages.
-   - *Cons*: Down-migrations frequently destroy production data, fail when foreign key dependencies shift, and are incompatible with continuous zero-downtime deployment pipelines.
+   - _Pros_: Simple for initial prototype stages.
+   - _Cons_: Down-migrations frequently destroy production data, fail when foreign key dependencies shift, and are incompatible with continuous zero-downtime deployment pipelines.
 2. **Hard-Reset Seeding (`prisma migrate reset --force`)**:
-   - *Pros*: Ensures fresh development databases.
-   - *Cons*: Catastrophic if misconfigured in staging or production; wipes audit logs and tenant configurations.
+   - _Pros_: Ensures fresh development databases.
+   - _Cons_: Catastrophic if misconfigured in staging or production; wipes audit logs and tenant configurations.
 3. **Expand-and-Contract Zero-Downtime Migrations + Forward-Fix Recovery + 100% Idempotent Upsert Seeds + Automated Data Dictionary (Selected)**:
-   - *Pros*: Guarantees zero downtime, complete audit preservation, deterministic seed reruns, and centralized data governance across all 49 models.
+   - _Pros_: Guarantees zero downtime, complete audit preservation, deterministic seed reruns, and centralized data governance across all 49 models.
 
 ---
 
@@ -62,17 +64,18 @@ Every model in AlifWorld is explicitly bound to one of three lifecycle deletion 
 1. **`IMMUTABLE` (Append-Only, Hard & Soft Deletion Prohibited)**:
    - Records represent immutable financial, legal, or state-transition facts.
    - Updates and deletions are strictly rejected. Errors are corrected exclusively through linked reversal records (`reversalOfId`).
-   - *Models (16)*: `HealthProbe`, `OutboxEvent`, `AuditLog`, `ProductSlugHistory`, `StockMovementLedger`, `OrderStatusHistory`, `ShipmentEvent`, `Payment`, `Refund`, `RefundItem`, `CommissionLedger`, `PaymentWebhookLog`, `LedgerJournal`, `LedgerPosting`, `PointEvent`, `RewardAllocation`, `LeaderboardSnapshot`.
+   - _Models (16)_: `HealthProbe`, `OutboxEvent`, `AuditLog`, `ProductSlugHistory`, `StockMovementLedger`, `OrderStatusHistory`, `ShipmentEvent`, `Payment`, `Refund`, `RefundItem`, `CommissionLedger`, `PaymentWebhookLog`, `LedgerJournal`, `LedgerPosting`, `PointEvent`, `RewardAllocation`, `LeaderboardSnapshot`.
 2. **`SOFT_DELETE` (Audit-Preserved, Deleted At Timestamp)**:
    - Business entities containing relational dependencies or historical value. Records are flagged via `deletedAt DateTime?` and filtered from active application queries.
-   - *Models (30)*: `SystemConfig`, `User`, `Role`, `Permission`, `UserRoleAssignment`, `RolePermission`, `Seller`, `SellerStaff`, `SellerKycDocument`, `SellerStoreSettings`, `Category`, `Brand`, `Product`, `ProductVariant`, `ProductMedia`, `Warehouse`, `StockBalance`, `StockReservation`, `Order`, `SellerFulfillmentGroup`, `OrderItem`, `Shipment`, `SellerSettlement`, `SellerPayout`, `Wallet`, `LedgerAccount`, `PointAccount`, `RewardRule`, `RankDefinition`, `UserRank`.
+   - _Models (30)_: `SystemConfig`, `User`, `Role`, `Permission`, `UserRoleAssignment`, `RolePermission`, `Seller`, `SellerStaff`, `SellerKycDocument`, `SellerStoreSettings`, `Category`, `Brand`, `Product`, `ProductVariant`, `ProductMedia`, `Warehouse`, `StockBalance`, `StockReservation`, `Order`, `SellerFulfillmentGroup`, `OrderItem`, `Shipment`, `SellerSettlement`, `SellerPayout`, `Wallet`, `LedgerAccount`, `PointAccount`, `RewardRule`, `RankDefinition`, `UserRank`.
 3. **`EPHEMERAL` (Hard Deletion Permitted with Expiration/Cleanup TTL)**:
    - Transient operational artifacts with no legal or financial reporting obligations.
-   - *Models (2)*: `Cart`, `CartItem` (abandoned carts purged after 30-day retention window).
+   - _Models (2)_: `Cart`, `CartItem` (abandoned carts purged after 30-day retention window).
 
 ### 2. Zero-Downtime Expand-and-Contract Migration Workflow
 
 Schema migrations must be phased across two or more releases:
+
 1. **Expand Phase (Release N)**: Add new nullable or defaulted columns, new tables, or non-blocking indexes (`CREATE INDEX CONCURRENTLY`). The running code continues to read from old structures while dual-writing to both old and new.
 2. **Backfill Phase (Release N or Background Job)**: Backfill data from legacy columns to new columns asynchronously without table locks.
 3. **Contract Phase (Release N+1)**: Update application code to read solely from new structures, deprecate legacy columns, and eventually drop unused columns after all instances have transitioned.
@@ -94,11 +97,13 @@ Schema migrations must be phased across two or more releases:
 ## Consequences
 
 ### Positive
+
 - Zero downtime during schema evolutions across high-volume marketplace operations.
 - Full compliance with national auditing and taxation standards (NBR Mushak 6.3) via immutable financial ledgers.
 - 100% reproducible environments for developers and automated CI pipelines.
 - Complete documentation visibility for product, compliance, and engineering teams via `/admin/database`.
 
 ### Negative & Mitigations
+
 - Requires multi-step deployments for schema changes (mitigated by automated migration verification scripts).
 - Additional storage required for soft-deleted records and immutable event ledgers (mitigated by read-replica offloading and partitioned historical tables).

@@ -1,10 +1,6 @@
 import { describe, expect, it, beforeEach } from 'bun:test';
 import { ProductQnaService } from '@/features/qna/services/product-qna.service';
-import {
-  NotFoundError,
-  ValidationError,
-  AuthorizationError,
-} from '@/shared/errors/app-error';
+import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
 
 class MockPrismaQnaDb {
   public questions: any[] = [];
@@ -87,8 +83,7 @@ class MockPrismaQnaDb {
     count: async ({ where }: any) => {
       return this.questions.filter((q) => {
         if (where.productId && q.productId !== where.productId) return false;
-        if (where.product?.sellerId && q.product?.sellerId !== where.product.sellerId)
-          return false;
+        if (where.product?.sellerId && q.product?.sellerId !== where.product.sellerId) return false;
         if (where.status && q.status !== where.status) return false;
         if (where.isAnswered !== undefined && q.isAnswered !== where.isAnswered) return false;
         return !q.deletedAt;
@@ -164,9 +159,8 @@ class MockPrismaQnaDb {
   public productAnswerVote = {
     findFirst: async ({ where }: any) => {
       return (
-        this.answerVotes.find(
-          (v) => v.answerId === where.answerId && v.userId === where.userId
-        ) || null
+        this.answerVotes.find((v) => v.answerId === where.answerId && v.userId === where.userId) ||
+        null
       );
     },
     create: async ({ data }: any) => {
@@ -305,9 +299,7 @@ describe('Milestone 126: Product Q&A & Seller Moderation Unit Tests', () => {
       });
 
       // Author self-upvote must fail
-      await expect(service.voteQuestion(q.id, 'usr_customer_01')).rejects.toThrow(
-        ValidationError
-      );
+      await expect(service.voteQuestion(q.id, 'usr_customer_01')).rejects.toThrow(ValidationError);
 
       // Other customer upvotes
       const res = await service.voteQuestion(q.id, 'usr_customer_02');

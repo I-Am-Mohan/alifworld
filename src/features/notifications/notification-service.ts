@@ -25,7 +25,9 @@ export interface QueuedNotification {
   status: 'QUEUED' | 'ALREADY_QUEUED' | 'SKIPPED';
 }
 
-export function notificationIdempotencyKey(input: Omit<QueueNotificationInput, 'preferences'>): string {
+export function notificationIdempotencyKey(
+  input: Omit<QueueNotificationInput, 'preferences'>
+): string {
   const material = [
     input.userId,
     input.event,
@@ -45,7 +47,11 @@ export class NotificationService {
 
   async queue(input: QueueNotificationInput): Promise<QueuedNotification> {
     const locale = normalizeToCanonicalLocale(input.locale);
-    const shouldDeliver = shouldDeliverNotification(input.event, input.channel, input.preferences ?? []);
+    const shouldDeliver = shouldDeliverNotification(
+      input.event,
+      input.channel,
+      input.preferences ?? []
+    );
     const idempotencyKey = notificationIdempotencyKey({ ...input, locale });
 
     if (!shouldDeliver) {

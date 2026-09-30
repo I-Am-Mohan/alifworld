@@ -4,7 +4,7 @@
 **Milestone Reference**: [Milestone 021](../../AlifWorld-300-Milestones/021-configure-postgresql-and-prisma-foundations.md)  
 **Phase**: Phase 03: Data Architecture  
 **Status**: Authoritative / Implemented  
-**Date**: 2026-09-22  
+**Date**: 2026-09-22
 
 ---
 
@@ -13,6 +13,7 @@
 Phase 03 initiates the **Data Architecture** for the AlifWorld e-commerce platform. The overarching purpose of Phase 03 is to establish normalized PostgreSQL models, strict database constraints, optimized compound indexes, and deterministic migrations via Prisma, ensuring full financial traceability and multi-tenant isolation.
 
 **Milestone 021** establishes the core database foundations:
+
 - Canonical Prisma schema configuration targeting PostgreSQL 16.
 - Resilient singleton connection management compatible with Next.js App Router hot-reloading.
 - Base repository pattern and unified error translation mapping database exceptions to domain `AppError` types.
@@ -25,7 +26,9 @@ Phase 03 initiates the **Data Architecture** for the AlifWorld e-commerce platfo
 ## 2. Infrastructure & Connection Pool Topology
 
 ### 2.1 Database Credentials & Connection Parameters
+
 Connection parameters strictly align with `.env.example` and the typed configuration schema in `src/shared/config/environment.ts`:
+
 - **Engine**: PostgreSQL 16 Alpine
 - **Database Name**: `alifworld_dev` (configurable via `DATABASE_URL`)
 - **Default Port**: `5432`
@@ -33,6 +36,7 @@ Connection parameters strictly align with `.env.example` and the typed configura
 - **Connection URL**: `DATABASE_URL` (bypasses transaction poolers like PgBouncer for migrations)
 
 ### 2.2 Connection String Format
+
 ```text
 postgresql://alifworld:alifworld_local_secret@localhost:5432/alifworld_dev?schema=public&connection_limit=10
 ```
@@ -66,7 +70,9 @@ All future domain models in Phase 03 (Milestones 022–029) must adhere to these
 Milestone 021 establishes four foundational infrastructure models in `prisma/schema.prisma`:
 
 ### 4.1 SystemConfig (`system_configs`)
+
 Stores platform configuration parameters, financial rule versions, and feature flags. Changes are tracked and versioned.
+
 - `id`: String (UUID)
 - `key`: String (Unique)
 - `value`: String
@@ -75,7 +81,9 @@ Stores platform configuration parameters, financial rule versions, and feature f
 - `created_at` / `updated_at`: DateTime
 
 ### 4.2 HealthProbe (`health_probes`)
+
 Persists operational telemetry from readiness and liveness checks for latency tracking and reliability auditing.
+
 - `id`: String (UUID)
 - `probe_type`: String (`live` | `ready`)
 - `status`: String (`healthy` | `degraded` | `unhealthy`)
@@ -84,7 +92,9 @@ Persists operational telemetry from readiness and liveness checks for latency tr
 - `created_at`: DateTime (Indexed with `probe_type`)
 
 ### 4.3 OutboxEvent (`outbox_events`)
+
 Implements the Transactional Outbox pattern (ADR-0003, ADR-0006). Domain mutations write events into this table within the same ACID transaction; BullMQ workers consume and dispatch them asynchronously.
+
 - `id`: String (UUID)
 - `event_type`: String (e.g., `ORDER_CREATED`, `POINTS_ACCRUED`)
 - `aggregate_type`: String (e.g., `Order`, `Wallet`)
@@ -96,7 +106,9 @@ Implements the Transactional Outbox pattern (ADR-0003, ADR-0006). Domain mutatio
 - `processed_at`: DateTime?
 
 ### 4.4 AuditLog (`audit_logs`)
+
 Maintains an immutable append-only trail of all sensitive operations, configuration updates, and security events.
+
 - `id`: String (UUID)
 - `actor_id`: String?
 - `actor_role`: String?
@@ -127,6 +139,7 @@ if (process.env.NODE_ENV !== 'production') {
 ```
 
 ### Logging Configuration:
+
 - **Development**: `['query', 'error', 'warn']` for full query visibility.
 - **Production / Staging**: `['error', 'warn']` to prevent sensitive query payloads and PII from reaching standard output.
 
@@ -136,30 +149,34 @@ if (process.env.NODE_ENV !== 'production') {
 
 To prevent internal database table names, SQL constraints, and credentials from leaking through API responses, `src/shared/database/error-translator.ts` intercepts Prisma exceptions and maps them to strongly typed `AppError` subclasses:
 
-| Prisma Error Code | Description | Translated Domain Error | HTTP Status |
-|:---|:---|:---|:---:|
-| `P2002` | Unique constraint violation | `ConflictError` | `409` |
-| `P2025` | Record to update/delete not found | `NotFoundError` | `404` |
-| `P2003` | Foreign key constraint failed | `ValidationError` | `422` |
-| `P2000` | Value exceeds column length | `ValidationError` | `422` |
-| `P2014` | Required relationship violation | `ValidationError` | `422` |
-| `P2024` | Connection pool checkout timeout | `InternalServerError` | `500` |
-| *Unhandled* | Unspecified query failure | `InternalServerError` | `500` |
+| Prisma Error Code | Description                       | Translated Domain Error | HTTP Status |
+| :---------------- | :-------------------------------- | :---------------------- | :---------: |
+| `P2002`           | Unique constraint violation       | `ConflictError`         |    `409`    |
+| `P2025`           | Record to update/delete not found | `NotFoundError`         |    `404`    |
+| `P2003`           | Foreign key constraint failed     | `ValidationError`       |    `422`    |
+| `P2000`           | Value exceeds column length       | `ValidationError`       |    `422`    |
+| `P2014`           | Required relationship violation   | `ValidationError`       |    `422`    |
+| `P2024`           | Connection pool checkout timeout  | `InternalServerError`   |    `500`    |
+| _Unhandled_       | Unspecified query failure         | `InternalServerError`   |    `500`    |
 
 ---
 
 ## 7. Base Repository Pattern & Multi-Tenant Scoping
 
 In alignment with the four-tier dependency architecture (ADR-0006):
+
 1. **Route Handlers** (`app/api/*`) are thin orchestrators.
 2. **Domain Services** (`services/*`) own business logic and transactions.
 3. **Repositories** (`repositories/*`) extend `BaseRepository` to encapsulate database queries.
 
 ### Multi-Tenant Protection
+
 Repositories enforce tenant boundaries using `assertSellerScope(entitySellerId, authorizedSellerId)`. Any attempt by an authenticated seller to access records outside their tenant raises an immediate `AuthorizationError` (HTTP 403).
 
 ### Standardized Pagination
+
 `parseOffsetPagination` and `formatPaginatedResult` enforce:
+
 - Positive page and limit bounds.
 - Configurable maximum page size ceilings (default: 100).
 - Consistent metadata structures (`total`, `page`, `limit`, `totalPages`, `hasNext`, `hasPrev`).
@@ -169,6 +186,7 @@ Repositories enforce tenant boundaries using `assertSellerScope(entitySellerId, 
 ## 8. Idempotent Database Seed Harness
 
 The database seed script (`prisma/seed.ts`, run via `bun run db:seed`) provides idempotent initialization:
+
 - Uses `upsert` operations on `SystemConfig` records.
 - Injects core business constants:
   - `PLATFORM_CURRENCY`: `BDT`

@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -131,7 +132,8 @@ function MerchantHeroIllustration() {
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-            Join Bangladesh&apos;s premier merchant hub. Enjoy 0% listing fees, guaranteed weekly BDT settlements, Pathao &amp; RedX express logistics, and automated NBR VAT compliance.
+            Join Bangladesh&apos;s premier merchant hub. Enjoy 0% listing fees, guaranteed weekly
+            BDT settlements, Pathao &amp; RedX express logistics, and automated NBR VAT compliance.
           </p>
 
           <div className="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-4 text-xs font-semibold text-slate-200">
@@ -148,9 +150,11 @@ function MerchantHeroIllustration() {
 
         {/* Real Hero Graphic Image Banner Card */}
         <div className="w-full max-w-sm shrink-0 rounded-2xl overflow-hidden border border-white/10 shadow-2xl group hover:scale-[1.02] transition-transform duration-300">
-          <img
+          <Image
             src="/seller-hero-banner.jpg"
             alt="AlifWorld Merchant Platform"
+            width={384}
+            height={216}
             className="w-full h-auto object-cover rounded-2xl"
           />
         </div>
@@ -228,7 +232,9 @@ export default function SellerApplicationPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const domainDisplay = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const domainDisplay = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
 
   const isValidPhone = /^(\+8801|01)[3-9]\d{8}$/.test(form.mobileNumber.trim());
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.emailAddress.trim());
@@ -264,48 +270,132 @@ export default function SellerApplicationPage() {
   const [stepLoading, setStepLoading] = useState(false);
 
   // Dynamic Compliance & KYC Document Configuration State
-  const [complianceFields, setComplianceFields] = useState<Array<{
-    id: string;
-    name: string;
-    type: 'TEXT' | 'NUMBER' | 'FILE';
-    allowedExtensions?: string;
-    regex?: string;
-    hint?: string;
-    required: boolean;
-  }>>([
-    { id: 'tradeLicenseNumber', name: 'Trade License Number', type: 'TEXT', regex: '^[A-Za-z0-9_-]{3,50}$', hint: 'Issued by municipal City Corporation or Paurashava', required: true },
-    { id: 'binNumber', name: 'NBR BIN (VAT Registration Number)', type: 'NUMBER', regex: '^\\d{9,13}$', hint: '13-digit Business Identification Number', required: false },
-    { id: 'tinNumber', name: 'e-TIN (Taxpayer Identification Number)', type: 'NUMBER', regex: '^\\d{12}$', hint: '12-digit e-TIN number', required: false },
+  const [complianceFields, setComplianceFields] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: 'TEXT' | 'NUMBER' | 'FILE';
+      allowedExtensions?: string;
+      regex?: string;
+      hint?: string;
+      required: boolean;
+    }>
+  >([
+    {
+      id: 'tradeLicenseNumber',
+      name: 'Trade License Number',
+      type: 'TEXT',
+      regex: '^[A-Za-z0-9_-]{3,50}$',
+      hint: 'Issued by municipal City Corporation or Paurashava',
+      required: true,
+    },
+    {
+      id: 'binNumber',
+      name: 'NBR BIN (VAT Registration Number)',
+      type: 'NUMBER',
+      regex: '^\\d{9,13}$',
+      hint: '13-digit Business Identification Number',
+      required: false,
+    },
+    {
+      id: 'tinNumber',
+      name: 'e-TIN (Taxpayer Identification Number)',
+      type: 'NUMBER',
+      regex: '^\\d{12}$',
+      hint: '12-digit e-TIN number',
+      required: false,
+    },
   ]);
 
-  const [kycDocConfigs, setKycDocConfigs] = useState<Array<{
-    id: string;
-    name: string;
-    type: 'FILE';
-    allowedExtensions: string;
-    minSizeKb: number;
-    maxSizeKb: number;
-    hint?: string;
-    required: boolean;
-  }>>([
-    { id: 'TRADE_LICENSE', name: 'Trade License Copy', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Valid municipal trade license document', required: true },
-    { id: 'NID_FRONT', name: 'National ID (NID) Front', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'Smart Card or original NID front photo', required: true },
-    { id: 'NID_BACK', name: 'National ID (NID) Back', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.webp', minSizeKb: 10, maxSizeKb: 5120, hint: 'NID back photo showing residential address', required: true },
-    { id: 'BIN_CERTIFICATE', name: 'NBR BIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'VAT Registration certificate', required: false },
-    { id: 'BANK_CHEQUE_LEAF', name: 'Bank Cheque Leaf', type: 'FILE', allowedExtensions: '.jpg,.jpeg,.png,.pdf', minSizeKb: 10, maxSizeKb: 5120, hint: 'Cancelled cheque leaf for bank payout verification', required: false },
-    { id: 'TIN_CERTIFICATE', name: 'e-TIN Certificate', type: 'FILE', allowedExtensions: '.pdf,.jpg,.jpeg,.png', minSizeKb: 10, maxSizeKb: 10240, hint: 'Tax identification dossier document', required: false },
+  const [kycDocConfigs, setKycDocConfigs] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: 'FILE';
+      allowedExtensions: string;
+      minSizeKb: number;
+      maxSizeKb: number;
+      hint?: string;
+      required: boolean;
+    }>
+  >([
+    {
+      id: 'TRADE_LICENSE',
+      name: 'Trade License Copy',
+      type: 'FILE',
+      allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+      minSizeKb: 10,
+      maxSizeKb: 10240,
+      hint: 'Valid municipal trade license document',
+      required: true,
+    },
+    {
+      id: 'NID_FRONT',
+      name: 'National ID (NID) Front',
+      type: 'FILE',
+      allowedExtensions: '.jpg,.jpeg,.png,.webp',
+      minSizeKb: 10,
+      maxSizeKb: 5120,
+      hint: 'Smart Card or original NID front photo',
+      required: true,
+    },
+    {
+      id: 'NID_BACK',
+      name: 'National ID (NID) Back',
+      type: 'FILE',
+      allowedExtensions: '.jpg,.jpeg,.png,.webp',
+      minSizeKb: 10,
+      maxSizeKb: 5120,
+      hint: 'NID back photo showing residential address',
+      required: true,
+    },
+    {
+      id: 'BIN_CERTIFICATE',
+      name: 'NBR BIN Certificate',
+      type: 'FILE',
+      allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+      minSizeKb: 10,
+      maxSizeKb: 10240,
+      hint: 'VAT Registration certificate',
+      required: false,
+    },
+    {
+      id: 'BANK_CHEQUE_LEAF',
+      name: 'Bank Cheque Leaf',
+      type: 'FILE',
+      allowedExtensions: '.jpg,.jpeg,.png,.pdf',
+      minSizeKb: 10,
+      maxSizeKb: 5120,
+      hint: 'Cancelled cheque leaf for bank payout verification',
+      required: false,
+    },
+    {
+      id: 'TIN_CERTIFICATE',
+      name: 'e-TIN Certificate',
+      type: 'FILE',
+      allowedExtensions: '.pdf,.jpg,.jpeg,.png',
+      minSizeKb: 10,
+      maxSizeKb: 10240,
+      hint: 'Tax identification dossier document',
+      required: false,
+    },
   ]);
 
   const [customComplianceValues, setCustomComplianceValues] = useState<Record<string, string>>({});
 
-  const [kycFileStates, setKycFileStates] = useState<Record<string, {
-    file: File | null;
-    fileName?: string;
-    fileSizeStr?: string;
-    status: 'IDLE' | 'SELECTED' | 'UPLOADING' | 'UPLOADED' | 'ERROR';
-    errorMessage?: string;
-    documentId?: string;
-  }>>({});
+  const [kycFileStates, setKycFileStates] = useState<
+    Record<
+      string,
+      {
+        file: File | null;
+        fileName?: string;
+        fileSizeStr?: string;
+        status: 'IDLE' | 'SELECTED' | 'UPLOADING' | 'UPLOADED' | 'ERROR';
+        errorMessage?: string;
+        documentId?: string;
+      }
+    >
+  >({});
 
   const loadSetupConfigs = useCallback(async () => {
     try {
@@ -538,7 +628,10 @@ export default function SellerApplicationPage() {
       return;
     }
     if (!isValidPhone) {
-      setFieldError('mobileNumber', 'Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).');
+      setFieldError(
+        'mobileNumber',
+        'Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).'
+      );
       return;
     }
 
@@ -723,7 +816,7 @@ export default function SellerApplicationPage() {
     }
 
     try {
-      let activeUser = user;
+      const activeUser = user;
       if (!activeUser && !accountProvisioned) {
         // Register seller user account
         const regRes = await csrfFetch('/api/v1/auth/register', {
@@ -753,7 +846,10 @@ export default function SellerApplicationPage() {
           });
           const loginJson = await loginRes.json().catch(() => null);
           if (!loginRes.ok || !loginJson?.success) {
-            setFieldError('password', loginJson?.error?.message || 'Failed to authenticate seller account.');
+            setFieldError(
+              'password',
+              loginJson?.error?.message || 'Failed to authenticate seller account.'
+            );
             setSaving(false);
             return null;
           }
@@ -869,12 +965,19 @@ export default function SellerApplicationPage() {
     }
   };
 
-  const isEditable = !application || application.status === 'DRAFT' || application.status === 'CHANGES_REQUESTED';
+  const isEditable =
+    !application || application.status === 'DRAFT' || application.status === 'CHANGES_REQUESTED';
 
   // Filter districts based on selected division
-  const selectedDivision = BANGLADESH_DIVISIONS.find((d) => d.id === form.divisionId) || BANGLADESH_DIVISIONS[0];
-  const availableDistricts = BANGLADESH_DISTRICTS.filter((d) => d.divisionCode === selectedDivision.code);
-  const selectedDistrict = availableDistricts.find((d) => d.id === form.districtId) || availableDistricts[0] || BANGLADESH_DISTRICTS[0];
+  const selectedDivision =
+    BANGLADESH_DIVISIONS.find((d) => d.id === form.divisionId) || BANGLADESH_DIVISIONS[0];
+  const availableDistricts = BANGLADESH_DISTRICTS.filter(
+    (d) => d.divisionCode === selectedDivision.code
+  );
+  const selectedDistrict =
+    availableDistricts.find((d) => d.id === form.districtId) ||
+    availableDistricts[0] ||
+    BANGLADESH_DISTRICTS[0];
   const availableUpazilas = BANGLADESH_UPAZILAS.filter((u) => u.districtId === selectedDistrict.id);
 
   const validateStep = (step: number): boolean => {
@@ -888,7 +991,8 @@ export default function SellerApplicationPage() {
         if (!form.mobileNumber.trim()) {
           errors.mobileNumber = 'Please enter your mobile number.';
         } else if (!isValidPhone) {
-          errors.mobileNumber = 'Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).';
+          errors.mobileNumber =
+            'Enter a valid Bangladesh mobile number (+8801XXXXXXXXX or 01XXXXXXXXX).';
         }
         if (!form.emailAddress.trim()) {
           errors.emailAddress = 'Please enter your email address.';
@@ -909,10 +1013,12 @@ export default function SellerApplicationPage() {
 
       if (!user && !accountProvisioned) {
         if (!phoneVerified) {
-          errors.mobileNumber = errors.mobileNumber || 'Please verify your mobile number with the OTP code.';
+          errors.mobileNumber =
+            errors.mobileNumber || 'Please verify your mobile number with the OTP code.';
         }
         if (!emailVerified) {
-          errors.emailAddress = errors.emailAddress || 'Please verify your email address with the OTP code.';
+          errors.emailAddress =
+            errors.emailAddress || 'Please verify your email address with the OTP code.';
         }
       }
     }
@@ -928,14 +1034,17 @@ export default function SellerApplicationPage() {
 
     if (step === 3) {
       complianceFields.forEach((field) => {
-        const val = (field.id in form ? (form as any)[field.id] : (customComplianceValues[field.id] || '')).trim();
+        const val = (
+          field.id in form ? (form as any)[field.id] : customComplianceValues[field.id] || ''
+        ).trim();
         if (field.required && !val) {
           errors[field.id] = `${field.name} is a mandatory required field.`;
         } else if (val && field.regex) {
           try {
             const re = new RegExp(field.regex);
             if (!re.test(val)) {
-              errors[field.id] = `Invalid ${field.name} format. ${field.hint ? `Requirement: ${field.hint}` : 'Does not match required format.'}`;
+              errors[field.id] =
+                `Invalid ${field.name} format. ${field.hint ? `Requirement: ${field.hint}` : 'Does not match required format.'}`;
             }
           } catch {}
         }
@@ -953,7 +1062,8 @@ export default function SellerApplicationPage() {
         const fileState = kycFileStates[doc.id];
         if (doc.required) {
           if (!fileState || (!fileState.file && fileState.status !== 'UPLOADED')) {
-            errors[doc.id] = `${doc.name} is a mandatory required document. Please select a valid file to upload.`;
+            errors[doc.id] =
+              `${doc.name} is a mandatory required document. Please select a valid file to upload.`;
           } else if (fileState.status === 'ERROR') {
             errors[doc.id] = fileState.errorMessage || `Selected file for ${doc.name} is invalid.`;
           }
@@ -997,7 +1107,9 @@ export default function SellerApplicationPage() {
         // Automatically upload selected files sequentially for this step
         const filesUploaded = await uploadAllSelectedFiles();
         if (!filesUploaded) {
-          setError('Failed to upload one or more selected documents. Please resolve the file error and try again.');
+          setError(
+            'Failed to upload one or more selected documents. Please resolve the file error and try again.'
+          );
           return;
         }
 
@@ -1051,7 +1163,13 @@ export default function SellerApplicationPage() {
                   <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                     Select Division / Location
                   </div>
-                  {['Dhaka, Bangladesh', 'Chattogram, Bangladesh', 'Sylhet, Bangladesh', 'Rajshahi, Bangladesh', 'Khulna, Bangladesh'].map((loc) => (
+                  {[
+                    'Dhaka, Bangladesh',
+                    'Chattogram, Bangladesh',
+                    'Sylhet, Bangladesh',
+                    'Rajshahi, Bangladesh',
+                    'Khulna, Bangladesh',
+                  ].map((loc) => (
                     <button
                       key={loc}
                       type="button"
@@ -1060,7 +1178,9 @@ export default function SellerApplicationPage() {
                         setIsLocationMenuOpen(false);
                       }}
                       className={`w-full text-left px-4 py-2 text-xs font-semibold hover:bg-amber-50 hover:text-[#D97706] transition-colors cursor-pointer ${
-                        selectedLocation === loc ? 'bg-amber-50 text-[#F59E0B] font-bold' : 'text-slate-700'
+                        selectedLocation === loc
+                          ? 'bg-amber-50 text-[#F59E0B] font-bold'
+                          : 'text-slate-700'
                       }`}
                     >
                       {loc}
@@ -1140,7 +1260,9 @@ export default function SellerApplicationPage() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">Cart</span>
+              <span className="text-[10px] font-bold text-slate-600 group-hover:text-slate-900 mt-1">
+                Cart
+              </span>
             </button>
 
             {/* Language Switcher Dropdown */}
@@ -1170,9 +1292,10 @@ export default function SellerApplicationPage() {
                 className={`px-3 py-1 rounded-full text-xs font-bold font-mono ${
                   application.status === 'APPROVED'
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : application.status === 'CHANGES_REQUESTED' || application.status === 'REJECTED'
-                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                    : 'bg-amber-50 text-amber-800 border border-amber-200'
+                    : application.status === 'CHANGES_REQUESTED' ||
+                        application.status === 'REJECTED'
+                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
                 }`}
               >
                 {application.status}
@@ -1257,7 +1380,8 @@ export default function SellerApplicationPage() {
 
             <nav aria-label="Registration Steps" className="space-y-1">
               {STEPS.map((step, idx) => {
-                const isCompleted = step.id < currentStep || (step.id === 6 && application?.status === 'SUBMITTED');
+                const isCompleted =
+                  step.id < currentStep || (step.id === 6 && application?.status === 'SUBMITTED');
                 const isCurrent = step.id === currentStep;
 
                 return (
@@ -1265,7 +1389,7 @@ export default function SellerApplicationPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (isEditable && (step.id < currentStep)) {
+                        if (isEditable && step.id < currentStep) {
                           if (validateStep(currentStep)) setCurrentStep(step.id);
                         }
                       }}
@@ -1273,8 +1397,8 @@ export default function SellerApplicationPage() {
                         isCurrent
                           ? 'bg-orange-50/80 border border-orange-200 text-slate-900 shadow-xs'
                           : isCompleted
-                          ? 'hover:bg-slate-50 text-slate-700'
-                          : 'text-slate-400 hover:text-slate-600'
+                            ? 'hover:bg-slate-50 text-slate-700'
+                            : 'text-slate-400 hover:text-slate-600'
                       } ${!isEditable ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <div
@@ -1282,8 +1406,8 @@ export default function SellerApplicationPage() {
                           isCompleted
                             ? 'bg-emerald-500 text-white'
                             : isCurrent
-                            ? 'bg-[#FF6A00] text-white shadow-xs'
-                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                              ? 'bg-[#FF6A00] text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-500 border border-slate-200'
                         }`}
                       >
                         {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.id}
@@ -1292,7 +1416,11 @@ export default function SellerApplicationPage() {
                       <div className="min-w-0 flex-1">
                         <div
                           className={`text-xs font-bold truncate leading-tight ${
-                            isCurrent ? 'text-slate-950 font-black' : isCompleted ? 'text-slate-800' : 'text-slate-500'
+                            isCurrent
+                              ? 'text-slate-950 font-black'
+                              : isCompleted
+                                ? 'text-slate-800'
+                                : 'text-slate-500'
                           }`}
                         >
                           {step.title}
@@ -1302,7 +1430,9 @@ export default function SellerApplicationPage() {
                         </div>
                       </div>
 
-                      {isCurrent && <ChevronRight className="w-3.5 h-3.5 text-[#FF6A00] shrink-0" />}
+                      {isCurrent && (
+                        <ChevronRight className="w-3.5 h-3.5 text-[#FF6A00] shrink-0" />
+                      )}
                     </button>
 
                     {idx < STEPS.length - 1 && (
@@ -1329,18 +1459,25 @@ export default function SellerApplicationPage() {
                     <div className="border-b border-slate-100 pb-4">
                       <div className="flex items-center space-x-2">
                         <User className="w-5 h-5 text-[#FF6A00]" />
-                        <h2 className="text-lg font-black text-slate-900">Step 1: Seller Account Credentials</h2>
+                        <h2 className="text-lg font-black text-slate-900">
+                          Step 1: Seller Account Credentials
+                        </h2>
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
-                        Enter your personal details and verify your mobile number and email address to begin onboarding.
+                        Enter your personal details and verify your mobile number and email address
+                        to begin onboarding.
                       </p>
                     </div>
 
                     {/* Account Status Badge if authenticated */}
                     {user && (
                       <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
-                        <span className="font-semibold">Logged in as {user.name || user.email}</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Verified Session</span>
+                        <span className="font-semibold">
+                          Logged in as {user.name || user.email}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          Verified Session
+                        </span>
                       </div>
                     )}
 
@@ -1403,7 +1540,9 @@ export default function SellerApplicationPage() {
                                 disabled={verificationBusy}
                                 className="px-3 py-1.5 rounded-lg bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                               >
-                                {verificationBusy && activeVerifyModal === 'phone' ? 'Sending...' : 'Verify'}
+                                {verificationBusy && activeVerifyModal === 'phone'
+                                  ? 'Sending...'
+                                  : 'Verify'}
                               </button>
                             ) : null}
                           </div>
@@ -1448,7 +1587,9 @@ export default function SellerApplicationPage() {
                                 disabled={verificationBusy}
                                 className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                               >
-                                {verificationBusy && activeVerifyModal === 'email' ? 'Sending...' : 'Verify'}
+                                {verificationBusy && activeVerifyModal === 'email'
+                                  ? 'Sending...'
+                                  : 'Verify'}
                               </button>
                             ) : null}
                           </div>
@@ -1521,24 +1662,44 @@ export default function SellerApplicationPage() {
                                 Password Requirements &amp; Format
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-medium text-slate-600">
-                                <div className={`flex items-center space-x-1.5 ${form.password.length >= 8 ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
-                                  <Check className={`w-3.5 h-3.5 ${form.password.length >= 8 ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                <div
+                                  className={`flex items-center space-x-1.5 ${form.password.length >= 8 ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}
+                                >
+                                  <Check
+                                    className={`w-3.5 h-3.5 ${form.password.length >= 8 ? 'text-emerald-600' : 'text-slate-300'}`}
+                                  />
                                   <span>Minimum 8 characters</span>
                                 </div>
-                                <div className={`flex items-center space-x-1.5 ${/[A-Z]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
-                                  <Check className={`w-3.5 h-3.5 ${/[A-Z]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                <div
+                                  className={`flex items-center space-x-1.5 ${/[A-Z]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}
+                                >
+                                  <Check
+                                    className={`w-3.5 h-3.5 ${/[A-Z]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`}
+                                  />
                                   <span>Uppercase letter (A-Z)</span>
                                 </div>
-                                <div className={`flex items-center space-x-1.5 ${/[a-z]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
-                                  <Check className={`w-3.5 h-3.5 ${/[a-z]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                <div
+                                  className={`flex items-center space-x-1.5 ${/[a-z]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}
+                                >
+                                  <Check
+                                    className={`w-3.5 h-3.5 ${/[a-z]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`}
+                                  />
                                   <span>Lowercase letter (a-z)</span>
                                 </div>
-                                <div className={`flex items-center space-x-1.5 ${/\d/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
-                                  <Check className={`w-3.5 h-3.5 ${/\d/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                <div
+                                  className={`flex items-center space-x-1.5 ${/\d/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}
+                                >
+                                  <Check
+                                    className={`w-3.5 h-3.5 ${/\d/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`}
+                                  />
                                   <span>Numeric digit (0-9)</span>
                                 </div>
-                                <div className={`flex items-center space-x-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}>
-                                  <Check className={`w-3.5 h-3.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                <div
+                                  className={`flex items-center space-x-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password) ? 'text-emerald-700 font-bold' : 'text-slate-500'}`}
+                                >
+                                  <Check
+                                    className={`w-3.5 h-3.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password) ? 'text-emerald-600' : 'text-slate-300'}`}
+                                  />
                                   <span>Special symbol (!@#$%...)</span>
                                 </div>
                               </div>
@@ -1551,857 +1712,996 @@ export default function SellerApplicationPage() {
                     <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-amber-900 text-xs flex items-start space-x-2.5">
                       <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                       <p className="leading-relaxed">
-                        Verify your mobile number and email address using the inline <strong>Verify</strong> buttons. You can verify either one first. Once verified, click Next Step to proceed to Store Identity.
+                        Verify your mobile number and email address using the inline{' '}
+                        <strong>Verify</strong> buttons. You can verify either one first. Once
+                        verified, click Next Step to proceed to Store Identity.
                       </p>
                     </div>
                   </div>
                 )}
 
-              {/* STEP 2: STORE IDENTITY */}
-              {currentStep === 2 && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  <div className="border-b border-slate-100 pb-4">
-                    <div className="flex items-center space-x-2">
-                      <Store className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 2: Store Identity &amp; Branding</h2>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Choose your business entity, registered store name, and public AlifWorld handle.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-2">Merchant Business Entity Type *</label>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {[
-                        { type: 'PROPRIETORSHIP', title: 'Proprietorship', desc: 'Individual sole trader with Trade License', icon: User },
-                        { type: 'CORPORATE', title: 'Private Limited / Ltd', desc: 'Corporate business with BIN & TIN', icon: Building2 },
-                        { type: 'BRAND_DISTRIBUTOR', title: 'Brand / Distributor', desc: 'Official brand flagship store', icon: Award },
-                      ].map((item) => {
-                        const ItemIcon = item.icon;
-                        const isSelected = form.merchantType === item.type;
-                        return (
-                          <button key={item.type} type="button" disabled={!isEditable || saving} onClick={() => setForm((prev) => ({ ...prev, merchantType: item.type as FormState['merchantType'] }))} className={`p-3.5 rounded-2xl border text-left transition-all ${isSelected ? 'border-[#FF6A00] bg-orange-50/60 ring-2 ring-orange-500/20' : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'}`}>
-                            <div className="flex items-center justify-between mb-1.5"><ItemIcon className={`w-5 h-5 ${isSelected ? 'text-[#FF6A00]' : 'text-slate-400'}`} />{isSelected && <CheckCircle2 className="w-4 h-4 text-[#FF6A00]" />}</div>
-                            <div className="text-xs font-bold text-slate-900">{item.title}</div>
-                            <div className="text-[10px] text-slate-500 mt-0.5">{item.desc}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <label className="sm:col-span-2 block text-xs font-bold text-slate-700">Registered Business / Store Name *
-                      <input type="text" disabled={!isEditable || saving} value={form.businessName} onChange={(e) => handleNameChange(e.target.value)} placeholder="e.g. Biswas Stores" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-[#FF6A00]" />
-                    </label>
-                    <label className="sm:col-span-2 block text-xs font-bold text-slate-700">Store Handle / URL Slug *
-                      <div className="mt-1.5 flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50 focus-within:border-[#FF6A00]">
-                        <span className="flex items-center border-r border-slate-200 bg-slate-100 px-3.5 text-xs font-mono text-slate-500">{domainDisplay}/stores/</span>
-                        <input type="text" disabled={!isEditable || saving} value={form.slug} onChange={(e) => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-'))} placeholder="biswas-stores" className="w-full bg-transparent px-3.5 py-2.5 text-sm font-mono outline-none" />
+                {/* STEP 2: STORE IDENTITY */}
+                {currentStep === 2 && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center space-x-2">
+                        <Store className="w-5 h-5 text-[#FF6A00]" />
+                        <h2 className="text-lg font-black text-slate-900">
+                          Step 2: Store Identity &amp; Branding
+                        </h2>
                       </div>
-                      <span className="mt-1.5 block text-[11px] font-normal text-slate-500">Your unique storefront handle. Customers can visit your storefront directly via this link.</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3: DOCUMENT VERIFICATION */}
-              {currentStep === 3 && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  <div className="border-b border-slate-100 pb-4">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 3: Document Verification &amp; Compliance</h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Choose your business entity, registered store name, and public AlifWorld
+                        handle.
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">Provide statutory business compliance identifiers and registration details.</p>
-                  </div>
 
-                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 text-xs space-y-1.5">
-                    <div className="font-bold flex items-center space-x-1.5 text-amber-900">
-                      <Info className="w-4 h-4 text-amber-700 shrink-0" />
-                      <span>Document Verification &amp; Statutory Guidance</span>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-2">
+                        Merchant Business Entity Type *
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {[
+                          {
+                            type: 'PROPRIETORSHIP',
+                            title: 'Proprietorship',
+                            desc: 'Individual sole trader with Trade License',
+                            icon: User,
+                          },
+                          {
+                            type: 'CORPORATE',
+                            title: 'Private Limited / Ltd',
+                            desc: 'Corporate business with BIN & TIN',
+                            icon: Building2,
+                          },
+                          {
+                            type: 'BRAND_DISTRIBUTOR',
+                            title: 'Brand / Distributor',
+                            desc: 'Official brand flagship store',
+                            icon: Award,
+                          },
+                        ].map((item) => {
+                          const ItemIcon = item.icon;
+                          const isSelected = form.merchantType === item.type;
+                          return (
+                            <button
+                              key={item.type}
+                              type="button"
+                              disabled={!isEditable || saving}
+                              onClick={() =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  merchantType: item.type as FormState['merchantType'],
+                                }))
+                              }
+                              className={`p-3.5 rounded-2xl border text-left transition-all ${isSelected ? 'border-[#FF6A00] bg-orange-50/60 ring-2 ring-orange-500/20' : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'}`}
+                            >
+                              <div className="flex items-center justify-between mb-1.5">
+                                <ItemIcon
+                                  className={`w-5 h-5 ${isSelected ? 'text-[#FF6A00]' : 'text-slate-400'}`}
+                                />
+                                {isSelected && <CheckCircle2 className="w-4 h-4 text-[#FF6A00]" />}
+                              </div>
+                              <div className="text-xs font-bold text-slate-900">{item.title}</div>
+                              <div className="text-[10px] text-slate-500 mt-0.5">{item.desc}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <p className="leading-relaxed text-slate-700 font-medium">
-                      Under National Board of Revenue and Bangladesh Commerce Ministry guidelines, marketplace vendors must provide valid business registration identifiers.
-                    </p>
-                  </div>
 
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    {complianceFields.map((field) => {
-                      const val = (field.id in form ? (form as any)[field.id] : (customComplianceValues[field.id] || '')).trim();
-                      const hasError = Boolean(fieldErrors[field.id]);
-                      const isRegexValid = field.regex ? (val.length > 0 && (() => { try { return new RegExp(field.regex).test(val); } catch { return true; } })()) : (val.length > 0);
-
-                      return (
-                        <div key={field.id} className={`space-y-2.5 ${field.type === 'FILE' ? 'sm:col-span-2' : ''}`}>
-                          <div className="flex items-center justify-between">
-                            <label className="block text-xs font-bold text-slate-900">
-                              {field.name} {field.required ? '*' : '(Optional)'}
-                            </label>
-                            {field.required ? (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 uppercase">
-                                Mandatory *
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
-                                Optional
-                              </span>
-                            )}
-                          </div>
-
-                          {field.type === 'FILE' ? (
-                            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="font-semibold text-slate-700">{field.hint || 'Upload compliance document'}</span>
-                                <span className="text-[11px] font-mono text-slate-500 font-bold">
-                                  Allowed: {field.allowedExtensions || '.pdf,.jpg,.png'}
-                                </span>
-                              </div>
-
-                              <input
-                                type="file"
-                                disabled={!isEditable || saving}
-                                accept={field.allowedExtensions || '.pdf,.jpg,.png'}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] || null;
-                                  if (file) handleKycFileSelect(field.id, field, file);
-                                }}
-                                className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FF6A00] file:text-white hover:file:bg-[#E55F00] cursor-pointer"
-                              />
-
-                              {kycFileStates[field.id]?.fileName && (
-                                <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
-                                  <span className="font-mono text-slate-800 font-bold truncate">
-                                    {kycFileStates[field.id].fileName} ({kycFileStates[field.id].fileSizeStr})
-                                  </span>
-                                  {kycFileStates[field.id].status === 'UPLOADED' ? (
-                                    <span className="inline-flex items-center space-x-1 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                      <span>Uploaded</span>
-                                    </span>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => void handleUploadKycDocument(field.id)}
-                                      disabled={kycFileStates[field.id].status === 'UPLOADING'}
-                                      className="px-3 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-black transition-colors"
-                                    >
-                                      {kycFileStates[field.id].status === 'UPLOADING' ? 'Uploading...' : 'Upload'}
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-
-                              {kycFileStates[field.id]?.errorMessage && (
-                                <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
-                                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                  <span>{kycFileStates[field.id].errorMessage}</span>
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <input
-                                type={field.type === 'NUMBER' ? 'text' : 'text'}
-                                disabled={!isEditable || saving}
-                                value={val}
-                                onChange={(e) => handleComplianceChange(field.id, e.target.value, field)}
-                                placeholder={field.hint || `Enter ${field.name}`}
-                                className={`w-full px-3.5 py-2.5 rounded-xl border font-mono text-sm outline-none transition-all disabled:bg-slate-100 ${
-                                  hasError
-                                    ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20 text-rose-950'
-                                    : val && isRegexValid
-                                    ? 'border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 bg-emerald-50/20 text-slate-900'
-                                    : 'border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 text-slate-900'
-                                }`}
-                              />
-
-                              {/* Real-time Input Requirements Guidance Box */}
-                              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 animate-in fade-in">
-                                <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between">
-                                  <span>Field Format &amp; Requirements</span>
-                                  {val.length > 0 && isRegexValid ? (
-                                    <span className="text-emerald-700 font-bold flex items-center space-x-1">
-                                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                                      <span>Format Valid</span>
-                                    </span>
-                                  ) : field.required && !val ? (
-                                    <span className="text-rose-600 font-bold flex items-center space-x-1">
-                                      <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                                      <span>Mandatory Field</span>
-                                    </span>
-                                  ) : val.length > 0 && !isRegexValid ? (
-                                    <span className="text-rose-600 font-bold flex items-center space-x-1">
-                                      <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
-                                      <span>Invalid Format</span>
-                                    </span>
-                                  ) : null}
-                                </div>
-
-                                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                                  {field.hint || `Enter a valid ${field.name}`}
-                                </p>
-
-                                {field.regex && (
-                                  <div className="text-[10px] font-mono text-slate-500 bg-white p-1.5 rounded-lg border border-slate-200 truncate">
-                                    Pattern: <code className="text-amber-800 font-bold">{field.regex}</code>
-                                  </div>
-                                )}
-                              </div>
-
-                              {hasError && (
-                                <p className="mt-1 text-xs text-rose-600 font-semibold flex items-center gap-1 animate-in fade-in">
-                                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                  <span>{fieldErrors[field.id]}</span>
-                                </p>
-                              )}
-                            </div>
-                          )}
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <label className="sm:col-span-2 block text-xs font-bold text-slate-700">
+                        Registered Business / Store Name *
+                        <input
+                          type="text"
+                          disabled={!isEditable || saving}
+                          value={form.businessName}
+                          onChange={(e) => handleNameChange(e.target.value)}
+                          placeholder="e.g. Biswas Stores"
+                          className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-[#FF6A00]"
+                        />
+                      </label>
+                      <label className="sm:col-span-2 block text-xs font-bold text-slate-700">
+                        Store Handle / URL Slug *
+                        <div className="mt-1.5 flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50/50 focus-within:border-[#FF6A00]">
+                          <span className="flex items-center border-r border-slate-200 bg-slate-100 px-3.5 text-xs font-mono text-slate-500">
+                            {domainDisplay}/stores/
+                          </span>
+                          <input
+                            type="text"
+                            disabled={!isEditable || saving}
+                            value={form.slug}
+                            onChange={(e) =>
+                              setField(
+                                'slug',
+                                e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-')
+                              )
+                            }
+                            placeholder="biswas-stores"
+                            className="w-full bg-transparent px-3.5 py-2.5 text-sm font-mono outline-none"
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 4: LOGISTICS LOCATION */}
-              {currentStep === 4 && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  <div className="border-b border-slate-100 pb-4">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 4: Warehouse &amp; Logistics Address</h2>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Configure pickup location for courier logistics (Pathao, RedX, Steadfast).
-                    </p>
-                  </div>
-
-                  <div className="grid gap-5 sm:grid-cols-3">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Division *
+                        <span className="mt-1.5 block text-[11px] font-normal text-slate-500">
+                          Your unique storefront handle. Customers can visit your storefront
+                          directly via this link.
+                        </span>
                       </label>
-                      <select
-                        disabled={!isEditable || saving}
-                        value={form.divisionId}
-                        onChange={(e) => setField('divisionId', e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#FF6A00]"
-                      >
-                        {BANGLADESH_DIVISIONS.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {locale === 'bn' ? d.nameBn : d.nameEn} ({d.code})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        District *
-                      </label>
-                      <select
-                        disabled={!isEditable || saving}
-                        value={form.districtId}
-                        onChange={(e) => setField('districtId', e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#FF6A00]"
-                      >
-                        {availableDistricts.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {locale === 'bn' ? d.nameBn : d.nameEn}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Upazila / Thana *
-                      </label>
-                      <select
-                        disabled={!isEditable || saving}
-                        value={form.upazilaId}
-                        onChange={(e) => setField('upazilaId', e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#FF6A00]"
-                      >
-                        {availableUpazilas.length > 0 ? (
-                          availableUpazilas.map((u) => (
-                            <option key={u.id} value={u.id}>
-                              {locale === 'bn' ? u.nameBn : u.nameEn}
-                            </option>
-                          ))
-                        ) : (
-                          <option value="central">Central Commercial Thana</option>
-                        )}
-                      </select>
-                    </div>
-
-                    <div className="sm:col-span-3">
-                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                        Warehouse Street Address &amp; Building Details *
-                      </label>
-                      <textarea
-                        rows={3}
-                        disabled={!isEditable || saving}
-                        value={form.streetAddress}
-                        onChange={(e) => setField('streetAddress', e.target.value)}
-                        placeholder="e.g. House 42, Road 11, Block D, Dhanmondi, Dhaka 1205"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
-                      />
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* STEP 5: MERCHANT KYC CHECKLIST & DIRECT FILE UPLOAD */}
-              {currentStep === 5 && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  <div className="border-b border-slate-100 pb-4">
-                    <div className="flex items-center space-x-2">
-                      <ShieldCheck className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 5: Merchant KYC Verification Dossier</h2>
+                {/* STEP 3: DOCUMENT VERIFICATION */}
+                {currentStep === 3 && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-5 h-5 text-[#FF6A00]" />
+                        <h2 className="text-lg font-black text-slate-900">
+                          Step 3: Document Verification &amp; Compliance
+                        </h2>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Provide statutory business compliance identifiers and registration details.
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Upload mandatory legal identity documents directly below for compliance verification.
-                    </p>
-                  </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {kycDocConfigs.map((doc) => {
-                      const fileState = kycFileStates[doc.id] || { file: null, status: 'IDLE' };
-                      const minKb = doc.minSizeKb ?? 10;
-                      const maxKb = doc.maxSizeKb ?? 10240;
-                      const hasDocError = Boolean(fieldErrors[doc.id]);
+                    <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-950 text-xs space-y-1.5">
+                      <div className="font-bold flex items-center space-x-1.5 text-amber-900">
+                        <Info className="w-4 h-4 text-amber-700 shrink-0" />
+                        <span>Document Verification &amp; Statutory Guidance</span>
+                      </div>
+                      <p className="leading-relaxed text-slate-700 font-medium">
+                        Under National Board of Revenue and Bangladesh Commerce Ministry guidelines,
+                        marketplace vendors must provide valid business registration identifiers.
+                      </p>
+                    </div>
 
-                      return (
-                        <div
-                          key={doc.id}
-                          className={`p-4.5 rounded-2xl border space-y-3 flex flex-col justify-between transition-all ${
-                            hasDocError
-                              ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200'
-                              : 'border-slate-200 bg-slate-50/60'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="text-xs font-bold text-slate-900">{doc.name}</h4>
-                              {doc.required ? (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {complianceFields.map((field) => {
+                        const val = (
+                          field.id in form
+                            ? (form as any)[field.id]
+                            : customComplianceValues[field.id] || ''
+                        ).trim();
+                        const hasError = Boolean(fieldErrors[field.id]);
+                        const isRegexValid = field.regex
+                          ? val.length > 0 &&
+                            (() => {
+                              try {
+                                return new RegExp(field.regex).test(val);
+                              } catch {
+                                return true;
+                              }
+                            })()
+                          : val.length > 0;
+
+                        return (
+                          <div
+                            key={field.id}
+                            className={`space-y-2.5 ${field.type === 'FILE' ? 'sm:col-span-2' : ''}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <label className="block text-xs font-bold text-slate-900">
+                                {field.name} {field.required ? '*' : '(Optional)'}
+                              </label>
+                              {field.required ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 uppercase">
                                   Mandatory *
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-200 text-slate-600 uppercase">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
                                   Optional
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-500">{doc.hint || 'Upload document file'}</p>
-                            <div className="flex items-center space-x-2 mt-2 text-[10px] font-mono text-slate-600">
-                              <span className="bg-slate-200/80 px-1.5 py-0.5 rounded font-bold">{doc.allowedExtensions}</span>
-                              <span>•</span>
-                              <span>Min {minKb} KB - Max {Math.round(maxKb / 1024)} MB</span>
-                            </div>
-                          </div>
 
-                          <div className="space-y-2 pt-2 border-t border-slate-200/60">
-                            {/* Inline File Input Picker */}
-                            <input
-                              type="file"
-                              disabled={!isEditable || saving}
-                              accept={doc.allowedExtensions}
-                              onChange={(e) => {
-                                const selected = e.target.files?.[0] || null;
-                                handleKycFileSelect(doc.id, doc, selected);
-                                clearFieldError(doc.id);
-                              }}
-                              className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-black cursor-pointer"
-                            />
+                            {field.type === 'FILE' ? (
+                              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-semibold text-slate-700">
+                                    {field.hint || 'Upload compliance document'}
+                                  </span>
+                                  <span className="text-[11px] font-mono text-slate-500 font-bold">
+                                    Allowed: {field.allowedExtensions || '.pdf,.jpg,.png'}
+                                  </span>
+                                </div>
 
-                            {/* File Info Bar */}
-                            {fileState.fileName && (
-                              <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
-                                <span className="font-mono text-slate-800 font-bold truncate max-w-[170px]">
-                                  {fileState.fileName}
-                                </span>
-                                <span className="text-[11px] text-slate-500 font-mono font-semibold">
-                                  {fileState.fileSizeStr}
-                                </span>
+                                <input
+                                  type="file"
+                                  disabled={!isEditable || saving}
+                                  accept={field.allowedExtensions || '.pdf,.jpg,.png'}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    if (file) handleKycFileSelect(field.id, field, file);
+                                  }}
+                                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#FF6A00] file:text-white hover:file:bg-[#E55F00] cursor-pointer"
+                                />
+
+                                {kycFileStates[field.id]?.fileName && (
+                                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200 text-xs">
+                                    <span className="font-mono text-slate-800 font-bold truncate">
+                                      {kycFileStates[field.id].fileName} (
+                                      {kycFileStates[field.id].fileSizeStr})
+                                    </span>
+                                    {kycFileStates[field.id].status === 'UPLOADED' ? (
+                                      <span className="inline-flex items-center space-x-1 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>Uploaded</span>
+                                      </span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleUploadKycDocument(field.id)}
+                                        disabled={kycFileStates[field.id].status === 'UPLOADING'}
+                                        className="px-3 py-1 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-black transition-colors"
+                                      >
+                                        {kycFileStates[field.id].status === 'UPLOADING'
+                                          ? 'Uploading...'
+                                          : 'Upload'}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+
+                                {kycFileStates[field.id]?.errorMessage && (
+                                  <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+                                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    <span>{kycFileStates[field.id].errorMessage}</span>
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <input
+                                  type={field.type === 'NUMBER' ? 'text' : 'text'}
+                                  disabled={!isEditable || saving}
+                                  value={val}
+                                  onChange={(e) =>
+                                    handleComplianceChange(field.id, e.target.value, field)
+                                  }
+                                  placeholder={field.hint || `Enter ${field.name}`}
+                                  className={`w-full px-3.5 py-2.5 rounded-xl border font-mono text-sm outline-none transition-all disabled:bg-slate-100 ${
+                                    hasError
+                                      ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 bg-rose-50/20 text-rose-950'
+                                      : val && isRegexValid
+                                        ? 'border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 bg-emerald-50/20 text-slate-900'
+                                        : 'border-slate-200 bg-slate-50/50 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 text-slate-900'
+                                  }`}
+                                />
+
+                                {/* Real-time Input Requirements Guidance Box */}
+                                <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5 animate-in fade-in">
+                                  <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between">
+                                    <span>Field Format &amp; Requirements</span>
+                                    {val.length > 0 && isRegexValid ? (
+                                      <span className="text-emerald-700 font-bold flex items-center space-x-1">
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>Format Valid</span>
+                                      </span>
+                                    ) : field.required && !val ? (
+                                      <span className="text-rose-600 font-bold flex items-center space-x-1">
+                                        <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                                        <span>Mandatory Field</span>
+                                      </span>
+                                    ) : val.length > 0 && !isRegexValid ? (
+                                      <span className="text-rose-600 font-bold flex items-center space-x-1">
+                                        <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                                        <span>Invalid Format</span>
+                                      </span>
+                                    ) : null}
+                                  </div>
+
+                                  <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                                    {field.hint || `Enter a valid ${field.name}`}
+                                  </p>
+
+                                  {field.regex && (
+                                    <div className="text-[10px] font-mono text-slate-500 bg-white p-1.5 rounded-lg border border-slate-200 truncate">
+                                      Pattern:{' '}
+                                      <code className="text-amber-800 font-bold">
+                                        {field.regex}
+                                      </code>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {hasError && (
+                                  <p className="mt-1 text-xs text-rose-600 font-semibold flex items-center gap-1 animate-in fade-in">
+                                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    <span>{fieldErrors[field.id]}</span>
+                                  </p>
+                                )}
                               </div>
                             )}
-
-                            {/* Status Badges / Action Button */}
-                            <div className="flex items-center justify-between">
-                              {fileState.status === 'UPLOADED' ? (
-                                <span className="inline-flex items-center space-x-1 text-emerald-700 font-bold text-xs bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Uploaded &amp; Encrypted</span>
-                                </span>
-                              ) : fileState.status === 'SELECTED' ? (
-                                <button
-                                  type="button"
-                                  onClick={() => void handleUploadKycDocument(doc.id)}
-                                  className="px-3.5 py-1.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold transition-colors shadow-xs inline-flex items-center space-x-1 cursor-pointer"
-                                >
-                                  <Upload className="w-3.5 h-3.5" />
-                                  <span>Upload Document</span>
-                                </button>
-                              ) : fileState.status === 'UPLOADING' ? (
-                                <span className="inline-flex items-center space-x-1.5 text-amber-800 font-bold text-xs bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                                  <span>Uploading to S3...</span>
-                                </span>
-                              ) : null}
-                            </div>
-
-                            {/* Error Message */}
-                            {(fileState.errorMessage || hasDocError) && (
-                              <p className="text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
-                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                                <span>{fileState.errorMessage || fieldErrors[doc.id]}</span>
-                              </p>
-                            )}
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
+                )}
 
-                  <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/80 text-blue-950 text-xs flex items-start space-x-2.5">
-                    <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold">Secure Object Storage Guarantee</span>
-                      <p className="mt-0.5 text-slate-700 leading-relaxed font-medium">
-                        All uploaded KYC dossiers are encrypted in S3-compatible private object storage and accessible only by authorized compliance administrators.
+                {/* STEP 4: LOGISTICS LOCATION */}
+                {currentStep === 4 && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-5 h-5 text-[#FF6A00]" />
+                        <h2 className="text-lg font-black text-slate-900">
+                          Step 4: Warehouse &amp; Logistics Address
+                        </h2>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Configure pickup location for courier logistics (Pathao, RedX, Steadfast).
                       </p>
                     </div>
+
+                    <div className="grid gap-5 sm:grid-cols-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                          Division *
+                        </label>
+                        <select
+                          disabled={!isEditable || saving}
+                          value={form.divisionId}
+                          onChange={(e) => setField('divisionId', e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#FF6A00]"
+                        >
+                          {BANGLADESH_DIVISIONS.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {locale === 'bn' ? d.nameBn : d.nameEn} ({d.code})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                          District *
+                        </label>
+                        <select
+                          disabled={!isEditable || saving}
+                          value={form.districtId}
+                          onChange={(e) => setField('districtId', e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#FF6A00]"
+                        >
+                          {availableDistricts.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {locale === 'bn' ? d.nameBn : d.nameEn}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                          Upazila / Thana *
+                        </label>
+                        <select
+                          disabled={!isEditable || saving}
+                          value={form.upazilaId}
+                          onChange={(e) => setField('upazilaId', e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 outline-none focus:bg-white focus:border-[#FF6A00]"
+                        >
+                          {availableUpazilas.length > 0 ? (
+                            availableUpazilas.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {locale === 'bn' ? u.nameBn : u.nameEn}
+                              </option>
+                            ))
+                          ) : (
+                            <option value="central">Central Commercial Thana</option>
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                          Warehouse Street Address &amp; Building Details *
+                        </label>
+                        <textarea
+                          rows={3}
+                          disabled={!isEditable || saving}
+                          value={form.streetAddress}
+                          onChange={(e) => setField('streetAddress', e.target.value)}
+                          placeholder="e.g. House 42, Road 11, Block D, Dhanmondi, Dhaka 1205"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none transition-all disabled:bg-slate-100"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* STEP 6: REVIEW & SUBMIT */}
-              {currentStep === 6 && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  <div className="border-b border-slate-100 pb-4">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle2 className="w-5 h-5 text-[#FF6A00]" />
-                      <h2 className="text-lg font-black text-slate-900">Step 6: Review &amp; Submit Application</h2>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Verify your business information before submitting to the platform compliance team.
-                    </p>
-                  </div>
-
-                  {/* Summary Cards Grid (4 Cards) */}
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {/* Card 1: Store Identity */}
-                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
-                          <Store className="w-4 h-4 text-[#FF6A00]" />
-                          <span>Store Identity</span>
-                        </span>
-                        {isEditable && (
-                          <button
-                            type="button"
-                            onClick={() => setCurrentStep(2)}
-                            className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit</span>
-                          </button>
-                        )}
+                {/* STEP 5: MERCHANT KYC CHECKLIST & DIRECT FILE UPLOAD */}
+                {currentStep === 5 && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center space-x-2">
+                        <ShieldCheck className="w-5 h-5 text-[#FF6A00]" />
+                        <h2 className="text-lg font-black text-slate-900">
+                          Step 5: Merchant KYC Verification Dossier
+                        </h2>
                       </div>
-                      <div className="text-xs space-y-1">
-                        <div>
-                          <span className="text-slate-500">Business Name: </span>
-                          <span className="font-bold text-slate-900">{form.businessName || 'Not specified'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">Merchant Type: </span>
-                          <span className="font-semibold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px]">
-                            {form.merchantType || 'PROPRIETORSHIP'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">Handle / Slug: </span>
-                          <span className="font-mono font-semibold text-slate-900">{domainDisplay}/stores/{form.slug || 'slug'}</span>
-                        </div>
-                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Upload mandatory legal identity documents directly below for compliance
+                        verification.
+                      </p>
                     </div>
 
-                    {/* Card 2: Document Verification */}
-                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
-                          <FileText className="w-4 h-4 text-[#FF6A00]" />
-                          <span>Document Verification</span>
-                        </span>
-                        {isEditable && (
-                          <button
-                            type="button"
-                            onClick={() => setCurrentStep(3)}
-                            className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {kycDocConfigs.map((doc) => {
+                        const fileState = kycFileStates[doc.id] || { file: null, status: 'IDLE' };
+                        const minKb = doc.minSizeKb ?? 10;
+                        const maxKb = doc.maxSizeKb ?? 10240;
+                        const hasDocError = Boolean(fieldErrors[doc.id]);
+
+                        return (
+                          <div
+                            key={doc.id}
+                            className={`p-4.5 rounded-2xl border space-y-3 flex flex-col justify-between transition-all ${
+                              hasDocError
+                                ? 'border-rose-400 bg-rose-50/20 ring-2 ring-rose-200'
+                                : 'border-slate-200 bg-slate-50/60'
+                            }`}
                           >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit</span>
-                          </button>
-                        )}
-                      </div>
-                      <div className="text-xs space-y-1 font-mono">
-                        <div>
-                          <span className="text-slate-500 font-sans">Trade License: </span>
-                          <span className="font-semibold text-slate-900">{form.tradeLicenseNumber || 'None'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 font-sans">BIN Number: </span>
-                          <span className="font-semibold text-slate-900">{form.binNumber || 'None'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 font-sans">e-TIN Number: </span>
-                          <span className="font-semibold text-slate-900">{form.tinNumber || 'None'}</span>
-                        </div>
-                      </div>
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="text-xs font-bold text-slate-900">{doc.name}</h4>
+                                {doc.required ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-rose-100 text-rose-800 uppercase">
+                                    Mandatory *
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-200 text-slate-600 uppercase">
+                                    Optional
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500">
+                                {doc.hint || 'Upload document file'}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-2 text-[10px] font-mono text-slate-600">
+                                <span className="bg-slate-200/80 px-1.5 py-0.5 rounded font-bold">
+                                  {doc.allowedExtensions}
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  Min {minKb} KB - Max {Math.round(maxKb / 1024)} MB
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t border-slate-200/60">
+                              {/* Inline File Input Picker */}
+                              <input
+                                type="file"
+                                disabled={!isEditable || saving}
+                                accept={doc.allowedExtensions}
+                                onChange={(e) => {
+                                  const selected = e.target.files?.[0] || null;
+                                  handleKycFileSelect(doc.id, doc, selected);
+                                  clearFieldError(doc.id);
+                                }}
+                                className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-black cursor-pointer"
+                              />
+
+                              {/* File Info Bar */}
+                              {fileState.fileName && (
+                                <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs">
+                                  <span className="font-mono text-slate-800 font-bold truncate max-w-[170px]">
+                                    {fileState.fileName}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 font-mono font-semibold">
+                                    {fileState.fileSizeStr}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Status Badges / Action Button */}
+                              <div className="flex items-center justify-between">
+                                {fileState.status === 'UPLOADED' ? (
+                                  <span className="inline-flex items-center space-x-1 text-emerald-700 font-bold text-xs bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Uploaded &amp; Encrypted</span>
+                                  </span>
+                                ) : fileState.status === 'SELECTED' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleUploadKycDocument(doc.id)}
+                                    className="px-3.5 py-1.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold transition-colors shadow-xs inline-flex items-center space-x-1 cursor-pointer"
+                                  >
+                                    <Upload className="w-3.5 h-3.5" />
+                                    <span>Upload Document</span>
+                                  </button>
+                                ) : fileState.status === 'UPLOADING' ? (
+                                  <span className="inline-flex items-center space-x-1.5 text-amber-800 font-bold text-xs bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                                    <span>Uploading to S3...</span>
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              {/* Error Message */}
+                              {(fileState.errorMessage || hasDocError) && (
+                                <p className="text-xs text-rose-600 font-medium flex items-center gap-1 animate-in fade-in">
+                                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                  <span>{fileState.errorMessage || fieldErrors[doc.id]}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Card 3: Logistics Hub */}
-                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
-                          <MapPin className="w-4 h-4 text-[#FF6A00]" />
-                          <span>Logistics &amp; Pickup Hub</span>
-                        </span>
-                        {isEditable && (
-                          <button
-                            type="button"
-                            onClick={() => setCurrentStep(4)}
-                            className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit</span>
-                          </button>
-                        )}
-                      </div>
-                      <div className="text-xs space-y-1">
-                        <div>
-                          <span className="text-slate-500">Division / District: </span>
-                          <span className="font-bold text-slate-900">{selectedDivision.nameEn} / {selectedDistrict.nameEn}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">Upazila / Thana: </span>
-                          <span className="font-semibold text-slate-900">{selectedDistrict.id || 'Central Thana'}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500">Couriers: </span>
-                          <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">
-                            Pathao • RedX • Steadfast
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Card 4: KYC Verification Dossier */}
-                    <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                        <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
-                          <ShieldCheck className="w-4 h-4 text-[#FF6A00]" />
-                          <span>KYC Document Dossier</span>
-                        </span>
-                        {isEditable && (
-                          <button
-                            type="button"
-                            onClick={() => setCurrentStep(5)}
-                            className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Edit</span>
-                          </button>
-                        )}
-                      </div>
-                      <div className="text-xs space-y-1">
-                        <div className="flex items-center space-x-1.5 text-emerald-700 font-bold">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>
-                            {Object.values(kycFileStates).filter((s) => s.status === 'UPLOADED' || s.file).length} Documents Uploaded / Ready
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500">
-                          Encrypted in S3 object storage for compliance review.
+                    <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/80 text-blue-950 text-xs flex items-start space-x-2.5">
+                      <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">Secure Object Storage Guarantee</span>
+                        <p className="mt-0.5 text-slate-700 leading-relaxed font-medium">
+                          All uploaded KYC dossiers are encrypted in S3-compatible private object
+                          storage and accessible only by authorized compliance administrators.
                         </p>
                       </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Terms & Conditions Checkbox */}
-                  {isEditable && (
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-2">
-                      <label className="flex items-start space-x-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={agreedTerms}
-                          onChange={(e) => setAgreedTerms(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-[#FF6A00] focus:ring-orange-500"
-                        />
-                        <span className="text-xs text-slate-600 leading-relaxed font-medium">
-                          I certify that the information provided is accurate and compliant with National Board of Revenue (NBR) regulations and AlifWorld Merchant Network Policy.
-                        </span>
-                      </label>
+                {/* STEP 6: REVIEW & SUBMIT */}
+                {currentStep === 6 && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    <div className="border-b border-slate-100 pb-4">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle2 className="w-5 h-5 text-[#FF6A00]" />
+                        <h2 className="text-lg font-black text-slate-900">
+                          Step 6: Review &amp; Submit Application
+                        </h2>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Verify your business information before submitting to the platform
+                        compliance team.
+                      </p>
                     </div>
-                  )}
+
+                    {/* Summary Cards Grid (4 Cards) */}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {/* Card 1: Store Identity */}
+                      <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                            <Store className="w-4 h-4 text-[#FF6A00]" />
+                            <span>Store Identity</span>
+                          </span>
+                          {isEditable && (
+                            <button
+                              type="button"
+                              onClick={() => setCurrentStep(2)}
+                              className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs space-y-1">
+                          <div>
+                            <span className="text-slate-500">Business Name: </span>
+                            <span className="font-bold text-slate-900">
+                              {form.businessName || 'Not specified'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500">Merchant Type: </span>
+                            <span className="font-semibold text-amber-900 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px]">
+                              {form.merchantType || 'PROPRIETORSHIP'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500">Handle / Slug: </span>
+                            <span className="font-mono font-semibold text-slate-900">
+                              {domainDisplay}/stores/{form.slug || 'slug'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 2: Document Verification */}
+                      <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                            <FileText className="w-4 h-4 text-[#FF6A00]" />
+                            <span>Document Verification</span>
+                          </span>
+                          {isEditable && (
+                            <button
+                              type="button"
+                              onClick={() => setCurrentStep(3)}
+                              className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs space-y-1 font-mono">
+                          <div>
+                            <span className="text-slate-500 font-sans">Trade License: </span>
+                            <span className="font-semibold text-slate-900">
+                              {form.tradeLicenseNumber || 'None'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 font-sans">BIN Number: </span>
+                            <span className="font-semibold text-slate-900">
+                              {form.binNumber || 'None'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 font-sans">e-TIN Number: </span>
+                            <span className="font-semibold text-slate-900">
+                              {form.tinNumber || 'None'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 3: Logistics Hub */}
+                      <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                            <MapPin className="w-4 h-4 text-[#FF6A00]" />
+                            <span>Logistics &amp; Pickup Hub</span>
+                          </span>
+                          {isEditable && (
+                            <button
+                              type="button"
+                              onClick={() => setCurrentStep(4)}
+                              className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs space-y-1">
+                          <div>
+                            <span className="text-slate-500">Division / District: </span>
+                            <span className="font-bold text-slate-900">
+                              {selectedDivision.nameEn} / {selectedDistrict.nameEn}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500">Upazila / Thana: </span>
+                            <span className="font-semibold text-slate-900">
+                              {selectedDistrict.id || 'Central Thana'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500">Couriers: </span>
+                            <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px]">
+                              Pathao • RedX • Steadfast
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 4: KYC Verification Dossier */}
+                      <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                            <ShieldCheck className="w-4 h-4 text-[#FF6A00]" />
+                            <span>KYC Document Dossier</span>
+                          </span>
+                          {isEditable && (
+                            <button
+                              type="button"
+                              onClick={() => setCurrentStep(5)}
+                              className="text-xs font-bold text-[#FF6A00] hover:underline inline-flex items-center space-x-0.5 cursor-pointer"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs space-y-1">
+                          <div className="flex items-center space-x-1.5 text-emerald-700 font-bold">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>
+                              {
+                                Object.values(kycFileStates).filter(
+                                  (s) => s.status === 'UPLOADED' || s.file
+                                ).length
+                              }{' '}
+                              Documents Uploaded / Ready
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500">
+                            Encrypted in S3 object storage for compliance review.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Terms & Conditions Checkbox */}
+                    {isEditable && (
+                      <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-2">
+                        <label className="flex items-start space-x-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={agreedTerms}
+                            onChange={(e) => setAgreedTerms(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-[#FF6A00] focus:ring-orange-500"
+                          />
+                          <span className="text-xs text-slate-600 leading-relaxed font-medium">
+                            I certify that the information provided is accurate and compliant with
+                            National Board of Revenue (NBR) regulations and AlifWorld Merchant
+                            Network Policy.
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Stepper Navigation Buttons */}
+                <div className="mt-8 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    {currentStep > 1 && isEditable && (
+                      <button
+                        type="button"
+                        onClick={prevStep}
+                        className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all inline-flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Previous Step</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    {!isEditable && (
+                      <Link
+                        href="/seller/status"
+                        className="px-5 py-2.5 rounded-xl bg-orange-50 border border-orange-200 text-[#FF6A00] hover:bg-orange-100 text-xs font-bold transition-all inline-flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <Clock className="w-4 h-4 text-[#FF6A00]" />
+                        <span>Track Application Status</span>
+                      </Link>
+                    )}
+
+                    {isEditable && currentStep >= 2 && (
+                      <button
+                        type="button"
+                        disabled={saving || stepLoading}
+                        onClick={(e) => void saveDraft(e)}
+                        className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <Save className="w-4 h-4 text-slate-500" />
+                        <span>Save Draft</span>
+                      </button>
+                    )}
+
+                    {currentStep < 6
+                      ? isEditable && (
+                          <button
+                            type="button"
+                            onClick={nextStep}
+                            disabled={stepLoading || saving}
+                            className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all inline-flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            {stepLoading || saving ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Processing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Next Step</span>
+                                <ChevronRight className="w-4 h-4" />
+                              </>
+                            )}
+                          </button>
+                        )
+                      : isEditable && (
+                          <button
+                            type="button"
+                            disabled={saving || !agreedTerms}
+                            onClick={(e) => void submitApplication(e)}
+                            className="px-6 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/25 transition-all disabled:opacity-50 inline-flex items-center space-x-2 cursor-pointer"
+                          >
+                            {saving ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Submitting Application...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>Submit Application</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Phone OTP Verification Modal */}
+        {activeVerifyModal === 'phone' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#FF6A00] flex items-center justify-center">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-black text-slate-900">Verify Mobile Number</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveVerifyModal(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Enter the 6-digit numeric verification code sent to{' '}
+                <strong className="text-slate-800">{form.mobileNumber}</strong>.
+              </p>
+
+              {devPhoneOtp && (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono">
+                  Development OTP: <strong>{devPhoneOtp}</strong>
                 </div>
               )}
 
-              {/* Stepper Navigation Buttons */}
-              <div className="mt-8 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  {currentStep > 1 && isEditable && (
-                    <button
-                      type="button"
-                      onClick={prevStep}
-                      className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all inline-flex items-center space-x-1.5 cursor-pointer"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                      <span>Previous Step</span>
-                    </button>
-                  )}
+              {modalError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{modalError}</span>
                 </div>
+              )}
 
-                <div className="flex items-center space-x-3">
-                  {!isEditable && (
-                    <Link
-                      href="/seller/status"
-                      className="px-5 py-2.5 rounded-xl bg-orange-50 border border-orange-200 text-[#FF6A00] hover:bg-orange-100 text-xs font-bold transition-all inline-flex items-center space-x-1.5 cursor-pointer"
-                    >
-                      <Clock className="w-4 h-4 text-[#FF6A00]" />
-                      <span>Track Application Status</span>
-                    </Link>
-                  )}
+              <div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={phoneOtpInput}
+                  onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="••••••"
+                  className="w-full text-center font-mono text-2xl tracking-[0.35em] font-bold py-3 px-4 rounded-xl border border-slate-300 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                />
+              </div>
 
-                  {isEditable && currentStep >= 2 && (
-                    <button
-                      type="button"
-                      disabled={saving || stepLoading}
-                      onClick={(e) => void saveDraft(e)}
-                      className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-all disabled:opacity-50 inline-flex items-center space-x-1.5 cursor-pointer"
-                    >
-                      <Save className="w-4 h-4 text-slate-500" />
-                      <span>Save Draft</span>
-                    </button>
-                  )}
-
-                  {currentStep < 6 ? (
-                    isEditable && (
-                      <button
-                        type="button"
-                        onClick={nextStep}
-                        disabled={stepLoading || saving}
-                        className="px-5 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/20 transition-all inline-flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                      >
-                        {stepLoading || saving ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Next Step</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                    )
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitPhoneOtp()}
+                  disabled={verificationBusy || phoneOtpInput.length !== 6}
+                  className="w-full py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
+                >
+                  {verificationBusy ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    isEditable && (
-                      <button
-                        type="button"
-                        disabled={saving || !agreedTerms}
-                        onClick={(e) => void submitApplication(e)}
-                        className="px-6 py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-md shadow-orange-500/25 transition-all disabled:opacity-50 inline-flex items-center space-x-2 cursor-pointer"
-                      >
-                        {saving ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Submitting Application...</span>
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>Submit Application</span>
-                          </>
-                        )}
-                      </button>
-                    )
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                   )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Phone OTP Verification Modal */}
-      {activeVerifyModal === 'phone' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#FF6A00] flex items-center justify-center">
-                  <Smartphone className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-black text-slate-900">Verify Mobile Number</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveVerifyModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Enter the 6-digit numeric verification code sent to <strong className="text-slate-800">{form.mobileNumber}</strong>.
-            </p>
-
-            {devPhoneOtp && (
-              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono">
-                Development OTP: <strong>{devPhoneOtp}</strong>
-              </div>
-            )}
-
-            {modalError && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{modalError}</span>
-              </div>
-            )}
-
-            <div>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={phoneOtpInput}
-                onChange={(e) => setPhoneOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="••••••"
-                className="w-full text-center font-mono text-2xl tracking-[0.35em] font-bold py-3 px-4 rounded-xl border border-slate-300 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none"
-              />
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                type="button"
-                onClick={() => void handleSubmitPhoneOtp()}
-                disabled={verificationBusy || phoneOtpInput.length !== 6}
-                className="w-full py-2.5 rounded-xl bg-[#FF6A00] hover:bg-[#E55F00] text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
-              >
-                {verificationBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                <span>Submit OTP</span>
-              </button>
-
-              <div className="flex items-center justify-between text-xs pt-1">
-                <button
-                  type="button"
-                  onClick={() => void handleStartPhoneVerification()}
-                  disabled={verificationBusy}
-                  className="text-xs font-semibold text-[#FF6A00] hover:underline cursor-pointer"
-                >
-                  Resend Code
+                  <span>Submit OTP</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveVerifyModal(null)}
-                  className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
-                >
-                  Cancel
-                </button>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={() => void handleStartPhoneVerification()}
+                    disabled={verificationBusy}
+                    className="text-xs font-semibold text-[#FF6A00] hover:underline cursor-pointer"
+                  >
+                    Resend Code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveVerifyModal(null)}
+                    className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Email OTP Verification Modal */}
-      {activeVerifyModal === 'email' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center">
-                  <Mail className="w-4 h-4" />
+        {/* Email OTP Verification Modal */}
+        {activeVerifyModal === 'email' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-black text-slate-900">Verify Email Address</h3>
                 </div>
-                <h3 className="text-sm font-black text-slate-900">Verify Email Address</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveVerifyModal(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Enter the 6-digit verification code sent to <strong className="text-slate-800">{form.emailAddress}</strong>.
-            </p>
-
-            {devEmailOtp && (
-              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono">
-                Development OTP: <strong>{devEmailOtp}</strong>
-              </div>
-            )}
-
-            {modalError && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{modalError}</span>
-              </div>
-            )}
-
-            <div>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={emailOtpInput}
-                onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="••••••"
-                className="w-full text-center font-mono text-2xl tracking-[0.35em] font-bold py-3 px-4 rounded-xl border border-slate-300 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none"
-              />
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                type="button"
-                onClick={() => void handleSubmitEmailOtp()}
-                disabled={verificationBusy || emailOtpInput.length !== 6}
-                className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
-              >
-                {verificationBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                <span>Submit OTP</span>
-              </button>
-
-              <div className="flex items-center justify-between text-xs pt-1">
-                <button
-                  type="button"
-                  onClick={() => void handleStartEmailVerification()}
-                  disabled={verificationBusy}
-                  className="text-xs font-semibold text-slate-700 hover:text-black hover:underline cursor-pointer"
-                >
-                  Resend Code
-                </button>
                 <button
                   type="button"
                   onClick={() => setActiveVerifyModal(null)}
-                  className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
-                  Cancel
+                  <X className="w-4 h-4" />
                 </button>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Enter the 6-digit verification code sent to{' '}
+                <strong className="text-slate-800">{form.emailAddress}</strong>.
+              </p>
+
+              {devEmailOtp && (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono">
+                  Development OTP: <strong>{devEmailOtp}</strong>
+                </div>
+              )}
+
+              {modalError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
+              <div>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={emailOtpInput}
+                  onChange={(e) => setEmailOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="••••••"
+                  className="w-full text-center font-mono text-2xl tracking-[0.35em] font-bold py-3 px-4 rounded-xl border border-slate-300 focus:border-[#FF6A00] focus:ring-2 focus:ring-orange-500/20 outline-none"
+                />
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitEmailOtp()}
+                  disabled={verificationBusy || emailOtpInput.length !== 6}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-xs disabled:opacity-50 transition-colors cursor-pointer flex items-center justify-center space-x-1.5"
+                >
+                  {verificationBusy ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>Submit OTP</span>
+                </button>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={() => void handleStartEmailVerification()}
+                    disabled={verificationBusy}
+                    className="text-xs font-semibold text-slate-700 hover:text-black hover:underline cursor-pointer"
+                  >
+                    Resend Code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveVerifyModal(null)}
+                    className="text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </main>
 
       {/* LUXURY DARK STOREFRONT FOOTER */}
@@ -2412,7 +2712,8 @@ export default function SellerApplicationPage() {
             <div className="space-y-4">
               <AlifLogo size="md" href="/" inverted />
               <p className="text-xs text-[#9CA3AF] leading-relaxed max-w-sm">
-                Your neighborhood&apos;s fastest delivery service. We bring everything you need, right to your doorstep in minutes.
+                Your neighborhood&apos;s fastest delivery service. We bring everything you need,
+                right to your doorstep in minutes.
               </p>
 
               <div className="pt-2 space-y-2 text-xs text-[#D1D5DB]">
@@ -2444,12 +2745,18 @@ export default function SellerApplicationPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/stores" className="hover:text-white transition-colors cursor-pointer">
+                  <Link
+                    href="/stores"
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     Stores
                   </Link>
                 </li>
                 <li className="pt-2">
-                  <Link href="/seller/apply" className="text-amber-500 font-bold hover:underline block">
+                  <Link
+                    href="/seller/apply"
+                    className="text-amber-500 font-bold hover:underline block"
+                  >
                     Become a Seller
                   </Link>
                 </li>
@@ -2463,7 +2770,10 @@ export default function SellerApplicationPage() {
               </h4>
               <ul className="space-y-2.5 text-xs text-[#9CA3AF]">
                 <li>
-                  <Link href="/privacy" className="hover:text-white transition-colors cursor-pointer">
+                  <Link
+                    href="/privacy"
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
@@ -2473,12 +2783,18 @@ export default function SellerApplicationPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/shipping-policy" className="hover:text-white transition-colors cursor-pointer">
+                  <Link
+                    href="/shipping-policy"
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     Shipping Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/return-policy" className="hover:text-white transition-colors cursor-pointer">
+                  <Link
+                    href="/return-policy"
+                    className="hover:text-white transition-colors cursor-pointer"
+                  >
                     Return &amp; Refund Policy
                   </Link>
                 </li>
@@ -2508,7 +2824,7 @@ export default function SellerApplicationPage() {
                   className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
                 >
                   <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                   </svg>
                 </a>
                 <a
@@ -2519,7 +2835,7 @@ export default function SellerApplicationPage() {
                   className="w-8 h-8 rounded-full bg-[#262624] text-white flex items-center justify-center hover:bg-[#F59E0B] hover:text-black transition-colors"
                 >
                   <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
                   </svg>
                 </a>
                 <a
@@ -2552,9 +2868,7 @@ export default function SellerApplicationPage() {
           </div>
 
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#9CA3AF] gap-4">
-            <div>
-              © 2026 AlifWorld. All rights reserved.
-            </div>
+            <div>© 2026 AlifWorld. All rights reserved.</div>
             <div className="px-3 py-1 rounded-full bg-[#262624] text-slate-400 border border-neutral-800 font-mono text-[11px]">
               V 3.2.0
             </div>

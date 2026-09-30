@@ -8,11 +8,11 @@
 
 The password domain supports three operations:
 
-| Actor | Operation | Authorization | Success result |
-|---|---|---|---|
-| Anonymous account owner | Request reset | Valid email-shaped input; account existence is never disclosed | A neutral acknowledgement and an asynchronous notification outbox record when the account is eligible |
-| Reset-token holder | Complete reset | Matching, unused, unexpired one-time token | Password updated, token consumed, `tokenVersion` incremented, all sessions revoked |
-| Authenticated account owner | Change password | Active session plus correct current password | Password updated, `tokenVersion` incremented, all sessions revoked |
+| Actor                       | Operation       | Authorization                                                  | Success result                                                                                        |
+| --------------------------- | --------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Anonymous account owner     | Request reset   | Valid email-shaped input; account existence is never disclosed | A neutral acknowledgement and an asynchronous notification outbox record when the account is eligible |
+| Reset-token holder          | Complete reset  | Matching, unused, unexpired one-time token                     | Password updated, token consumed, `tokenVersion` incremented, all sessions revoked                    |
+| Authenticated account owner | Change password | Active session plus correct current password                   | Password updated, `tokenVersion` incremented, all sessions revoked                                    |
 
 No Admin, seller, support, or cross-tenant operation is introduced. A user can mutate only the credential resolved from their authenticated user ID or one-time token. Deleted accounts and passwordless accounts receive the same public reset-request response as unknown accounts.
 

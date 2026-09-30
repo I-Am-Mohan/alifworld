@@ -55,7 +55,11 @@ describe('Seller Tenant Isolation: Settings Service', () => {
       create: mock(async () => ({ id: 'aud_01' })),
     };
 
-    const service = new SellerSettingsService(mockSettingsRepo, mockSellerRepo, mockRoleAssignmentRepo);
+    const service = new SellerSettingsService(
+      mockSettingsRepo,
+      mockSellerRepo,
+      mockRoleAssignmentRepo
+    );
 
     const result = await service.updateSettings('usr_owner_tenant_a', {
       sellerId: 'sel_tenant_a',
@@ -84,7 +88,11 @@ describe('Seller Tenant Isolation: Settings Service', () => {
       hasRole: mock(async () => false),
     };
 
-    const service = new SellerSettingsService(mockSettingsRepo, mockSellerRepo, mockRoleAssignmentRepo);
+    const service = new SellerSettingsService(
+      mockSettingsRepo,
+      mockSellerRepo,
+      mockRoleAssignmentRepo
+    );
 
     expect(
       service.updateSettings('usr_owner_tenant_a', {
@@ -124,7 +132,11 @@ describe('Seller Tenant Isolation: Settings Service', () => {
       create: mock(async () => ({ id: 'aud_admin' })),
     };
 
-    const service = new SellerSettingsService(mockSettingsRepo, mockSellerRepo, mockRoleAssignmentRepo);
+    const service = new SellerSettingsService(
+      mockSettingsRepo,
+      mockSellerRepo,
+      mockRoleAssignmentRepo
+    );
 
     const result = await service.updateSettings('usr_super_admin', {
       sellerId: 'sel_tenant_b',

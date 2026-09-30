@@ -50,10 +50,7 @@ export async function GET(req: NextRequest) {
 
     const sellerId = resolveSellerId(actor, queryInput.sellerId);
 
-    const result = await sellerFulfillmentGroupService.listGroupsForSeller(
-      sellerId,
-      queryInput
-    );
+    const result = await sellerFulfillmentGroupService.listGroupsForSeller(sellerId, queryInput);
 
     return NextResponse.json({
       success: true,

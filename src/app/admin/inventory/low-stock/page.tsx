@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface AdminLowStockView {
   id: string;
@@ -144,7 +151,9 @@ export default function AdminLowStockPage() {
               <div className="text-3xl font-black text-amber-800">
                 {items.filter((i) => i.urgency === 'HIGH').length}
               </div>
-              <p className="text-xs text-amber-700/80 mt-1 font-medium">At or below low stock threshold</p>
+              <p className="text-xs text-amber-700/80 mt-1 font-medium">
+                At or below low stock threshold
+              </p>
             </CardContent>
           </Card>
 
@@ -158,7 +167,9 @@ export default function AdminLowStockPage() {
               <div className="text-3xl font-black text-blue-800">
                 {items.filter((i) => i.urgency === 'MEDIUM').length}
               </div>
-              <p className="text-xs text-blue-700/80 mt-1 font-medium">Order replenishment recommended</p>
+              <p className="text-xs text-blue-700/80 mt-1 font-medium">
+                Order replenishment recommended
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -209,12 +220,17 @@ export default function AdminLowStockPage() {
                     <TableCell>
                       <div className="font-bold text-slate-900 text-xs">{item.productTitle}</div>
                       <div className="text-[11px] text-slate-500 font-mono">
-                        <span className="font-bold text-slate-700">{item.sellerName}</span> ({item.sku})
+                        <span className="font-bold text-slate-700">{item.sellerName}</span> (
+                        {item.sku})
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-xs font-semibold text-slate-800">{item.warehouseName}</div>
-                      <div className="text-[10px] font-mono text-slate-500">{item.warehouseCode}</div>
+                      <div className="text-xs font-semibold text-slate-800">
+                        {item.warehouseName}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-500">
+                        {item.warehouseCode}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs font-bold">
                       <span className={item.available === 0 ? 'text-red-600' : 'text-slate-900'}>
@@ -222,8 +238,12 @@ export default function AdminLowStockPage() {
                       </span>{' '}
                       <span className="text-[10px] text-slate-400">/ {item.onHand}</span>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-xs">{item.lowStockThreshold}</TableCell>
-                    <TableCell className="text-right font-mono text-xs">{item.reorderPoint}</TableCell>
+                    <TableCell className="text-right font-mono text-xs">
+                      {item.lowStockThreshold}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs">
+                      {item.reorderPoint}
+                    </TableCell>
                     <TableCell className="text-right font-mono text-xs font-black text-[#FF6A00]">
                       +{item.recommendedReorderQuantity} units
                     </TableCell>

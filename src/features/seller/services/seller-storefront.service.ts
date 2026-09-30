@@ -1,9 +1,9 @@
 /**
  * AlifWorld Public Seller Storefront Service
- * 
+ *
  * Provides public store profiles, business policies, and merchant catalog discovery
  * with strict seller-tenant isolation enforced directly inside database and search queries.
- * 
+ *
  * References:
  * - docs/architecture/scope-boundaries-and-domain-map.md
  * - docs/architecture/single-application-modular-monolith.md
@@ -94,9 +94,12 @@ export class SellerStorefrontService {
       memberSince: seller.createdAt ? new Date(seller.createdAt).getFullYear().toString() : '2026',
       supportEmail: settings?.publicEmailEnabled ? settings?.supportEmail : null,
       supportPhone: settings?.publicPhoneEnabled ? settings?.supportPhone : null,
-      shippingPolicy: settings?.shippingPolicy || 'Standard Express 2-3 Days Delivery across Bangladesh.',
-      returnPolicy: settings?.returnPolicy || '7-Day Return & Replacement Guarantee for defective items.',
-      cancellationPolicy: settings?.cancellationPolicy || 'Orders may be cancelled before shipment dispatch.',
+      shippingPolicy:
+        settings?.shippingPolicy || 'Standard Express 2-3 Days Delivery across Bangladesh.',
+      returnPolicy:
+        settings?.returnPolicy || '7-Day Return & Replacement Guarantee for defective items.',
+      cancellationPolicy:
+        settings?.cancellationPolicy || 'Orders may be cancelled before shipment dispatch.',
       vacationMode: Boolean(settings?.vacationMode),
       vacationMessage: settings?.vacationMessage || null,
       rating: 4.8,

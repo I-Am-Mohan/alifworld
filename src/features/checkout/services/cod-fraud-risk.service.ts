@@ -16,11 +16,7 @@
 import { createHash, randomBytes } from 'crypto';
 import { prisma } from '@/shared/database/prisma';
 import { generateId, generatePrefixedId, ID_PREFIXES, ENTITY_PREFIXES } from '@/shared/utils/id';
-import {
-  ValidationError,
-  NotFoundError,
-  ConflictError,
-} from '@/shared/errors/app-error';
+import { ValidationError, NotFoundError, ConflictError } from '@/shared/errors/app-error';
 import { normalizeBangladeshPhone, maskBangladeshPhone } from '@/shared/utils/phone';
 import {
   CodRiskLevel,
@@ -107,8 +103,10 @@ export class CodFraudRiskService {
         factor: 'DIGITAL_NON_PHYSICAL_GOODS',
         score: 95,
         severity: 'CRITICAL',
-        messageEn: 'Cart contains digital software licenses or virtual goods. 100% digital prepayment required.',
-        messageBn: 'কার্টে ডিজিটাল পণ্য বা সফটওয়্যার লাইসেন্স রয়েছে। ডিজিটাল পেমেন্ট বাধ্যতামূলক।',
+        messageEn:
+          'Cart contains digital software licenses or virtual goods. 100% digital prepayment required.',
+        messageBn:
+          'কার্টে ডিজিটাল পণ্য বা সফটওয়্যার লাইসেন্স রয়েছে। ডিজিটাল পেমেন্ট বাধ্যতামূলক।',
       });
 
       return this.buildResult(
@@ -178,7 +176,9 @@ export class CodFraudRiskService {
           Math.min(100, riskScore),
           subtotal,
           factors,
-          ['Persistent delivery returns detected on this phone number. Digital prepayment required.'],
+          [
+            'Persistent delivery returns detected on this phone number. Digital prepayment required.',
+          ],
           false,
           true
         );
@@ -200,7 +200,9 @@ export class CodFraudRiskService {
         messageBn: `আপনার বর্তমানে ${activePendingCod}টি ক্যাশ অন ডেলিভারি অর্ডার প্রক্রিয়াধীন রয়েছে।`,
       });
       riskScore += 45;
-      warnings.push(`Maximum concurrent pending COD orders limit (${DEFAULT_MAX_ACTIVE_PENDING_COD}) reached.`);
+      warnings.push(
+        `Maximum concurrent pending COD orders limit (${DEFAULT_MAX_ACTIVE_PENDING_COD}) reached.`
+      );
     }
 
     // 7. Check if phone is verified
@@ -314,10 +316,7 @@ export class CodFraudRiskService {
   /**
    * Verifies the 6-digit OTP code and generates a single-use verification ticket for checkout.
    */
-  public async verifyCodOtp(
-    recipientPhone: string,
-    otp: string
-  ): Promise<VerifyCodOtpResultDTO> {
+  public async verifyCodOtp(recipientPhone: string, otp: string): Promise<VerifyCodOtpResultDTO> {
     const normalizedPhone = normalizeBangladeshPhone(recipientPhone);
     const activeToken = await this.otpRepo.findActiveOtp(normalizedPhone, COD_OTP_PURPOSE);
 
@@ -326,7 +325,9 @@ export class CodFraudRiskService {
     }
 
     if (activeToken.attempts >= (activeToken.maxAttempts || 3)) {
-      throw new ValidationError('Maximum verification attempts exceeded. Please request a new code.');
+      throw new ValidationError(
+        'Maximum verification attempts exceeded. Please request a new code.'
+      );
     }
 
     const inputHash = createHash('sha256').update(otp.trim()).digest('hex');
@@ -340,7 +341,10 @@ export class CodFraudRiskService {
 
     // Generate cryptographic single-use ticket
     const ticketRandom = randomBytes(24).toString('hex');
-    const verificationTicket = `cod_tkt_${createHash('sha256').update(normalizedPhone + ticketRandom).digest('hex').slice(0, 32)}`;
+    const verificationTicket = `cod_tkt_${createHash('sha256')
+      .update(normalizedPhone + ticketRandom)
+      .digest('hex')
+      .slice(0, 32)}`;
 
     return {
       verified: true,
@@ -379,9 +383,7 @@ export class CodFraudRiskService {
     expiresAt?: Date | null;
   }) {
     const cleanIdentifier =
-      data.type === 'PHONE'
-        ? normalizeBangladeshPhone(data.identifier)
-        : data.identifier.trim();
+      data.type === 'PHONE' ? normalizeBangladeshPhone(data.identifier) : data.identifier.trim();
 
     return this.repo.addBlacklistEntry({
       ...data,
@@ -397,9 +399,7 @@ export class CodFraudRiskService {
     identifier: string
   ): Promise<boolean> {
     const cleanIdentifier =
-      type === 'PHONE'
-        ? normalizeBangladeshPhone(identifier)
-        : identifier.trim();
+      type === 'PHONE' ? normalizeBangladeshPhone(identifier) : identifier.trim();
 
     return this.repo.removeBlacklistEntry(type, cleanIdentifier);
   }

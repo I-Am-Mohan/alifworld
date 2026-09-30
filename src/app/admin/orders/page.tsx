@@ -73,7 +73,8 @@ export default function AdminOrdersPage() {
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Orders Pipeline</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Central multi-vendor order partition oversight across all 8 Bangladesh administrative divisions.
+            Central multi-vendor order partition oversight across all 8 Bangladesh administrative
+            divisions.
           </p>
         </div>
 
@@ -144,7 +145,8 @@ export default function AdminOrdersPage() {
             </div>
             <h3 className="text-base font-black text-slate-900">No data available</h3>
             <p className="mt-1 text-xs text-slate-500 max-w-sm leading-relaxed">
-              No orders have been recorded in the platform yet. As customers check out on storefronts, order entries will display here in real time.
+              No orders have been recorded in the platform yet. As customers check out on
+              storefronts, order entries will display here in real time.
             </p>
           </div>
         ) : (
@@ -176,18 +178,20 @@ export default function AdminOrdersPage() {
                         {new Date(order.createdAt).toLocaleString('en-BD')}
                       </span>
                     </td>
-formatLocalizedDateTime(new Date(order.createdAt), locale
+                    formatLocalizedDateTime(new Date(order.createdAt), locale
                     <td className="py-4 px-4">
-                      <span className="font-semibold text-slate-900 block">{order.customerName}</span>
-                      <span className="text-slate-400 font-mono text-[11px]">{order.customerPhone}</span>
+                      <span className="font-semibold text-slate-900 block">
+                        {order.customerName}
+                      </span>
+                      <span className="text-slate-400 font-mono text-[11px]">
+                        {order.customerPhone}
+                      </span>
                     </td>
-
                     <td className="py-4 px-4">
                       <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-700 font-semibold text-[11px]">
                         {order.division}
                       </span>
                     </td>
-
                     <td className="py-4 px-4">
                       <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-blue-50 text-blue-700 border border-blue-200">
                         {order.status}
@@ -196,11 +200,9 @@ formatLocalizedDateTime(new Date(order.createdAt), locale
                         ● {order.paymentStatus}
                       </span>
                     </td>
-
                     <td className="py-4 px-4 font-mono font-bold text-slate-900">
                       {formatBdt(order.totalPoisha)}
                     </td>
-
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center gap-1 font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md text-[10px] border border-purple-200">
                         <Sparkles className="w-3 h-3 text-purple-500" />
@@ -210,7 +212,6 @@ formatLocalizedDateTime(new Date(order.createdAt), locale
                         {order.pointsReleased ? 'Released' : 'Pending Return Window'}
                       </span>
                     </td>
-
                     <td className="py-4 px-4">
                       <div className="space-y-1">
                         {order.groups.map((grp, gIdx) => (
@@ -220,7 +221,9 @@ formatLocalizedDateTime(new Date(order.createdAt), locale
                           >
                             <div className="flex items-center justify-between font-semibold text-slate-800">
                               <span>{grp.sellerName}</span>
-                              <span className="text-emerald-600 font-bold">{grp.courierProvider}</span>
+                              <span className="text-emerald-600 font-bold">
+                                {grp.courierProvider}
+                              </span>
                             </div>
                             <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
                               <span>Track: {grp.trackingNumber}</span>

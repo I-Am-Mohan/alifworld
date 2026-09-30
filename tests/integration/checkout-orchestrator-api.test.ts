@@ -42,7 +42,9 @@ describe('Milestone 131: Checkout Orchestration REST API Integration Tests', () 
   beforeEach(() => {
     authSpy = spyOn(authzModule, 'authenticateRequest').mockReturnValue(customerActor as any);
 
-    checkoutSpy = spyOn(checkoutOrchestratorService, 'executeCheckout').mockResolvedValue(mockCheckoutResult as any);
+    checkoutSpy = spyOn(checkoutOrchestratorService, 'executeCheckout').mockResolvedValue(
+      mockCheckoutResult as any
+    );
   });
 
   afterEach(() => {

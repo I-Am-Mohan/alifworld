@@ -8,13 +8,13 @@ const authTokenService = new AuthTokenService();
 
 /**
  * POST /api/v1/auth/logout
- * 
+ *
  * Logs out the caller's active session:
  * 1. Resolves caller's active session and user credentials.
  * 2. Marks the session revoked in the database (reason: 'USER_LOGOUT').
  * 3. Records a security audit event for the logout.
  * 4. Clears both `aw_access_token` and `aw_refresh_token` secure cookies.
- * 
+ *
  * Idempotent: If token is expired or absent, still clears cookies and returns 200.
  */
 export async function POST(req: NextRequest) {

@@ -15,10 +15,10 @@ const authTokenService = new AuthTokenService();
 
 /**
  * GET /api/v1/auth/me
- * 
+ *
  * Returns authenticated user profile, assigned roles, permissions, multi-wallets,
  * and loyalty point balances for the currently active session.
- * 
+ *
  * Accepts token via `Authorization: Bearer <token>` or `aw_access_token` cookie.
  */
 export async function GET(req: NextRequest) {
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * PATCH /api/v1/auth/me
- * 
+ *
  * Allows an authenticated operator or user (such as Super Admin) to update their
  * profile details including full name, email address (with uniqueness collision checks),
  * and Bangladesh mobile phone number.

@@ -1,8 +1,8 @@
 /**
  * Admin Audit Trail Single Entry Inspection API Route
- * 
+ *
  * Retrieves individual audit record by ID and rejects mutation attempts (immutable).
- * 
+ *
  * Invariants: ADR-0022, ADR-0031, Milestone 049
  */
 
@@ -17,10 +17,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/admin/audit/[id]
  * Retrieves a single audit log entry.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;
@@ -60,7 +57,8 @@ export async function DELETE() {
       success: false,
       error: {
         code: 'IMMUTABLE_RECORD',
-        message: 'Audit logs are classified as IMMUTABLE append-only records under ADR-0022. Deletion is strictly prohibited.',
+        message:
+          'Audit logs are classified as IMMUTABLE append-only records under ADR-0022. Deletion is strictly prohibited.',
       },
     },
     { status: 405 }
@@ -77,7 +75,8 @@ export async function PUT() {
       success: false,
       error: {
         code: 'IMMUTABLE_RECORD',
-        message: 'Audit logs are classified as IMMUTABLE append-only records under ADR-0022. Modifications are strictly prohibited.',
+        message:
+          'Audit logs are classified as IMMUTABLE append-only records under ADR-0022. Modifications are strictly prohibited.',
       },
     },
     { status: 405 }
@@ -94,7 +93,8 @@ export async function PATCH() {
       success: false,
       error: {
         code: 'IMMUTABLE_RECORD',
-        message: 'Audit logs are classified as IMMUTABLE append-only records under ADR-0022. Modifications are strictly prohibited.',
+        message:
+          'Audit logs are classified as IMMUTABLE append-only records under ADR-0022. Modifications are strictly prohibited.',
       },
     },
     { status: 405 }

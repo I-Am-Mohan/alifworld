@@ -1,10 +1,10 @@
 /**
  * AlifWorld Stock Movement Repository
- * 
+ *
  * Manages the append-only, immutable inventory movement ledger.
  * Every balance change, checkout reservation, order commitment, return, or audit
  * adjustment records an audit trail entry. Entries are never updated or deleted.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariants: ADR-0003, ADR-0021, ADR-0022, ADR-0026
  */
@@ -69,7 +69,10 @@ export class StockMovementRepository {
     return record ? this.mapToModel(record) : null;
   }
 
-  public async findByStockBalance(stockBalanceId: string, limit = 50): Promise<StockMovementModel[]> {
+  public async findByStockBalance(
+    stockBalanceId: string,
+    limit = 50
+  ): Promise<StockMovementModel[]> {
     const records = await (this.prisma as any).stockMovementLedger.findMany({
       where: { stockBalanceId },
       orderBy: { createdAt: 'desc' },

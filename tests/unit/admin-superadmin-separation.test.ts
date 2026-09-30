@@ -1,9 +1,9 @@
 /**
  * Unit Tests: Separate Admin and Super Admin Capabilities (Milestone 044)
- * 
+ *
  * Verifies privilege boundaries, administrative escalation barriers,
  * root security configuration protections, and account lifecycle governance.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 044
  */
 
@@ -335,7 +335,8 @@ describe('Milestone 044 — Separate Admin and Super Admin Capabilities', () => 
     class MockRoleRepo {
       public async findById(id: string) {
         if (id === 'rol_admin') return { id: 'rol_admin', code: SystemRoleCode.ADMIN };
-        if (id === 'rol_super_admin') return { id: 'rol_super_admin', code: SystemRoleCode.SUPER_ADMIN };
+        if (id === 'rol_super_admin')
+          return { id: 'rol_super_admin', code: SystemRoleCode.SUPER_ADMIN };
         if (id === 'rol_staff') return { id: 'rol_staff', code: SystemRoleCode.SELLER_STAFF };
         return null;
       }
@@ -354,7 +355,11 @@ describe('Milestone 044 — Separate Admin and Super Admin Capabilities', () => 
       }
     }
 
-    const rbacService = new RbacService(new MockRoleRepo() as any, {} as any, new MockAssignmentRepo() as any);
+    const rbacService = new RbacService(
+      new MockRoleRepo() as any,
+      {} as any,
+      new MockAssignmentRepo() as any
+    );
 
     it('prevents Platform Admin from assigning ADMIN role via service', async () => {
       await expect(

@@ -39,7 +39,12 @@ export async function GET(req: NextRequest) {
 
     const options = { ...parsedQuery };
 
-    if (actor && !actor.roles.includes('ADMIN') && !actor.roles.includes('SUPER_ADMIN') && actor.sellerId) {
+    if (
+      actor &&
+      !actor.roles.includes('ADMIN') &&
+      !actor.roles.includes('SUPER_ADMIN') &&
+      actor.sellerId
+    ) {
       options.sellerId = actor.sellerId;
     }
 

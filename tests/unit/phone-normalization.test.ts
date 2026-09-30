@@ -1,9 +1,9 @@
 /**
  * Unit Tests for Bangladesh Phone Normalization and Validation
- * 
+ *
  * Verifies E.164 compliance (+8801[3-9]XXXXXXXX), format stripping,
  * operator code validation, and error handling.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0005, ADR-0023
  */

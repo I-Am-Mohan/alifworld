@@ -57,7 +57,9 @@ async function main() {
     });
   }
 
-  console.info(`[geo] seeded ${BANGLADESH_DIVISIONS.length} divisions, ${BANGLADESH_DISTRICTS.length} districts, ${BANGLADESH_UPAZILAS.length} upazilas/thanas`);
+  console.info(
+    `[geo] seeded ${BANGLADESH_DIVISIONS.length} divisions, ${BANGLADESH_DISTRICTS.length} districts, ${BANGLADESH_UPAZILAS.length} upazilas/thanas`
+  );
 }
 
 main()

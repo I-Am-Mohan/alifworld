@@ -1,0 +1,47 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Baseline Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Code Formatting Check
+        run: bun run format:check
+
+      - name: Static Code Analysis & Linting
+        run: bun run lint
+
+      - name: Strict Typecheck
+        run: bun run typecheck
+
+      - name: Automated Test Suite
+        run: bun run test
+
+      - name: OpenAPI Schema Generation & Validation
+        run: bun run openapi
+
+      - name: Production Local Build
+        run: bun run build:local

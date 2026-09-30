@@ -6,7 +6,14 @@ import { AlifLogo } from '@/components/brand/logo';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 interface StockBalanceView {
   id: string;
@@ -50,7 +57,9 @@ interface MovementView {
 }
 
 export default function SellerInventoryPage() {
-  const [activeTab, setActiveTab] = useState<'balances' | 'reservations' | 'ledger' | 'intake'>('balances');
+  const [activeTab, setActiveTab] = useState<'balances' | 'reservations' | 'ledger' | 'intake'>(
+    'balances'
+  );
   const [intakeQty, setIntakeQty] = useState<number>(20);
   const [selectedVariant, setSelectedVariant] = useState<string>('WLT-PRX60-BLU-128');
   const [poReference, setPoReference] = useState<string>('PO-2026-BANANI-09');
@@ -240,17 +249,22 @@ export default function SellerInventoryPage() {
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
       movementType: 'RECEIVE',
       sku: selectedVariant,
-      variantTitle: selectedVariant === 'WLT-PRX60-BLU-128' ? 'Ocean Blue / 128GB' : 'Moonlight White',
+      variantTitle:
+        selectedVariant === 'WLT-PRX60-BLU-128' ? 'Ocean Blue / 128GB' : 'Moonlight White',
       warehouseCode: 'DHK-DTH-01',
       quantityDelta: intakeQty,
-      availableAfter: (balances.find((b) => b.sku === selectedVariant && b.warehouseCode === 'DHK-DTH-01')?.available ?? 0) + intakeQty,
+      availableAfter:
+        (balances.find((b) => b.sku === selectedVariant && b.warehouseCode === 'DHK-DTH-01')
+          ?.available ?? 0) + intakeQty,
       sourceType: 'PURCHASE_ORDER',
       sourceId: poReference,
       reason: 'Merchant depot purchase order intake',
     };
 
     setMovements((prev) => [newMovement, ...prev]);
-    setIntakeMessage(`Successfully received ${intakeQty} units into Banani Depot (${poReference}). Available stock recalculated.`);
+    setIntakeMessage(
+      `Successfully received ${intakeQty} units into Banani Depot (${poReference}). Available stock recalculated.`
+    );
     setTimeout(() => setIntakeMessage(null), 4000);
   };
 
@@ -326,8 +340,8 @@ export default function SellerInventoryPage() {
               <p className="text-xs text-slate-600 mt-0.5">
                 <code className="font-mono bg-white border border-orange-200 px-2 py-0.5 rounded text-[#EA580C] font-bold">
                   Available = OnHand - Reserved - Damaged - Quarantined
-                </code>
-                {' '}— Client-side overrides are strictly rejected.
+                </code>{' '}
+                — Client-side overrides are strictly rejected.
               </p>
             </div>
           </div>
@@ -351,7 +365,9 @@ export default function SellerInventoryPage() {
               Active Checkout Reserved
             </span>
             <p className="text-3xl font-black text-amber-600 mt-1">{totalReserved}</p>
-            <p className="text-[11px] text-slate-500 mt-1">Locked in active buyer carts (15m TTL)</p>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Locked in active buyer carts (15m TTL)
+            </p>
           </Card>
 
           <Card className="p-5 bg-white border-slate-200">
@@ -367,7 +383,9 @@ export default function SellerInventoryPage() {
               Net Available for Sale
             </span>
             <p className="text-3xl font-black text-[#FF6A00] mt-1">{totalAvailable}</p>
-            <p className="text-[11px] text-slate-600 mt-1">Storefront checkout purchasing ceiling</p>
+            <p className="text-[11px] text-slate-600 mt-1">
+              Storefront checkout purchasing ceiling
+            </p>
           </Card>
         </div>
 
@@ -419,33 +437,56 @@ export default function SellerInventoryPage() {
         {activeTab === 'balances' && (
           <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
             <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-bold text-slate-900">Facility Stock Balances</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-900">
+                Facility Stock Balances
+              </CardTitle>
               <span className="text-xs text-slate-500">Dhaka Central Hub &amp; Banani Depot</span>
             </CardHeader>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-slate-50 border-b border-slate-200">
                   <TableRow>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Product &amp; SKU</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Warehouse Facility</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">On-Hand</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">Reserved</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">Damaged</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">Available</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Product &amp; SKU
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Warehouse Facility
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      On-Hand
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      Reserved
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      Damaged
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      Available
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                      Status
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {balances.map((row) => (
-                    <TableRow key={row.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                    <TableRow
+                      key={row.id}
+                      className="border-b border-slate-100 hover:bg-slate-50/80"
+                    >
                       <TableCell>
                         <div className="font-bold text-xs text-slate-900">{row.productTitle}</div>
                         <div className="text-[11px] text-slate-500">{row.variantTitle}</div>
                         <div className="text-[10px] font-mono text-slate-400">{row.sku}</div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-xs font-semibold text-slate-700">{row.warehouseName}</div>
-                        <div className="text-[10px] font-mono text-[#0284C7] font-semibold">{row.warehouseCode}</div>
+                        <div className="text-xs font-semibold text-slate-700">
+                          {row.warehouseName}
+                        </div>
+                        <div className="text-[10px] font-mono text-[#0284C7] font-semibold">
+                          {row.warehouseCode}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs text-slate-700 font-bold">
                         {row.onHand}
@@ -463,11 +504,17 @@ export default function SellerInventoryPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         {row.available > row.lowStockThreshold ? (
-                          <Badge variant="success" size="sm">IN STOCK</Badge>
+                          <Badge variant="success" size="sm">
+                            IN STOCK
+                          </Badge>
                         ) : row.available > 0 ? (
-                          <Badge variant="warning" size="sm">LOW STOCK</Badge>
+                          <Badge variant="warning" size="sm">
+                            LOW STOCK
+                          </Badge>
                         ) : (
-                          <Badge variant="danger" size="sm">OUT OF STOCK</Badge>
+                          <Badge variant="danger" size="sm">
+                            OUT OF STOCK
+                          </Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -483,31 +530,47 @@ export default function SellerInventoryPage() {
           <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
             <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-bold text-slate-900">Active Buyer Checkout Reservations</CardTitle>
+                <CardTitle className="text-sm font-bold text-slate-900">
+                  Active Buyer Checkout Reservations
+                </CardTitle>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Temporary stock locks held during customer checkout. Automatically released upon 15m TTL cutoff.
+                  Temporary stock locks held during customer checkout. Automatically released upon
+                  15m TTL cutoff.
                 </p>
               </div>
-              <Badge variant="warning" size="sm">TTL = 15 MINUTES</Badge>
+              <Badge variant="warning" size="sm">
+                TTL = 15 MINUTES
+              </Badge>
             </CardHeader>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader className="bg-slate-50 border-b border-slate-200">
                   <TableRow>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Reservation ID</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Cart Session</TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Reservation ID
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Cart Session
+                    </TableHead>
                     <TableHead className="text-[11px] text-slate-600 uppercase">Variant</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">Locked Qty</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Time to Expiry</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-center">Status</TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      Locked Qty
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Time to Expiry
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-center">
+                      Status
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reservations.map((res) => (
-                    <TableRow key={res.id} className="border-b border-slate-100 hover:bg-slate-50/80">
-                      <TableCell className="font-mono text-xs text-slate-600">
-                        {res.id}
-                      </TableCell>
+                    <TableRow
+                      key={res.id}
+                      className="border-b border-slate-100 hover:bg-slate-50/80"
+                    >
+                      <TableCell className="font-mono text-xs text-slate-600">{res.id}</TableCell>
                       <TableCell className="font-mono text-xs text-[#0284C7] font-semibold">
                         {res.cartId}
                       </TableCell>
@@ -524,7 +587,9 @@ export default function SellerInventoryPage() {
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="warning" size="sm">ACTIVE</Badge>
+                        <Badge variant="warning" size="sm">
+                          ACTIVE
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -539,9 +604,12 @@ export default function SellerInventoryPage() {
           <Card className="border-slate-200 bg-white p-0 overflow-hidden shadow-sm">
             <CardHeader className="border-b border-slate-200 py-4 px-6 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-bold text-slate-900">Append-Only Stock Movement Ledger</CardTitle>
+                <CardTitle className="text-sm font-bold text-slate-900">
+                  Append-Only Stock Movement Ledger
+                </CardTitle>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Cryptographically audited, immutable record of every inventory delta. Entries are never updated or deleted.
+                  Cryptographically audited, immutable record of every inventory delta. Entries are
+                  never updated or deleted.
                 </p>
               </div>
               <span className="text-xs font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">
@@ -552,17 +620,30 @@ export default function SellerInventoryPage() {
               <Table>
                 <TableHeader className="bg-slate-50 border-b border-slate-200">
                   <TableRow>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Timestamp</TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Timestamp
+                    </TableHead>
                     <TableHead className="text-[11px] text-slate-600 uppercase">Type</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Variant &amp; Facility</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">Delta</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">Available After</TableHead>
-                    <TableHead className="text-[11px] text-slate-600 uppercase">Source &amp; Reason</TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Variant &amp; Facility
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      Delta
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase text-right">
+                      Available After
+                    </TableHead>
+                    <TableHead className="text-[11px] text-slate-600 uppercase">
+                      Source &amp; Reason
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {movements.map((mov) => (
-                    <TableRow key={mov.id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                    <TableRow
+                      key={mov.id}
+                      className="border-b border-slate-100 hover:bg-slate-50/80"
+                    >
                       <TableCell className="font-mono text-[11px] text-slate-500">
                         {mov.timestamp}
                       </TableCell>
@@ -572,22 +653,28 @@ export default function SellerInventoryPage() {
                             mov.movementType === 'RECEIVE'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : mov.movementType === 'RESERVE'
-                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                              : mov.movementType === 'DAMAGE'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                : mov.movementType === 'DAMAGE'
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
                           }`}
                         >
                           {mov.movementType}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="text-xs font-semibold text-slate-900">{mov.variantTitle}</div>
-                        <div className="text-[10px] font-mono text-slate-500">{mov.sku} • {mov.warehouseCode}</div>
+                        <div className="text-xs font-semibold text-slate-900">
+                          {mov.variantTitle}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-500">
+                          {mov.sku} • {mov.warehouseCode}
+                        </div>
                       </TableCell>
-                      <TableCell className={`text-right font-mono text-xs font-bold ${
-                        mov.quantityDelta > 0 ? 'text-emerald-600' : 'text-amber-600'
-                      }`}>
+                      <TableCell
+                        className={`text-right font-mono text-xs font-bold ${
+                          mov.quantityDelta > 0 ? 'text-emerald-600' : 'text-amber-600'
+                        }`}
+                      >
                         {mov.quantityDelta > 0 ? `+${mov.quantityDelta}` : mov.quantityDelta}
                       </TableCell>
                       <TableCell className="text-right font-mono text-xs font-black text-[#FF6A00]">
@@ -611,9 +698,12 @@ export default function SellerInventoryPage() {
         {activeTab === 'intake' && (
           <Card className="border-slate-200 bg-white max-w-2xl shadow-sm">
             <CardHeader className="border-b border-slate-200 py-4 px-6">
-              <CardTitle className="text-sm font-bold text-slate-900">Direct Stock Intake (Purchase Order)</CardTitle>
+              <CardTitle className="text-sm font-bold text-slate-900">
+                Direct Stock Intake (Purchase Order)
+              </CardTitle>
               <p className="text-xs text-slate-500 mt-0.5">
-                Record incoming stock units into your merchant warehouse. Automatically recalculates available stock and appends an immutable movement log.
+                Record incoming stock units into your merchant warehouse. Automatically recalculates
+                available stock and appends an immutable movement log.
               </p>
             </CardHeader>
             <CardContent className="p-6">
@@ -644,7 +734,9 @@ export default function SellerInventoryPage() {
                     onChange={(e) => setSelectedVariant(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 focus:border-[#FF6A00] focus:outline-none"
                   >
-                    <option value="WLT-PRX60-BLU-128">Walton Primo S8 Pro (Ocean Blue / 128GB)</option>
+                    <option value="WLT-PRX60-BLU-128">
+                      Walton Primo S8 Pro (Ocean Blue / 128GB)
+                    </option>
                     <option value="MI-BUDS5P-WHT">Xiaomi Redmi Buds 5 Pro (Moonlight White)</option>
                   </select>
                 </div>

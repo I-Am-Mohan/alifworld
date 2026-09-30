@@ -1,9 +1,9 @@
 /**
  * Order, Cart, and Fulfillment Validators
- * 
+ *
  * Defines runtime Zod validation schemas for carts, checkouts, seller fulfillment groups,
  * courier dispatches, and shipment tracking events.
- * 
+ *
  * Reference: docs/architecture/carts-orders-fulfillment-groups-and-shipments.md
  */
 
@@ -22,7 +22,10 @@ export const CheckoutInputSchema = z.object({
   shippingName: z.string().min(2, 'Recipient name is required'),
   shippingPhone: z
     .string()
-    .regex(/^(\+?8801|01)[3-9]\d{8}$/, 'Valid Bangladesh mobile number required (+8801XXXXXXXXX or 01XXXXXXXXX)'),
+    .regex(
+      /^(\+?8801|01)[3-9]\d{8}$/,
+      'Valid Bangladesh mobile number required (+8801XXXXXXXXX or 01XXXXXXXXX)'
+    ),
   shippingDivision: z.enum([
     'DHAKA',
     'CHITTAGONG',

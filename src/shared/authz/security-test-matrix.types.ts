@@ -1,9 +1,9 @@
 /**
  * AlifWorld Authorization & Tenancy Security Test Matrix Types
- * 
+ *
  * Formalizes role-permission-resource Cartesian mappings, negative attack categories,
  * tenant isolation invariants, and verification expectation contracts.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 050
  */
 
@@ -16,13 +16,13 @@ import { SystemRoleCode } from '@/features/identity/types';
  */
 export type SecurityAttackCategory =
   | 'HORIZONTAL_PRIVILEGE_ESCALATION' // Cross-user / cross-merchant unauthorized access
-  | 'VERTICAL_PRIVILEGE_ESCALATION'   // Low-privilege role attempting high-privilege action
-  | 'TENANT_ISOLATION_BREACH'         // Merchant attempting to access foreign store data
-  | 'OBJECT_OWNERSHIP_VIOLATION'      // Customer attempting to view/modify foreign customer object
-  | 'ACCOUNT_LIFECYCLE_VIOLATION'     // Suspended or soft-deleted account attempting operational access
-  | 'STATE_INVARIANT_VIOLATION'       // Mutation attempted in an ineligible lifecycle state
-  | 'FINANCIAL_GATE_VIOLATION'        // High-value transaction lacking secondary Maker-Checker approval
-  | 'WEB_PERIMETER_ATTACK';           // CSRF, CORS, or clickjacking framing breach
+  | 'VERTICAL_PRIVILEGE_ESCALATION' // Low-privilege role attempting high-privilege action
+  | 'TENANT_ISOLATION_BREACH' // Merchant attempting to access foreign store data
+  | 'OBJECT_OWNERSHIP_VIOLATION' // Customer attempting to view/modify foreign customer object
+  | 'ACCOUNT_LIFECYCLE_VIOLATION' // Suspended or soft-deleted account attempting operational access
+  | 'STATE_INVARIANT_VIOLATION' // Mutation attempted in an ineligible lifecycle state
+  | 'FINANCIAL_GATE_VIOLATION' // High-value transaction lacking secondary Maker-Checker approval
+  | 'WEB_PERIMETER_ATTACK'; // CSRF, CORS, or clickjacking framing breach
 
 /**
  * Expected outcome for a specific security matrix evaluation.
@@ -54,9 +54,6 @@ export interface SecurityMatrixReport {
   totalScenarios: number;
   passedScenarios: number;
   failedScenarios: number;
-  categories: Record<
-    SecurityAttackCategory,
-    { total: number; passed: number; failed: number }
-  >;
+  categories: Record<SecurityAttackCategory, { total: number; passed: number; failed: number }>;
   timestamp: string;
 }

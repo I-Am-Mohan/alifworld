@@ -5,7 +5,12 @@ import {
 } from './promotion-funding-calculator';
 
 export type DiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT' | 'BUY_X_GET_Y' | 'FREE_SHIPPING';
-export type TargetScope = 'CART_SUBTOTAL' | 'SPECIFIC_PRODUCTS' | 'SPECIFIC_CATEGORIES' | 'SPECIFIC_BRANDS' | 'SHIPPING_FEE';
+export type TargetScope =
+  | 'CART_SUBTOTAL'
+  | 'SPECIFIC_PRODUCTS'
+  | 'SPECIFIC_CATEGORIES'
+  | 'SPECIFIC_BRANDS'
+  | 'SHIPPING_FEE';
 
 export interface DiscountRuleTargetDescriptor {
   targetType: 'PRODUCT' | 'CATEGORY' | 'BRAND' | string;
@@ -112,13 +117,19 @@ export function evaluateDiscountRule(
   }
 
   // 4. Target Scope Filtering
-  if (rule.targetScope === 'SPECIFIC_PRODUCTS' || rule.targetScope === 'SPECIFIC_CATEGORIES' || rule.targetScope === 'SPECIFIC_BRANDS') {
+  if (
+    rule.targetScope === 'SPECIFIC_PRODUCTS' ||
+    rule.targetScope === 'SPECIFIC_CATEGORIES' ||
+    rule.targetScope === 'SPECIFIC_BRANDS'
+  ) {
     const targetIds = new Set((rule.targets || []).map((t) => t.targetId));
     if (targetIds.size > 0) {
       eligibleItems = eligibleItems.filter((item) => {
         if (rule.targetScope === 'SPECIFIC_PRODUCTS') return targetIds.has(item.productId);
-        if (rule.targetScope === 'SPECIFIC_CATEGORIES') return item.categoryId ? targetIds.has(item.categoryId) : false;
-        if (rule.targetScope === 'SPECIFIC_BRANDS') return item.brandId ? targetIds.has(item.brandId) : false;
+        if (rule.targetScope === 'SPECIFIC_CATEGORIES')
+          return item.categoryId ? targetIds.has(item.categoryId) : false;
+        if (rule.targetScope === 'SPECIFIC_BRANDS')
+          return item.brandId ? targetIds.has(item.brandId) : false;
         return false;
       });
     }
@@ -199,14 +210,17 @@ export function evaluateDiscountRule(
       const discountedUnitsCount = setsCount * getQty;
 
       // Find unit price of eligible items (sort items by price ascending to discount cheaper items)
-      const sortedItems = [...eligibleItems].sort((a, b) => Number(a.unitPricePoisha - b.unitPricePoisha));
+      const sortedItems = [...eligibleItems].sort((a, b) =>
+        Number(a.unitPricePoisha - b.unitPricePoisha)
+      );
       let remainingDiscountedUnits = discountedUnitsCount;
 
       for (const item of sortedItems) {
         if (remainingDiscountedUnits <= 0) break;
         const unitsToDiscount = Math.min(item.quantity, remainingDiscountedUnits);
         const itemDiscountPctScaled = BigInt(Math.round(getPct * 100));
-        const itemLineDiscount = (item.unitPricePoisha * BigInt(unitsToDiscount) * itemDiscountPctScaled) / 10000n;
+        const itemLineDiscount =
+          (item.unitPricePoisha * BigInt(unitsToDiscount) * itemDiscountPctScaled) / 10000n;
 
         rawDiscountPoisha += itemLineDiscount;
         remainingDiscountedUnits -= unitsToDiscount;
@@ -217,7 +231,11 @@ export function evaluateDiscountRule(
 
   // 7. Max Discount Cap
   let finalDiscountPoisha = rawDiscountPoisha;
-  if (rule.maxDiscountPoisha !== null && rule.maxDiscountPoisha !== undefined && finalDiscountPoisha > rule.maxDiscountPoisha) {
+  if (
+    rule.maxDiscountPoisha !== null &&
+    rule.maxDiscountPoisha !== undefined &&
+    finalDiscountPoisha > rule.maxDiscountPoisha
+  ) {
     finalDiscountPoisha = rule.maxDiscountPoisha;
   }
 

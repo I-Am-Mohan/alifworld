@@ -37,10 +37,7 @@ export async function POST(req: NextRequest) {
       // Guest calculation session
     }
 
-    const review = await finalOrderReviewService.generateOrderReview(
-      validatedInput,
-      customerId
-    );
+    const review = await finalOrderReviewService.generateOrderReview(validatedInput, customerId);
 
     return NextResponse.json(
       {

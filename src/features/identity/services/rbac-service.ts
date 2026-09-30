@@ -1,9 +1,9 @@
 /**
  * AlifWorld RBAC (Role-Based Access Control) Domain Service
- * 
+ *
  * Enforces server-side authorization checks, permission evaluation,
  * seller-tenant scoping, and role delegation rules.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0006, ADR-0022, ADR-0023
  */
@@ -27,8 +27,16 @@ export class RbacService {
    * Asserts that a user has a specific permission. Throws AuthorizationError if not.
    * If targetSellerId is provided, evaluates tenant-scoped permissions.
    */
-  public async assertPermission(userId: string, permissionCode: string, targetSellerId?: string): Promise<void> {
-    const hasPerm = await this.roleAssignmentRepo.hasPermission(userId, permissionCode, targetSellerId);
+  public async assertPermission(
+    userId: string,
+    permissionCode: string,
+    targetSellerId?: string
+  ): Promise<void> {
+    const hasPerm = await this.roleAssignmentRepo.hasPermission(
+      userId,
+      permissionCode,
+      targetSellerId
+    );
     if (!hasPerm) {
       throw new AuthorizationError(
         `Authorization Denied: User lacks required permission '${permissionCode}'.`,
@@ -40,20 +48,25 @@ export class RbacService {
   /**
    * Asserts that a user has a specific role. Throws AuthorizationError if not.
    */
-  public async assertRole(userId: string, roleCode: string, targetSellerId?: string): Promise<void> {
+  public async assertRole(
+    userId: string,
+    roleCode: string,
+    targetSellerId?: string
+  ): Promise<void> {
     const hasRole = await this.roleAssignmentRepo.hasRole(userId, roleCode, targetSellerId);
     if (!hasRole) {
-      throw new AuthorizationError(
-        `Authorization Denied: User does not hold role '${roleCode}'.`,
-        { userId, roleCode, targetSellerId }
-      );
+      throw new AuthorizationError(`Authorization Denied: User does not hold role '${roleCode}'.`, {
+        userId,
+        roleCode,
+        targetSellerId,
+      });
     }
   }
 
   /**
    * Enforces multi-tenant isolation: verifies that a user has valid staff/owner access
    * to a specific seller tenant.
-   * 
+   *
    * Super Admins automatically bypass tenant restrictions.
    */
   public async assertSellerTenantAccess(userId: string, sellerId: string): Promise<void> {
@@ -66,7 +79,9 @@ export class RbacService {
     // 2. Check if user holds an active role scoped to this sellerId
     const assignments = await this.roleAssignmentRepo.getUserRoleAssignments(userId);
     const hasTenantRole = assignments.some(
-      (a) => a.sellerId === sellerId && (a.role.code === SystemRoleCode.SELLER_OWNER || a.role.code === SystemRoleCode.SELLER_STAFF)
+      (a) =>
+        a.sellerId === sellerId &&
+        (a.role.code === SystemRoleCode.SELLER_OWNER || a.role.code === SystemRoleCode.SELLER_STAFF)
     );
 
     if (!hasTenantRole) {
@@ -86,7 +101,10 @@ export class RbacService {
    */
   public async assignRole(actorUserId: string, input: AssignRoleInput): Promise<void> {
     // 1. Actor privilege verification
-    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
     const actorIsAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
 
     if (!actorIsSuperAdmin && !actorIsAdmin && !input.sellerId) {
@@ -99,7 +117,9 @@ export class RbacService {
     }
 
     // Check if target role requires sellerId scoping
-    const isSellerRole = targetRole.code === SystemRoleCode.SELLER_OWNER || targetRole.code === SystemRoleCode.SELLER_STAFF;
+    const isSellerRole =
+      targetRole.code === SystemRoleCode.SELLER_OWNER ||
+      targetRole.code === SystemRoleCode.SELLER_STAFF;
     if (isSellerRole && !input.sellerId) {
       throw new ValidationError(
         `Role '${targetRole.code}' requires a valid 'sellerId' tenant scope.`,
@@ -107,16 +127,28 @@ export class RbacService {
       );
     }
 
-    if ((targetRole.code === SystemRoleCode.SUPER_ADMIN || targetRole.code === SystemRoleCode.ADMIN) && !actorIsSuperAdmin) {
-      throw new AuthorizationError(`Only a Super Administrator can assign administrative roles (${targetRole.code}).`);
+    if (
+      (targetRole.code === SystemRoleCode.SUPER_ADMIN ||
+        targetRole.code === SystemRoleCode.ADMIN) &&
+      !actorIsSuperAdmin
+    ) {
+      throw new AuthorizationError(
+        `Only a Super Administrator can assign administrative roles (${targetRole.code}).`
+      );
     }
 
     if (!actorIsSuperAdmin && !actorIsAdmin) {
       // If actor is not platform admin, check if they are SELLER_OWNER for the target seller
       if (input.sellerId && targetRole.code === SystemRoleCode.SELLER_STAFF) {
-        const isOwner = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SELLER_OWNER, input.sellerId);
+        const isOwner = await this.roleAssignmentRepo.hasRole(
+          actorUserId,
+          SystemRoleCode.SELLER_OWNER,
+          input.sellerId
+        );
         if (!isOwner) {
-          throw new AuthorizationError('Only the store owner or an administrator can assign staff roles for this seller.');
+          throw new AuthorizationError(
+            'Only the store owner or an administrator can assign staff roles for this seller.'
+          );
         }
       } else {
         throw new AuthorizationError('Insufficient privileges to assign this role.');
@@ -149,7 +181,10 @@ export class RbacService {
    * Revokes a role assignment.
    */
   public async revokeRole(actorUserId: string, input: RevokeRoleInput): Promise<void> {
-    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
     const actorIsAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.ADMIN);
 
     // Identify target role being revoked
@@ -162,8 +197,13 @@ export class RbacService {
       targetRoleCode = assignment?.role?.code || null;
     }
 
-    if ((targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) && !actorIsSuperAdmin) {
-      throw new AuthorizationError(`Only a Super Administrator can revoke administrative roles (${targetRoleCode}).`);
+    if (
+      (targetRoleCode === SystemRoleCode.SUPER_ADMIN || targetRoleCode === SystemRoleCode.ADMIN) &&
+      !actorIsSuperAdmin
+    ) {
+      throw new AuthorizationError(
+        `Only a Super Administrator can revoke administrative roles (${targetRoleCode}).`
+      );
     }
 
     if (!actorIsSuperAdmin && !actorIsAdmin && !input.sellerId) {
@@ -193,7 +233,10 @@ export class RbacService {
    * Creates a custom role and maps permissions to it.
    */
   public async createRole(actorUserId: string, input: CreateRoleInput): Promise<RoleModel> {
-    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(actorUserId, SystemRoleCode.SUPER_ADMIN);
+    const actorIsSuperAdmin = await this.roleAssignmentRepo.hasRole(
+      actorUserId,
+      SystemRoleCode.SUPER_ADMIN
+    );
     if (!actorIsSuperAdmin) {
       throw new AuthorizationError('Only a Super Administrator can create custom system roles.');
     }

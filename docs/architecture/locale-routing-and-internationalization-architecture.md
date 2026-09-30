@@ -6,7 +6,7 @@
 **Locales**: `bn-BD` (Bangla - Bangladesh, Default), `en-BD` (English - Bangladesh)  
 **Timezone**: `Asia/Dhaka` (UTC+6)  
 **Currency**: BDT (Integer Poisha, Minor Units)  
-**Status**: Accepted & Implemented  
+**Status**: Accepted & Implemented
 
 ---
 
@@ -15,6 +15,7 @@
 Milestone 051 establishes the core internationalization and locale routing architecture for AlifWorld, designating Bangladesh as the primary operational market while building an extensible, multi-language foundation capable of supporting future regional expansions.
 
 The architecture delivers:
+
 1. **BCP 47 Regional Tagging**: Canonical support for `bn-BD` and `en-BD`, with bidirectional normalization from legacy short codes (`bn`, `en`).
 2. **Deterministic Precedence Hierarchy**: Strict 6-tier negotiation algorithm resolving the user's preferred language across URL prefixes, query parameters, custom headers, persistent cookies, and browser `Accept-Language` headers.
 3. **Middleware Routing & Rewriting**: Next.js global middleware (`src/middleware.ts`) detects the requested locale, injects `x-locale` correlation headers, synchronizes the `aw_locale` cookie, and rewrites path-prefixed routes internally without breaking URL structure.
@@ -27,12 +28,13 @@ The architecture delivers:
 
 AlifWorld utilizes standard BCP 47 language and country subtags:
 
-| Canonical Locale | Short Alias | Display Name | Native Name | Direction | Launch Status |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`bn-BD`** | `bn` | বাংলা (বাংলাদেশ) | বাংলা | LTR | **Default Launch Locale** |
-| **`en-BD`** | `en` | English (Bangladesh) | English | LTR | Supported Launch Locale |
+| Canonical Locale | Short Alias | Display Name         | Native Name | Direction | Launch Status             |
+| :--------------- | :---------- | :------------------- | :---------- | :-------- | :------------------------ |
+| **`bn-BD`**      | `bn`        | বাংলা (বাংলাদেশ)     | বাংলা       | LTR       | **Default Launch Locale** |
+| **`en-BD`**      | `en`        | English (Bangladesh) | English     | LTR       | Supported Launch Locale   |
 
 ### Normalization Guarantees
+
 - The `normalizeToCanonicalLocale()` utility maps variations (`'bn'`, `'bn-bd'`, `'bn_BD'`, `'bangla'`) to `'bn-BD'`.
 - Variations of English (`'en'`, `'en-bd'`, `'en_BD'`, `'en-us'`, `'english'`) normalize to `'en-BD'`.
 - Unrecognized or unsupported inputs fall back to `'bn-BD'`.
@@ -88,6 +90,7 @@ The global middleware (`src/middleware.ts`) governs locale routing:
 ## 5. Server-Side vs Client-Side Internationalization
 
 ### 5.1 Server-Side Rendering (Server Components & Route Handlers)
+
 ```typescript
 import { getServerLocale, getServerTranslations, formatServerMessage } from '@/i18n/server';
 
@@ -100,6 +103,7 @@ export default async function ProductPage() {
 ```
 
 ### 5.2 Client-Side Rendering (Interactive Components)
+
 ```typescript
 'use client';
 import { useI18n } from '@/i18n/context';

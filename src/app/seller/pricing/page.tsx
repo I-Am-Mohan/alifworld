@@ -99,7 +99,8 @@ export default function SellerPricingPage() {
             Channel & Tier Pricing
           </h1>
           <p className="text-sm text-slate-500">
-            Manage compare-at MSRP, cost prices, MAP floor protection, B2B wholesale tiers, and campaign price lists.
+            Manage compare-at MSRP, cost prices, MAP floor protection, B2B wholesale tiers, and
+            campaign price lists.
           </p>
         </div>
         <button
@@ -112,7 +113,9 @@ export default function SellerPricingPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">{error}</div>
+        <div className="p-4 bg-rose-50 text-rose-700 rounded-md border border-rose-200">
+          {error}
+        </div>
       )}
 
       {loading ? (
@@ -135,7 +138,8 @@ export default function SellerPricingPage() {
               {priceLists.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-6 text-center text-slate-400">
-                    No custom channel price lists found. Click &apos;Create Price List&apos; to add B2B or campaign tiers.
+                    No custom channel price lists found. Click &apos;Create Price List&apos; to add
+                    B2B or campaign tiers.
                   </td>
                 </tr>
               ) : (

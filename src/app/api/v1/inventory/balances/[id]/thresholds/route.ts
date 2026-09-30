@@ -13,10 +13,7 @@ const inventoryService = new InventoryService();
  * PUT /api/v1/inventory/balances/[id]/thresholds
  * Configures lowStockThreshold and reorderPoint settings for a stock balance.
  */
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     let actor;
     try {

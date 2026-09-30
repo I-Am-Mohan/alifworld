@@ -1,20 +1,14 @@
 /**
  * Unit Tests for Standardized Identifiers, Timestamps & Lifecycle Fields
- * 
+ *
  * Verifies ID generation, prefix extraction, format validation,
  * optimistic concurrency control, and soft-delete payloads.
- * 
+ *
  * Reference: docs/architecture/identifiers-lifecycle-and-deletion-policy.md
  */
 
 import { describe, it, expect } from 'bun:test';
-import {
-  generateId,
-  isValidId,
-  extractPrefix,
-  parseId,
-  ID_PREFIXES,
-} from '@/shared/utils/id';
+import { generateId, isValidId, extractPrefix, parseId, ID_PREFIXES } from '@/shared/utils/id';
 import {
   whereActive,
   createSoftDeletePayload,

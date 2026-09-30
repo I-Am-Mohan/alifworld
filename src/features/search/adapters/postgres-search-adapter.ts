@@ -1,9 +1,9 @@
 /**
  * AlifWorld PostgreSQL Fallback Search Adapter
- * 
+ *
  * Reliable, boot-safe search implementation querying PostgreSQL directly via Prisma.
  * Used automatically when Meilisearch is unavailable, unconfigured, or timing out.
- * 
+ *
  * Invariants: ADR-0003, ADR-0004, ADR-0006, ADR-0022
  */
 
@@ -247,7 +247,15 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
         const tagMatch = d.tags.some((t) => isFuzzyMatch(queryTerm, t));
         const brandMatch = d.brand ? isFuzzyMatch(queryTerm, d.brand) : false;
         const catMatch = d.categoryName ? isFuzzyMatch(queryTerm, d.categoryName) : false;
-        return titleMatch || titleBnMatch || descMatch || descBnMatch || tagMatch || brandMatch || catMatch;
+        return (
+          titleMatch ||
+          titleBnMatch ||
+          descMatch ||
+          descBnMatch ||
+          tagMatch ||
+          brandMatch ||
+          catMatch
+        );
       });
     }
 
@@ -328,7 +336,8 @@ export class PostgresSearchAdapter implements SearchServiceInterface {
       for (const v of product.variants) {
         if (v.stockBalances) {
           for (const sb of v.stockBalances) {
-            totalAvailable += (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0);
+            totalAvailable +=
+              (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0);
           }
         }
       }

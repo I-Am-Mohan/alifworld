@@ -9,19 +9,12 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/b2b/rfqs/[id]
  * Retrieves details of a single RFQ.
  */
-export async function GET(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;
 
-    const rfq = await b2bCommerceService.getRfqById(
-      id,
-      actor.userId,
-      actor.sellerId || undefined
-    );
+    const rfq = await b2bCommerceService.getRfqById(id, actor.userId, actor.sellerId || undefined);
 
     return NextResponse.json(
       {
@@ -39,10 +32,7 @@ export async function GET(
  * DELETE /api/v1/b2b/rfqs/[id]
  * Cancels an open RFQ by the buyer organization.
  */
-export async function DELETE(
-  req: NextRequest,
-  props: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await props.params;

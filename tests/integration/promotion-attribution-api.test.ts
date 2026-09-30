@@ -35,9 +35,18 @@ describe('Milestone 096: Promotion Funding Authorization & Tenant Isolation', ()
 
   describe('PromotionPolicy.canCreatePromotion', () => {
     it('allows ADMIN to create platform-funded, seller-funded, and co-funded promotions', () => {
-      expect(PromotionPolicy.canCreatePromotion(adminActor, { fundingType: 'PLATFORM_FUNDED' })).toBe(true);
-      expect(PromotionPolicy.canCreatePromotion(adminActor, { fundingType: 'SELLER_FUNDED', sellerId: 'sel-store-aaaa' })).toBe(true);
-      expect(PromotionPolicy.canCreatePromotion(adminActor, { fundingType: 'CO_FUNDED' })).toBe(true);
+      expect(
+        PromotionPolicy.canCreatePromotion(adminActor, { fundingType: 'PLATFORM_FUNDED' })
+      ).toBe(true);
+      expect(
+        PromotionPolicy.canCreatePromotion(adminActor, {
+          fundingType: 'SELLER_FUNDED',
+          sellerId: 'sel-store-aaaa',
+        })
+      ).toBe(true);
+      expect(PromotionPolicy.canCreatePromotion(adminActor, { fundingType: 'CO_FUNDED' })).toBe(
+        true
+      );
     });
 
     it('allows SELLER to create seller-funded promotions for their own sellerId', () => {
@@ -75,25 +84,41 @@ describe('Milestone 096: Promotion Funding Authorization & Tenant Isolation', ()
     });
 
     it('prohibits CUSTOMER from creating promotions', () => {
-      expect(PromotionPolicy.canCreatePromotion(customerUser, { fundingType: 'SELLER_FUNDED' })).toBe(false);
+      expect(
+        PromotionPolicy.canCreatePromotion(customerUser, { fundingType: 'SELLER_FUNDED' })
+      ).toBe(false);
     });
   });
 
   describe('PromotionPolicy.canReadAttribution & canAccessSellerAttributionReport', () => {
     it('allows ADMIN to access attribution records for any seller', () => {
-      expect(PromotionPolicy.canReadAttribution(adminActor, { sellerId: 'sel-store-aaaa' })).toBe(true);
-      expect(PromotionPolicy.canAccessSellerAttributionReport(adminActor, 'sel-store-aaaa')).toBe(true);
-      expect(PromotionPolicy.canAccessSellerAttributionReport(adminActor, 'sel-store-bbbb')).toBe(true);
+      expect(PromotionPolicy.canReadAttribution(adminActor, { sellerId: 'sel-store-aaaa' })).toBe(
+        true
+      );
+      expect(PromotionPolicy.canAccessSellerAttributionReport(adminActor, 'sel-store-aaaa')).toBe(
+        true
+      );
+      expect(PromotionPolicy.canAccessSellerAttributionReport(adminActor, 'sel-store-bbbb')).toBe(
+        true
+      );
     });
 
     it('allows SELLER to access attribution records for their own sellerId', () => {
-      expect(PromotionPolicy.canReadAttribution(sellerA, { sellerId: 'sel-store-aaaa' })).toBe(true);
-      expect(PromotionPolicy.canAccessSellerAttributionReport(sellerA, 'sel-store-aaaa')).toBe(true);
+      expect(PromotionPolicy.canReadAttribution(sellerA, { sellerId: 'sel-store-aaaa' })).toBe(
+        true
+      );
+      expect(PromotionPolicy.canAccessSellerAttributionReport(sellerA, 'sel-store-aaaa')).toBe(
+        true
+      );
     });
 
     it('prohibits SELLER from accessing attribution records belonging to another sellerId', () => {
-      expect(PromotionPolicy.canReadAttribution(sellerA, { sellerId: 'sel-store-bbbb' })).toBe(false);
-      expect(PromotionPolicy.canAccessSellerAttributionReport(sellerA, 'sel-store-bbbb')).toBe(false);
+      expect(PromotionPolicy.canReadAttribution(sellerA, { sellerId: 'sel-store-bbbb' })).toBe(
+        false
+      );
+      expect(PromotionPolicy.canAccessSellerAttributionReport(sellerA, 'sel-store-bbbb')).toBe(
+        false
+      );
     });
   });
 
@@ -126,12 +151,12 @@ describe('Milestone 096: Promotion Funding Authorization & Tenant Isolation', ()
           page: 1,
           limit: 20,
         })
-      ).rejects.toThrow('Sellers cannot view another seller\'s promotion attributions');
+      ).rejects.toThrow("Sellers cannot view another seller's promotion attributions");
     });
 
     it('blocks seller from viewing another seller attribution summary', async () => {
       expect(service.getAttributionSummary(sellerA, 'sel-store-bbbb')).rejects.toThrow(
-        'Sellers cannot view another seller\'s promotion summary'
+        "Sellers cannot view another seller's promotion summary"
       );
     });
 

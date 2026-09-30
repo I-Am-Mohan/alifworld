@@ -1,9 +1,9 @@
 /**
  * AlifWorld Delivery Rider & Logistics Authorization Policy
- * 
+ *
  * Enforces assignment lease validation, atomic acceptance to prevent double-assignment,
  * live GPS telemetry updates, shipment milestone transitions, and route isolation.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0023, Milestone 046
  */
 
@@ -31,14 +31,20 @@ export class RiderPolicy implements IPolicy {
     }
 
     // 2. Dispatchers & Operations Global Logistics Access
-    const isDispatcher = isPlatformAdmin || isOperations || actor.permissions.includes('rider:dispatch');
+    const isDispatcher =
+      isPlatformAdmin || isOperations || actor.permissions.includes('rider:dispatch');
 
     switch (action) {
       case 'accept_assignment':
       case 'rider:assignment:accept':
       case 'rider:accept': {
         if (isDispatcher) {
-          return { granted: true, code: 'GRANTED', reason: 'Dispatcher assigning delivery parcel.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Dispatcher assigning delivery parcel.',
+            policyName: this.name,
+          };
         }
 
         if (!isRider) {
@@ -66,7 +72,8 @@ export class RiderPolicy implements IPolicy {
           return {
             granted: false,
             code: 'FORBIDDEN',
-            reason: 'Double-assignment prevented: Delivery parcel has already been claimed by another rider.',
+            reason:
+              'Double-assignment prevented: Delivery parcel has already been claimed by another rider.',
             policyName: this.name,
             diagnostics: { claimedByRiderId: existingRiderId, attemptingRiderId: actor.userId },
           };
@@ -83,14 +90,19 @@ export class RiderPolicy implements IPolicy {
             return {
               granted: false,
               code: 'FORBIDDEN',
-              reason: 'Delivery assignment is held under an active exclusive lease by another rider.',
+              reason:
+                'Delivery assignment is held under an active exclusive lease by another rider.',
               policyName: this.name,
               diagnostics: { leaseRiderId, leaseExpiresAt },
             };
           }
         }
 
-        if (leaseRiderId === actor.userId && leaseExpiresAt && new Date(leaseExpiresAt).getTime() < Date.now()) {
+        if (
+          leaseRiderId === actor.userId &&
+          leaseExpiresAt &&
+          new Date(leaseExpiresAt).getTime() < Date.now()
+        ) {
           return {
             granted: false,
             code: 'FORBIDDEN',
@@ -111,11 +123,21 @@ export class RiderPolicy implements IPolicy {
       case 'rider:status:update':
       case 'rider:status': {
         if (isDispatcher) {
-          return { granted: true, code: 'GRANTED', reason: 'Dispatcher updating parcel milestone status.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Dispatcher updating parcel milestone status.',
+            policyName: this.name,
+          };
         }
 
         if (!isRider) {
-          return { granted: false, code: 'FORBIDDEN', reason: 'Non-rider cannot update delivery status.', policyName: this.name };
+          return {
+            granted: false,
+            code: 'FORBIDDEN',
+            reason: 'Non-rider cannot update delivery status.',
+            policyName: this.name,
+          };
         }
 
         // Must be the assigned rider for this delivery
@@ -150,7 +172,12 @@ export class RiderPolicy implements IPolicy {
           };
         }
 
-        return { granted: true, code: 'GRANTED', reason: 'Assigned rider authorized to update delivery status.', policyName: this.name };
+        return {
+          granted: true,
+          code: 'GRANTED',
+          reason: 'Assigned rider authorized to update delivery status.',
+          policyName: this.name,
+        };
       }
 
       case 'location_update':
@@ -167,29 +194,60 @@ export class RiderPolicy implements IPolicy {
               policyName: this.name,
             };
           }
-          return { granted: true, code: 'GRANTED', reason: 'Rider publishing telemetry coordinates.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Rider publishing telemetry coordinates.',
+            policyName: this.name,
+          };
         }
 
         if (isDispatcher) {
-          return { granted: true, code: 'GRANTED', reason: 'Dispatcher logging automated GPS telemetry.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Dispatcher logging automated GPS telemetry.',
+            policyName: this.name,
+          };
         }
 
-        return { granted: false, code: 'FORBIDDEN', reason: 'Unauthorized to publish rider location telemetry.', policyName: this.name };
+        return {
+          granted: false,
+          code: 'FORBIDDEN',
+          reason: 'Unauthorized to publish rider location telemetry.',
+          policyName: this.name,
+        };
       }
 
       case 'read':
       case 'rider:read': {
         if (isDispatcher) {
-          return { granted: true, code: 'GRANTED', reason: 'Dispatcher inspecting delivery assignments.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Dispatcher inspecting delivery assignments.',
+            policyName: this.name,
+          };
         }
 
         if (!isRider) {
-          return { granted: false, code: 'FORBIDDEN', reason: 'Unauthorized to view rider dispatch records.', policyName: this.name };
+          return {
+            granted: false,
+            code: 'FORBIDDEN',
+            reason: 'Unauthorized to view rider dispatch records.',
+            policyName: this.name,
+          };
         }
 
-        const assignedRiderId = resource.data?.riderId || resource.data?.leaseRiderId || resource.ownerId;
+        const assignedRiderId =
+          resource.data?.riderId || resource.data?.leaseRiderId || resource.ownerId;
         if (!assignedRiderId || assignedRiderId === actor.userId) {
-          return { granted: true, code: 'GRANTED', reason: 'Rider viewing assigned route or open dispatch.', policyName: this.name };
+          return {
+            granted: true,
+            code: 'GRANTED',
+            reason: 'Rider viewing assigned route or open dispatch.',
+            policyName: this.name,
+          };
         }
 
         return {

@@ -45,7 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (actor && !actor.roles.includes('ADMIN') && !actor.roles.includes('SUPER_ADMIN')) {
-      throw new AuthorizationError('Only platform administrators can configure search degraded mode.');
+      throw new AuthorizationError(
+        'Only platform administrators can configure search degraded mode.'
+      );
     }
 
     const body = await req.json();

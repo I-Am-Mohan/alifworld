@@ -3,9 +3,16 @@
 import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
+import type { CustomerParentOrderDTO } from '@/features/orders/types/order.types';
+import { csrfFetch } from '@/shared/security/csrf-client';
 import { AlifLogo } from '@/components/brand/logo';
 import { useI18n } from '@/i18n/context';
-import { formatLocalizedCurrency, formatLocalizedDate, formatLocalizedTime } from '@/shared/utils/localization';
+import {
+  formatLocalizedCurrency,
+  formatLocalizedDate,
+  formatLocalizedTime,
+} from '@/shared/utils/localization';
 import {
   Package,
   Truck,
@@ -19,14 +26,19 @@ import {
   Calendar,
   ShieldAlert,
   FileText,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function OrderTrackingPage() {
   const { locale } = useI18n();
   const params = useParams();
-  const orderNumber = (params?.orderNumber as string) || 'ORD-20260922-0001';
+  const orderNumber = (params?.orderNumber as string) || '';
+  const text = (en: string, bn: string) => (locale.startsWith('bn') ? bn : en);
 
-  const [liveOrder, setLiveOrder] = React.useState<any | null>(null);
+  const [liveOrder, setLiveOrder] = React.useState<CustomerParentOrderDTO | null>(null);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [refresh, setRefresh] = React.useState(0);
+  const cancellation = React.useRef<{ key: string; reason: string } | null>(null);
   const [isCancelling, setIsCancelling] = React.useState<boolean>(false);
   const [cancelError, setCancelError] = React.useState<string | null>(null);
 
@@ -35,142 +47,106 @@ export default function OrderTrackingPage() {
     async function fetchLiveOrder() {
       try {
         const res = await fetch(`/api/v1/customer/orders/${encodeURIComponent(orderNumber)}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data && isMounted) {
-            setLiveOrder(json.data);
-          }
-        }
+        const json = await res.json();
+        if (!res.ok || !json.success) throw new Error(String(res.status));
+        if (isMounted) setLiveOrder(json.data);
       } catch {
-        // Fallback to static display
+        if (isMounted) setLoadError('LOAD_FAILED');
       }
     }
     void fetchLiveOrder();
     return () => {
       isMounted = false;
     };
-  }, [orderNumber]);
+  }, [orderNumber, refresh]);
 
   const handleCancelOrder = async () => {
-    const reason = prompt('Please provide a reason for cancelling this order:');
+    const reason = prompt(
+      text('Reason for cancellation (3-500 characters):', 'বাতিলের কারণ (৩-৫০০ অক্ষর):'),
+      cancellation.current?.reason || ''
+    );
     if (!reason || !reason.trim()) return;
+    if (reason.trim().length < 3 || reason.trim().length > 500) {
+      setCancelError(
+        text('Enter a reason between 3 and 500 characters.', '৩ থেকে ৫০০ অক্ষরের কারণ লিখুন।')
+      );
+      return;
+    }
+    if (cancellation.current?.reason !== reason.trim())
+      cancellation.current = { reason: reason.trim(), key: crypto.randomUUID() };
 
     setIsCancelling(true);
     setCancelError(null);
     try {
-      const res = await fetch(`/api/v1/customer/orders/${encodeURIComponent(orderNumber)}/cancel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
+      const res = await csrfFetch(
+        `/api/v1/customer/orders/${encodeURIComponent(orderNumber)}/cancel`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': cancellation.current!.key,
+          },
+          body: JSON.stringify({ reason: reason.trim() }),
+        }
+      );
       const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.error?.message || 'Failed to cancel order.');
+      if (!res.ok || !json.success) {
+        throw new Error(
+          text(
+            'Cancellation failed. Refresh or retry.',
+            'বাতিল করা যায়নি। রিফ্রেশ করুন বা আবার চেষ্টা করুন।'
+          )
+        );
       }
       setLiveOrder(json.data);
-    } catch (err: any) {
-      setCancelError(err.message || 'Cancellation failed.');
+      cancellation.current = null;
+    } catch (err) {
+      setCancelError(
+        err instanceof Error ? err.message : text('Cancellation failed.', 'বাতিল করা যায়নি।')
+      );
     } finally {
       setIsCancelling(false);
     }
   };
 
-  // Demo order data matching seeded order (used when live order is not yet loaded)
-  const order = liveOrder || {
-    orderNumber,
-    status: 'PROCESSING',
-    paymentStatus: 'PAID',
-    createdAt: '2026-09-22T10:30:00.000Z',
-    customerName: 'Tanvir Ahmed',
-    customerPhone: '+88017****2233',
-    shippingDivision: 'DHAKA',
-    shippingDistrict: 'Dhaka (Gulshan-2)',
-    shippingAddress: 'House 42, Road 11, Block D, Gulshan-2, Dhaka-1212',
-    subtotalPoisha: BigInt(2199000), // ৳21,990.00
-    shippingFeePoisha: BigInt(6000),  // ৳60.00
-    taxPoisha: BigInt(329850),        // ৳3,298.50
-    totalPoisha: BigInt(2534850),      // ৳25,348.50
-    totalProductPoints: 450,
-    pointsReleased: false,
-    fulfillmentGroups: [
-      {
-        id: 'sfg_01',
-        groupNumber: `${orderNumber}-SFG01`,
-        sellerName: 'Dhaka Tech Ltd.',
-        sellerSlug: 'dhaka-tech',
-        warehouseName: 'Dhaka Tech Banani Logistics Depot',
-        status: 'HANDED_OVER_TO_COURIER',
-        subtotalPoisha: BigInt(2199000),
-        courierProvider: 'PATHAO',
-        trackingNumber: 'PTH-DHK-882910',
-        items: [
-          {
-            id: 'itm_01',
-            productTitle: 'Nexus Pro Smartphone 5G',
-            variantTitle: 'Midnight Black / 128GB',
-            sku: 'PHN-NEXUS-BLK',
-            imageUrl: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=300&q=80',
-            unitPricePoisha: BigInt(2199000),
-            quantity: 1,
-            totalPoisha: BigInt(2199000),
-            productPointSnapshot: 450,
-            totalProductPoints: 450,
-          },
-        ],
-        shipment: {
-          shipmentNumber: 'SHP-20260922-0001',
-          status: 'IN_TRANSIT',
-          events: [
-            {
-              id: 'she_01',
-              status: 'LABEL_CREATED',
-              description: 'Merchant generated Pathao delivery consignment label',
-              occurredAt: '2026-09-22T11:00:00.000Z',
-            },
-            {
-              id: 'she_02',
-              status: 'PICKED_UP',
-              location: 'Banani Depot, Dhaka',
-              description: 'Pathao courier rider picked up package for dispatch',
-              occurredAt: '2026-09-22T13:30:00.000Z',
-            },
-            {
-              id: 'she_03',
-              status: 'IN_TRANSIT',
-              location: 'Tejgaon Sorting Hub, Dhaka',
-              description: 'Package in sorting queue for last-mile route transit',
-              occurredAt: '2026-09-22T15:15:00.000Z',
-            },
-          ],
-        },
-      },
-    ],
-    statusHistory: [
-      {
-        id: 'osh_01',
-        toStatus: 'PENDING_PAYMENT',
-        actorRole: 'CUSTOMER',
-        reason: 'Order placed by customer at checkout',
-        createdAt: '2026-09-22T10:30:00.000Z',
-      },
-      {
-        id: 'osh_02',
-        toStatus: 'CONFIRMED',
-        actorRole: 'SYSTEM',
-        reason: 'Payment authorized and verified via bKash gateway',
-        createdAt: '2026-09-22T10:32:00.000Z',
-      },
-      {
-        id: 'osh_03',
-        toStatus: 'PROCESSING',
-        actorRole: 'SELLER',
-        reason: 'Merchant accepted fulfillment group and started packaging',
-        createdAt: '2026-09-22T10:45:00.000Z',
-      },
-    ],
+  if (!liveOrder)
+    return (
+      <main className="mx-auto max-w-5xl p-6 space-y-4">
+        <AlifLogo size="md" />
+        <h1 className="text-xl font-bold break-all">
+          {text('Order', 'অর্ডার')} {orderNumber}
+        </h1>
+        <p role={loadError ? 'alert' : 'status'}>
+          {loadError
+            ? text(
+                'Unable to load this order. Sign in and retry.',
+                'অর্ডার লোড করা যায়নি। সাইন ইন করে আবার চেষ্টা করুন।'
+              )
+            : text('Loading order...', 'অর্ডার লোড হচ্ছে...')}
+        </p>
+        {loadError && (
+          <button
+            type="button"
+            onClick={() => {
+              setLoadError(null);
+              setRefresh((value) => value + 1);
+            }}
+            className="inline-flex gap-2 items-center border p-2 rounded-lg"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {text('Retry', 'আবার চেষ্টা করুন')}
+          </button>
+        )}
+        <Link href="/">{text('Return to Store', 'স্টোরে ফিরে যান')}</Link>
+      </main>
+    );
+  const order = {
+    ...liveOrder,
+    ...liveOrder.financialSummary,
+    fulfillmentGroups: liveOrder.packages,
   };
 
-  const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
+  const formatBdt = (poisha: number) => formatLocalizedCurrency(BigInt(poisha), locale);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A]">
@@ -197,12 +173,12 @@ export default function OrderTrackingPage() {
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100">
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 break-all">
                 <h1 className="text-xl sm:text-2xl font-black text-gray-900">
                   Order #{order.orderNumber}
                 </h1>
                 <span className="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-full">
-                  {order.status}
+                  {locale.startsWith('bn') ? order.statusLabelBn : order.statusLabelEn}
                 </span>
               </div>
               <div className="flex items-center gap-4 text-xs text-gray-500 mt-1.5">
@@ -212,7 +188,10 @@ export default function OrderTrackingPage() {
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Payment Settled ({order.paymentStatus})
+                  <CheckCircle2 className="w-3.5 h-3.5" />{' '}
+                  {locale.startsWith('bn')
+                    ? order.paymentStatusLabelBn
+                    : order.paymentStatusLabelEn}
                 </span>
               </div>
             </div>
@@ -224,7 +203,6 @@ export default function OrderTrackingPage() {
               </span>
             </div>
           </div>
-
           {/* Points Banner */}
           <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
@@ -232,33 +210,31 @@ export default function OrderTrackingPage() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-amber-900 uppercase">Independent Loyalty Points</h4>
+                <h4 className="text-xs font-bold text-amber-900 uppercase">
+                  Independent Loyalty Points
+                </h4>
                 <p className="text-sm font-semibold text-amber-800">
                   {order.totalProductPoints} Product Points (PP) Snapshotted
                 </p>
               </div>
             </div>
             <span className="text-xs bg-white/80 text-amber-900 font-medium px-3 py-1 rounded-full border border-amber-200">
-              Pending Return Inspection Window
+              {text('Product Points snapshot', 'প্রোডাক্ট পয়েন্ট স্ন্যাপশট')}
             </span>
           </div>
           {/* Customer Self-Service Actions */}
           <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Link
-                href={`/api/v1/checkout/tax-breakdown/${encodeURIComponent(order.orderNumber)}`}
-                target="_blank"
-                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                <FileText className="w-3.5 h-3.5 text-gray-500" />
-                NBR Mushak-6.3 Invoice
-              </Link>
-              <Link
-                href="/cart"
-                className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-[#1B5E20] text-xs font-bold rounded-lg border border-green-200 transition-colors"
-              >
-                Reorder Items
-              </Link>
+              {order.selfServiceActions.canDownloadInvoice && (
+                <Link
+                  href={`/api/v1/checkout/tax-breakdown/${encodeURIComponent(order.id)}`}
+                  target="_blank"
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                >
+                  <FileText className="w-3.5 h-3.5 text-gray-500" />
+                  NBR Mushak-6.3 Invoice
+                </Link>
+              )}
             </div>
 
             {(order.selfServiceActions?.canCancel ?? order.status === 'PENDING_PAYMENT') && (
@@ -268,19 +244,24 @@ export default function OrderTrackingPage() {
                 disabled={isCancelling}
                 className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-lg border border-red-200 transition-colors disabled:opacity-50"
               >
-                {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+                {isCancelling
+                  ? text('Cancelling...', 'বাতিল হচ্ছে...')
+                  : text('Cancel Order', 'অর্ডার বাতিল করুন')}
               </button>
             )}
           </div>
-
           {cancelError && (
-            <div className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200">
+            <div
+              role="alert"
+              className="mt-2 text-xs text-red-600 bg-red-50 p-2 rounded-lg border border-red-200"
+            >
               {cancelError}
             </div>
-          )}        </div>
+          )}{' '}
+        </div>
 
         {/* Multi-Vendor Seller Fulfillment Groups */}
-        {order.fulfillmentGroups.map((group: any) => (
+        {order.fulfillmentGroups.map((group) => (
           <div
             key={group.id}
             className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-6"
@@ -297,27 +278,34 @@ export default function OrderTrackingPage() {
                   </div>
                   <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                     <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                    Origin: {group.warehouseName}
+                    {text('Package', 'প্যাকেজ')}: {group.groupNumber}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 font-semibold rounded-lg">
-                  {group.status.replace(/_/g, ' ')}
+                  {locale.startsWith('bn') ? group.statusLabelBn : group.statusLabelEn}
                 </span>
               </div>
             </div>
 
             {/* Item List */}
             <div className="space-y-4">
-              {group.items.map((item: any) => (
+              {group.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.productTitle}
-                    className="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0"
-                  />
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.productTitle}
+                      width={64}
+                      height={64}
+                      unoptimized
+                      className="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-shrink-0"
+                    />
+                  ) : (
+                    <Package aria-hidden="true" className="w-12 h-12 text-gray-300 flex-shrink-0" />
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-gray-900 truncate">
                       {item.productTitle}
@@ -331,8 +319,7 @@ export default function OrderTrackingPage() {
                         {formatBdt(item.totalPoisha)}
                       </span>
                       <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200 font-medium px-2 py-0.2 rounded-full flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-600" />
-                        +{item.totalProductPoints} PP
+                        <Sparkles className="w-3 h-3 text-amber-600" />+{item.totalProductPoints} PP
                       </span>
                     </div>
                   </div>
@@ -357,27 +344,16 @@ export default function OrderTrackingPage() {
                   </div>
 
                   <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-md self-start sm:self-auto">
-                    {group.shipment.status}
+                    {locale.startsWith('bn') ? group.statusLabelBn : group.statusLabelEn}
                   </span>
                 </div>
 
                 {/* Timeline */}
-                <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-green-200">
-                  {group.shipment.events.map((event: any, idx: number) => (
-                    <div key={event.id} className="relative">
-                      <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#1B5E20] border-2 border-white" />
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p className="text-xs font-semibold text-gray-900">{event.description}</p>
-                        <span className="text-[11px] text-gray-400 whitespace-nowrap">
-                          {formatLocalizedTime(new Date(event.occurredAt), locale)}
-                        </span>
-                      </div>
-                      {event.location && (
-                        <p className="text-[11px] text-gray-500 mt-0.5">{event.location}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {!group.trackingNumber && (
+                  <p className="text-xs text-gray-500">
+                    {text('Tracking is not available yet.', 'ট্র্যাকিং এখনো পাওয়া যায়নি।')}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -391,14 +367,16 @@ export default function OrderTrackingPage() {
           </h2>
 
           <div className="space-y-3">
-            {order.statusHistory.map((entry: any) => (
+            {order.statusHistory.map((entry) => (
               <div
                 key={entry.id}
                 className="flex items-start justify-between text-xs p-3 bg-gray-50 rounded-xl border border-gray-100"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-800">{entry.toStatus}</span>
+                    <span className="font-bold text-gray-800">
+                      {locale.startsWith('bn') ? entry.statusLabelBn : entry.statusLabelEn}
+                    </span>
                     <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] font-semibold">
                       {entry.actorRole}
                     </span>
@@ -406,7 +384,7 @@ export default function OrderTrackingPage() {
                   <p className="text-gray-500 mt-0.5">{entry.reason}</p>
                 </div>
                 <span className="text-gray-400">
-                  {formatLocalizedTime(new Date(entry.createdAt), locale)}
+                  {formatLocalizedTime(new Date(entry.occurredAt), locale)}
                 </span>
               </div>
             ))}

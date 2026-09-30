@@ -4,12 +4,23 @@ import { ProductStatus } from '@/features/catalog/types';
 import { CatalogPolicy } from '@/shared/authz/policies/catalog.policy';
 
 const product = {
-  id: 'prd_approval_01', sellerId: 'sel_01', status: ProductStatus.DRAFT, version: 1,
-  title: 'Approval Phone', slug: 'approval-phone', description: 'A valid approval-ready product description.',
-  currency: 'BDT', basePricePoisha: 1000, productPoint: 0,
+  id: 'prd_approval_01',
+  sellerId: 'sel_01',
+  status: ProductStatus.DRAFT,
+  version: 1,
+  title: 'Approval Phone',
+  slug: 'approval-phone',
+  description: 'A valid approval-ready product description.',
+  currency: 'BDT',
+  basePricePoisha: 1000,
+  productPoint: 0,
   seller: { status: 'VERIFIED', ownerUserId: 'usr_seller' },
-  category: { isActive: true, attributeAssignments: [] }, brand: null,
-  media: [{ mediaType: 'IMAGE' }], variants: [], attributeValues: [], optionSets: [],
+  category: { isActive: true, attributeAssignments: [] },
+  brand: null,
+  media: [{ mediaType: 'IMAGE' }],
+  variants: [],
+  attributeValues: [],
+  optionSets: [],
 };
 
 describe('Milestone 076 product approval workflow', () => {
@@ -30,14 +41,26 @@ describe('Milestone 076 product approval workflow', () => {
     const sellerRepository: any = { findById: mock(async () => product.seller) };
     const roles: any = { hasRole: mock(async () => false) };
     const service = new ProductApprovalService(repository, sellerRepository, roles);
-    const result = await service.submit('usr_seller', product.id, { version: 1, idempotencyKey: 'approval-key-01' });
+    const result = await service.submit('usr_seller', product.id, {
+      version: 1,
+      idempotencyKey: 'approval-key-01',
+    });
     expect(result.toStatus).toBe(ProductStatus.PENDING_APPROVAL);
     expect(result.submittedVersion).toBe(1);
   });
 
   it('denies seller publication in the catalog policy', () => {
     const policy = new CatalogPolicy();
-    const decision = policy.evaluate({ userId: 'usr_seller', roles: ['SELLER_OWNER'], permissions: ['catalog:publish'], sellerId: 'sel_01' }, 'catalog:publish', { type: 'CATALOG', id: product.id, sellerId: 'sel_01' });
+    const decision = policy.evaluate(
+      {
+        userId: 'usr_seller',
+        roles: ['SELLER_OWNER'],
+        permissions: ['catalog:publish'],
+        sellerId: 'sel_01',
+      },
+      'catalog:publish',
+      { type: 'CATALOG', id: product.id, sellerId: 'sel_01' }
+    );
     expect(decision.granted).toBe(false);
   });
 });

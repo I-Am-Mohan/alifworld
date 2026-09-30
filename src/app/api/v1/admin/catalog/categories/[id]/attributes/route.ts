@@ -14,7 +14,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const categoryId = (await params).id;
     await defaultPolicyEngine.assert(actor, 'catalog:write', { type: 'CATALOG', id: categoryId });
     const parsed = CategoryAttributeAssignmentsSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid category attribute assignments.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.replace(actor.userId, categoryId, parsed.data.assignments) });
-  } catch (error) { return errorResponse(req, error, 'Failed to assign category attributes'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid category attribute assignments.', parsed.error.flatten());
+    return NextResponse.json({
+      success: true,
+      data: await service.replace(actor.userId, categoryId, parsed.data.assignments),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to assign category attributes');
+  }
 }

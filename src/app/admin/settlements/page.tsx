@@ -144,15 +144,11 @@ export default function AdminSettlementsPage() {
   const formatBdt = (poisha: bigint) => formatLocalizedCurrency(poisha, locale);
 
   const handleApproveBatch = (batchId: string) => {
-    setBatches((prev) =>
-      prev.map((b) => (b.id === batchId ? { ...b, status: 'APPROVED' } : b))
-    );
+    setBatches((prev) => prev.map((b) => (b.id === batchId ? { ...b, status: 'APPROVED' } : b)));
   };
 
   const handleDisburseBatch = (batchId: string) => {
-    setBatches((prev) =>
-      prev.map((b) => (b.id === batchId ? { ...b, status: 'DISBURSED' } : b))
-    );
+    setBatches((prev) => prev.map((b) => (b.id === batchId ? { ...b, status: 'DISBURSED' } : b)));
   };
 
   return (
@@ -203,7 +199,8 @@ export default function AdminSettlementsPage() {
               Marketplace Settlement & Reconciliation Console
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Multi-tenant merchant clearing batches, automated 5% platform commission accruals, and gateway webhook signature verification.
+              Multi-tenant merchant clearing batches, automated 5% platform commission accruals, and
+              gateway webhook signature verification.
             </p>
           </div>
         </div>
@@ -218,9 +215,7 @@ export default function AdminSettlementsPage() {
             <div className="text-2xl font-black text-white font-mono">
               {formatBdt(BigInt(3228550))}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              bKash / Nagad / SSLCommerz
-            </div>
+            <div className="text-[11px] text-slate-500 mt-1">bKash / Nagad / SSLCommerz</div>
           </div>
 
           <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
@@ -231,9 +226,7 @@ export default function AdminSettlementsPage() {
             <div className="text-2xl font-black text-amber-400 font-mono">
               {formatBdt(BigInt(152200))}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              500 bps platform revenue
-            </div>
+            <div className="text-[11px] text-slate-500 mt-1">500 bps platform revenue</div>
           </div>
 
           <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800">
@@ -254,12 +247,8 @@ export default function AdminSettlementsPage() {
               <span>Webhook IPN Authenticity</span>
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="text-xl font-bold text-emerald-400">
-              100% Verified
-            </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              HMAC SHA-256 checked
-            </div>
+            <div className="text-xl font-bold text-emerald-400">100% Verified</div>
+            <div className="text-[11px] text-slate-500 mt-1">HMAC SHA-256 checked</div>
           </div>
         </div>
 
@@ -323,7 +312,9 @@ export default function AdminSettlementsPage() {
                         </td>
                         <td className="p-4">
                           <div className="font-semibold text-white">{batch.sellerName}</div>
-                          <div className="text-[10px] text-slate-500 font-mono">{batch.sellerId}</div>
+                          <div className="text-[10px] text-slate-500 font-mono">
+                            {batch.sellerId}
+                          </div>
                         </td>
                         <td className="p-4 text-slate-400">{batch.period}</td>
                         <td className="p-4 text-right font-mono font-medium">
@@ -341,8 +332,8 @@ export default function AdminSettlementsPage() {
                               batch.status === 'DISBURSED'
                                 ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                                 : batch.status === 'APPROVED'
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                             }`}
                           >
                             <CheckCircle2 className="w-3 h-3" />
@@ -370,7 +361,9 @@ export default function AdminSettlementsPage() {
                             <span className="text-[11px] text-slate-500 font-mono">Disbursed</span>
                           )}
                           {batch.status === 'PENDING' && (
-                            <span className="text-[11px] text-amber-400 font-mono">Auditing...</span>
+                            <span className="text-[11px] text-amber-400 font-mono">
+                              Auditing...
+                            </span>
                           )}
                         </td>
                       </tr>

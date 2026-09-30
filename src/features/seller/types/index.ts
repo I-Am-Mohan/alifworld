@@ -1,9 +1,9 @@
 /**
  * Seller Domain Types & Multi-Tenant Boundaries
- * 
+ *
  * Defines Seller, SellerStaff, SellerKycDocument, SellerStoreSettings models,
  * verification states, document types, and tenant isolation types.
- * 
+ *
  * Reference: docs/architecture/scope-boundaries-and-domain-map.md
  * Invariant: ADR-0003, ADR-0006, ADR-0022, ADR-0024
  */

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as getHomeRoute, PUT as putHomeRoute } from '@/app/api/v1/cms/home/route';
 import { cmsService } from '@/features/cms/services/cms-service';

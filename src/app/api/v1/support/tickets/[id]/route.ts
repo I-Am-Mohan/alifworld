@@ -1,23 +1,23 @@
 /**
  * REST API Route Handler: /api/v1/support/tickets/[id]
- * 
+ *
  * Manages single support ticket inspection, thread replies, and resolution.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 046
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/shared/authz';
 import { SupportTicketService } from '@/services/support-ticket.service';
-import { ReplySupportTicketSchema, ResolveSupportTicketSchema } from '@/validators/support-and-rider.validators';
+import {
+  ReplySupportTicketSchema,
+  ResolveSupportTicketSchema,
+} from '@/validators/support-and-rider.validators';
 import { AppError } from '@/shared/errors/app-error';
 
 const ticketService = new SupportTicketService();
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;
@@ -38,10 +38,7 @@ export async function GET(
   }
 }
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;
@@ -49,7 +46,10 @@ export async function POST(
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
-        { success: false, error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' } },
+        {
+          success: false,
+          error: { code: 'INVALID_JSON', message: 'Valid JSON payload is required.' },
+        },
         { status: 400 }
       );
     }
@@ -86,10 +86,7 @@ export async function POST(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const actor = authenticateRequest(req);
     const { id } = await params;

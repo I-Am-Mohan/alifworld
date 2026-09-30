@@ -1,16 +1,21 @@
 /**
  * Cart Repository
- * 
+ *
  * Manages shopping cart and cart item persistence with active status filtering,
  * soft deletion, and variant price/point snapshotting.
- * 
+ *
  * Reference: docs/architecture/carts-orders-fulfillment-groups-and-shipments.md
  * Invariant: ADR-0027
  */
 
 import { BaseRepository } from '@/shared/database/base-repository';
 import { generateId, ID_PREFIXES } from '@/shared/utils/id';
-import { NotFoundError, ValidationError, AuthorizationError, ConflictError } from '@/shared/errors/app-error';
+import {
+  NotFoundError,
+  ValidationError,
+  AuthorizationError,
+  ConflictError,
+} from '@/shared/errors/app-error';
 import { ActorContext } from '@/shared/authz/authz.types';
 
 export interface AddCartItemInput {
@@ -32,7 +37,12 @@ export class CartRepository extends BaseRepository {
         id: variantId,
         deletedAt: null,
         isActive: true,
-        product: { deletedAt: null, status: 'PUBLISHED', currency: 'BDT', seller: { deletedAt: null, status: 'VERIFIED' } },
+        product: {
+          deletedAt: null,
+          status: 'PUBLISHED',
+          currency: 'BDT',
+          seller: { deletedAt: null, status: 'VERIFIED' },
+        },
       },
       select: {
         pricePoisha: true,
@@ -63,7 +73,12 @@ export class CartRepository extends BaseRepository {
 
   private async claimEditableCart(tx: any, cartId: string, ownerId?: string) {
     const result = await tx.cart.updateMany({
-      where: { id: cartId, status: 'ACTIVE', deletedAt: null, ...(ownerId ? { userId: ownerId } : {}) },
+      where: {
+        id: cartId,
+        status: 'ACTIVE',
+        deletedAt: null,
+        ...(ownerId ? { userId: ownerId } : {}),
+      },
       data: { version: { increment: 1 } },
     });
     if (result.count !== 1) {
@@ -73,7 +88,11 @@ export class CartRepository extends BaseRepository {
 
   private async claimEditableItem(tx: any, itemId: string, ownerId?: string) {
     const item = await tx.cartItem.findFirst({
-      where: { id: itemId, deletedAt: null, ...(ownerId ? { cart: { userId: ownerId, deletedAt: null, status: 'ACTIVE' } } : {}) },
+      where: {
+        id: itemId,
+        deletedAt: null,
+        ...(ownerId ? { cart: { userId: ownerId, deletedAt: null, status: 'ACTIVE' } } : {}),
+      },
       select: { cartId: true },
     });
     if (!item) {
@@ -209,7 +228,11 @@ export class CartRepository extends BaseRepository {
    * Adds or increments an item in a cart.
    */
   async addItem(cartId: string, input: AddCartItemInput) {
-    if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0 || input.quantity > 2147483647) {
+    if (
+      !Number.isSafeInteger(input.quantity) ||
+      input.quantity <= 0 ||
+      input.quantity > 2147483647
+    ) {
       throw new ValidationError('Item quantity must be greater than zero');
     }
 

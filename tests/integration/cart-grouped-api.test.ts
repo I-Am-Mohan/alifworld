@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, spyOn } from 'bun:test';
+import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
+afterEach(() => mock.restore());
 import * as authzModule from '@/shared/authz';
 import { GET as getGroupedCartRoute } from '@/app/api/v1/cart/grouped/route';
 import { cartService } from '@/features/cart/services/cart.service';

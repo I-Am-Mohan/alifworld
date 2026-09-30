@@ -8,7 +8,7 @@ const phoneAuthService = new PhoneAuthService();
 
 /**
  * POST /api/v1/auth/phone/verify-register
- * 
+ *
  * Verifies the 6-digit OTP code sent for registration and issues a verification ticket
  * permitting completion of name, password, and optional details.
  */

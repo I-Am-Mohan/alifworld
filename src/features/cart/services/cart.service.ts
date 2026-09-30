@@ -177,7 +177,11 @@ export class CartService {
     userId?: string,
     guestCartToken?: string
   ): Promise<{ cart: CartDTO; guestCartToken?: string }> {
-    if (!Number.isSafeInteger(input.quantity) || input.quantity < 1 || input.quantity > 2147483647) {
+    if (
+      !Number.isSafeInteger(input.quantity) ||
+      input.quantity < 1 ||
+      input.quantity > 2147483647
+    ) {
       throw new ValidationError('Quantity must be a positive integer.');
     }
 
@@ -195,7 +199,9 @@ export class CartService {
         },
       },
       include: {
-        product: { select: { id: true, title: true, slug: true, sellerId: true, productPoint: true } },
+        product: {
+          select: { id: true, title: true, slug: true, sellerId: true, productPoint: true },
+        },
         stockBalances: { where: { deletedAt: null } },
       },
     });
@@ -209,7 +215,11 @@ export class CartService {
     // Compute available stock across active warehouses
     const totalAvailableStock = (variant.stockBalances || []).reduce(
       (sum: number, sb: any) =>
-        sum + Math.max(0, (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)),
+        sum +
+        Math.max(
+          0,
+          (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)
+        ),
       0
     );
 
@@ -309,7 +319,11 @@ export class CartService {
     } else {
       const totalAvailableStock = (item.variant?.stockBalances || []).reduce(
         (sum: number, sb: any) =>
-          sum + Math.max(0, (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)),
+          sum +
+          Math.max(
+            0,
+            (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)
+          ),
         0
       );
 
@@ -383,10 +397,7 @@ export class CartService {
    * - Sets guest cart status to MERGED.
    * - Emits outbox event.
    */
-  public async mergeGuestCart(
-    userId: string,
-    guestCartToken: string
-  ): Promise<MergeCartResultDTO> {
+  public async mergeGuestCart(userId: string, guestCartToken: string): Promise<MergeCartResultDTO> {
     const warnings: string[] = [];
 
     // 1. Find guest cart
@@ -439,14 +450,25 @@ export class CartService {
     // 3. Merge each guest item into user cart
     for (const guestItem of guestCart.items) {
       const variant = guestItem.variant;
-      if (!variant || variant.deletedAt || variant.product?.deletedAt || variant.product?.status !== 'PUBLISHED') {
-        warnings.push(`Item '${guestItem.variant?.title || 'Unknown'}' is no longer available and was skipped.`);
+      if (
+        !variant ||
+        variant.deletedAt ||
+        variant.product?.deletedAt ||
+        variant.product?.status !== 'PUBLISHED'
+      ) {
+        warnings.push(
+          `Item '${guestItem.variant?.title || 'Unknown'}' is no longer available and was skipped.`
+        );
         continue;
       }
 
       const availableStock = (variant.stockBalances || []).reduce(
         (sum: number, sb: any) =>
-          sum + Math.max(0, (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)),
+          sum +
+          Math.max(
+            0,
+            (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)
+          ),
         0
       );
 
@@ -663,7 +685,12 @@ export class CartService {
         },
       });
 
-      if (!variant || variant.deletedAt || variant.product?.status !== 'PUBLISHED' || variant.product?.deletedAt) {
+      if (
+        !variant ||
+        variant.deletedAt ||
+        variant.product?.status !== 'PUBLISHED' ||
+        variant.product?.deletedAt
+      ) {
         const title = variant?.product?.title || item.variant?.product?.title || 'Product Item';
         warnings.push(`Item '${title}' is no longer published or available in the storefront.`);
         outOfStockCount++;
@@ -686,7 +713,11 @@ export class CartService {
 
       const availableStock = (variant.stockBalances || []).reduce(
         (sum: number, sb: any) =>
-          sum + Math.max(0, (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)),
+          sum +
+          Math.max(
+            0,
+            (sb.onHand || 0) - (sb.reserved || 0) - (sb.damaged || 0) - (sb.quarantined || 0)
+          ),
         0
       );
 
@@ -968,7 +999,10 @@ export class CartService {
 
       const freeShippingThresholdPoisha = 200000; // ৳2,000.00 standard free shipping threshold
       const qualifiesForFreeShipping = subtotalPoisha >= freeShippingThresholdPoisha;
-      const amountNeededForFreeShippingPoisha = Math.max(0, freeShippingThresholdPoisha - subtotalPoisha);
+      const amountNeededForFreeShippingPoisha = Math.max(
+        0,
+        freeShippingThresholdPoisha - subtotalPoisha
+      );
 
       // Shipping fee in poisha: 6000 (৳60) inside Dhaka, 12000 (৳120) outside Dhaka
       const isInsideDhaka = customerDivision.toUpperCase().includes('DHAKA');

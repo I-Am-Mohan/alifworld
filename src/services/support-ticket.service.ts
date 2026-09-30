@@ -1,9 +1,9 @@
 /**
  * AlifWorld Customer Support Ticket Domain Service
- * 
+ *
  * Manages customer inquiries, order incident reports, ticket threads,
  * and operator assignment with strict privacy boundaries and SLA tracking.
- * 
+ *
  * Invariants: ADR-0003, ADR-0006, ADR-0022, ADR-0024, Milestone 046
  */
 
@@ -11,7 +11,11 @@ import { prisma } from '@/shared/database/prisma';
 import { ActorContext } from '@/shared/authz/authz.types';
 import { defaultPolicyEngine } from '@/shared/authz';
 import { NotFoundError, ValidationError, AuthorizationError } from '@/shared/errors/app-error';
-import { CreateSupportTicketInput, ReplySupportTicketInput, ResolveSupportTicketInput } from '@/validators/support-and-rider.validators';
+import {
+  CreateSupportTicketInput,
+  ReplySupportTicketInput,
+  ResolveSupportTicketInput,
+} from '@/validators/support-and-rider.validators';
 
 export interface TicketMessage {
   id: string;
@@ -46,7 +50,10 @@ export class SupportTicketService {
   /**
    * Creates a new support ticket.
    */
-  public async createTicket(actor: ActorContext, input: CreateSupportTicketInput): Promise<SupportTicket> {
+  public async createTicket(
+    actor: ActorContext,
+    input: CreateSupportTicketInput
+  ): Promise<SupportTicket> {
     await defaultPolicyEngine.assert(actor, 'create', {
       type: 'SUPPORT',
       ownerId: actor.userId,

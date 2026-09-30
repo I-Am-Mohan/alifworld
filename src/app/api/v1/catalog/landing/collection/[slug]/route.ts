@@ -8,10 +8,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/v1/catalog/landing/collection/[slug]
  * Retrieves curated promotional collection landing page with member products.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
     const result = await discoveryLandingService.getCollectionLanding(slug);

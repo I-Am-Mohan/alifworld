@@ -1,9 +1,9 @@
 /**
  * AlifWorld Decoupled Loyalty Product Point Repository
- * 
+ *
  * Manages customer point accounts, point events, escrow holds during
  * inspection return windows, and clawbacks on refund.
- * 
+ *
  * Invariants: ADR-0022, ADR-0027, ADR-0028, ADR-0029, Decoupled Point Tokens
  */
 
@@ -43,7 +43,13 @@ export class PointRepository {
   /**
    * Snapshots points on an order item into pending/escrow status during fulfillment.
    */
-  async snapshotOrderPoints(userId: string, orderId: string, orderItemId: string, points: number, ruleVersion: string = 'v1.0.0') {
+  async snapshotOrderPoints(
+    userId: string,
+    orderId: string,
+    orderItemId: string,
+    points: number,
+    ruleVersion: string = 'v1.0.0'
+  ) {
     if (points <= 0) return null;
 
     const account = await this.getOrCreatePointAccount(userId);
@@ -77,7 +83,13 @@ export class PointRepository {
   /**
    * Releases pending points into available/spendable points when inspection window closes.
    */
-  async releaseOrderPoints(userId: string, orderId: string, orderItemId: string, points: number, ruleVersion: string = 'v1.0.0') {
+  async releaseOrderPoints(
+    userId: string,
+    orderId: string,
+    orderItemId: string,
+    points: number,
+    ruleVersion: string = 'v1.0.0'
+  ) {
     if (points <= 0) return null;
 
     const account = await this.getOrCreatePointAccount(userId);
@@ -117,7 +129,13 @@ export class PointRepository {
   /**
    * Reverses / claws back Product Points when an item is refunded.
    */
-  async reverseOrderPoints(userId: string, orderId: string, orderItemId: string, pointsToReverse: number, reason: string) {
+  async reverseOrderPoints(
+    userId: string,
+    orderId: string,
+    orderItemId: string,
+    pointsToReverse: number,
+    reason: string
+  ) {
     if (pointsToReverse <= 0) return null;
 
     const account = await this.getOrCreatePointAccount(userId);

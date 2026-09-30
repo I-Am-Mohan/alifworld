@@ -1,9 +1,9 @@
 /**
  * Unit Tests for User, Role, Permission Domain Modeling and Validators
- * 
+ *
  * Verifies ID prefixes, domain validation schemas, case-normalization,
  * and constraint rules.
- * 
+ *
  * Reference: docs/architecture/identifiers-lifecycle-and-deletion-policy.md
  * Invariant: ADR-0022, ADR-0023
  */

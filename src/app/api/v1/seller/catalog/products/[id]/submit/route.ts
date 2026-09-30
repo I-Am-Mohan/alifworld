@@ -10,10 +10,21 @@ const service = new ProductApprovalService();
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const actor = authenticateRequest(req); const id = (await params).id;
-    await defaultPolicyEngine.assert(actor, 'catalog:submit', { type: 'CATALOG', id, sellerId: actor.sellerId });
+    const actor = authenticateRequest(req);
+    const id = (await params).id;
+    await defaultPolicyEngine.assert(actor, 'catalog:submit', {
+      type: 'CATALOG',
+      id,
+      sellerId: actor.sellerId,
+    });
     const parsed = SubmitProductApprovalSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) throw new ValidationError('Invalid product submission.', parsed.error.flatten());
-    return NextResponse.json({ success: true, data: await service.submit(actor.userId, id, parsed.data) });
-  } catch (error) { return errorResponse(req, error, 'Failed to submit product for approval'); }
+    if (!parsed.success)
+      throw new ValidationError('Invalid product submission.', parsed.error.flatten());
+    return NextResponse.json({
+      success: true,
+      data: await service.submit(actor.userId, id, parsed.data),
+    });
+  } catch (error) {
+    return errorResponse(req, error, 'Failed to submit product for approval');
+  }
 }

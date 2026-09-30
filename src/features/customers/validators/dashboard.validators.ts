@@ -26,7 +26,9 @@ export const UpdateNotificationMatrixSchema = z.object({
 });
 
 export const ListCustomerOrdersQuerySchema = z.object({
-  status: z.enum(['PENDING', 'PROCESSING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'RETURNED']).optional(),
+  status: z
+    .enum(['PENDING', 'PROCESSING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'RETURNED'])
+    .optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });

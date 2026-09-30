@@ -1,8 +1,23 @@
-import { describe, expect, it } from 'bun:test';
-import { decryptPayoutSecret, encryptPayoutSecret, lastFour, payoutFingerprint } from '@/features/seller/payout-profile-crypto';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import {
+  decryptPayoutSecret,
+  encryptPayoutSecret,
+  lastFour,
+  payoutFingerprint,
+} from '@/features/seller/payout-profile-crypto';
 import { PayoutProfileInputSchema } from '@/features/seller/payout-profile';
 
 describe('seller payout profile security', () => {
+  let previousKey: string | undefined;
+  beforeEach(() => {
+    previousKey = process.env.PAYOUT_PROFILE_ENCRYPTION_KEY;
+    process.env.PAYOUT_PROFILE_ENCRYPTION_KEY =
+      'unit-test-only-payout-encryption-key-32-characters';
+  });
+  afterEach(() => {
+    if (previousKey === undefined) delete process.env.PAYOUT_PROFILE_ENCRYPTION_KEY;
+    else process.env.PAYOUT_PROFILE_ENCRYPTION_KEY = previousKey;
+  });
   it('encrypts and decrypts banking values without deterministic ciphertext', () => {
     const first = encryptPayoutSecret('1234567890');
     const second = encryptPayoutSecret('1234567890');
@@ -16,7 +31,23 @@ describe('seller payout profile security', () => {
   });
 
   it('validates payout profile input boundaries', () => {
-    expect(PayoutProfileInputSchema.safeParse({ sellerId: 'sel_abc123', providerName: 'Example Bank', accountNumber: '12345678', accountTitle: 'Alif Traders', version: 1 }).success).toBe(true);
-    expect(PayoutProfileInputSchema.safeParse({ sellerId: 'sel_abc123', providerName: 'x', accountNumber: '12', accountTitle: 'A', version: 0 }).success).toBe(false);
+    expect(
+      PayoutProfileInputSchema.safeParse({
+        sellerId: 'sel_abc123',
+        providerName: 'Example Bank',
+        accountNumber: '12345678',
+        accountTitle: 'Alif Traders',
+        version: 1,
+      }).success
+    ).toBe(true);
+    expect(
+      PayoutProfileInputSchema.safeParse({
+        sellerId: 'sel_abc123',
+        providerName: 'x',
+        accountNumber: '12',
+        accountTitle: 'A',
+        version: 0,
+      }).success
+    ).toBe(false);
   });
 });

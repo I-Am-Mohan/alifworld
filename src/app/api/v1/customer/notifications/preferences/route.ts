@@ -14,9 +14,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
-    const matrix = await customerDashboardService.getNotificationPreferencesMatrix(
-      actor.userId
-    );
+    const matrix = await customerDashboardService.getNotificationPreferencesMatrix(actor.userId);
 
     return NextResponse.json(
       {

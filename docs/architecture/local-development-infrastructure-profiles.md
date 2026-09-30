@@ -3,7 +3,7 @@
 **Document Type**: Architectural Specification & Local Infrastructure Guide  
 **Milestone Reference**: [Milestone 019](../../AlifWorld-300-Milestones/019-create-local-development-infrastructure-profiles.md)  
 **Status**: Active / Approved  
-**Related Decision**: [ADR-0019](../decisions/0019-local-development-infrastructure-profiles.md)  
+**Related Decision**: [ADR-0019](../decisions/0019-local-development-infrastructure-profiles.md)
 
 ---
 
@@ -34,6 +34,7 @@ To ensure a reproducible, turnkey local developer experience with zero credentia
 ```
 
 The infrastructure defines two explicit profiles:
+
 1. **`core` Profile**: Runs only PostgreSQL and Redis. Ideal for rapid development of domain logic, unit tests, and migrations with minimal CPU/RAM overhead.
 2. **`full` Profile**: Runs the complete platform dependencies including MinIO, Meilisearch, and Mailpit for full-stack integration testing.
 
@@ -44,6 +45,7 @@ The infrastructure defines two explicit profiles:
 All credentials and ports strictly mirror [`src/shared/config/environment.ts`](../../src/shared/config/environment.ts) and [`.env.example`](../../.env.example):
 
 ### 3.1 PostgreSQL 16 (`alifworld-postgres`)
+
 - **Image**: `postgres:16-alpine`
 - **Port**: `5432:5432`
 - **Database**: `alifworld_dev`
@@ -52,6 +54,7 @@ All credentials and ports strictly mirror [`src/shared/config/environment.ts`](.
 - **Volume**: `alifworld_postgres_data`
 
 ### 3.2 Redis 7 (`alifworld-redis`)
+
 - **Image**: `redis:7-alpine`
 - **Port**: `6379:6379`
 - **Persistence**: Append-Only File (`--appendonly yes`)
@@ -59,6 +62,7 @@ All credentials and ports strictly mirror [`src/shared/config/environment.ts`](.
 - **Volume**: `alifworld_redis_data`
 
 ### 3.3 MinIO S3-Compatible Storage (`alifworld-minio`)
+
 - **Image**: `minio/minio:latest`
 - **Ports**: `9000:9000` (S3 API), `9001:9001` (Web Console)
 - **Credentials**: User `minioadmin`, Password `minioadmin`
@@ -69,6 +73,7 @@ All credentials and ports strictly mirror [`src/shared/config/environment.ts`](.
   - Sets public download policy matching `.env.example`.
 
 ### 3.4 Meilisearch Search Engine (`alifworld-meilisearch`)
+
 - **Image**: `getmeili/meilisearch:v1.10`
 - **Port**: `7700:7700`
 - **Master Key**: `masterKey123`
@@ -76,6 +81,7 @@ All credentials and ports strictly mirror [`src/shared/config/environment.ts`](.
 - **Volume**: `alifworld_meilisearch_data`
 
 ### 3.5 Mailpit SMTP Inspector (`alifworld-mailpit`)
+
 - **Image**: `axllent/mailpit:latest`
 - **Ports**: `1025:1025` (SMTP server), `8025:8025` (Web UI)
 - **Purpose**: Intercepts verification emails, OTPs, and transaction alerts in local development.
@@ -86,19 +92,20 @@ All credentials and ports strictly mirror [`src/shared/config/environment.ts`](.
 
 The following scripts are registered in [`package.json`](../../package.json):
 
-| Command | Action |
-| :--- | :--- |
-| `bun run infra:up` | Boots all infrastructure services under the `full` profile in the background. |
-| `bun run infra:core` | Boots only PostgreSQL and Redis under the `core` profile. |
-| `bun run infra:down` | Stops and tears down all containers while preserving data volumes. |
-| `bun run infra:logs` | Streams consolidated container logs in realtime. |
-| `bun run infra:reset` | Destroys data volumes and restarts all fresh containers. |
+| Command               | Action                                                                        |
+| :-------------------- | :---------------------------------------------------------------------------- |
+| `bun run infra:up`    | Boots all infrastructure services under the `full` profile in the background. |
+| `bun run infra:core`  | Boots only PostgreSQL and Redis under the `core` profile.                     |
+| `bun run infra:down`  | Stops and tears down all containers while preserving data volumes.            |
+| `bun run infra:logs`  | Streams consolidated container logs in realtime.                              |
+| `bun run infra:reset` | Destroys data volumes and restarts all fresh containers.                      |
 
 ---
 
 ## 5. Verification and Correctness
 
 Automated verification is implemented in [`tests/unit/infrastructure-profiles.test.ts`](../../tests/unit/infrastructure-profiles.test.ts):
+
 - Verifies exact credential matches with `.env.example`.
 - Verifies healthcheck definitions and port allocations.
 - Proves presence of `core` and `full` profiles.

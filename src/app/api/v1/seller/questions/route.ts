@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
   try {
     const actor = authenticateRequest(req);
     if (!actor.sellerId) {
-      throw new AuthorizationError('Only registered sellers can access the seller questions portal.');
+      throw new AuthorizationError(
+        'Only registered sellers can access the seller questions portal.'
+      );
     }
 
     const { searchParams } = new URL(req.url);

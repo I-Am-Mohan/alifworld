@@ -35,9 +35,15 @@ class MockSearchEngine implements SearchServiceInterface {
       },
     };
   }
-  public async indexDocuments(): Promise<any> { return { indexed: 0 }; }
-  public async deleteDocuments(): Promise<any> { return { deleted: 0 }; }
-  public async checkHealth(): Promise<any> { return { status: 'HEALTHY' }; }
+  public async indexDocuments(): Promise<any> {
+    return { indexed: 0 };
+  }
+  public async deleteDocuments(): Promise<any> {
+    return { deleted: 0 };
+  }
+  public async checkHealth(): Promise<any> {
+    return { status: 'HEALTHY' };
+  }
 }
 
 class MockPrismaDiscoveryDb {
@@ -180,7 +186,9 @@ describe('Milestone 116: Category, Brand, and Collection Landing Discovery Unit 
     });
 
     it('throws NotFoundError for non-existent category slug', async () => {
-      expect(discoveryService.getCategoryLanding('unknown-category')).rejects.toThrow(NotFoundError);
+      expect(discoveryService.getCategoryLanding('unknown-category')).rejects.toThrow(
+        NotFoundError
+      );
     });
   });
 

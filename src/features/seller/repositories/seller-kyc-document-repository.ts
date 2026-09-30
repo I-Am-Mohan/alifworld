@@ -1,8 +1,8 @@
 /**
  * AlifWorld Seller KYC Document Repository
- * 
+ *
  * Manages regulatory verification documents for merchants with tenant scoping.
- * 
+ *
  * Reference: docs/architecture/postgresql-and-prisma-foundations.md
  * Invariant: ADR-0003, ADR-0006, ADR-0022, ADR-0024
  */
@@ -51,7 +51,10 @@ export class SellerKycDocumentRepository extends BaseRepository {
   /**
    * Submits a new or updated KYC document for a seller.
    */
-  public async findByContentHash(sellerId: string, contentSha256: string): Promise<SellerKycDocumentModel | null> {
+  public async findByContentHash(
+    sellerId: string,
+    contentSha256: string
+  ): Promise<SellerKycDocumentModel | null> {
     return this.executeSafe(async () => {
       const doc = await (this.db as any).sellerKycDocument.findFirst({
         where: this.whereSellerScope(sellerId, { contentSha256 }),
@@ -102,7 +105,9 @@ export class SellerKycDocumentRepository extends BaseRepository {
         throw new NotFoundError(`KYC Document with id '${id}' not found`, { id });
       }
       if (existing.status !== KycDocumentStatus.PENDING) {
-        throw new ConflictError('Only pending KYC documents can be reviewed.', { status: existing.status });
+        throw new ConflictError('Only pending KYC documents can be reviewed.', {
+          status: existing.status,
+        });
       }
       this.assertVersion(existing.version, expectedVersion, id);
 
@@ -116,7 +121,8 @@ export class SellerKycDocumentRepository extends BaseRepository {
           version: nextVersion(expectedVersion),
         },
       });
-      if (result.count !== 1) throw new ConflictError('KYC document was reviewed by another request.');
+      if (result.count !== 1)
+        throw new ConflictError('KYC document was reviewed by another request.');
       const updated = await this.findById(id);
       if (!updated) throw new NotFoundError(`KYC Document with id '${id}' not found`, { id });
       return updated;

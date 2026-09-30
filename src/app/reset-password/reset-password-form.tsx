@@ -1,11 +1,33 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle2, Eye, EyeOff, KeyRound, RefreshCw, ShieldCheck } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  KeyRound,
+  RefreshCw,
+  ShieldCheck,
+} from 'lucide-react';
 import { AlifLogo } from '@/components/brand/logo';
 import { LanguageSwitcher } from '@/components/i18n/language-switcher';
 import { useI18n } from '@/i18n/context';
+
+function subscribeHash(callback: () => void) {
+  window.addEventListener('hashchange', callback);
+  return () => window.removeEventListener('hashchange', callback);
+}
+
+function getHashTokenSnapshot(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.hash.slice(1)).get('token') || '';
+}
+
+function getServerHashToken(): string | null {
+  return null;
+}
 
 export function ResetPasswordForm({ email }: { email: string }) {
   const { t } = useI18n();
@@ -15,14 +37,13 @@ export function ResetPasswordForm({ email }: { email: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
-  const [token, setToken] = useState('');
-  const [linkReady, setLinkReady] = useState(false);
-
-  useEffect(() => {
-    const fragment = new URLSearchParams(window.location.hash.slice(1));
-    setToken(fragment.get('token') || '');
-    setLinkReady(true);
-  }, []);
+  const tokenSnapshot = useSyncExternalStore(
+    subscribeHash,
+    getHashTokenSnapshot,
+    getServerHashToken
+  );
+  const linkReady = tokenSnapshot !== null;
+  const token = tokenSnapshot || '';
 
   const hasResetCredentials = Boolean(email && token);
 
@@ -59,9 +80,7 @@ export function ResetPasswordForm({ email }: { email: string }) {
       setComplete(true);
       window.history.replaceState({}, '', '/reset-password');
     } catch (submitError) {
-      setError(
-        submitError instanceof Error ? submitError.message : t('auth.passwordResetFailed')
-      );
+      setError(submitError instanceof Error ? submitError.message : t('auth.passwordResetFailed'));
     } finally {
       setLoading(false);
     }
@@ -80,7 +99,11 @@ export function ResetPasswordForm({ email }: { email: string }) {
 
         <div className="p-6 sm:p-8">
           {!linkReady ? (
-            <div className="flex min-h-56 items-center justify-center" role="status" aria-label={t('auth.loadingResetLink')}>
+            <div
+              className="flex min-h-56 items-center justify-center"
+              role="status"
+              aria-label={t('auth.loadingResetLink')}
+            >
               <RefreshCw className="h-7 w-7 animate-spin text-amber-600" aria-hidden="true" />
             </div>
           ) : complete ? (
@@ -106,8 +129,12 @@ export function ResetPasswordForm({ email }: { email: string }) {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
                 <AlertCircle className="h-8 w-8" aria-hidden="true" />
               </div>
-              <h1 className="mt-5 text-2xl font-black text-slate-900">{t('auth.resetLinkInvalidTitle')}</h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('auth.resetLinkInvalid')}</p>
+              <h1 className="mt-5 text-2xl font-black text-slate-900">
+                {t('auth.resetLinkInvalidTitle')}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {t('auth.resetLinkInvalid')}
+              </p>
               <Link
                 href="/?auth=login"
                 className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-black"
@@ -120,11 +147,18 @@ export function ResetPasswordForm({ email }: { email: string }) {
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
                 <KeyRound className="h-6 w-6" aria-hidden="true" />
               </div>
-              <h1 className="mt-5 text-2xl font-black text-slate-900">{t('auth.createNewPassword')}</h1>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{t('auth.createNewPasswordDesc')}</p>
+              <h1 className="mt-5 text-2xl font-black text-slate-900">
+                {t('auth.createNewPassword')}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {t('auth.createNewPasswordDesc')}
+              </p>
 
               {error && (
-                <div role="alert" className="mt-5 flex gap-2.5 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs leading-relaxed text-rose-700">
+                <div
+                  role="alert"
+                  className="mt-5 flex gap-2.5 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs leading-relaxed text-rose-700"
+                >
                   <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>{error}</span>
                 </div>
@@ -132,7 +166,9 @@ export function ResetPasswordForm({ email }: { email: string }) {
 
               <form onSubmit={submit} className="mt-6 space-y-4">
                 <label className="block">
-                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">{t('auth.newPassword')}</span>
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    {t('auth.newPassword')}
+                  </span>
                   <input
                     type={showPasswords ? 'text' : 'password'}
                     value={newPassword}
@@ -146,7 +182,9 @@ export function ResetPasswordForm({ email }: { email: string }) {
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">{t('auth.confirmPassword')}</span>
+                  <span className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-600">
+                    {t('auth.confirmPassword')}
+                  </span>
                   <input
                     type={showPasswords ? 'text' : 'password'}
                     value={confirmPassword}
@@ -160,7 +198,10 @@ export function ResetPasswordForm({ email }: { email: string }) {
                 </label>
 
                 <div className="flex items-start gap-2 rounded-xl bg-sky-50 p-3 text-xs leading-relaxed text-sky-900">
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-sky-700" aria-hidden="true" />
+                  <ShieldCheck
+                    className="mt-0.5 h-4 w-4 shrink-0 text-sky-700"
+                    aria-hidden="true"
+                  />
                   <span>{t('auth.passwordRequirements')}</span>
                 </div>
 
@@ -169,7 +210,11 @@ export function ResetPasswordForm({ email }: { email: string }) {
                   onClick={() => setShowPasswords((shown) => !shown)}
                   className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900"
                 >
-                  {showPasswords ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {showPasswords ? (
+                    <EyeOff className="h-3.5 w-3.5" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" />
+                  )}
                   {showPasswords ? t('auth.hidePasswords') : t('auth.showPasswords')}
                 </button>
 
