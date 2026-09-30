@@ -29,62 +29,70 @@ describe('Order transition PostgreSQL transactions', () => {
   const shipmentIds: string[] = [];
 
   beforeAll(async () => {
-    await db.$transaction(async (transaction) => {
-      await transaction.user.create({ data: { id: customerId, status: 'ACTIVE' } });
-      await transaction.seller.create({
-        data: {
-          id: sellerId,
-          ownerUserId: customerId,
-          businessName: 'Test seller',
-          slug: sellerId,
-          status: 'VERIFIED',
-        },
-      });
-      await transaction.category.create({
-        data: { id: categoryId, name: 'Test category', slug: categoryId },
-      });
-      await transaction.product.create({
-        data: {
-          id: productId,
-          sellerId,
-          categoryId,
-          title: 'Test product',
-          slug: productId,
-          description: 'Test fixture',
-          basePricePoisha: 10000n,
-        },
-      });
-      await transaction.productVariant.create({
-        data: {
-          id: variantId,
-          productId,
-          sku: variantId,
-          title: 'Test variant',
-          pricePoisha: 10000n,
-        },
-      });
-    });
+    await db.$transaction(
+      async (transaction) => {
+        await transaction.user.create({ data: { id: customerId, status: 'ACTIVE' } });
+        await transaction.seller.create({
+          data: {
+            id: sellerId,
+            ownerUserId: customerId,
+            businessName: 'Test seller',
+            slug: sellerId,
+            status: 'VERIFIED',
+          },
+        });
+        await transaction.category.create({
+          data: { id: categoryId, name: 'Test category', slug: categoryId },
+        });
+        await transaction.product.create({
+          data: {
+            id: productId,
+            sellerId,
+            categoryId,
+            title: 'Test product',
+            slug: productId,
+            description: 'Test fixture',
+            basePricePoisha: 10000n,
+          },
+        });
+        await transaction.productVariant.create({
+          data: {
+            id: variantId,
+            productId,
+            sku: variantId,
+            title: 'Test variant',
+            pricePoisha: 10000n,
+          },
+        });
+      },
+      { maxWait: 15000, timeout: 30000 }
+    );
   });
 
   afterAll(async () => {
     try {
-      await db.$transaction(async (transaction) => {
-        const shipments = await transaction.shipment.findMany({
-          where: { fulfillmentGroupId: { in: groupIds } },
-          select: { id: true },
-        });
-        const ownedShipmentIds = [...shipmentIds, ...shipments.map((shipment) => shipment.id)];
-        await transaction.outboxEvent.deleteMany({
-          where: { aggregateId: { in: [...orderIds, ...groupIds, ...ownedShipmentIds] } },
-        });
-        await transaction.auditLog.deleteMany({ where: { resourceId: { in: ownedShipmentIds } } });
-        await transaction.order.deleteMany({ where: { id: { in: orderIds } } });
-        await transaction.productVariant.deleteMany({ where: { id: variantId } });
-        await transaction.product.deleteMany({ where: { id: productId } });
-        await transaction.category.deleteMany({ where: { id: categoryId } });
-        await transaction.seller.deleteMany({ where: { id: sellerId } });
-        await transaction.user.deleteMany({ where: { id: customerId } });
-      });
+      await db.$transaction(
+        async (transaction) => {
+          const shipments = await transaction.shipment.findMany({
+            where: { fulfillmentGroupId: { in: groupIds } },
+            select: { id: true },
+          });
+          const ownedShipmentIds = [...shipmentIds, ...shipments.map((shipment) => shipment.id)];
+          await transaction.outboxEvent.deleteMany({
+            where: { aggregateId: { in: [...orderIds, ...groupIds, ...ownedShipmentIds] } },
+          });
+          await transaction.auditLog.deleteMany({
+            where: { resourceId: { in: ownedShipmentIds } },
+          });
+          await transaction.order.deleteMany({ where: { id: { in: orderIds } } });
+          await transaction.productVariant.deleteMany({ where: { id: variantId } });
+          await transaction.product.deleteMany({ where: { id: productId } });
+          await transaction.category.deleteMany({ where: { id: categoryId } });
+          await transaction.seller.deleteMany({ where: { id: sellerId } });
+          await transaction.user.deleteMany({ where: { id: customerId } });
+        },
+        { maxWait: 15000, timeout: 30000 }
+      );
     } finally {
       await db.$disconnect();
     }

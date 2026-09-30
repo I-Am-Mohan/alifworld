@@ -30,10 +30,12 @@ import {
   CourierCancellationResultDTO,
   CourierInfoDTO,
   ShipmentStatus,
+  ShipmentDTO,
 } from '../types/courier.types';
 import {
   CreateConsignmentInput,
   VerifyInHouseDeliveryInput,
+  AppendShipmentEventInput,
 } from '../validators/courier.validators';
 import { courierAdapterRegistry } from '../adapters/courier-adapter.registry';
 import { shipmentRepository } from '../repositories/shipment.repository';
@@ -547,6 +549,137 @@ export class CourierDispatchService {
       message: 'Doorstep delivery confirmed and verified successfully via OTP.',
       deliveredAt: deliveredAt.toISOString(),
     };
+  }
+
+  /**
+   * Retrieves a shipment by ID or shipment number with optional seller tenant scoping.
+   */
+  public async getShipment(idOrNumber: string, sellerId?: string | null): Promise<ShipmentDTO> {
+    if (sellerId) {
+      return this.repo.findShipmentByIdAndSellerId(idOrNumber, sellerId);
+    }
+    return this.repo.findShipmentDTO(idOrNumber);
+  }
+
+  /**
+   * Lists shipments with pagination, status filtering, and optional seller tenant scoping.
+   */
+  public async listShipments(params: {
+    sellerId?: string | null;
+    status?: string;
+    courierProvider?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ items: ShipmentDTO[]; total: number; page: number; limit: number }> {
+    const result = await this.repo.listShipments(params);
+    return {
+      items: result.items.map((i) => this.repo.mapToDTO(i)),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  /**
+   * Appends an append-only tracking event to a physical parcel shipment.
+   * If the event advances the status to DELIVERED, coordinates atomically with fulfillment group.
+   */
+  public async appendTrackingEvent(
+    shipmentId: string,
+    eventInput: AppendShipmentEventInput,
+    options: {
+      actorId: string;
+      actorRole: string;
+      sellerId?: string | null;
+    }
+  ): Promise<ShipmentDTO> {
+    // 1. Fetch shipment under seller tenant scoping if seller
+    const current = options.sellerId
+      ? await this.repo.findShipmentByIdAndSellerId(shipmentId, options.sellerId)
+      : await this.repo.findShipmentDTO(shipmentId);
+
+    if (current.status === 'DELIVERED' && eventInput.status !== 'DELIVERED') {
+      throw new ConflictError('Cannot alter or regress a shipment that is already DELIVERED.');
+    }
+    if (current.status === 'CANCELLED') {
+      throw new ConflictError('Cannot append tracking events to a CANCELLED shipment.');
+    }
+
+    const isDelivered = eventInput.status === 'DELIVERED';
+    const isShipped = ['PICKED_UP', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(eventInput.status);
+    const deliveredAt = isDelivered ? new Date() : undefined;
+    const shippedAt = isShipped && !current.shippedAt ? new Date() : undefined;
+    const occurredAt = eventInput.occurredAt ? new Date(eventInput.occurredAt) : new Date();
+
+    const persistEvent = async (tx?: any) => {
+      await this.repo.updateStatusWithEvent(
+        current.id,
+        eventInput.status,
+        {
+          description: eventInput.description,
+          location: eventInput.location || null,
+          carrierPayload: eventInput.carrierPayload || undefined,
+          occurredAt,
+        },
+        { deliveredAt, shippedAt },
+        tx
+      );
+
+      // Audit log & Outbox event
+      await auditService.logBusinessEvent({
+        action: 'LOGISTICS_TRACKING_EVENT_APPENDED',
+        resource: 'SHIPMENT',
+        resourceId: current.id,
+        actorId: options.actorId,
+        actorRole: options.actorRole,
+        metadata: {
+          shipmentNumber: current.shipmentNumber,
+          previousStatus: current.status,
+          newStatus: eventInput.status,
+          location: eventInput.location || null,
+        },
+      });
+
+      const outbox = (tx || this.db).outboxEvent;
+      if (outbox) {
+        await outbox.create({
+          data: {
+            id: generatePrefixedId(ENTITY_PREFIXES.OUTBOX),
+            eventType: `shipment.status_${eventInput.status.toLowerCase()}`,
+            aggregateType: 'SHIPMENT',
+            aggregateId: current.id,
+            payload: {
+              shipmentId: current.id,
+              shipmentNumber: current.shipmentNumber,
+              trackingNumber: current.trackingNumber,
+              previousStatus: current.status,
+              newStatus: eventInput.status,
+              location: eventInput.location || null,
+              description: eventInput.description,
+              occurredAt: occurredAt.toISOString(),
+            },
+          },
+        });
+      }
+    };
+
+    if (isDelivered) {
+      await orderTransitionService.transitionFulfillmentGroupStatus(
+        {
+          groupId: current.fulfillmentGroupId,
+          sellerId: current.sellerId,
+          nextStatus: 'DELIVERED',
+          actorId: options.actorId,
+          actorRole: options.actorRole as any,
+          idempotencyKey: `shipment:${current.id}:delivered:${occurredAt.getTime()}`,
+        },
+        persistEvent
+      );
+    } else {
+      await persistEvent();
+    }
+
+    return this.repo.findShipmentDTO(current.id);
   }
 
   /**

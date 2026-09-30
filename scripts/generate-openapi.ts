@@ -20,7 +20,10 @@ import {
 } from '../src/features/orders/validators/order.validators';
 import { CancelOrderSchema as LegacyCancelOrderSchema } from '../src/validators/order.validator';
 import { TransitionGroupStatusSchema } from '../src/features/fulfillment/validators/fulfillment-group.validators';
-import { ListConsignmentsSchema } from '../src/features/shipping/validators/courier.validators';
+import {
+  ListConsignmentsSchema,
+  AppendShipmentEventSchema,
+} from '../src/features/shipping/validators/courier.validators';
 
 const orderTransitionRequestSchema = zodToJsonSchema(TransitionOrderStatusSchema, {
   target: 'jsonSchema7',
@@ -59,6 +62,10 @@ const readyForPickupOrderRequestSchema = zodToJsonSchema(ReadyForPickupOrderSche
   $refStrategy: 'none',
 });
 const handoverOrderRequestSchema = zodToJsonSchema(HandoverOrderSchema, {
+  target: 'jsonSchema7',
+  $refStrategy: 'none',
+});
+const appendShipmentEventRequestSchema = zodToJsonSchema(AppendShipmentEventSchema, {
   target: 'jsonSchema7',
   $refStrategy: 'none',
 });
@@ -5550,6 +5557,94 @@ export const openApiSpec = {
           },
           '401': { description: 'Authentication required' },
           '404': { description: 'Consignment not found' },
+        },
+      },
+    },
+    '/api/v1/shipping/shipments': {
+      get: {
+        tags: ['Checkout & Shipping', 'Shipments'],
+        summary: 'List Shipments (Tenant Scoped)',
+        description:
+          'Lists shipments scoped to merchant tenant (or platform-wide for administrators) with status and courier filters.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } },
+          { name: 'sellerId', in: 'query', schema: { type: 'string' } },
+          {
+            name: 'courierProvider',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: ['PATHAO', 'STEADFAST', 'REDX', 'PAPERFLY', 'IN_HOUSE'],
+            },
+          },
+          { name: 'status', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': {
+            description: 'List of shipments returned successfully',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant violation or view permission required' },
+        },
+      },
+    },
+    '/api/v1/shipping/shipments/{id}': {
+      get: {
+        tags: ['Checkout & Shipping', 'Shipments'],
+        summary: 'Get Shipment Details',
+        description:
+          'Retrieves single shipment by ID or shipmentNumber with full tracking event timeline and tenant scoping.',
+        security: [{ BearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Shipment details returned successfully',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant violation or view permission required' },
+          '404': { description: 'Shipment not found' },
+        },
+      },
+    },
+    '/api/v1/shipping/shipments/{id}/events': {
+      post: {
+        tags: ['Checkout & Shipping', 'Shipments', 'Events'],
+        summary: 'Append Tracking Event to Shipment',
+        description:
+          'Appends an immutable logistics/delivery event to the shipment and advances its status.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          transitionIdempotencyHeader,
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: appendShipmentEventRequestSchema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Tracking event appended and shipment status updated',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '401': { description: 'Authentication required' },
+          '403': { description: 'Tenant violation or manage permission required' },
+          '404': { description: 'Shipment not found' },
+          '409': { description: 'Cannot alter delivered or cancelled shipment' },
+          '422': { description: 'Validation failed' },
         },
       },
     },

@@ -23,6 +23,51 @@ export type ShipmentStatus =
   | 'RETURNED_TO_SELLER'
   | 'CANCELLED';
 
+export const SHIPMENT_STATUS_LABELS: Record<ShipmentStatus, { en: string; bn: string }> = {
+  PENDING: { en: 'Pending Dispatch', bn: 'প্রেরণের অপেক্ষায়' },
+  LABEL_CREATED: { en: 'Shipping Label Created', bn: 'শিপিং লেবেল তৈরি করা হয়েছে' },
+  ASSIGNED: { en: 'Rider / Vehicle Assigned', bn: 'রাইডার / গাড়ি বরাদ্দ করা হয়েছে' },
+  PICKED_UP: { en: 'Picked Up by Courier', bn: 'কুরিয়ার পার্সেল গ্রহণ করেছে' },
+  IN_TRANSIT: { en: 'In Transit', bn: 'পরিবহনরত' },
+  OUT_FOR_DELIVERY: { en: 'Out for Delivery', bn: 'ডেলিভারির জন্য পাঠানো হয়েছে' },
+  DELIVERED: { en: 'Delivered', bn: 'ডেলিভারি সম্পন্ন' },
+  FAILED_DELIVERY: { en: 'Delivery Attempt Failed', bn: 'ডেলিভারি প্রচেষ্টা ব্যর্থ হয়েছে' },
+  RETURNED_TO_SELLER: { en: 'Returned to Seller', bn: 'বিক্রেতার কাছে ফেরত পাঠানো হয়েছে' },
+  CANCELLED: { en: 'Cancelled', bn: 'বাতিল' },
+};
+
+export interface ShipmentDTO {
+  id: string;
+  fulfillmentGroupId: string;
+  sellerId: string;
+  sellerName?: string | null;
+  orderNumber?: string | null;
+  groupNumber?: string | null;
+  shipmentNumber: string;
+  courierProvider: string;
+  trackingNumber: string | null;
+  consignmentId: string | null;
+  trackingUrl?: string | null;
+  status: ShipmentStatus;
+  statusLabelEn: string;
+  statusLabelBn: string;
+  weightGrams: number | null;
+  packageCount: number;
+  shippingCostPoisha: number;
+  shippingCostBdtFormatted: string;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  recipientName: string;
+  recipientPhoneMasked: string;
+  deliveryAddress: string;
+  division: string;
+  district: string;
+  events: TrackingTimelineEventDTO[];
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateConsignmentRequest {
   shipmentId: string;
   shipmentNumber: string;

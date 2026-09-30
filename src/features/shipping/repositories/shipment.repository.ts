@@ -7,6 +7,14 @@
  */
 
 import { prisma } from '@/shared/database/prisma';
+import { maskBangladeshPhone } from '@/shared/utils/phone';
+import { AuthorizationError, NotFoundError } from '@/shared/errors/app-error';
+import {
+  ShipmentDTO,
+  ShipmentStatus,
+  SHIPMENT_STATUS_LABELS,
+  TrackingTimelineEventDTO,
+} from '../types/courier.types';
 
 export interface CreateShipmentDbInput {
   id?: string;
@@ -278,6 +286,148 @@ export class ShipmentRepository {
     ]);
 
     return { items, total, page, limit };
+  }
+
+  /**
+   * SELLER TENANT SCOPING: Retrieves a single shipment with sellerId in the query.
+   */
+  public async findShipmentByIdAndSellerId(
+    idOrNumber: string,
+    sellerId: string
+  ): Promise<ShipmentDTO> {
+    const isShipmentNumber = idOrNumber.startsWith('SHP-');
+
+    // 1. Query with sellerId directly in WHERE clause
+    const shipment = await (this.db as any).shipment.findFirst({
+      where: {
+        sellerId,
+        deletedAt: null,
+        ...(isShipmentNumber ? { shipmentNumber: idOrNumber } : { id: idOrNumber }),
+      },
+      include: {
+        events: { orderBy: { occurredAt: 'desc' } },
+        fulfillmentGroup: {
+          include: {
+            order: true,
+            seller: true,
+          },
+        },
+      },
+    });
+
+    if (shipment) {
+      return this.mapToDTO(shipment);
+    }
+
+    // 2. If not found under seller, inspect whether shipment exists under another seller
+    const existsAnywhere = await (this.db as any).shipment.findFirst({
+      where: {
+        deletedAt: null,
+        ...(isShipmentNumber ? { shipmentNumber: idOrNumber } : { id: idOrNumber }),
+      },
+      select: { id: true, sellerId: true },
+    });
+
+    if (existsAnywhere) {
+      throw new AuthorizationError(
+        'Tenant access violation: you do not have permission to view or manage another seller shipment.',
+        { code: 'TENANT_VIOLATION' }
+      );
+    }
+
+    throw new NotFoundError(`Shipment '${idOrNumber}' not found.`);
+  }
+
+  /**
+   * ADMIN / PRIVILEGED: Retrieves a single shipment with full details.
+   */
+  public async findShipmentDTO(idOrNumber: string): Promise<ShipmentDTO> {
+    const isShipmentNumber = idOrNumber.startsWith('SHP-');
+    const shipment = await (this.db as any).shipment.findFirst({
+      where: {
+        deletedAt: null,
+        ...(isShipmentNumber ? { shipmentNumber: idOrNumber } : { id: idOrNumber }),
+      },
+      include: {
+        events: { orderBy: { occurredAt: 'desc' } },
+        fulfillmentGroup: {
+          include: {
+            order: true,
+            seller: true,
+          },
+        },
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundError(`Shipment '${idOrNumber}' not found.`);
+    }
+
+    return this.mapToDTO(shipment);
+  }
+
+  /**
+   * Maps a database shipment record with relations to a strongly-typed ShipmentDTO.
+   */
+  public mapToDTO(record: any): ShipmentDTO {
+    const shippingCost = Number(record.shippingCostPoisha || 0);
+    const formatBdt = (poisha: number) => `৳${(poisha / 100).toFixed(2)}`;
+
+    const status = record.status as ShipmentStatus;
+    const labels = SHIPMENT_STATUS_LABELS[status] || {
+      en: record.status,
+      bn: record.status,
+    };
+
+    const events: TrackingTimelineEventDTO[] = (record.events || []).map((e: any) => ({
+      status: e.status as ShipmentStatus,
+      location: e.location || null,
+      description: e.description,
+      occurredAt: e.occurredAt?.toISOString?.() || new Date(e.occurredAt).toISOString(),
+      carrierPayload: null, // Redacted for security & privacy
+    }));
+
+    const trackingNumber = record.trackingNumber || null;
+    let trackingUrl: string | null = null;
+    if (trackingNumber) {
+      trackingUrl = `/shipping/track/${trackingNumber}`;
+    }
+
+    return {
+      id: record.id,
+      fulfillmentGroupId: record.fulfillmentGroupId,
+      sellerId: record.sellerId,
+      sellerName: record.fulfillmentGroup?.seller?.businessName || null,
+      orderNumber: record.fulfillmentGroup?.order?.orderNumber || null,
+      groupNumber: record.fulfillmentGroup?.groupNumber || null,
+      shipmentNumber: record.shipmentNumber,
+      courierProvider: record.courierProvider,
+      trackingNumber,
+      consignmentId: record.consignmentId || null,
+      trackingUrl,
+      status,
+      statusLabelEn: labels.en,
+      statusLabelBn: labels.bn,
+      weightGrams: record.weightGrams ?? null,
+      packageCount: record.packageCount || 1,
+      shippingCostPoisha: shippingCost,
+      shippingCostBdtFormatted: formatBdt(shippingCost),
+      shippedAt:
+        record.shippedAt?.toISOString?.() ||
+        (record.shippedAt ? new Date(record.shippedAt).toISOString() : null),
+      deliveredAt:
+        record.deliveredAt?.toISOString?.() ||
+        (record.deliveredAt ? new Date(record.deliveredAt).toISOString() : null),
+      recipientName: record.recipientName,
+      recipientPhoneMasked: maskBangladeshPhone(record.recipientPhone || ''),
+      deliveryAddress: record.deliveryAddress,
+      division: record.division,
+      district: record.district,
+      events,
+      version: record.version || 1,
+      createdAt: record.createdAt?.toISOString?.() || new Date(record.createdAt).toISOString(),
+      updatedAt: record.updatedAt?.toISOString?.() || new Date(record.updatedAt).toISOString(),
+    };
   }
 }
 

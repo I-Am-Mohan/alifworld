@@ -7989,6 +7989,242 @@
         }
       }
     },
+    "/api/v1/shipping/shipments": {
+      "get": {
+        "tags": ["Checkout & Shipping", "Shipments"],
+        "summary": "List Shipments (Tenant Scoped)",
+        "description": "Lists shipments scoped to merchant tenant (or platform-wide for administrators) with status and courier filters.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sellerId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "courierProvider",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["PATHAO", "STEADFAST", "REDX", "PAPERFLY", "IN_HOUSE"]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of shipments returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Tenant violation or view permission required"
+          }
+        }
+      }
+    },
+    "/api/v1/shipping/shipments/{id}": {
+      "get": {
+        "tags": ["Checkout & Shipping", "Shipments"],
+        "summary": "Get Shipment Details",
+        "description": "Retrieves single shipment by ID or shipmentNumber with full tracking event timeline and tenant scoping.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shipment details returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Tenant violation or view permission required"
+          },
+          "404": {
+            "description": "Shipment not found"
+          }
+        }
+      }
+    },
+    "/api/v1/shipping/shipments/{id}/events": {
+      "post": {
+        "tags": ["Checkout & Shipping", "Shipments", "Events"],
+        "summary": "Append Tracking Event to Shipment",
+        "description": "Appends an immutable logistics/delivery event to the shipment and advances its status.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "description": "Stable request key for replay. Reusing it with changed input returns 409.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "pattern": "\\S",
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "LABEL_CREATED",
+                      "ASSIGNED",
+                      "PICKED_UP",
+                      "IN_TRANSIT",
+                      "OUT_FOR_DELIVERY",
+                      "DELIVERED",
+                      "FAILED_DELIVERY",
+                      "RETURNED_TO_SELLER",
+                      "CANCELLED"
+                    ]
+                  },
+                  "location": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {}
+                          },
+                          {
+                            "type": "string",
+                            "maxLength": 200
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  },
+                  "occurredAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "carrierPayload": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": ["status", "description"],
+                "additionalProperties": false,
+                "$schema": "http://json-schema.org/draft-07/schema#"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tracking event appended and shipment status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccessEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Tenant violation or manage permission required"
+          },
+          "404": {
+            "description": "Shipment not found"
+          },
+          "409": {
+            "description": "Cannot alter delivered or cancelled shipment"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        }
+      }
+    },
     "/api/v1/shipping/track/{trackingNumber}": {
       "get": {
         "tags": ["Checkout & Shipping"],

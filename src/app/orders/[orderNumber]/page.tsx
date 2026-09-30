@@ -349,7 +349,23 @@ export default function OrderTrackingPage() {
                 </div>
 
                 {/* Timeline */}
-                {!group.trackingNumber && (
+                {group.trackingNumber ? (
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-600">
+                      {text(
+                        'Real-time checkpoint events are available.',
+                        'রিয়েল-টাইম চেকপয়েন্ট ইভেন্ট উপলব্ধ।'
+                      )}
+                    </p>
+                    <Link
+                      href={`/shipping/track/${encodeURIComponent(group.trackingNumber)}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1B5E20] hover:bg-[#2E7D32] text-white text-xs font-bold rounded-lg transition-colors shadow-xs"
+                    >
+                      <Truck className="w-3.5 h-3.5" />
+                      <span>{text('Track Parcel', 'পার্সেল ট্র্যাক করুন')}</span>
+                    </Link>
+                  </div>
+                ) : (
                   <p className="text-xs text-gray-500">
                     {text('Tracking is not available yet.', 'ট্র্যাকিং এখনো পাওয়া যায়নি।')}
                   </p>

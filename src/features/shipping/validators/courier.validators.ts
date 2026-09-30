@@ -10,25 +10,51 @@ import { normalizeBangladeshPhone } from '@/shared/utils/phone';
 
 export const CourierCodeEnum = z.enum(['PATHAO', 'STEADFAST', 'REDX', 'PAPERFLY', 'IN_HOUSE']);
 
+export const ShipmentStatusEnum = z.enum([
+  'PENDING',
+  'LABEL_CREATED',
+  'ASSIGNED',
+  'PICKED_UP',
+  'IN_TRANSIT',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'FAILED_DELIVERY',
+  'RETURNED_TO_SELLER',
+  'CANCELLED',
+]);
+
 export const ListConsignmentsSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   sellerId: z.string().min(1).max(200).optional(),
   courierProvider: CourierCodeEnum.optional(),
-  status: z
-    .enum([
-      'PENDING',
-      'LABEL_CREATED',
-      'ASSIGNED',
-      'PICKED_UP',
-      'IN_TRANSIT',
-      'OUT_FOR_DELIVERY',
-      'DELIVERED',
-      'FAILED_DELIVERY',
-      'RETURNED_TO_SELLER',
-      'CANCELLED',
-    ])
-    .optional(),
+  status: ShipmentStatusEnum.optional(),
+});
+
+export const QueryShipmentsSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  sellerId: z.string().optional(),
+  courierProvider: CourierCodeEnum.optional(),
+  status: ShipmentStatusEnum.optional(),
+  search: z.string().optional(),
+});
+
+export const AppendShipmentEventSchema = z.object({
+  status: ShipmentStatusEnum,
+  location: z.string().max(200).optional().nullable(),
+  description: z.string().min(3, 'Event description must be at least 3 characters').max(500),
+  occurredAt: z.string().datetime().optional(),
+  carrierPayload: z.record(z.unknown()).optional(),
+});
+
+export const UpdateShipmentStatusSchema = z.object({
+  status: ShipmentStatusEnum,
+  description: z.string().min(3).max(500).optional(),
+  location: z.string().max(200).optional().nullable(),
+  trackingNumber: z.string().min(1).max(100).optional().nullable(),
+  consignmentId: z.string().min(1).max(100).optional().nullable(),
+  occurredAt: z.string().datetime().optional(),
 });
 
 export const CreateConsignmentSchema = z.object({
@@ -78,3 +104,6 @@ export const CourierWebhookParamsSchema = z.object({
 export type CreateConsignmentInput = z.infer<typeof CreateConsignmentSchema>;
 export type VerifyInHouseDeliveryInput = z.infer<typeof VerifyInHouseDeliverySchema>;
 export type CancelConsignmentInput = z.infer<typeof CancelConsignmentSchema>;
+export type QueryShipmentsInput = z.infer<typeof QueryShipmentsSchema>;
+export type AppendShipmentEventInput = z.infer<typeof AppendShipmentEventSchema>;
+export type UpdateShipmentStatusInput = z.infer<typeof UpdateShipmentStatusSchema>;
