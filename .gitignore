@@ -17,8 +17,7 @@ dist/
 # Environment Variables & Secrets (Keep .env.example tracked)
 
 !.env.example
-.env.local
-.env
+.env*
 *.pem
 *.key
 *.cert
@@ -69,3 +68,6 @@ bun.lock
 .claude
 .windsurf
 skills-lock.json
+CLAUDE.md
+skills-lock.json
+AGENTS.md

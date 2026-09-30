@@ -6,7 +6,7 @@ AlifWorld is an enterprise-grade multi-vendor e-commerce platform and digital ec
 
 ## Brand Identity & Design Language
 
-AlifWorld's visual identity is governed by the customer storefront design guidelines (`colors.md` and `logo.png`):
+AlifWorld's visual identity is governed by the customer storefront design guidelines (`docs/product/brand-identity-and-design-tokens.md` and `public/logo.png`):
 
 - **Primary Interactive Accent**: Golden Amber (`#F59E0B`) powers primary conversion buttons (`Add to cart`), star ratings, and "See All" highlights, alongside signature Brand Orange (`#FF6A00`) smile and badges.
 - **Foundation & Surfaces**: Pure White (`#FFFFFF`) and Soft Canvas Cream (`#FAF9F6`) provide a crisp, clean shopping surface.
