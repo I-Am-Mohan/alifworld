@@ -12,6 +12,11 @@ import {
   TransitionOrderStatusSchema,
   TransitionFulfillmentGroupStatusSchema,
   TransitionIdempotencyKeySchema,
+  AcceptFulfillmentOrderSchema,
+  RejectFulfillmentOrderSchema,
+  StartPackingOrderSchema,
+  ReadyForPickupOrderSchema,
+  HandoverOrderSchema,
 } from '../src/features/orders/validators/order.validators';
 import { CancelOrderSchema as LegacyCancelOrderSchema } from '../src/validators/order.validator';
 import { TransitionGroupStatusSchema } from '../src/features/fulfillment/validators/fulfillment-group.validators';
@@ -34,6 +39,26 @@ const legacyCancellationRequestSchema = zodToJsonSchema(LegacyCancelOrderSchema,
   $refStrategy: 'none',
 });
 const legacyFulfillmentRequestSchema = zodToJsonSchema(TransitionGroupStatusSchema, {
+  target: 'jsonSchema7',
+  $refStrategy: 'none',
+});
+const acceptOrderRequestSchema = zodToJsonSchema(AcceptFulfillmentOrderSchema, {
+  target: 'jsonSchema7',
+  $refStrategy: 'none',
+});
+const rejectOrderRequestSchema = zodToJsonSchema(RejectFulfillmentOrderSchema, {
+  target: 'jsonSchema7',
+  $refStrategy: 'none',
+});
+const startPackingOrderRequestSchema = zodToJsonSchema(StartPackingOrderSchema, {
+  target: 'jsonSchema7',
+  $refStrategy: 'none',
+});
+const readyForPickupOrderRequestSchema = zodToJsonSchema(ReadyForPickupOrderSchema, {
+  target: 'jsonSchema7',
+  $refStrategy: 'none',
+});
+const handoverOrderRequestSchema = zodToJsonSchema(HandoverOrderSchema, {
   target: 'jsonSchema7',
   $refStrategy: 'none',
 });
@@ -6078,6 +6103,223 @@ export const openApiSpec = {
           '404': { description: 'Fulfillment group not found' },
           '409': { description: 'Invalid transition, terminal state, or optimistic lock conflict' },
           '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/accept': {
+      post: {
+        tags: ['Order', 'Seller Fulfillment', 'Workflow'],
+        summary: 'Accept Fulfillment Order (PENDING -> ACCEPTED)',
+        description:
+          'Merchant accepts fulfillment order, acknowledging inventory and committing to prepare shipment. Synchronizes child items to CONFIRMED.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          transitionIdempotencyHeader,
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: acceptOrderRequestSchema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Fulfillment order accepted successfully.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '403': { description: 'Tenant violation or order management permission required' },
+          '404': { description: 'Fulfillment order not found' },
+          '409': { description: 'Invalid transition or optimistic lock conflict' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/reject': {
+      post: {
+        tags: ['Order', 'Seller Fulfillment', 'Workflow'],
+        summary: 'Reject Fulfillment Order (PENDING -> REJECTED)',
+        description:
+          'Merchant rejects fulfillment order with a mandatory reason (minimum 5 characters). Cancels child items and cascades to parent order cancellation if all sibling groups are terminal.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          transitionIdempotencyHeader,
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: rejectOrderRequestSchema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Fulfillment order rejected successfully.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '403': { description: 'Tenant violation or order management permission required' },
+          '404': { description: 'Fulfillment order not found' },
+          '409': { description: 'Invalid transition or optimistic lock conflict' },
+          '422': { description: 'Validation failed (e.g. reason too short)' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/pack': {
+      post: {
+        tags: ['Order', 'Seller Fulfillment', 'Workflow'],
+        summary: 'Start Packing Fulfillment Order (ACCEPTED -> PACKING)',
+        description:
+          'Merchant warehouse starts packing the accepted parcel. Synchronizes child items to PROCESSING.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          transitionIdempotencyHeader,
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: startPackingOrderRequestSchema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Packing commenced successfully.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '403': { description: 'Tenant violation or order management permission required' },
+          '404': { description: 'Fulfillment order not found' },
+          '409': { description: 'Invalid transition or optimistic lock conflict' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/ready-for-pickup': {
+      post: {
+        tags: ['Order', 'Seller Fulfillment', 'Workflow'],
+        summary: 'Mark Ready for Pickup (PACKING -> READY_FOR_PICKUP)',
+        description:
+          'Merchant warehouse marks parcel boxed, weighted, and ready for courier logistics pickup.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          transitionIdempotencyHeader,
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: readyForPickupOrderRequestSchema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Package marked ready for courier pickup.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '403': { description: 'Tenant violation or order management permission required' },
+          '404': { description: 'Fulfillment order not found' },
+          '409': { description: 'Invalid transition or optimistic lock conflict' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/handover': {
+      post: {
+        tags: ['Order', 'Seller Fulfillment', 'Workflow'],
+        summary: 'Confirm Courier Handover (READY_FOR_PICKUP -> HANDED_OVER_TO_COURIER)',
+        description:
+          'Merchant confirms package handover to courier personnel with consignment tracking details.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          transitionIdempotencyHeader,
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        requestBody: {
+          required: false,
+          content: {
+            'application/json': {
+              schema: handoverOrderRequestSchema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Handover confirmed successfully.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '403': { description: 'Tenant violation or order management permission required' },
+          '404': { description: 'Fulfillment order not found' },
+          '409': { description: 'Invalid transition or optimistic lock conflict' },
+          '422': { description: 'Validation failed' },
+        },
+      },
+    },
+    '/api/v1/seller/orders/{groupId}/manifest': {
+      get: {
+        tags: ['Order', 'Seller Fulfillment', 'Manifest'],
+        summary: 'Get Printable Packing Slip Manifest',
+        description:
+          'Retrieves printable warehouse packing slip manifest with recipient delivery routing and itemized items.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'groupId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: 'sfg_1j7x4b9e8m02k3f8d7c6b5a4' },
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'Printable packing slip manifest generated.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/ApiSuccessEnvelope' } },
+            },
+          },
+          '403': { description: 'Tenant violation or read permission required' },
+          '404': { description: 'Fulfillment order not found' },
         },
       },
     },

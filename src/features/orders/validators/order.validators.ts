@@ -91,3 +91,54 @@ export type TransitionFulfillmentGroupStatusInput = z.infer<
   typeof TransitionFulfillmentGroupStatusSchema
 >;
 export type TransitionOrderItemStatusInput = z.infer<typeof TransitionOrderItemStatusSchema>;
+
+// ─── Seller Fulfillment Action Workflow Schemas (Milestone 143) ───
+
+export const RejectionReasonCodeEnum = z.enum([
+  'OUT_OF_STOCK',
+  'PRICING_DISCREPANCY',
+  'UNSERVICEABLE_LOCATION',
+  'SUSPECTED_FRAUD',
+  'MERCHANT_CAPACITY_EXCEEDED',
+  'DAMAGED_INVENTORY',
+  'OTHER',
+]);
+
+export const AcceptFulfillmentOrderSchema = z.object({
+  note: z.string().max(500).optional(),
+});
+
+export const RejectFulfillmentOrderSchema = z.object({
+  reason: z.string().min(5, 'Rejection reason must be at least 5 characters').max(500),
+  rejectionCode: RejectionReasonCodeEnum.default('OUT_OF_STOCK'),
+});
+
+export const StartPackingOrderSchema = z.object({
+  packingNotes: z.string().max(500).optional(),
+});
+
+export const ReadyForPickupOrderSchema = z.object({
+  packageCount: z.coerce.number().int().min(1).default(1),
+  totalWeightGrams: z.coerce.number().int().positive().optional(),
+  packageLengthMm: z.coerce.number().int().positive().optional(),
+  packageWidthMm: z.coerce.number().int().positive().optional(),
+  packageHeightMm: z.coerce.number().int().positive().optional(),
+  packagingNotes: z.string().max(500).optional(),
+});
+
+export const HandoverOrderSchema = z.object({
+  courierProvider: z
+    .enum(['PATHAO', 'STEADFAST', 'REDX', 'PAPERFLY', 'IN_HOUSE'])
+    .default('PATHAO'),
+  consignmentId: z.string().min(1).max(100).optional(),
+  trackingNumber: z.string().min(1).max(100).optional(),
+  pickupDate: z.string().datetime().optional(),
+  handoverNotes: z.string().max(500).optional(),
+});
+
+export type RejectionReasonCode = z.infer<typeof RejectionReasonCodeEnum>;
+export type AcceptFulfillmentOrderInput = z.infer<typeof AcceptFulfillmentOrderSchema>;
+export type RejectFulfillmentOrderInput = z.infer<typeof RejectFulfillmentOrderSchema>;
+export type StartPackingOrderInput = z.infer<typeof StartPackingOrderSchema>;
+export type ReadyForPickupOrderInput = z.infer<typeof ReadyForPickupOrderSchema>;
+export type HandoverOrderInput = z.infer<typeof HandoverOrderSchema>;

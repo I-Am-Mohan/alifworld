@@ -14,8 +14,17 @@ import { prisma } from '@/shared/database/prisma';
 import { NotFoundError, AuthorizationError } from '@/shared/errors/app-error';
 import { maskBangladeshPhone } from '@/shared/utils/phone';
 import { SellerFulfillmentOrderDTO } from '../types/order.types';
-import { QuerySellerOrdersInput } from '../validators/order.validators';
+import {
+  QuerySellerOrdersInput,
+  AcceptFulfillmentOrderInput,
+  RejectFulfillmentOrderInput,
+  StartPackingOrderInput,
+  ReadyForPickupOrderInput,
+  HandoverOrderInput,
+} from '../validators/order.validators';
 import { FULFILLMENT_GROUP_STATUS_LABELS } from '../state-machines/order-state-machine';
+import { sellerFulfillmentGroupService } from '@/features/fulfillment/services/seller-fulfillment-group.service';
+import type { PackingSlipManifestDTO } from '@/features/fulfillment/types/fulfillment-group.types';
 
 export class SellerFulfillmentOrderService {
   private db = prisma;
@@ -149,6 +158,116 @@ export class SellerFulfillmentOrderService {
       page,
       limit,
     };
+  }
+
+  /**
+   * SELLER WORKFLOW: Accept fulfillment order (PENDING -> ACCEPTED).
+   */
+  public async acceptFulfillmentOrder(
+    groupId: string,
+    sellerId: string,
+    input: AcceptFulfillmentOrderInput,
+    options: { actorId: string; actorRole?: 'ADMIN' | 'SELLER'; idempotencyKey?: string }
+  ): Promise<SellerFulfillmentOrderDTO> {
+    await sellerFulfillmentGroupService.acceptGroup(groupId, sellerId, {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      note: input.note,
+      idempotencyKey: options.idempotencyKey,
+    });
+    return this.getSellerFulfillmentOrder(groupId, sellerId);
+  }
+
+  /**
+   * SELLER WORKFLOW: Reject fulfillment order (PENDING -> REJECTED).
+   */
+  public async rejectFulfillmentOrder(
+    groupId: string,
+    sellerId: string,
+    input: RejectFulfillmentOrderInput,
+    options: { actorId: string; actorRole?: 'ADMIN' | 'SELLER'; idempotencyKey?: string }
+  ): Promise<SellerFulfillmentOrderDTO> {
+    await sellerFulfillmentGroupService.rejectGroup(groupId, sellerId, {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      reason: input.reason,
+      rejectionCode: input.rejectionCode,
+      idempotencyKey: options.idempotencyKey,
+    });
+    return this.getSellerFulfillmentOrder(groupId, sellerId);
+  }
+
+  /**
+   * SELLER WORKFLOW: Start packing fulfillment order (ACCEPTED -> PACKING).
+   */
+  public async startPackingFulfillmentOrder(
+    groupId: string,
+    sellerId: string,
+    input: StartPackingOrderInput,
+    options: { actorId: string; actorRole?: 'ADMIN' | 'SELLER'; idempotencyKey?: string }
+  ): Promise<SellerFulfillmentOrderDTO> {
+    await sellerFulfillmentGroupService.startPackingGroup(groupId, sellerId, {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      packingNotes: input.packingNotes,
+      idempotencyKey: options.idempotencyKey,
+    });
+    return this.getSellerFulfillmentOrder(groupId, sellerId);
+  }
+
+  /**
+   * SELLER WORKFLOW: Mark order package ready for courier pickup (PACKING -> READY_FOR_PICKUP).
+   */
+  public async markReadyForPickup(
+    groupId: string,
+    sellerId: string,
+    input: ReadyForPickupOrderInput,
+    options: { actorId: string; actorRole?: 'ADMIN' | 'SELLER'; idempotencyKey?: string }
+  ): Promise<SellerFulfillmentOrderDTO> {
+    await sellerFulfillmentGroupService.markReadyForPickup(groupId, sellerId, {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      packageCount: input.packageCount,
+      totalWeightGrams: input.totalWeightGrams,
+      packageLengthMm: input.packageLengthMm,
+      packageWidthMm: input.packageWidthMm,
+      packageHeightMm: input.packageHeightMm,
+      packagingNotes: input.packagingNotes,
+      idempotencyKey: options.idempotencyKey,
+    });
+    return this.getSellerFulfillmentOrder(groupId, sellerId);
+  }
+
+  /**
+   * SELLER WORKFLOW: Confirm courier package handover (READY_FOR_PICKUP -> HANDED_OVER_TO_COURIER).
+   */
+  public async handoverFulfillmentOrder(
+    groupId: string,
+    sellerId: string,
+    input: HandoverOrderInput,
+    options: { actorId: string; actorRole?: 'ADMIN' | 'SELLER'; idempotencyKey?: string }
+  ): Promise<SellerFulfillmentOrderDTO> {
+    await sellerFulfillmentGroupService.handoverGroup(groupId, sellerId, {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      courierProvider: input.courierProvider,
+      consignmentId: input.consignmentId,
+      trackingNumber: input.trackingNumber,
+      pickupDate: input.pickupDate,
+      handoverNotes: input.handoverNotes,
+      idempotencyKey: options.idempotencyKey,
+    });
+    return this.getSellerFulfillmentOrder(groupId, sellerId);
+  }
+
+  /**
+   * SELLER WORKFLOW: Retrieve printable packing slip manifest.
+   */
+  public async getPackingSlipManifest(
+    groupId: string,
+    sellerId: string
+  ): Promise<PackingSlipManifestDTO> {
+    return sellerFulfillmentGroupService.getPackingSlipManifest(groupId, sellerId);
   }
 
   private mapToSellerOrderDTO(record: any): SellerFulfillmentOrderDTO {

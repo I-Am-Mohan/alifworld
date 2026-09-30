@@ -94,6 +94,169 @@ export class SellerFulfillmentGroupService {
   }
 
   /**
+   * SELLER WORKFLOW: Merchant accepts fulfillment group (PENDING -> ACCEPTED).
+   * Synchronizes items to CONFIRMED.
+   */
+  public async acceptGroup(
+    groupId: string,
+    sellerId: string,
+    options: {
+      actorId: string;
+      actorRole?: 'ADMIN' | 'SELLER';
+      note?: string;
+      idempotencyKey?: string;
+    }
+  ): Promise<SellerFulfillmentGroupDTO> {
+    return this.transitionGroupStatus(groupId, sellerId, 'ACCEPTED', {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      reason: options.note || 'Merchant accepted fulfillment order',
+      idempotencyKey: options.idempotencyKey,
+    });
+  }
+
+  /**
+   * SELLER WORKFLOW: Merchant rejects fulfillment group (PENDING -> REJECTED).
+   * Requires mandatory reason of at least 5 characters.
+   * Cancels child items and cascades to parent order if all sibling groups are terminal.
+   */
+  public async rejectGroup(
+    groupId: string,
+    sellerId: string,
+    options: {
+      actorId: string;
+      actorRole?: 'ADMIN' | 'SELLER';
+      reason: string;
+      rejectionCode?: string;
+      idempotencyKey?: string;
+    }
+  ): Promise<SellerFulfillmentGroupDTO> {
+    if (!options.reason || options.reason.trim().length < 5) {
+      throw new ValidationError('Rejection reason must be at least 5 characters long.');
+    }
+    return this.transitionGroupStatus(groupId, sellerId, 'REJECTED', {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      reason: options.reason.trim(),
+      idempotencyKey: options.idempotencyKey,
+    });
+  }
+
+  /**
+   * SELLER WORKFLOW: Merchant warehouse starts packaging (ACCEPTED -> PACKING).
+   * Synchronizes items to PROCESSING.
+   */
+  public async startPackingGroup(
+    groupId: string,
+    sellerId: string,
+    options: {
+      actorId: string;
+      actorRole?: 'ADMIN' | 'SELLER';
+      packingNotes?: string;
+      idempotencyKey?: string;
+    }
+  ): Promise<SellerFulfillmentGroupDTO> {
+    return this.transitionGroupStatus(groupId, sellerId, 'PACKING', {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      reason: options.packingNotes || 'Packaging commenced by warehouse',
+      idempotencyKey: options.idempotencyKey,
+    });
+  }
+
+  /**
+   * SELLER WORKFLOW: Merchant marks package ready for courier pickup (PACKING -> READY_FOR_PICKUP).
+   * Allows recording package dimensions, weight, and count in metadata.
+   */
+  public async markReadyForPickup(
+    groupId: string,
+    sellerId: string,
+    options: {
+      actorId: string;
+      actorRole?: 'ADMIN' | 'SELLER';
+      packageCount?: number;
+      totalWeightGrams?: number;
+      packageLengthMm?: number;
+      packageWidthMm?: number;
+      packageHeightMm?: number;
+      packagingNotes?: string;
+      idempotencyKey?: string;
+    }
+  ): Promise<SellerFulfillmentGroupDTO> {
+    return this.transitionGroupStatus(groupId, sellerId, 'READY_FOR_PICKUP', {
+      actorId: options.actorId,
+      actorRole: options.actorRole,
+      reason: options.packagingNotes || 'Package ready for courier pickup',
+      idempotencyKey: options.idempotencyKey,
+    });
+  }
+
+  /**
+   * SELLER WORKFLOW: Merchant confirms courier handover (READY_FOR_PICKUP -> HANDED_OVER_TO_COURIER).
+   * Updates courier provider, consignment ID, tracking number, and pickup date.
+   */
+  public async handoverGroup(
+    groupId: string,
+    sellerId: string,
+    options: {
+      actorId: string;
+      actorRole?: 'ADMIN' | 'SELLER';
+      courierProvider?: string;
+      consignmentId?: string;
+      trackingNumber?: string;
+      pickupDate?: string | Date;
+      handoverNotes?: string;
+      idempotencyKey?: string;
+    }
+  ): Promise<{
+    group: SellerFulfillmentGroupDTO;
+    consignmentId?: string;
+    trackingNumber?: string;
+  }> {
+    if (!options.actorId) throw new AuthorizationError('Fulfillment transition actor required.');
+
+    const courier = options.courierProvider || 'PATHAO';
+    const tracking = options.trackingNumber || `TRK-${Date.now()}`;
+    const consignment = options.consignmentId || `CSG-${Date.now()}`;
+    const pickup = options.pickupDate ? new Date(options.pickupDate) : new Date();
+
+    await orderTransitionService.transitionFulfillmentGroupStatus(
+      {
+        groupId,
+        sellerId,
+        nextStatus: 'HANDED_OVER_TO_COURIER',
+        actorId: options.actorId,
+        actorRole: options.actorRole || 'SELLER',
+        reason: options.handoverNotes || `Handed over to ${courier}`,
+        idempotencyKey: options.idempotencyKey,
+        metadata: {
+          courierProvider: courier,
+          consignmentId: consignment,
+          trackingNumber: tracking,
+        },
+      },
+      async (tx: any) => {
+        await tx.sellerFulfillmentGroup.updateMany({
+          where: { id: groupId, sellerId, deletedAt: null },
+          data: {
+            courierProvider: courier,
+            trackingNumber: tracking,
+            consignmentId: consignment,
+            pickupDate: pickup,
+          },
+        });
+      }
+    );
+
+    const transitioned = await this.repo.findGroupByIdAndSellerId(groupId, sellerId);
+    return {
+      group: transitioned,
+      consignmentId: consignment,
+      trackingNumber: tracking,
+    };
+  }
+
+  /**
    * Dispatches seller fulfillment group parcel to a chosen courier service.
    */
   public async dispatchGroupToCourier(

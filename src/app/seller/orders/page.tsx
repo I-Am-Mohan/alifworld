@@ -30,7 +30,12 @@ import {
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  X,
+  Printer,
+  XCircle,
 } from 'lucide-react';
+import type { PackingSlipManifestDTO } from '@/features/fulfillment/types/fulfillment-group.types';
+import type { RejectionReasonCode } from '@/features/orders/validators/order.validators';
 
 interface SellerGroupView {
   id: string;
@@ -80,6 +85,23 @@ export default function SellerOrdersPage() {
       user.permissions?.some((permission) =>
         ['orders:manage', 'seller:orders:manage'].includes(permission)
       ));
+
+  // Rejection modal state
+  const [rejectModalGroup, setRejectModalGroup] = useState<SellerGroupView | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionCode, setRejectionCode] = useState<RejectionReasonCode>('OUT_OF_STOCK');
+
+  // Handover modal state
+  const [handoverModalGroup, setHandoverModalGroup] = useState<SellerGroupView | null>(null);
+  const [handoverCourier, setHandoverCourier] = useState('PATHAO');
+  const [handoverTracking, setHandoverTracking] = useState('');
+  const [handoverConsignment, setHandoverConsignment] = useState('');
+
+  // Manifest modal state
+  const [manifestModalGroupId, setManifestModalGroupId] = useState<string | null>(null);
+  const [manifestData, setManifestData] = useState<PackingSlipManifestDTO | null>(null);
+  const [manifestLoading, setManifestLoading] = useState(false);
+  const [manifestError, setManifestError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -175,6 +197,108 @@ export default function SellerOrdersPage() {
       setError(failure instanceof Error ? failure.message : 'UPDATE_FAILED');
     } finally {
       setSaving(null);
+    }
+  };
+
+  const submitReject = async () => {
+    if (!rejectModalGroup || !canManage || saving) return;
+    if (rejectionReason.trim().length < 5) {
+      setError(text('Reason must be at least 5 characters.', 'কারণ অন্তত ৫ অক্ষরের হতে হবে।'));
+      return;
+    }
+    const groupId = rejectModalGroup.id;
+    const action = `${groupId}:REJECTED`;
+    const key = requestKeys.current.get(action) || crypto.randomUUID();
+    requestKeys.current.set(action, key);
+    setSaving(groupId);
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await csrfFetch(`/api/v1/seller/orders/${groupId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify({ reason: rejectionReason.trim(), rejectionCode }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.success)
+        throw new Error(
+          response.status === 403
+            ? 'FORBIDDEN'
+            : response.status === 409
+              ? 'CONFLICT'
+              : 'REJECT_FAILED'
+        );
+      requestKeys.current.delete(action);
+      setRejectModalGroup(null);
+      setRejectionReason('');
+      setNotice('REJECTED');
+      setLoading(true);
+      setRefresh((value) => value + 1);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'REJECT_FAILED');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const submitHandover = async () => {
+    if (!handoverModalGroup || !canManage || saving) return;
+    const groupId = handoverModalGroup.id;
+    const action = `${groupId}:HANDED_OVER_TO_COURIER`;
+    const key = requestKeys.current.get(action) || crypto.randomUUID();
+    requestKeys.current.set(action, key);
+    setSaving(groupId);
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await csrfFetch(`/api/v1/seller/orders/${groupId}/handover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify({
+          courierProvider: handoverCourier,
+          trackingNumber: handoverTracking.trim() || undefined,
+          consignmentId: handoverConsignment.trim() || undefined,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.success)
+        throw new Error(
+          response.status === 403
+            ? 'FORBIDDEN'
+            : response.status === 409
+              ? 'CONFLICT'
+              : 'HANDOVER_FAILED'
+        );
+      requestKeys.current.delete(action);
+      setHandoverModalGroup(null);
+      setHandoverTracking('');
+      setHandoverConsignment('');
+      setNotice('HANDED_OVER_TO_COURIER');
+      setLoading(true);
+      setRefresh((value) => value + 1);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'HANDOVER_FAILED');
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const openManifest = async (groupId: string) => {
+    setManifestModalGroupId(groupId);
+    setManifestLoading(true);
+    setManifestError(null);
+    setManifestData(null);
+    try {
+      const res = await fetch(`/api/v1/seller/orders/${groupId}/manifest`);
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.error?.message || 'MANIFEST_FAILED');
+      }
+      setManifestData(body.data);
+    } catch (err: any) {
+      setManifestError(err.message || 'MANIFEST_FAILED');
+    } finally {
+      setManifestLoading(false);
     }
   };
 
@@ -368,17 +492,46 @@ export default function SellerOrdersPage() {
                   disabled={!!saving || !canManage || loading}
                   className="flex flex-wrap items-center gap-2 disabled:opacity-50"
                 >
+                  <button
+                    type="button"
+                    onClick={() => void openManifest(group.id)}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+                    title={text(
+                      'Print Packing Slip Manifest',
+                      'প্যাকিং স্লিপ ম্যানিফেস্ট প্রিন্ট করুন'
+                    )}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{text('Packing Slip', 'প্যাকিং স্লিপ')}</span>
+                  </button>
+
                   {group.status === 'PENDING' && (
-                    <button
-                      onClick={() => advanceStatus(group.id, 'ACCEPTED')}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />{' '}
-                      {text('Accept Order', 'অর্ডার গ্রহণ করুন')}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => advanceStatus(group.id, 'ACCEPTED')}
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />{' '}
+                        {text('Accept Order', 'অর্ডার গ্রহণ করুন')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRejectModalGroup(group);
+                          setRejectionReason('');
+                          setRejectionCode('OUT_OF_STOCK');
+                        }}
+                        className="px-3.5 py-1.5 bg-rose-900/60 hover:bg-rose-800 text-rose-200 border border-rose-700 text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1.5"
+                      >
+                        <XCircle className="w-4 h-4 text-rose-400" />{' '}
+                        {text('Reject', 'প্রত্যাখ্যান')}
+                      </button>
+                    </>
                   )}
                   {group.status === 'ACCEPTED' && (
                     <button
+                      type="button"
                       onClick={() => advanceStatus(group.id, 'PACKING')}
                       className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1.5"
                     >
@@ -387,6 +540,7 @@ export default function SellerOrdersPage() {
                   )}
                   {group.status === 'PACKING' && (
                     <button
+                      type="button"
                       onClick={() => advanceStatus(group.id, 'READY_FOR_PICKUP')}
                       className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1.5"
                     >
@@ -396,7 +550,13 @@ export default function SellerOrdersPage() {
                   )}
                   {group.status === 'READY_FOR_PICKUP' && (
                     <button
-                      onClick={() => advanceStatus(group.id, 'HANDED_OVER_TO_COURIER')}
+                      type="button"
+                      onClick={() => {
+                        setHandoverModalGroup(group);
+                        setHandoverCourier(group.courierProvider || 'PATHAO');
+                        setHandoverTracking(group.trackingNumber || '');
+                        setHandoverConsignment('');
+                      }}
                       className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition-colors flex items-center gap-1.5"
                     >
                       <Send className="w-4 h-4" />{' '}
@@ -508,6 +668,405 @@ export default function SellerOrdersPage() {
             <ChevronRight className="h-4 w-4" />
           </button>
         </nav>
+
+        {/* ─── Rejection Modal ─── */}
+        {rejectModalGroup && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-dialog-title"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs"
+          >
+            <div className="w-full max-w-lg rounded-2xl bg-[#1E293B] border border-slate-700 p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2
+                  id="reject-dialog-title"
+                  className="text-lg font-bold text-white flex items-center gap-2"
+                >
+                  <XCircle className="w-5 h-5 text-rose-400" />
+                  <span>{text('Reject Fulfillment Order', 'অর্ডার প্রত্যাখ্যান করুন')}</span>
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setRejectModalGroup(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="bg-rose-950/30 border border-rose-800/60 rounded-xl p-3 text-xs text-rose-300">
+                {text(
+                  'Rejecting will cancel this package and notify the customer. Sibling packages from other merchants remain unaffected.',
+                  'প্রত্যাখ্যান করলে আপনার প্যাকেজটি বাতিল হবে এবং ক্রেতাকে জানানো হবে। অন্যান্য বিক্রেতাদের প্যাকেজ অপরিবর্তিত থাকবে।'
+                )}
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label
+                    htmlFor="rejection-code"
+                    className="block font-semibold text-slate-300 mb-1"
+                  >
+                    {text('Rejection Category', 'প্রত্যাখ্যানের কারণের ধরন')}
+                  </label>
+                  <select
+                    id="rejection-code"
+                    value={rejectionCode}
+                    onChange={(e) => setRejectionCode(e.target.value as RejectionReasonCode)}
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-white"
+                  >
+                    <option value="OUT_OF_STOCK">{text('Out of Stock', 'স্টক শেষ')}</option>
+                    <option value="PRICING_DISCREPANCY">
+                      {text('Pricing Discrepancy', 'মূল্য অসঙ্গতি')}
+                    </option>
+                    <option value="UNSERVICEABLE_LOCATION">
+                      {text('Unserviceable Location', 'ডেলিভারি অনুপলব্ধ এলাকা')}
+                    </option>
+                    <option value="SUSPECTED_FRAUD">
+                      {text('Suspected Fraud', 'সন্দেহজনক জালিয়াতি')}
+                    </option>
+                    <option value="MERCHANT_CAPACITY_EXCEEDED">
+                      {text('Merchant Capacity Exceeded', 'অতিরিক্ত অর্ডার চাপ')}
+                    </option>
+                    <option value="DAMAGED_INVENTORY">
+                      {text('Damaged Inventory', 'ক্ষতিগ্রস্ত পণ্য')}
+                    </option>
+                    <option value="OTHER">{text('Other Reason', 'অন্যান্য কারণ')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="rejection-reason"
+                    className="block font-semibold text-slate-300 mb-1"
+                  >
+                    {text(
+                      'Detailed Reason (Mandatory, min 5 chars)',
+                      'বিস্তারিত কারণ (বাধ্যতামূলক, অন্তত ৫ অক্ষর)'
+                    )}
+                  </label>
+                  <textarea
+                    id="rejection-reason"
+                    rows={3}
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder={text(
+                      'State the exact reason for rejecting this fulfillment order...',
+                      'অর্ডারটি প্রত্যাখ্যানের সঠিক কারণ উল্লেখ করুন...'
+                    )}
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 p-3 text-white placeholder-slate-500 focus:border-rose-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setRejectModalGroup(null)}
+                  disabled={!!saving}
+                  className="px-4 py-2 rounded-xl border border-slate-600 text-slate-300 text-xs font-semibold hover:bg-slate-800"
+                >
+                  {text('Cancel', 'বাতিল')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitReject()}
+                  disabled={!!saving || rejectionReason.trim().length < 5}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow disabled:opacity-50"
+                >
+                  {saving
+                    ? text('Processing...', 'প্রক্রিয়াধীন...')
+                    : text('Confirm Rejection', 'প্রত্যাখ্যান নিশ্চিত করুন')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Handover to Courier Modal ─── */}
+        {handoverModalGroup && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="handover-dialog-title"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs"
+          >
+            <div className="w-full max-w-lg rounded-2xl bg-[#1E293B] border border-slate-700 p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h2
+                  id="handover-dialog-title"
+                  className="text-lg font-bold text-white flex items-center gap-2"
+                >
+                  <Send className="w-5 h-5 text-emerald-400" />
+                  <span>{text('Courier Handover Details', 'কুরিয়ার হস্তান্তর বিবরণ')}</span>
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setHandoverModalGroup(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label
+                    htmlFor="handover-courier"
+                    className="block font-semibold text-slate-300 mb-1"
+                  >
+                    {text('Courier Provider', 'কুরিয়ার সেবাদাতা')}
+                  </label>
+                  <select
+                    id="handover-courier"
+                    value={handoverCourier}
+                    onChange={(e) => setHandoverCourier(e.target.value)}
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-white"
+                  >
+                    <option value="PATHAO">Pathao Courier</option>
+                    <option value="STEADFAST">Steadfast Courier</option>
+                    <option value="REDX">RedX Logistics</option>
+                    <option value="PAPERFLY">Paperfly Private Ltd</option>
+                    <option value="IN_HOUSE">In-House Dedicated Delivery</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="handover-tracking"
+                    className="block font-semibold text-slate-300 mb-1"
+                  >
+                    {text('Tracking Number / AWB', 'ট্র্যাকিং নম্বর / এডাব্লিউবি')}
+                  </label>
+                  <input
+                    id="handover-tracking"
+                    type="text"
+                    value={handoverTracking}
+                    onChange={(e) => setHandoverTracking(e.target.value)}
+                    placeholder="e.g. PTH-98218491"
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder-slate-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="handover-consignment"
+                    className="block font-semibold text-slate-300 mb-1"
+                  >
+                    {text('Consignment ID (Optional)', 'কনসাইনমেন্ট আইডি (ঐচ্ছিক)')}
+                  </label>
+                  <input
+                    id="handover-consignment"
+                    type="text"
+                    value={handoverConsignment}
+                    onChange={(e) => setHandoverConsignment(e.target.value)}
+                    placeholder="e.g. CSG-PATHAO-001"
+                    className="w-full rounded-xl bg-slate-900 border border-slate-700 px-3 py-2 text-white placeholder-slate-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setHandoverModalGroup(null)}
+                  disabled={!!saving}
+                  className="px-4 py-2 rounded-xl border border-slate-600 text-slate-300 text-xs font-semibold hover:bg-slate-800"
+                >
+                  {text('Cancel', 'বাতিল')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitHandover()}
+                  disabled={!!saving}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow disabled:opacity-50"
+                >
+                  {saving
+                    ? text('Processing...', 'প্রক্রিয়াধীন...')
+                    : text('Confirm Handover', 'হস্তান্তর নিশ্চিত করুন')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Packing Slip / Manifest Modal ─── */}
+        {manifestModalGroupId && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="manifest-dialog-title"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs overflow-y-auto"
+          >
+            <div className="w-full max-w-2xl rounded-2xl bg-white text-slate-900 border border-slate-200 p-6 shadow-2xl space-y-4 my-8">
+              <div className="flex items-center justify-between border-b pb-3 print:hidden">
+                <h2
+                  id="manifest-dialog-title"
+                  className="text-lg font-bold flex items-center gap-2"
+                >
+                  <FileText className="w-5 h-5 text-emerald-600" />
+                  <span>
+                    {text('Warehouse Packing Slip Manifest', 'প্যাকিং স্লিপ ও ম্যানিফেস্ট')}
+                  </span>
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    disabled={manifestLoading || !manifestData}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 flex items-center gap-1.5"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>{text('Print Slip', 'প্রিন্ট করুন')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManifestModalGroupId(null);
+                      setManifestData(null);
+                    }}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {manifestLoading && (
+                <div className="py-12 text-center text-slate-500 text-xs">
+                  {text('Generating packing slip...', 'প্যাকিং স্লিপ তৈরি হচ্ছে...')}
+                </div>
+              )}
+
+              {manifestError && (
+                <div className="p-4 rounded-xl bg-rose-50 text-rose-700 text-xs border border-rose-200">
+                  {manifestError}
+                </div>
+              )}
+
+              {manifestData && (
+                <div className="space-y-4 text-xs">
+                  {/* Manifest Header */}
+                  <div className="grid grid-cols-2 gap-4 border-b pb-4">
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">
+                        Package & Order
+                      </p>
+                      <p className="font-mono font-bold text-sm text-slate-900">
+                        {manifestData.groupNumber}
+                      </p>
+                      <p className="text-slate-500">Order #{manifestData.orderNumber}</p>
+                      <p className="text-slate-500">
+                        Date: {new Date(manifestData.orderDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">Merchant</p>
+                      <p className="font-bold text-sm text-slate-900">
+                        {manifestData.seller.businessName}
+                      </p>
+                      <p className="text-slate-500">ID: {manifestData.seller.id}</p>
+                    </div>
+                  </div>
+
+                  {/* Delivery Destination */}
+                  <div className="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">
+                        Recipient / Delivery Address
+                      </p>
+                      <p className="font-bold text-slate-900">{manifestData.recipient.name}</p>
+                      <p className="text-slate-600">{manifestData.recipient.phone}</p>
+                      <p className="text-slate-600 whitespace-pre-wrap">
+                        {manifestData.recipient.address}
+                      </p>
+                      <p className="text-slate-600">
+                        {manifestData.recipient.district}, {manifestData.recipient.division}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">
+                        Logistics & Tracking
+                      </p>
+                      <p className="font-semibold text-slate-900">
+                        Courier: {manifestData.logistics.courierProvider}
+                      </p>
+                      {manifestData.logistics.trackingNumber && (
+                        <p className="font-mono text-slate-700">
+                          Tracking: {manifestData.logistics.trackingNumber}
+                        </p>
+                      )}
+                      <p className="text-slate-500">
+                        Total Items: {manifestData.logistics.totalItems}
+                      </p>
+                      <p className="text-slate-500">
+                        Est. Weight: {manifestData.logistics.totalWeightGrams}g
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Itemized Table */}
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-[10px] uppercase text-slate-500">
+                        <th className="py-2">Item / SKU</th>
+                        <th className="py-2 text-center">Qty</th>
+                        <th className="py-2 text-right">Unit Price</th>
+                        <th className="py-2 text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {manifestData.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="py-2">
+                            <p className="font-semibold text-slate-900">{item.productTitle}</p>
+                            <p className="text-[10px] font-mono text-slate-400">
+                              {item.sku} {item.variantTitle ? `• ${item.variantTitle}` : ''}
+                            </p>
+                          </td>
+                          <td className="py-2 text-center font-bold">{item.quantity}</td>
+                          <td className="py-2 text-right font-mono">
+                            {item.unitPriceBdtFormatted}
+                          </td>
+                          <td className="py-2 text-right font-mono font-bold">
+                            {item.totalBdtFormatted}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Financial Summary */}
+                  <div className="border-t pt-3 flex justify-between items-center text-xs">
+                    <div>
+                      {manifestData.financialSummary.isCod ? (
+                        <span className="px-2.5 py-1 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                          COD: Collect {manifestData.financialSummary.amountToCollectBdtFormatted}
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-1 rounded-full font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                          Prepaid Digitally (No Cash Collection)
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-500">
+                        Subtotal: {manifestData.financialSummary.subtotalBdtFormatted}
+                      </p>
+                      <p className="text-slate-500">
+                        Courier Fee: {manifestData.financialSummary.shippingFeeBdtFormatted}
+                      </p>
+                      <p className="font-bold text-slate-900">
+                        Total: {manifestData.financialSummary.totalBdtFormatted}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
